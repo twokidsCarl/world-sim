@@ -348,7 +348,7 @@ def get_wish(wish_id: str) -> wishes.WishDetail:
         wish = wishes.get(wish_id)
     except wishes.WishError as e:
         raise HTTPException(404, str(e))
-    return _with_job(wish, _wish_jobs().get(wish_id))
+    return _with_job(wish, _wish_jobs().get(wish.wish_id))
 
 
 @app.post("/api/wishes/{wish_id}/edit", response_model=wishes.WishDetail)

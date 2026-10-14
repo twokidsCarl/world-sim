@@ -262,6 +262,7 @@ a.button { display: block; text-align: center; padding: 6px 10px; border: 1px so
 a.button:hover { background: var(--sunken); }
 a.button.inline { display: inline-block; }
 .wish-command { align-items: center; margin-bottom: 12px; }
+.wish-name { white-space: nowrap; } /* 列表里标题前的 wish-N / the wish-N before a title in the list */
 /* 会话：网页里的 Claude Code / sessions: Claude Code in the page */
 .sessions { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 20px; align-items: start; }
 .sessions-list { display: grid; gap: 12px; }

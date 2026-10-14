@@ -81,6 +81,10 @@ def test_the_same_wish_cannot_be_started_twice(repo, wish):
     first = jobs.start("wish", wish)
     with pytest.raises(jobs.JobError, match=first.job_id):
         jobs.start("wish", wish)
+    # wish-N 指的是同一条：作业记完整编号，所以照样认得出是重复的。 / wish-N names the same wish: the job stores the full id, so the duplicate is still caught.
+    assert first.ref == wish and "wish-1" in first.what
+    with pytest.raises(jobs.JobError, match=first.job_id):
+        jobs.start("wish", "wish-1")
 
 
 def test_revise_carries_the_feedback(repo, wish):

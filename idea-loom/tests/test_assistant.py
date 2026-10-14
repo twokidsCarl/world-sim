@@ -101,12 +101,14 @@ def test_tools_need_the_token_of_a_running_turn(tmp_path, monkeypatch, seeded):
     assert call("record_wish", {"title": "x", "kind": "unclear", "stuck": "", "suggestion": ""}, tok="wrong").status_code == 403
 
     r = call("record_wish", {"title": "空格要更显眼", "kind": "unclear", "stuck": "找了半天", "suggestion": "画斜线"})
-    assert r.status_code == 200 and "已记入许愿池" in r.text
+    assert r.status_code == 200 and "已记入许愿池：wish-1" in r.text
     (wish,) = wishes.listing().wishes
     detail = wishes.get(wish.wish_id)
     assert (detail.where.title, detail.seen[0].question, detail.seen[0].turn) == ("1.2 沙堆", "地图上看不出哪格是空的", turn)
 
-    assert "遇到 2 次" in call("record_wish", {"title": "空格和薄格都要更显眼", "kind": "unclear", "stuck": "", "suggestion": "", "seen": wish.wish_id}).text
+    # 小助手看到的是 wish-N，用它指回已有的那条。 / The assistant sees wish-N and points back at the existing wish with it.
+    again = call("record_wish", {"title": "空格和薄格都要更显眼", "kind": "unclear", "stuck": "", "suggestion": "", "seen": "wish-1"}).text
+    assert "记在已有的 wish-1 上了" in again and "遇到 2 次" in again
     assert wishes.get(wish.wish_id).title == "空格和薄格都要更显眼"
     assert call("record_wish", {"title": "y", "kind": "nope", "stuck": "", "suggestion": ""}).status_code == 403
 
@@ -125,7 +127,7 @@ def test_tools_need_the_token_of_a_running_turn(tmp_path, monkeypatch, seeded):
     kinds = [e["type"] for e in turns.events(cid, turn)]
     assert kinds == ["started", "wish", "wish", "idea", "point"]
     events = turns.events(cid, turn)
-    assert events[1]["new"] is True and events[2]["new"] is False and events[2]["occurrences"] == 2
+    assert events[1]["new"] is True and events[2]["new"] is False and events[2]["occurrences"] == 2 and events[2]["number"] == 1
     assert events[4]["points"] == [{"ref": "e1", "note": "点这里改写"}]
     turns.stop(cid)
     wait_done(cid, turn)
@@ -167,6 +169,10 @@ def test_wish_and_trail_endpoints(data):
     assert client.post(f"/api/wishes/{wid}/withdraw").status_code == 409
     assert client.post(f"/api/wishes/{wid}/restore").json()["status"] == "open"
     assert client.get("/api/wishes/nope").status_code == 404
+    # 接口也认 wish-N 和纯数字，返回里带序号。 / The API accepts wish-N and a bare number too, and replies carry the number.
+    assert client.get("/api/wishes/wish-1").json()["wish_id"] == wid and client.get("/api/wishes").json()["wishes"][0]["number"] == 1
+    assert client.post("/api/wishes/1/edit", json={"title": "丙"}).json()["title"] == "丙"
+    assert client.get("/api/wishes/wish-2").status_code == 404
     # 左侧的数是待处理那一组：未处理加已采纳，撤销的不算。 / The nav count is the pending group: open plus accepted, withdrawn excluded.
     other = wishes.record(title="丙", kind="missing", stuck="s", suggestion="g")
     wishes.set_status(other, "accepted")

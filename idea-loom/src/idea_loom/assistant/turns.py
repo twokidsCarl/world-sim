@@ -467,8 +467,8 @@ def tool_record_wish(token: str, args: dict[str, Any]) -> str:
         if seen:
             wish = wishes.see_again(seen, title=args.get("title"), stuck=args.get("stuck"), suggestion=args.get("suggestion"),
                                     note=args.get("note"), conversation_id=ctx.conversation_id, turn=ctx.turn, question=question)
-            ctx.emit({"type": "wish", "wish_id": wish.wish_id, "title": wish.title, "kind_label": wish.kind_label, "occurrences": wish.occurrences, "new": False})
-            return f"记在已有的 {wish.wish_id} 上了，现在遇到 {wish.occurrences} 次。"
+            ctx.emit({"type": "wish", "wish_id": wish.wish_id, "number": wish.number, "title": wish.title, "kind_label": wish.kind_label, "occurrences": wish.occurrences, "new": False})
+            return f"记在已有的 {wishes.name(wish)} 上了，现在遇到 {wish.occurrences} 次。"
         if ctx.new_wishes >= MAX_WISHES_PER_TURN:
             raise ToolError("这一轮已经记了三条新的愿望，不能再记了")
         wish_id = wishes.record(title=str(args.get("title", "")), kind=str(args.get("kind", "")), stuck=str(args.get("stuck", "")),
@@ -477,8 +477,8 @@ def tool_record_wish(token: str, args: dict[str, Any]) -> str:
         raise ToolError(str(e)) from e
     ctx.new_wishes += 1
     wish = wishes.get(wish_id)
-    ctx.emit({"type": "wish", "wish_id": wish_id, "title": wish.title, "kind_label": wish.kind_label, "occurrences": 1, "new": True})
-    return f"已记入许愿池：{wish_id}"
+    ctx.emit({"type": "wish", "wish_id": wish_id, "number": wish.number, "title": wish.title, "kind_label": wish.kind_label, "occurrences": 1, "new": True})
+    return f"已记入许愿池：{wishes.name(wish)}"
 
 
 def tool_propose_idea(token: str, args: dict[str, Any]) -> str:

@@ -6,7 +6,7 @@ export type TurnEvent = { seq: number; type: string; [key: string]: unknown }
 export type Step = { id: string; label: string; state: 'running' | 'done' | 'refused' }
 export type Block =
   | { kind: 'text'; text: string }
-  | { kind: 'wish'; wish_id: string; title: string; kind_label: string; occurrences: number; fresh: boolean }
+  | { kind: 'wish'; wish_id: string; number?: number; title: string; kind_label: string; occurrences: number; fresh: boolean }
   | { kind: 'idea'; proposal_id: string; title: string; body: string; level: string }
   | { kind: 'point'; points: { ref: string; note: string }[] }
 
@@ -57,7 +57,8 @@ export function fold(view: TurnView, events: TurnEvent[]): TurnView {
       if (i >= 0) next.steps[i] = step
       else next.steps.push(step)
     } else if (e.type === 'wish') {
-      next.blocks.push({ kind: 'wish', wish_id: String(e.wish_id), title: String(e.title), kind_label: String(e.kind_label), occurrences: Number(e.occurrences ?? 1), fresh: Boolean(e.new) })
+      // 旧的对话里没有序号。 / Older conversations carry no number.
+      next.blocks.push({ kind: 'wish', wish_id: String(e.wish_id), ...(typeof e.number === 'number' && { number: e.number }), title: String(e.title), kind_label: String(e.kind_label), occurrences: Number(e.occurrences ?? 1), fresh: Boolean(e.new) })
     } else if (e.type === 'idea') {
       next.blocks.push({ kind: 'idea', proposal_id: String(e.proposal_id), title: String(e.title), body: String(e.body), level: String(e.level) })
     } else if (e.type === 'point') {
