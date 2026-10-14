@@ -15,7 +15,7 @@ type AssistantState = {
   running: boolean
   ready: boolean
   notReadyReason: string | null
-  openWishes: number
+  pendingWishes: number // 待处理（未处理加已采纳）的愿望 / pending wishes, open plus accepted
   history: ConversationSummary[]
   error: string | null
   offer: boolean // 卡住提示：要不要解释这一页 / the stuck offer
@@ -23,6 +23,7 @@ type AssistantState = {
   setWidth: (width: number) => void
   setOffer: (offer: boolean) => void
   refresh: () => Promise<void>
+  setPendingWishes: (n: number) => void
   ask: (question: string, page: PageSnapshot, ideaId: string | null, images?: Attached[]) => Promise<void>
   stop: () => Promise<void>
   newConversation: () => void
@@ -103,7 +104,7 @@ export const useAssistant = create<AssistantState>((set, get) => {
     running: false,
     ready: true,
     notReadyReason: null,
-    openWishes: 0,
+    pendingWishes: 0,
     history: [],
     error: null,
     offer: false,
@@ -117,10 +118,11 @@ export const useAssistant = create<AssistantState>((set, get) => {
       set({ width: w })
     },
     setOffer: (offer) => set({ offer }),
+    setPendingWishes: (pendingWishes) => set({ pendingWishes }),
     refresh: async () => {
       try {
-        const s = await json<{ ready: boolean; not_ready_reason: string | null; open_wishes: number }>('/api/assistant')
-        set({ ready: s.ready, notReadyReason: s.not_ready_reason, openWishes: s.open_wishes })
+        const s = await json<{ ready: boolean; not_ready_reason: string | null; pending_wishes: number }>('/api/assistant')
+        set({ ready: s.ready, notReadyReason: s.not_ready_reason, pendingWishes: s.pending_wishes })
       } catch {
         set({ ready: false, notReadyReason: tr(currentLang(), '连不上后端', 'Cannot reach the backend') })
       }
