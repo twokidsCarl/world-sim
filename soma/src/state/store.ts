@@ -8,6 +8,7 @@ import { clampControl, loadShape, shapeScales, type LoadedShape, type ShapeContr
 import { loadRig, posePresets, poseIsRest, withDof, type LoadedRig, type Pose, type Scales } from '../anatomy/rig.ts'
 import type { PainSample } from '../painmodel/index.ts'
 import type { ActiveStim } from '../pain/stim.ts'
+import type { DemoRecording } from '../face/say.ts'
 import { defaultSettings, kindSpec, withKind, type StimSettings } from '../pain/stimulus.ts'
 import { fetchJson } from '../anatomy/load.ts'
 import { loadDetail, type LoadedDetail } from '../pain/detail.ts'
@@ -67,6 +68,8 @@ export interface SayStatus {
   warnings: { word: string; note: string }[]
   /** 合成这段声音的模型；真人录音时为 null / the model that synthesized the audio; null for a recorded voice. */
   model: { name: string; version: string; licence: string } | null
+  /** 真人录音的出处（语料库里的编号、书名、时间线怎么来的）；机器合成的为 null / where a recording comes from (its numbers in the corpus, the book, how the timeline was made); null when machine-synthesized. */
+  recording: DemoRecording | null
   /** 片段所在的包的许可说明 / the licence statement of the clip's pack. */
   licence: string
 }
@@ -454,7 +457,7 @@ export const useApp = create<AppState>()((set, get) => ({
   expr: null,
   viseme: null,
   speech: { status: 'idle', name: '', durationS: 0, message: '' },
-  say: { status: 'idle', clip: null, source: null, text: '', lang: null, voice: '', durationS: 0, sound: false, mode: 'phonemes', message: '', warnings: [], model: null, licence: '' },
+  say: { status: 'idle', clip: null, source: null, text: '', lang: null, voice: '', durationS: 0, sound: false, mode: 'phonemes', message: '', warnings: [], model: null, recording: null, licence: '' },
   speechStyle: null,
   calibrationOpen: false,
   painNonce: 0,

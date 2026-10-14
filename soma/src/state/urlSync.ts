@@ -4,7 +4,7 @@
 
 import { TREE_KINDS, type AnatomyGraph, type TreeKind } from '../anatomy/graph.ts'
 import { posePresets } from '../anatomy/rig.ts'
-import { loadDemoClip, playSay } from '../face/say.ts'
+import { loadDemoClip, playSay, setSayMode } from '../face/say.ts'
 import { applyStimulus } from '../pain/stim.ts'
 import { nonDefaultControls } from '../anatomy/shape.ts'
 import type { SystemId } from '../anatomy/types.ts'
@@ -110,7 +110,10 @@ export function snapshot(s: AppState): UrlState {
   if (s.viseme) out.vis = s.viseme
   // 只有示范片段进 URL；合成用的文字不进（链接要短，也不该带着用户输入的话）
   // only a demo clip goes into the URL; text typed for synthesis does not (links stay short and carry nothing the user wrote)
-  if (s.say.source === 'demo' && s.say.clip) out.say = s.say.clip
+  if (s.say.source === 'demo' && s.say.clip) {
+    out.say = s.say.clip
+    if (s.say.mode === 'audio') out.drive = 'audio'
+  }
   if (s.speechStyle) out.style = s.speechStyle
   if (s.skinOpaque) out.skin = true
   if (s.stim) out.stim = { settings: s.stim.settings, site: s.stim.siteRef }
@@ -222,6 +225,8 @@ export async function restoreFromUrl(state: UrlState): Promise<string[]> {
     // 界面上有一个"声音"按钮。
     // a demo clip from a link: it starts by itself once loaded. Before any user gesture the browser allows no sound, so the mouth
     // runs silently on the page clock (looping when embedded) and the UI offers a "sound" button.
+    // 带动方式先设好，片段一开始就按它走 / the drive mode is set first, so the clip starts with it
+    if (state.drive) setSayMode(state.drive === 'audio' ? 'audio' : 'phonemes')
     const face = await useApp.getState().ensureFace()
     if (!face) warnings.push('say: 此人体没有表情数据 / this body has no facial expression data')
     else if (!(await loadDemoClip(state.say))) warnings.push(`say: ${useApp.getState().say.message || '无法装入 / could not be loaded'}`)

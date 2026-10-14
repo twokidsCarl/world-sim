@@ -2,12 +2,12 @@
 // "Say something" in the Expression panel: speech synthesis (when the backend is there), the demo sentences, what drives the
 // mouth, the word and sound being spoken; plus the style switch shared by held shapes and speech.
 //
-// 后端不在时界面照常能用：只是没有输入框，示范句子和"选择音频文件"都还在。合成用的文字只发给同源的 /api/tts，不进 URL。
-// Without the backend the UI still works: the text box is simply absent, and the demo sentences and "choose an audio file"
-// remain. Text typed for synthesis goes to the same-origin /api/tts only and never into the URL.
+// 后端不在时界面照常能用：只是没有输入框，示范句子、真人朗读的示例和"选择音频文件"都还在。合成用的文字只发给同源的 /api/tts，不进 URL。
+// Without the backend the UI still works: the text box is simply absent, and the demo sentences, the real read-speech examples and
+// "choose an audio file" remain. Text typed for synthesis goes to the same-origin /api/tts only and never into the URL.
 
 import { useEffect, useState } from 'react'
-import { enableSaySound, loadDemoClip, loadDemoPacks, loadSynthesized, playSay, primeSaySound, sayClip, sayNow, setSayMode, stopSay, type DemoPack } from '../face/say.ts'
+import { enableSaySound, loadDemoClip, loadDemoPacks, loadSynthesized, playSay, primeSaySound, sayClip, sayNow, setSayMode, stopSay, type DemoPack, type DemoRecording } from '../face/say.ts'
 import { SAY_STATEMENT } from '../face/statements.ts'
 import { useApp } from '../state/store.ts'
 import { ttsAvailable, ttsVoices, type TtsLang, type TtsLimits, type TtsVoice } from '../voice/tts.ts'
@@ -53,6 +53,32 @@ export function StyleControl() {
           The shape buttons and speech share this switch. “Normal” is the measured opening of read speech (even an open a parts the incisors by only about 5 mm, and most consonants by 1–3 mm); “Clear” is enlarged, careful articulation. By default the shape buttons use Clear (the shapes would hardly differ otherwise) and speech uses Normal.
         </span>
       </p>
+    </>
+  )
+}
+
+/** 性别的中英标签 / the bilingual label of a speaker's sex. */
+export const sexLabel = (sex: DemoRecording['sex']): string => (sex === 'female' ? '女 female' : sex === 'male' ? '男 male' : '')
+
+/**
+ * 真人录音的出处：语料库、说话人编号和性别、章节、语句、书名，并说明时间线是自动对齐的。不写朗读者的名字。
+ * Where a recording comes from: corpus, speaker number and sex, chapter, utterance, book, and the note that the timeline is an
+ * automatic alignment. The reader's name is never shown.
+ */
+export function RecordingCredit({ r, licence }: { r: DemoRecording; licence: string }) {
+  return (
+    <>
+      <strong>真人朗读的录音。</strong> <span className="en">A recording of a person reading aloud.</span> {r.corpus} · 说话人 <span className="en">speaker</span> {r.speaker}
+      {r.sex ? ` (${sexLabel(r.sex)})` : ''} · 章节 <span className="en">chapter</span> {r.chapter} · 语句 <span className="en">utterance</span> {r.utterance}
+      {r.book ? (
+        <>
+          {' '}
+          · 书 <span className="en">book</span> <em>{r.book}</em>
+        </>
+      ) : null}
+      。音素时间线是自动对齐（Montreal Forced Aligner），不是人工标注。
+      <span className="en"> The phoneme timeline is an automatic alignment (Montreal Forced Aligner), not hand labels.</span>
+      {licence ? ` · ${licence}` : ''}
     </>
   )
 }
@@ -143,7 +169,10 @@ export function SaySection() {
   const limit = present?.limits.maxTextLength ?? 300
   const busy = say.status === 'loading'
   const has = say.status === 'ready' || say.status === 'playing'
-  const clips = packs?.flatMap((p) => p.clips) ?? []
+  const all = packs?.flatMap((p) => p.clips) ?? []
+  // 机器合成的示范句子和真人朗读的示例分成两个列表 / machine-synthesized demo sentences and real read-speech examples are two lists
+  const clips = all.filter((c) => !c.recording)
+  const examples = all.filter((c) => c.recording)
 
   const speak = async (): Promise<void> => {
     // 先在手势里叫醒声音，再等合成 / wake the sound inside the gesture, then wait for the synthesis
@@ -259,7 +288,7 @@ export function SaySection() {
         <span>
           示范句子（{clips.length}） <span className="en">Demo sentences</span>
         </span>
-        <select value={say.source === 'demo' && say.clip ? say.clip : ''} aria-label="示范句子 / demo sentences" disabled={busy || clips.length === 0} onChange={(e) => void pick(e.target.value)}>
+        <select value={say.source === 'demo' && say.clip && clips.some((c) => c.id === say.clip) ? say.clip : ''} aria-label="示范句子 / demo sentences" disabled={busy || clips.length === 0} onChange={(e) => void pick(e.target.value)}>
           <option value="">{packs === null ? '正在读取… Loading…' : clips.length ? '选一句来说… Pick one to say…' : '没有找到示范片段 No demo clips found'}</option>
           {LANGS.map((l) => {
             const list = clips.filter((c) => c.lang === l.id)
@@ -275,6 +304,28 @@ export function SaySection() {
           })}
         </select>
       </label>
+
+      {examples.length > 0 && (
+        <label className="say-demo">
+          <span>
+            示例：真人朗读（{examples.length}） <span className="en">Examples: real read speech</span>
+          </span>
+          <select value={say.source === 'demo' && say.clip && examples.some((c) => c.id === say.clip) ? say.clip : ''} aria-label="示例：真人朗读 / examples: real read speech" disabled={busy} onChange={(e) => void pick(e.target.value)}>
+            <option value="">选一句来听… Pick one to hear…</option>
+            {examples.map((c) => (
+              <option key={c.id} value={c.id}>
+                {sexLabel(c.recording!.sex)} · {c.text}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {examples.length > 0 && (
+        <p className="hint">
+          LibriSpeech 里的真人朗读（CC BY 4.0），男女各半。切换下面的“按音素”和“按音频”，比较同一段录音的两种口形。
+          <span className="en"> Real read speech from LibriSpeech (CC BY 4.0), half female and half male. Switch between “By phoneme” and “By audio” below to compare the two mouths for the same recording.</span>
+        </p>
+      )}
 
       {busy && <p className="hint">正在准备声音… Preparing the audio…</p>}
       {say.message && (
@@ -306,17 +357,17 @@ export function SaySection() {
               带动 <span className="en">Driven</span>
             </span>
             <button className={say.mode === 'phonemes' ? 'on' : ''} aria-pressed={say.mode === 'phonemes'} onClick={() => setSayMode('phonemes')} title="按音素时间线：每个音一个口形，双唇音一定合上 / by the phoneme timeline: one shape per sound, bilabials always close">
-              按音素 <span className="en">By phonemes</span>
+              按音素 <span className="en">By phoneme</span>
             </button>
             <button className={say.mode === 'audio' ? 'on' : ''} aria-pressed={say.mode === 'audio'} onClick={() => setSayMode('audio')} title="对同一段声音做分析：只有开口度可靠 / by analysing the same audio: only the opening is reliable">
-              按声音分析 <span className="en">By audio analysis</span>
+              按音频 <span className="en">By audio</span>
             </button>
           </div>
           <p className="hint">
-            同一段声音两种带动方式，可以对比：“按音素”准确（知道每个音是什么）；“按声音分析”是近似（只从声音里猜，和下面“由音频带动口形”同一条路线，不受风格开关影响）。
+            同一段声音两种带动方式，可以对比：“按音素”准确（知道每个音是什么）；“按音频”是近似（只从声音里分析，和下面“由音频带动口形”同一条路线，不受风格开关影响）。
             <span className="en">
               {' '}
-              The same audio driven two ways, for comparison: “By phonemes” is accurate (each sound is known); “By audio analysis” is approximate (guessed from the sound alone — the route of “Speak from audio” below, unaffected by the style switch).
+              The same audio driven two ways, for comparison: “By phoneme” is accurate (each sound is known); “By audio” is approximate (analysed from the sound alone — the route of “Speak from audio” below, unaffected by the style switch).
             </span>
           </p>
           {say.warnings.length > 0 && (
@@ -329,7 +380,9 @@ export function SaySection() {
             </ul>
           )}
           <p className="hint" data-testid="say-model">
-            {say.model ? (
+            {say.recording ? (
+              <RecordingCredit r={say.recording} licence={say.licence} />
+            ) : say.model ? (
               <>
                 <strong>机器合成的声音。</strong> <span className="en">Machine-synthesized audio.</span> 模型 <span className="en">Model</span> {say.model.name}
                 {say.model.name.includes(say.model.version) ? '' : ` ${say.model.version}`} · 许可 <span className="en">licence</span> {say.model.licence}
@@ -339,7 +392,7 @@ export function SaySection() {
                 录音 <span className="en">Recorded audio</span>
               </>
             )}
-            {say.licence ? ` · ${say.licence}` : ''}
+            {!say.recording && say.licence ? ` · ${say.licence}` : ''}
           </p>
         </>
       )}
