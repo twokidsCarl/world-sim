@@ -333,3 +333,20 @@ def test_client_routes_with_a_dot_fall_back_to_the_page_but_missing_files_do_not
     assert str(host._static(tmp_path, "/assets/app.js").path).endswith("app.js")
     for path in ("/assets/missing.js", "/icon.png", "/old/style.css", "/../secret.txt"):
         assert host._static(tmp_path, path).status_code == 404, path
+
+
+def test_a_browser_leaving_mid_request_is_not_an_error():
+    """浏览器在请求发到一半时走了：代理安静地放弃，不抛异常、不转发。
+
+    The browser leaves halfway through sending a request: the proxy gives up quietly, raising nothing and forwarding nothing.
+    """
+    import asyncio
+
+    from starlette.requests import Request
+
+    async def gone():
+        return {"type": "http.disconnect"}
+
+    request = Request({"type": "http", "method": "POST", "path": "/api/step", "query_string": b"", "headers": []}, receive=gone)
+    reply = asyncio.run(host._proxy(request, 1))   # 端口 1 上什么都没有：真转发了就会是 502 / nothing listens on port 1: a real forward would give 502
+    assert reply.status_code == 499
