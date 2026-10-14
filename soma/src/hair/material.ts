@@ -19,7 +19,7 @@
 //   F 为 Schlick 近似，F0 = ((1.55 − 1)/(1.55 + 1))²（纤维折射率 1.55）/ F is Schlick's with F0 = ((1.55 − 1)/(1.55 + 1))² (fibre index 1.55)
 
 import { DoubleSide, LightingModel, MeshLambertNodeMaterial, MeshStandardNodeMaterial, type PhysicalLightingModel, type Texture } from 'three/webgpu'
-import { abs, asin, attribute, clamp, cos, cross, dFdx, dFdy, dot, exp, float, fract, inverseSqrt, length, log2, max, mix, normalFlat, normalViewGeometry, normalize, positionViewDirection, pow, select, sin, smoothstep, sqrt, texture, uniform, uv, vec3, vec4 } from 'three/tsl'
+import { abs, asin, attribute, positionGeometry, clamp, cos, cross, dFdx, dFdy, dot, exp, float, fract, inverseSqrt, length, log2, max, mix, normalFlat, normalViewGeometry, normalize, positionViewDirection, pow, select, sin, smoothstep, sqrt, texture, uniform, uv, vec3, vec4 } from 'three/tsl'
 import { EUMELANIN, type HairColour, MELANIN, PHEOMELANIN, UNPIGMENTED } from './colour.ts'
 
 // TSL 的类型定义跟不上这种写法，节点在本文件内按 any 处理 / TSL's typings do not follow this style, so nodes are `any` here
@@ -252,6 +252,33 @@ export function makeScalpTintMaterial(look: HairLook): MeshLambertNodeMaterial {
   m.transparent = true
   m.depthWrite = false
   // 盖在写实皮肤（−1/−1）和皱纹层（−1/−2）之上 / over the lifelike skin (−1/−1) and the wrinkle layer (−1/−2)
+  m.polygonOffset = true
+  m.polygonOffsetFactor = -2
+  m.polygonOffsetUnits = -6
+  return m
+}
+
+/**
+ * 胡茬：皮肤上每 0.35 毫米一格，按胡须密度随机点出毛根的小黑点，再加一层淡的发色（远看是"青色的胡茬"）。
+ * Stubble: on a 0.35 mm grid over the skin, small dark dots for the hair stubs, placed at random by the beard density,
+ * over a faint hair-coloured layer (from a distance, the familiar "five o'clock shadow").
+ */
+export function makeStubbleMaterial(look: HairLook): MeshLambertNodeMaterial {
+  const v3 = (c: readonly number[]): N => (vec3 as N)(c[0], c[1], c[2])
+  const sigma: N = v3(EUMELANIN).mul(look.eumelanin.mul(1.2)).add(v3(PHEOMELANIN).mul(look.pheomelanin))
+  const colour: N = mix(exp(sqrt(sigma).mul(-2.6)), exp(sqrt(v3(UNPIGMENTED)).mul(-2.6)), look.white).mul(0.6)
+  const w: N = attribute('aStubble', 'float')
+  // 格点里的随机数决定有没有一根毛、毛根在格里的位置 / a random number per cell decides whether a hair is there and where in the cell its stub sits
+  const g: N = (positionGeometry as N).div(0.00035)
+  const cell: N = g.floor()
+  const h: N = fract(sin(dot(cell, (vec3 as N)(12.9898, 78.233, 37.719))).mul(43758.5453))
+  const f: N = g.sub(cell).sub(0.5)
+  const dotMask: N = smoothstep(0.32, 0.18, length(f)).mul(h.lessThan(w.mul(0.8)).select(float(1), float(0)))
+  const m = new MeshLambertNodeMaterial()
+  m.colorNode = colour
+  m.opacityNode = clamp(w.mul(0.35).add(dotMask.mul(0.85)), 0, 1) as N
+  m.transparent = true
+  m.depthWrite = false
   m.polygonOffset = true
   m.polygonOffsetFactor = -2
   m.polygonOffsetUnits = -6

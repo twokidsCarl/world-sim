@@ -13,24 +13,26 @@ import { type Card, cardSpace } from './cards.ts'
 import { type V3, add, cross, gauss, len, norm, rng, scale, sub } from './geom.ts'
 import type { Strand } from './strands.ts'
 
-export type CardKind = 'long' | 'short' | 'brow' | 'lash'
+export type CardKind = 'long' | 'short' | 'brow' | 'lash' | 'beard' | 'body'
 
 export const ATLAS_SIZE = 1024
 /** 每种发片的贴图格：[x, y, 宽, 高]（像素），按种类排成一行 / tiles per card kind: [x, y, width, height] (pixels), one row per kind */
-export const TILES: Record<CardKind, { count: number; w: number; h: number; y: number }> = {
+export const TILES: Record<CardKind, { count: number; w: number; h: number; y: number; x?: number }> = {
   long: { count: 16, w: 64, h: 512, y: 0 },
   short: { count: 16, w: 64, h: 256, y: 512 },
-  brow: { count: 8, w: 128, h: 128, y: 768 },
-  lash: { count: 8, w: 128, h: 128, y: 896 },
+  brow: { count: 4, w: 128, h: 128, y: 768 },
+  beard: { count: 4, w: 128, h: 128, y: 768, x: 512 },
+  lash: { count: 4, w: 128, h: 128, y: 896 },
+  body: { count: 4, w: 128, h: 128, y: 896, x: 512 },
 }
 
 export function tileRect(kind: CardKind, tile: number): [number, number, number, number] {
   const t = TILES[kind]
-  return [(tile % t.count) * t.w, t.y, t.w, t.h]
+  return [(t.x ?? 0) + (tile % t.count) * t.w, t.y, t.w, t.h]
 }
 
 /** 深度的量程（米）：±这么多映射到 0…1 / depth range (m): ± this maps onto 0…1 */
-export const DEPTH_RANGE: Record<CardKind, number> = { long: 0.004, short: 0.003, brow: 0.0004, lash: 0.0004 }
+export const DEPTH_RANGE: Record<CardKind, number> = { long: 0.004, short: 0.003, brow: 0.0004, lash: 0.0004, beard: 0.0005, body: 0.003 }
 
 export class Atlas {
   readonly cov = new Float32Array(ATLAS_SIZE * ATLAS_SIZE)

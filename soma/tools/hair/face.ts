@@ -119,7 +119,7 @@ export function browGroom(b: BodyData, f: HeadFrame, surface: Surface, P: Params
 }
 
 /** 一根贴着皮肤长的短毛：以 `exit` 角出皮肤，然后弯向皮肤、保持在皮肤外 `gap` 处 / a short hair lying along the skin: leaves at `exit`, then bends towards it and stays `gap` above it */
-function lieAlong(surface: Surface, root: Root, dir: V3, L: number, exit: number, points: number, gap: number, seed: number): Strand {
+export function lieAlong(surface: Surface, root: Root, dir: V3, L: number, exit: number, points: number, gap: number, seed: number): Strand {
   const seg = L / (points - 1)
   let d = norm(add(scale(dir, Math.cos(exit)), scale(root.n, Math.sin(exit))))
   const pts: V3[] = [root.p]

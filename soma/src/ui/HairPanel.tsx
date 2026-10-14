@@ -2,8 +2,14 @@
 // The lifelike hair controls: style (none / short / long, default by body) and colour (presets by melanin concentration).
 
 import { HAIR_COLOURS, HAIR_COLOUR_LABEL, swatch } from '../hair/colour.ts'
-import type { HairStyle } from '../look/types.ts'
+import type { BeardStyle, HairStyle } from '../look/types.ts'
 import { useApp } from '../state/store.ts'
+
+const BEARDS: { id: BeardStyle; zh: string; en: string }[] = [
+  { id: 'none', zh: '无须', en: 'No beard' },
+  { id: 'stubble', zh: '胡茬', en: 'Stubble' },
+  { id: 'short', zh: '短须', en: 'Short beard' },
+]
 
 const STYLES: { id: HairStyle; zh: string; en: string }[] = [
   { id: 'none', zh: '无', en: 'None' },
@@ -18,6 +24,7 @@ export function HairPanel() {
   const style = useApp((s) => s.hairStyle)
   const colour = useApp((s) => s.hairColor)
   const dataset = useApp((s) => s.dataset)
+  const beard = useApp((s) => s.beard)
   const app = useApp.getState()
   const fallback = BODY_DEFAULT[dataset ?? ''] ?? 'short'
   const current = style ?? fallback
@@ -33,6 +40,17 @@ export function HairPanel() {
           </button>
         ))}
       </div>
+      {/* 胡须只有男性有数据 / only the male has beard data */}
+      {dataset === 'male' && (
+        <div className="segmented" role="radiogroup" aria-label="胡须 / Facial hair" style={{ marginTop: 6 }}>
+          {BEARDS.map((b) => (
+            <button key={b.id} role="radio" aria-checked={beard === b.id} className={beard === b.id ? 'active' : ''} onClick={() => app.setBeard(b.id)}>
+              {b.zh}
+              <span className="en">{b.en}</span>
+            </button>
+          ))}
+        </div>
+      )}
       <div role="radiogroup" aria-label="发色 / Hair colour" style={{ display: 'flex', flexWrap: 'wrap', gap: 4, margin: '6px 0' }}>
         {HAIR_COLOURS.map((c) => (
           <button

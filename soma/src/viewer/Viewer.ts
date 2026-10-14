@@ -227,6 +227,7 @@ export type ViewState = Pick<
   | 'skinUv'
   | 'hairStyle'
   | 'hairColor'
+  | 'beard'
   | 'wear'
   | 'clothes'
   | 'shape'
@@ -1227,7 +1228,7 @@ export class Viewer {
     this.syncLook(s)
     this.syncEyes(s)
     // 发型、发色变了：只告诉毛发层 / hair style or colour changed: only the hair layer needs telling
-    if (this.hair && (!p || p.hairStyle !== s.hairStyle || p.hairColor !== s.hairColor)) this.syncHair(this.lookShowing())
+    if (this.hair && (!p || p.hairStyle !== s.hairStyle || p.hairColor !== s.hairColor || p.beard !== s.beard || p.wear !== s.wear)) this.syncHair(this.lookShowing())
     this.syncClothes(s)
     // 写实外观：皮肤画成不透明时才去取 UV 网格 / lifelike look: the UV mesh is fetched only once the skin is drawn opaque
     if (this.source === useApp.getState && s.look && !s.skinUv && skinDrawnOpaque(s, this.mainSkin)) void useApp.getState().ensureSkinUv()
@@ -1837,7 +1838,7 @@ export class Viewer {
       this.hair = new HairLayer(base, this.skinGeometry.get(i)!, this.skinning, () => this.hairChanged(), this.backend === 'webgpu')
       this.addFollower(this.hair)
     }
-    this.hair.set({ show, style: s.hairStyle, colour: s.hairColor })
+    this.hair.set({ show, style: s.hairStyle, colour: s.hairColor, beard: s.beard, wear: s.wear })
   }
 
   /** 毛发层有变化：重画；它替代的外壳变了就重算显示 / The hair layer changed: redraw; if the shells it replaces changed, recompute the display. */

@@ -66,6 +66,10 @@ describe('hair URL parameters', () => {
     expect(parseUrl('?hc=green').warnings.length).toBe(1)
     expect(formatUrl({ skin: true, hc: DEFAULT_HAIR_COLOUR })).not.toContain('hc')
     expect(formatUrl({ skin: true })).not.toContain('hair')
+    expect(parseUrl('?beard=stubble').state.beard).toBe('stubble')
+    expect(parseUrl(`?${formatUrl({ beard: 'short' })}`).state.beard).toBe('short')
+    expect(formatUrl({ beard: 'none' })).not.toContain('beard')
+    expect(parseUrl('?beard=goatee').warnings.length).toBe(1)
   })
 })
 
@@ -94,7 +98,7 @@ for (const body of ['male', 'female']) {
       }
       // 一次下载：贴图集 + 最大的发型 + 眉毛 + 睫毛，≤ 5 MB / one download: atlas + the largest style + brows + lashes, ≤ 5 MB
       const piece = (id: string): number => meta.pieces.find((p) => p.id === id)!.bytes
-      expect(atlas + Math.max(piece('short'), piece('long')) + piece('brows') + piece('lashes') + meta.scalp.vertices * 5).toBeLessThan(5e6)
+      expect(atlas + Math.max(piece('short'), piece('long')) + piece('brows') + piece('lashes') + piece('pubic') + piece('axilla') + meta.scalp.vertices * 5).toBeLessThan(5e6)
     })
 
     it('roots lie on skin triangles and no card vertex is inside the skin', async () => {
@@ -122,7 +126,7 @@ for (const body of ['male', 'female']) {
           for (let v = 0; v < pos.length / 3; v++) {
             const q: V3 = [pos[v * 3]!, pos[v * 3 + 1]!, pos[v * 3 + 2]!]
             const h = surface.closest(q, 0.01)
-            if (h && h.distance <= 0.01) worst = Math.min(worst, dot(sub(q, h.point), h.normal))
+            if (h && h.distance <= 0.01) worst = Math.min(worst, dot(sub(q, h.point), h.smoothNormal))
           }
           expect(worst, `${p.id} level ${p.lods.indexOf(l)}`).toBeGreaterThan(-0.0005)
         }
@@ -172,7 +176,7 @@ for (const body of ['male', 'female']) {
           for (let k = 1; k < P; k++) {
             const q: V3 = [root[0]! + d.offset[(g * P + k) * 3]!, root[1]! + d.offset[(g * P + k) * 3 + 1]!, root[2]! + d.offset[(g * P + k) * 3 + 2]!]
             const h = surface.closest(q, 0.005)
-            if (h && h.distance <= 0.005) worst = Math.min(worst, dot(sub(q, h.point), h.normal))
+            if (h && h.distance <= 0.005) worst = Math.min(worst, dot(sub(q, h.point), h.smoothNormal))
           }
         }
         expect(worst, style).toBeGreaterThan(-0.0005)
@@ -218,6 +222,28 @@ for (const body of ['male', 'female']) {
       expect(lashes.lowerPerLid).toBeLessThanOrEqual(table.lashCountLower.range[1])
       expect(Math.abs(lashes.upperLengthMm! / table.lashLengthUpper.value - 1)).toBeLessThan(0.1)
       expect(Math.abs(lashes.lowerLengthMm! / table.lashLengthLower.value - 1)).toBeLessThan(0.1)
+      // 阴毛、腋毛：区内部的密度在表值 ±20% 内（都是假设值）；中位长度在 ±15% 内
+      // pubic and axillary hair: interior density within ±20 % of the table (both assumed); median length within ±15 %
+      expect(Math.abs(s('pubic').densityPerCm2! / table.pubicDensity.value - 1)).toBeLessThan(0.2)
+      expect(Math.abs(s('axilla').densityPerCm2! / table.axillaryDensity.value - 1)).toBeLessThan(0.2)
+      expect(Math.abs(s('pubic').lengthMmP50! / table.pubicLength.value - 1)).toBeLessThan(0.15)
+      expect(Math.abs(s('axilla').lengthMmP50! / table.axillaryLength.value - 1)).toBeLessThan(0.15)
+      // 胡须（只有男性）：各区密度与 Dua 等 2021 相符（颊、颏 ±15%，上唇按两侧值 ±15%，颈部是假设 ±30%）
+      // beard (male only): regional densities agree with Dua et al. 2021 (cheek and chin ±15 %, upper lip against the lateral value ±15 %, the assumed neck ±30 %)
+      const beard = meta.pieces.find((p) => p.id === 'beard')?.stats
+      expect(!!beard).toBe(body === 'male')
+      if (beard) {
+        const D = table.beardDensity
+        expect(Math.abs(beard.density_cheek! / D.cheek - 1)).toBeLessThan(0.15)
+        expect(Math.abs(beard.density_chin! / D.chin - 1)).toBeLessThan(0.15)
+        expect(Math.abs(beard.density_moustache! / D.moustacheLateral - 1)).toBeLessThan(0.15)
+        expect(Math.abs(beard.density_neck! / D.neck - 1)).toBeLessThan(0.3)
+        expect(Math.abs(beard.lengthMmP50! / table.beardLength.short - 1)).toBeLessThan(0.15)
+        expect(meta.beard!.vertices).toBeGreaterThan(100)
+        expect(readFileSync(resolve(dir, 'hair', meta.beard!.file)).length).toBe(meta.beard!.vertices * 5)
+      }
+      // 阴毛外壳在被替代的外壳里 / the pubic shell is among the replaced shells
+      expect(meta.hides[2]).toMatch(/FJ2815$/)
     })
 
     // 本机才有：逐根检查发丝（根在皮肤上 ≤ 0.5 毫米，没有点在皮肤里）/ local only: strand by strand (roots ≤ 0.5 mm from the skin, no point inside it)
@@ -235,7 +261,7 @@ for (const body of ['male', 'female']) {
           for (const p of st.pts.slice(1)) {
             const c = surface.closest(p as V3, 0.005)
             // 只看搜索半径以内的最近点（BVH 偶尔会给出更远的）/ only closest points within the search radius count (the BVH occasionally returns a farther one)
-            if (c && c.distance <= 0.005) worstInside = Math.min(worstInside, dot(sub(p as V3, c.point), c.normal))
+            if (c && c.distance <= 0.005) worstInside = Math.min(worstInside, dot(sub(p as V3, c.point), c.smoothNormal))
           }
         }
         expect(worstRoot, id).toBeLessThan(0.0005)

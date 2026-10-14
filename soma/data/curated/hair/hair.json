@@ -10,48 +10,514 @@
   "en": "The numbers used to generate scalp hair, eyebrows and eyelashes procedurally. Every item names its source and status: cited = the original text or table was opened and read; secondary = seen only in a review, a quotation or a search snippet; assumed = no source found, this project's own choice. tools/hair/build.ts reads this table and tests/look-hair.test.ts checks the generated grooms against it."
  },
  "sources": [
-  { "id": "leerunyakul2020", "cite": "Leerunyakul K, Suchonwanit P. Asian Hair: A Review of Structures, Properties, and Distinctive Disorders. Clin Cosmet Investig Dermatol 2020;13:309–318", "doi": "10.2147/CCID.S247390", "status": "opened", "note": { "zh": "表 1 汇总了多篇研究（综述，数值是转引）", "en": "Table 1 pools several studies (a review; the values are quoted)" } },
-  { "id": "thai-trichoscopy", "cite": "Trichoscopic norms of healthy Thai adults (PMC7035527)", "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7035527", "status": "snippet", "note": { "zh": "只见到检索摘要中的数值；题目、作者未核对", "en": "Values seen in a search snippet only; title and authors not checked" } },
-  { "id": "bernstein1998", "cite": "Bernstein RM. Measurements in Hair Restoration. Hair Transplant Forum Int'l 1998;8(1):27", "status": "opened" },
-  { "id": "flindt2006", "cite": "Flindt R. Amazing Numbers in Biology. Springer 2006, p. 212 (via BioNumbers 101509)", "url": "https://bionumbers.hms.harvard.edu/bionumber.aspx?id=101509", "status": "snippet" },
-  { "id": "lasisi2016", "cite": "Lasisi T, Ito S, Wakamatsu K, Shaw CN. Quantifying variation in human scalp hair fiber shape and pigmentation. Am J Phys Anthropol 2016", "doi": "10.1002/ajpa.22971", "status": "opened", "note": { "zh": "表 2：截面积、最大/最小直径之比、平均曲率（单位按数量级推断为 1/毫米）", "en": "Table 2: cross-sectional area, max/min diameter ratio, mean curvature (unit inferred from magnitude as 1/mm)" } },
-  { "id": "farkas-trn", "cite": "Farkas LG anthropometric norms, trichion–nasion of North American whites, quoted in a Kenyan comparison study", "status": "snippet" },
-  { "id": "statpearls-eyelash", "cite": "Patel BC, Lopez MJ, Joos ZP. Anatomy, Head and Neck: Eyelash. StatPearls 2023 (NBK537278)", "url": "https://www.ncbi.nlm.nih.gov/books/NBK537278/", "status": "secondary", "note": { "zh": "经维基百科“Eyelash”条目转引；原页被验证页面挡住", "en": "Quoted through Wikipedia's 'Eyelash' article; the original page sat behind a browser check" } },
-  { "id": "wikipedia-eyelash", "cite": "Wikipedia, 'Eyelash' (accessed 2026-10), citing Thibaut et al. 2009 Br J Dermatol, Na et al. 2006 Br J Dermatol, Aumond & Bitton 2018 J Optom", "url": "https://en.wikipedia.org/wiki/Eyelash", "status": "secondary" },
-  { "id": "amador2015", "cite": "Amador GJ, Mao W, DeMercurio P, et al. Eyelashes divert airflow to protect the eye. J R Soc Interface 2015;12:20141294", "doi": "10.1098/rsif.2014.1294", "status": "opened" },
-  { "id": "bernstein-brow", "cite": "Bernstein Medical, 'Eyebrow Transplant' (clinic page)", "url": "https://www.bernsteinmedical.com/hair-transplant/eyebrow-transplant/", "status": "secondary" },
-  { "id": "pbrt4-hair", "cite": "Pharr M, Jakob W, Humphreys G. Physically Based Rendering, 4th ed., 'Scattering from Hair' (after d'Eon et al. 2011 and Chiang et al. 2016)", "url": "https://pbr-book.org/4ed/Reflection_Models/Scattering_from_Hair", "status": "opened" },
-  { "id": "karis2016", "cite": "Karis B. Physically Based Hair Shading in Unreal. SIGGRAPH 2016 course: Physically Based Shading in Theory and Practice", "url": "https://blog.selfshadow.com/publications/s2016-shading-course/karis/s2016_pbs_epic_hair.pdf", "status": "opened", "note": { "zh": "幻灯片的公式是图片；具体常数按公开的文字说明重新实现，属转引", "en": "The slides' equations are images; the constants were reimplemented from public written descriptions and count as secondary" } }
+  {
+   "id": "leerunyakul2020",
+   "cite": "Leerunyakul K, Suchonwanit P. Asian Hair: A Review of Structures, Properties, and Distinctive Disorders. Clin Cosmet Investig Dermatol 2020;13:309–318",
+   "doi": "10.2147/CCID.S247390",
+   "status": "opened",
+   "note": {
+    "zh": "表 1 汇总了多篇研究（综述，数值是转引）",
+    "en": "Table 1 pools several studies (a review; the values are quoted)"
+   }
+  },
+  {
+   "id": "thai-trichoscopy",
+   "cite": "Trichoscopic norms of healthy Thai adults (PMC7035527)",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7035527",
+   "status": "snippet",
+   "note": {
+    "zh": "只见到检索摘要中的数值；题目、作者未核对",
+    "en": "Values seen in a search snippet only; title and authors not checked"
+   }
+  },
+  {
+   "id": "bernstein1998",
+   "cite": "Bernstein RM. Measurements in Hair Restoration. Hair Transplant Forum Int'l 1998;8(1):27",
+   "status": "opened"
+  },
+  {
+   "id": "flindt2006",
+   "cite": "Flindt R. Amazing Numbers in Biology. Springer 2006, p. 212 (via BioNumbers 101509)",
+   "url": "https://bionumbers.hms.harvard.edu/bionumber.aspx?id=101509",
+   "status": "snippet"
+  },
+  {
+   "id": "lasisi2016",
+   "cite": "Lasisi T, Ito S, Wakamatsu K, Shaw CN. Quantifying variation in human scalp hair fiber shape and pigmentation. Am J Phys Anthropol 2016",
+   "doi": "10.1002/ajpa.22971",
+   "status": "opened",
+   "note": {
+    "zh": "表 2：截面积、最大/最小直径之比、平均曲率（单位按数量级推断为 1/毫米）",
+    "en": "Table 2: cross-sectional area, max/min diameter ratio, mean curvature (unit inferred from magnitude as 1/mm)"
+   }
+  },
+  {
+   "id": "farkas-trn",
+   "cite": "Farkas LG anthropometric norms, trichion–nasion of North American whites, quoted in a Kenyan comparison study",
+   "status": "snippet"
+  },
+  {
+   "id": "statpearls-eyelash",
+   "cite": "Patel BC, Lopez MJ, Joos ZP. Anatomy, Head and Neck: Eyelash. StatPearls 2023 (NBK537278)",
+   "url": "https://www.ncbi.nlm.nih.gov/books/NBK537278/",
+   "status": "secondary",
+   "note": {
+    "zh": "经维基百科“Eyelash”条目转引；原页被验证页面挡住",
+    "en": "Quoted through Wikipedia's 'Eyelash' article; the original page sat behind a browser check"
+   }
+  },
+  {
+   "id": "wikipedia-eyelash",
+   "cite": "Wikipedia, 'Eyelash' (accessed 2026-10), citing Thibaut et al. 2009 Br J Dermatol, Na et al. 2006 Br J Dermatol, Aumond & Bitton 2018 J Optom",
+   "url": "https://en.wikipedia.org/wiki/Eyelash",
+   "status": "secondary"
+  },
+  {
+   "id": "amador2015",
+   "cite": "Amador GJ, Mao W, DeMercurio P, et al. Eyelashes divert airflow to protect the eye. J R Soc Interface 2015;12:20141294",
+   "doi": "10.1098/rsif.2014.1294",
+   "status": "opened"
+  },
+  {
+   "id": "bernstein-brow",
+   "cite": "Bernstein Medical, 'Eyebrow Transplant' (clinic page)",
+   "url": "https://www.bernsteinmedical.com/hair-transplant/eyebrow-transplant/",
+   "status": "secondary"
+  },
+  {
+   "id": "pbrt4-hair",
+   "cite": "Pharr M, Jakob W, Humphreys G. Physically Based Rendering, 4th ed., 'Scattering from Hair' (after d'Eon et al. 2011 and Chiang et al. 2016)",
+   "url": "https://pbr-book.org/4ed/Reflection_Models/Scattering_from_Hair",
+   "status": "opened"
+  },
+  {
+   "id": "karis2016",
+   "cite": "Karis B. Physically Based Hair Shading in Unreal. SIGGRAPH 2016 course: Physically Based Shading in Theory and Practice",
+   "url": "https://blog.selfshadow.com/publications/s2016-shading-course/karis/s2016_pbs_epic_hair.pdf",
+   "status": "opened",
+   "note": {
+    "zh": "幻灯片的公式是图片；具体常数按公开的文字说明重新实现，属转引",
+    "en": "The slides' equations are images; the constants were reimplemented from public written descriptions and count as secondary"
+   }
+  },
+  {
+   "id": "dua2021",
+   "cite": "Dua K, Verma V, Dua A. Beard and Moustache Reconstruction. Indian J Plast Surg 2021;54(4):483–488",
+   "doi": "10.1055/s-0041-1739248",
+   "status": "opened",
+   "note": {
+    "zh": "按作者观察给出的毛囊单位密度（胡须多为单根单位）",
+    "en": "follicular-unit densities given as the authors' observation (beard units are mostly single hairs)"
+   }
+  },
+  {
+   "id": "marshall-tanner",
+   "cite": "Marshall WA, Tanner JM. Variations in the pattern of pubertal changes in girls / in boys. Arch Dis Child 1969;44:291–303 and 1970;45:13–23",
+   "status": "secondary",
+   "note": {
+    "zh": "分期描述只在图里；第 5 期（成人：量与型；女性倒三角，可到大腿内侧）和男性第 6 期（沿白线向上）按二手转述",
+    "en": "the stage descriptions are in the figures; stage 5 (adult in quantity and type; inverted triangle in women, may reach the medial thighs) and the male stage 6 (spread up the linea alba) as paraphrased secondarily"
+   }
+  },
+  {
+   "id": "scc-beard",
+   "cite": "Comparative study of beard and scalp hair. J Soc Cosmet Chem vol. 34 no. 7",
+   "url": "https://library.scconline.org/v034n07",
+   "status": "snippet"
+  },
+  {
+   "id": "growth-secondary",
+   "cite": "Beard growth ≈ 0.27 mm/day (manufacturer page); pubic ≈ 0.3, axillary ≈ 0.4 mm/day (Dermatol Cosmet Med Quir 2026 review, abstract)",
+   "status": "secondary"
+  }
  ],
  "values": {
-  "scalpDensity": { "value": 226, "sd": 73, "unit": "hairs/cm²", "population": "Caucasian (pooled)", "alternatives": { "Asian": 175, "African": 161 }, "source": "leerunyakul2020", "status": "secondary" },
-  "temporalDensityRatio": { "value": 0.85, "unit": "ratio", "note": { "zh": "颞顶区 133.7 / 其余区约 158 根每平方厘米（泰国人群）", "en": "temporoparietal 133.7 / about 158 hairs/cm² elsewhere (Thai adults)" }, "source": "thai-trichoscopy", "status": "secondary" },
-  "hairsPerUnit": { "value": 2.05, "unit": "hairs per follicular unit", "distribution": { "1": 0.25, "2": 0.5, "3": 0.2, "4": 0.05 }, "note": { "zh": "平均约 2（Bernstein 1998）；1–4 根单位的比例是本项目假设", "en": "mean about 2 (Bernstein 1998); the split into 1–4-hair units is this project's assumption" }, "source": "bernstein1998", "status": "assumed" },
-  "totalScalpHairs": { "range": [90000, 150000], "unit": "hairs", "source": "flindt2006", "status": "secondary" },
-  "fibreDiameter": { "value": 74, "unit": "µm", "population": "European", "alternatives": { "Asian": 97, "African": 77 }, "note": { "zh": "由截面积换算：d = √(4A/π)，A = 4266 µm²", "en": "from the cross-sectional area: d = √(4A/π), A = 4266 µm²" }, "source": "lasisi2016", "status": "cited" },
-  "fibreEllipticity": { "value": 1.402, "unit": "max/min diameter", "population": "European", "alternatives": { "Asian": 1.354, "African": 1.569 }, "source": "lasisi2016", "status": "cited" },
-  "fibreCurvature": { "value": 0.042, "unit": "1/mm", "population": "European", "alternatives": { "Asian": 0.032, "African": 0.395 }, "source": "lasisi2016", "status": "cited" },
-  "waveLength": { "value": 60, "unit": "mm", "note": { "zh": "波纹的波长；与上面的曲率合起来得到振幅 A = κ(λ/2π)² ≈ 4 毫米", "en": "wavelength of the waves; with the curvature above it gives an amplitude A = κ(λ/2π)² ≈ 4 mm" }, "status": "assumed" },
-  "foreheadHeight": { "value": 67.1, "sd": 7.5, "unit": "mm (trichion–nasion)", "population": "North American whites, sexes pooled", "source": "farkas-trn", "status": "secondary" },
-  "foreheadHeightBySex": { "male": 64, "female": 61, "unit": "mm, vertical rise above the nasion", "note": { "zh": "按竖直高度用（文献是直线距离，额头前倾，直线比竖直长约 2–4 毫米）；取合并均值以下约 0.5–0.8 个标准差，发际线不显得太高", "en": "used as a vertical rise (the literature value is a straight-line distance, and the sloping forehead makes that about 2–4 mm longer than the rise); about 0.5–0.8 SD below the pooled mean, so the hairline does not look too high" }, "status": "assumed" },
-  "lashCountUpper": { "range": [90, 160], "value": 120, "unit": "lashes per upper lid", "source": "statpearls-eyelash", "status": "secondary" },
-  "lashCountLower": { "range": [75, 80], "value": 77, "unit": "lashes per lower lid", "source": "statpearls-eyelash", "status": "secondary" },
-  "lashLengthUpper": { "range": [7, 8], "value": 7.5, "max": 10, "unit": "mm", "source": "wikipedia-eyelash", "status": "secondary" },
-  "lashLengthLower": { "range": [5, 6], "value": 5.5, "unit": "mm", "source": "wikipedia-eyelash", "status": "secondary" },
-  "lashDiameter": { "value": 61, "unit": "µm", "population": "Caucasian women", "alternatives": { "Asian women": 71.7 }, "source": "wikipedia-eyelash", "status": "secondary" },
-  "lashToEyeWidth": { "value": 0.35, "range": [0.3, 0.4], "unit": "lash length / eye width (22 mammal species)", "source": "amador2015", "status": "cited" },
-  "lashCurlRadius": { "value": 0.5, "unit": "× lash length (model geometry)", "source": "amador2015", "status": "cited" },
-  "lashRows": { "upper": 3, "lower": 2, "note": { "zh": "文献说最多六层；取三层和两层", "en": "up to six layers are reported; three and two are used" }, "source": "wikipedia-eyelash", "status": "assumed" },
-  "browCount": { "value": 250, "range": [200, 400], "unit": "hairs per eyebrow", "note": { "zh": "只见到无出处的科普数字", "en": "only unsourced popular figures were found" }, "status": "assumed" },
-  "browLength": { "value": 8, "range": [5, 11], "unit": "mm", "status": "assumed" },
-  "browDiameter": { "value": 60, "unit": "µm", "status": "assumed" },
-  "browDirection": { "note": { "zh": "近鼻的毛朝上，上缘的朝外下，下缘的朝外上；以很小的角度出皮肤", "en": "hairs near the nose point upward, those along the top outward and downward, those along the bottom outward and upward; they leave the skin at a shallow angle" }, "exitAngleDeg": 15, "source": "bernstein-brow", "status": "secondary" },
-  "styleShortLength": { "top": 45, "sides": 20, "nape": 10, "unit": "mm", "note": { "zh": "男式短发（上长侧短）", "en": "a men's short cut (longer on top, short at the sides)" }, "status": "assumed" },
-  "styleLongLength": { "value": 420, "unit": "mm from the crown; tips cut level about 10 cm below the shoulder line", "status": "assumed" },
-  "melaninAbsorption": { "eumelanin": [0.419, 0.697, 1.37], "pheomelanin": [0.187, 0.4, 1.05], "unit": "σa per unit concentration (fibre radius 1)", "source": "pbrt4-hair", "status": "cited" },
-  "melaninConcentration": { "black": 8, "brown": 1.3, "blonde": 0.3, "unit": "eumelanin concentration", "source": "pbrt4-hair", "status": "cited" },
-  "fibreIor": { "value": 1.55, "source": "pbrt4-hair", "status": "cited" },
-  "cuticleTilt": { "value": 2, "range": [2, 4], "unit": "degrees", "source": "pbrt4-hair", "status": "cited" },
-  "karisLobes": { "shiftScale": [-2, 1, 4], "widthScale": [1, 0.5, 2], "ttAzimuthal": "exp(-3.65 cosφ - 3.98)", "trtAzimuthal": "exp(17 cosφ - 16.78)", "etaPrime": "1.19 / cosθd + 0.36 cosθd", "source": "karis2016", "status": "secondary" }
+  "scalpDensity": {
+   "value": 226,
+   "sd": 73,
+   "unit": "hairs/cm²",
+   "population": "Caucasian (pooled)",
+   "alternatives": {
+    "Asian": 175,
+    "African": 161
+   },
+   "source": "leerunyakul2020",
+   "status": "secondary"
+  },
+  "temporalDensityRatio": {
+   "value": 0.85,
+   "unit": "ratio",
+   "note": {
+    "zh": "颞顶区 133.7 / 其余区约 158 根每平方厘米（泰国人群）",
+    "en": "temporoparietal 133.7 / about 158 hairs/cm² elsewhere (Thai adults)"
+   },
+   "source": "thai-trichoscopy",
+   "status": "secondary"
+  },
+  "hairsPerUnit": {
+   "value": 2.05,
+   "unit": "hairs per follicular unit",
+   "distribution": {
+    "1": 0.25,
+    "2": 0.5,
+    "3": 0.2,
+    "4": 0.05
+   },
+   "note": {
+    "zh": "平均约 2（Bernstein 1998）；1–4 根单位的比例是本项目假设",
+    "en": "mean about 2 (Bernstein 1998); the split into 1–4-hair units is this project's assumption"
+   },
+   "source": "bernstein1998",
+   "status": "assumed"
+  },
+  "totalScalpHairs": {
+   "range": [
+    90000,
+    150000
+   ],
+   "unit": "hairs",
+   "source": "flindt2006",
+   "status": "secondary"
+  },
+  "fibreDiameter": {
+   "value": 74,
+   "unit": "µm",
+   "population": "European",
+   "alternatives": {
+    "Asian": 97,
+    "African": 77
+   },
+   "note": {
+    "zh": "由截面积换算：d = √(4A/π)，A = 4266 µm²",
+    "en": "from the cross-sectional area: d = √(4A/π), A = 4266 µm²"
+   },
+   "source": "lasisi2016",
+   "status": "cited"
+  },
+  "fibreEllipticity": {
+   "value": 1.402,
+   "unit": "max/min diameter",
+   "population": "European",
+   "alternatives": {
+    "Asian": 1.354,
+    "African": 1.569
+   },
+   "source": "lasisi2016",
+   "status": "cited"
+  },
+  "fibreCurvature": {
+   "value": 0.042,
+   "unit": "1/mm",
+   "population": "European",
+   "alternatives": {
+    "Asian": 0.032,
+    "African": 0.395
+   },
+   "source": "lasisi2016",
+   "status": "cited"
+  },
+  "waveLength": {
+   "value": 60,
+   "unit": "mm",
+   "note": {
+    "zh": "波纹的波长；与上面的曲率合起来得到振幅 A = κ(λ/2π)² ≈ 4 毫米",
+    "en": "wavelength of the waves; with the curvature above it gives an amplitude A = κ(λ/2π)² ≈ 4 mm"
+   },
+   "status": "assumed"
+  },
+  "foreheadHeight": {
+   "value": 67.1,
+   "sd": 7.5,
+   "unit": "mm (trichion–nasion)",
+   "population": "North American whites, sexes pooled",
+   "source": "farkas-trn",
+   "status": "secondary"
+  },
+  "foreheadHeightBySex": {
+   "male": 64,
+   "female": 61,
+   "unit": "mm, vertical rise above the nasion",
+   "note": {
+    "zh": "按竖直高度用（文献是直线距离，额头前倾，直线比竖直长约 2–4 毫米）；取合并均值以下约 0.5–0.8 个标准差，发际线不显得太高",
+    "en": "used as a vertical rise (the literature value is a straight-line distance, and the sloping forehead makes that about 2–4 mm longer than the rise); about 0.5–0.8 SD below the pooled mean, so the hairline does not look too high"
+   },
+   "status": "assumed"
+  },
+  "lashCountUpper": {
+   "range": [
+    90,
+    160
+   ],
+   "value": 120,
+   "unit": "lashes per upper lid",
+   "source": "statpearls-eyelash",
+   "status": "secondary"
+  },
+  "lashCountLower": {
+   "range": [
+    75,
+    80
+   ],
+   "value": 77,
+   "unit": "lashes per lower lid",
+   "source": "statpearls-eyelash",
+   "status": "secondary"
+  },
+  "lashLengthUpper": {
+   "range": [
+    7,
+    8
+   ],
+   "value": 7.5,
+   "max": 10,
+   "unit": "mm",
+   "source": "wikipedia-eyelash",
+   "status": "secondary"
+  },
+  "lashLengthLower": {
+   "range": [
+    5,
+    6
+   ],
+   "value": 5.5,
+   "unit": "mm",
+   "source": "wikipedia-eyelash",
+   "status": "secondary"
+  },
+  "lashDiameter": {
+   "value": 61,
+   "unit": "µm",
+   "population": "Caucasian women",
+   "alternatives": {
+    "Asian women": 71.7
+   },
+   "source": "wikipedia-eyelash",
+   "status": "secondary"
+  },
+  "lashToEyeWidth": {
+   "value": 0.35,
+   "range": [
+    0.3,
+    0.4
+   ],
+   "unit": "lash length / eye width (22 mammal species)",
+   "source": "amador2015",
+   "status": "cited"
+  },
+  "lashCurlRadius": {
+   "value": 0.5,
+   "unit": "× lash length (model geometry)",
+   "source": "amador2015",
+   "status": "cited"
+  },
+  "lashRows": {
+   "upper": 3,
+   "lower": 2,
+   "note": {
+    "zh": "文献说最多六层；取三层和两层",
+    "en": "up to six layers are reported; three and two are used"
+   },
+   "source": "wikipedia-eyelash",
+   "status": "assumed"
+  },
+  "browCount": {
+   "value": 250,
+   "range": [
+    200,
+    400
+   ],
+   "unit": "hairs per eyebrow",
+   "note": {
+    "zh": "只见到无出处的科普数字",
+    "en": "only unsourced popular figures were found"
+   },
+   "status": "assumed"
+  },
+  "browLength": {
+   "value": 8,
+   "range": [
+    5,
+    11
+   ],
+   "unit": "mm",
+   "status": "assumed"
+  },
+  "browDiameter": {
+   "value": 60,
+   "unit": "µm",
+   "status": "assumed"
+  },
+  "browDirection": {
+   "note": {
+    "zh": "近鼻的毛朝上，上缘的朝外下，下缘的朝外上；以很小的角度出皮肤",
+    "en": "hairs near the nose point upward, those along the top outward and downward, those along the bottom outward and upward; they leave the skin at a shallow angle"
+   },
+   "exitAngleDeg": 15,
+   "source": "bernstein-brow",
+   "status": "secondary"
+  },
+  "styleShortLength": {
+   "top": 45,
+   "sides": 20,
+   "nape": 10,
+   "unit": "mm",
+   "note": {
+    "zh": "男式短发（上长侧短）",
+    "en": "a men's short cut (longer on top, short at the sides)"
+   },
+   "status": "assumed"
+  },
+  "styleLongLength": {
+   "value": 420,
+   "unit": "mm from the crown; tips cut level about 10 cm below the shoulder line",
+   "status": "assumed"
+  },
+  "melaninAbsorption": {
+   "eumelanin": [
+    0.419,
+    0.697,
+    1.37
+   ],
+   "pheomelanin": [
+    0.187,
+    0.4,
+    1.05
+   ],
+   "unit": "σa per unit concentration (fibre radius 1)",
+   "source": "pbrt4-hair",
+   "status": "cited"
+  },
+  "melaninConcentration": {
+   "black": 8,
+   "brown": 1.3,
+   "blonde": 0.3,
+   "unit": "eumelanin concentration",
+   "source": "pbrt4-hair",
+   "status": "cited"
+  },
+  "fibreIor": {
+   "value": 1.55,
+   "source": "pbrt4-hair",
+   "status": "cited"
+  },
+  "cuticleTilt": {
+   "value": 2,
+   "range": [
+    2,
+    4
+   ],
+   "unit": "degrees",
+   "source": "pbrt4-hair",
+   "status": "cited"
+  },
+  "karisLobes": {
+   "shiftScale": [
+    -2,
+    1,
+    4
+   ],
+   "widthScale": [
+    1,
+    0.5,
+    2
+   ],
+   "ttAzimuthal": "exp(-3.65 cosφ - 3.98)",
+   "trtAzimuthal": "exp(17 cosφ - 16.78)",
+   "etaPrime": "1.19 / cosθd + 0.36 cosθd",
+   "source": "karis2016",
+   "status": "secondary"
+  },
+  "beardDensity": {
+   "cheek": 47,
+   "chin": 77,
+   "moustacheLateral": 87,
+   "moustacheCentral": 155,
+   "neck": 30,
+   "unit": "follicular units/cm² (mostly single hairs)",
+   "note": {
+    "zh": "颈部没有报告，30 是本项目的假设",
+    "en": "no neck value was reported; 30 is this project's assumption"
+   },
+   "source": "dua2021",
+   "status": "cited"
+  },
+  "beardEllipticity": {
+   "value": 1.72,
+   "sd": 0.2,
+   "unit": "max/min diameter",
+   "population": "Caucasian, 10 men",
+   "source": "scc-beard",
+   "status": "secondary"
+  },
+  "beardDiameter": {
+   "value": 100,
+   "unit": "µm",
+   "note": {
+    "zh": "由截面积约 10 700 µm²（转引）换算后取整",
+    "en": "rounded from a cross-section of about 10 700 µm² (quoted)"
+   },
+   "source": "scc-beard",
+   "status": "secondary"
+  },
+  "beardGrowth": {
+   "value": 0.27,
+   "unit": "mm/day",
+   "source": "growth-secondary",
+   "status": "secondary"
+  },
+  "beardLength": {
+   "stubble": 1.2,
+   "short": 8,
+   "unit": "mm",
+   "note": {
+    "zh": "胡茬约 4–5 天、短须约一个月的生长（按每天 0.27 毫米）；长度本身是本项目的选择",
+    "en": "about 4–5 days of growth for stubble and a month for the short beard (at 0.27 mm a day); the lengths themselves are this project's choice"
+   },
+   "status": "assumed"
+  },
+  "pubicPattern": {
+   "male": "stage 5 inverted triangle spreading to the medial thighs, plus stage 6 extension up the linea alba",
+   "female": "stage 5 inverted triangle with a horizontal upper border",
+   "source": "marshall-tanner",
+   "status": "secondary"
+  },
+  "pubicDensity": {
+   "value": 40,
+   "unit": "hairs/cm²",
+   "status": "assumed",
+   "note": {
+    "zh": "没找到测量值",
+    "en": "no measurement found"
+   }
+  },
+  "pubicLength": {
+   "value": 25,
+   "unit": "mm",
+   "status": "assumed"
+  },
+  "pubicCurlRadius": {
+   "value": 4,
+   "unit": "mm",
+   "status": "assumed"
+  },
+  "axillaryDensity": {
+   "value": 30,
+   "unit": "hairs/cm²",
+   "status": "assumed",
+   "note": {
+    "zh": "没找到测量值",
+    "en": "no measurement found"
+   }
+  },
+  "axillaryLength": {
+   "value": 18,
+   "unit": "mm",
+   "status": "assumed"
+  },
+  "axillaryArea": {
+   "value": 25,
+   "unit": "cm² per side (an ellipsoidal patch in the axillary vault)",
+   "status": "assumed"
+  }
  }
 }

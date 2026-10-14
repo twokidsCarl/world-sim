@@ -60,6 +60,7 @@
 //                                                 写实模式的发色（缺省 darkbrown）/ the lifelike hair colour (default darkbrown)
 //   wear   tee,pants                              穿的衣服（缺省不穿），逗号分隔：tee pants skirt compression-top sports-bra tights
 //                                                 the garments worn (none by default), comma-separated: tee pants skirt compression-top sports-bra tights
+//   beard  stubble | short                        写实模式的胡须（只有男性；缺省没有）/ the lifelike facial hair (male only; none by default)
 //   shape  h1.80,b28,l0,c0                        体型：h 身高（米）、b BMI、l 腿长比例（SD）、c 躯干体格（SD）；只写不在默认值的项，
 //                                                 超出该人体可用范围的值会被截断
 //                                                 body shape: h stature (m), b BMI, l leg length (SD), c central build (SD); only non-default
@@ -92,7 +93,7 @@ import { formatStimParam, parseStimParam, type StimParam } from '../pain/stimulu
 import { formatGaze, parseGaze } from '../look/eyesFit.ts'
 import { IRIS_NAMES, type GazeSetting, type IrisName } from '../look/types.ts'
 import type { SectionAxis } from './display.ts'
-import type { HairStyle } from '../look/types.ts'
+import type { BeardStyle, HairStyle } from '../look/types.ts'
 import { DEFAULT_HAIR_COLOUR, HAIR_COLOURS, type HairColour, isHairColour } from '../hair/colour.ts'
 
 export const SYSTEM_CODES: Record<SystemId, string> = {
@@ -117,7 +118,7 @@ const AXES: Record<string, SectionAxis> = { a: 'axial', c: 'coronal', s: 'sagitt
 const MAPS = { d: 'dermatome', n: 'cutaneousNerve' } as const
 const BODIES = new Set(['male', 'female', 'fixture', 'stress'])
 /** 本模块负责的参数名；其余的原样保留 / Parameter names owned here; all others pass through. */
-export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'say', 'drive', 'style', 'skin', 'look', 'tone', 'shape', 'stim', 'src', 'cmp', 'iris', 'gaze', 'blink', 'hair', 'hc', 'wear'] as const
+export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'say', 'drive', 'style', 'skin', 'look', 'tone', 'shape', 'stim', 'src', 'cmp', 'iris', 'gaze', 'blink', 'hair', 'hc', 'beard', 'wear'] as const
 /** 超过这个数量的部件 id 不写进 URL / Part id lists longer than this are not written to the URL. */
 export const MAX_URL_IDS = 60
 export const MAX_URL_DOFS = 40
@@ -171,6 +172,8 @@ export interface UrlState {
   hair?: HairStyle
   /** 写实模式的发色；缺省不写 / the lifelike hair colour; the default is not written */
   hc?: HairColour
+  /** 写实模式的胡须；缺省（没有）不写 / the lifelike facial hair; the default (none) is not written */
+  beard?: BeardStyle
   /** 穿的衣服 / the garments worn */
   wear?: GarmentId[]
   /** 体型控制量（未限幅）/ shape controls (not yet clamped). */
@@ -260,6 +263,10 @@ export function parseUrl(search: string): ParsedUrl {
       case 'hair':
         if (value === 'none' || value === 'short' || value === 'long') state.hair = value
         else warn(`hair: 应为 none、short 或 long / expected none, short or long`)
+        break
+      case 'beard':
+        if (value === 'none' || value === 'stubble' || value === 'short') state.beard = value
+        else warn(`beard: 应为 none、stubble 或 short / expected none, stubble or short`)
         break
       case 'hc':
         if (isHairColour(value)) state.hc = value
@@ -492,6 +499,7 @@ export function formatUrl(state: UrlState, passthrough: readonly [string, string
   }
   if (state.hair) put('hair', state.hair)
   if (state.hc && state.hc !== DEFAULT_HAIR_COLOUR) put('hc', state.hc)
+  if (state.beard && state.beard !== 'none') put('beard', state.beard)
   if (state.wear?.length) put('wear', state.wear.join(','))
   if (state.shape && Object.keys(state.shape).length) put('shape', formatShapeParam(state.shape))
   if (state.stim) put('stim', formatStimParam(state.stim))

@@ -127,6 +127,7 @@ export function snapshot(s: AppState): UrlState {
   if (!s.blink) out.blink = false
   if (s.hairStyle) out.hair = s.hairStyle
   if (s.hairColor !== DEFAULT_HAIR_COLOUR) out.hc = s.hairColor
+  if (s.beard !== 'none') out.beard = s.beard
   if (s.wear.length) out.wear = [...s.wear]
   if (s.stim) out.stim = { settings: s.stim.settings, site: s.stim.siteRef }
   if (Object.keys(s.shapeControls).length) out.shape = s.shape ? nonDefaultControls(s.shape.data, s.shapeControls) : { ...s.shapeControls }
@@ -211,6 +212,7 @@ export async function restoreFromUrl(state: UrlState): Promise<string[]> {
   if (state.blink === false) app.setBlink(false)
   if (state.hair) app.setHairStyle(state.hair)
   if (state.hc) app.setHairColor(state.hc)
+  if (state.beard) app.setBeard(state.beard)
   if (state.wear) app.setWear(state.wear)
   if (state.pain !== undefined || state.au) {
     // 只恢复表情（保持在给定强度）；声音必须由用户手势触发，这里绝不出声

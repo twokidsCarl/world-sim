@@ -11,13 +11,16 @@
    "long": 0.004,
    "short": 0.003,
    "brow": 0.0004,
-   "lash": 0.0004
+   "lash": 0.0004,
+   "beard": 0.0005,
+   "body": 0.003
   }
  },
  "defaultStyle": "long",
  "hides": [
   "W_FJ2813",
-  "W_FJ2812"
+  "W_FJ2812",
+  "W_FJ2815"
  ],
  "pieces": [
   {
@@ -177,6 +180,62 @@
     "upperLengthMm": 7.436,
     "lowerLengthMm": 5.542
    }
+  },
+  {
+   "id": "pubic",
+   "file": "pubic.cards.bin",
+   "bytes": 144832,
+   "lods": [
+    {
+     "cards": 616,
+     "segments": 5,
+     "maxDistance": 1.5,
+     "offset": 0
+    },
+    {
+     "cards": 246,
+     "segments": 3,
+     "maxDistance": 1000,
+     "offset": 113344
+    }
+   ],
+   "stats": {
+    "strands": 2054,
+    "lengthMmP10": 20.163,
+    "lengthMmP50": 25.033,
+    "lengthMmP90": 30.125,
+    "hairs": 2054,
+    "areaCm2": 74,
+    "densityPerCm2": 36
+   }
+  },
+  {
+   "id": "axilla",
+   "file": "axilla.cards.bin",
+   "bytes": 65552,
+   "lods": [
+    {
+     "cards": 286,
+     "segments": 5,
+     "maxDistance": 1.5,
+     "offset": 0
+    },
+    {
+     "cards": 101,
+     "segments": 3,
+     "maxDistance": 1000,
+     "offset": 52624
+    }
+   ],
+   "stats": {
+    "strands": 1027,
+    "lengthMmP10": 6.147,
+    "lengthMmP50": 17.98,
+    "lengthMmP90": 22.477,
+    "hairs": 1027,
+    "areaCm2PerSide": 22.966,
+    "densityPerCm2": 26
+   }
   }
  ],
  "scalp": {
@@ -207,7 +266,7 @@
  },
  "inputs": {
   "integumentary.glb": "b85a6c377ac0e884",
-  "hair.json (curated)": "12241d3570a4cf1c"
+  "hair.json (curated)": "34221dfef1b004b4"
  },
  "source": {
   "zh": "程序化生成（tools/hair/build.ts）：发际线、密度、纤维直径、睫毛和眉毛的根数与长度取自 data/curated/hair/hair.json 所列文献（标明了哪些是假设）；发片和贴图集由本项目自己的发丝画成，随项目数据以 CC BY-SA 4.0 发布。",

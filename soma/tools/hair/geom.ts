@@ -58,6 +58,8 @@ export interface Closest {
   distance: number
   /** 重心坐标 (w0, w1, w2) / barycentric coordinates (w0, w1, w2) */
   bary: V3
+  /** 按重心坐标插值的顶点法线：最近点落在棱上时比面法线可靠（内外判断用）/ vertex normals interpolated by the barycentric weights: more reliable than the face normal when the closest point lies on an edge (for inside tests) */
+  smoothNormal: V3
 }
 
 /** 皮肤表面：最近点和射线查询 / the skin surface: closest-point and ray queries */
@@ -67,10 +69,19 @@ export class Surface {
   private readonly tmp = new Vector3()
   private readonly hit = { point: new Vector3(), distance: 0, faceIndex: 0 }
 
+  private readonly vnormal: Float32Array
+
   constructor(
     readonly positions: Float32Array,
     readonly indices: Uint32Array,
   ) {
+    // 面积加权的顶点法线 / area-weighted vertex normals
+    this.vnormal = new Float32Array(positions.length)
+    for (let t = 0; t < indices.length; t += 3) {
+      const a = indices[t]!, b = indices[t + 1]!, c = indices[t + 2]!
+      const n = cross(sub(at(positions, b), at(positions, a)), sub(at(positions, c), at(positions, a)))
+      for (const v of [a, b, c]) for (let k = 0; k < 3; k++) this.vnormal[v * 3 + k] = this.vnormal[v * 3 + k]! + n[k]!
+    }
     const g = new BufferGeometry()
     g.setAttribute('position', new BufferAttribute(positions, 3))
     g.setIndex(new BufferAttribute(indices.slice(), 1))
@@ -103,7 +114,9 @@ export class Surface {
     if (!r) return null
     const q: V3 = [r.point.x, r.point.y, r.point.z]
     const [a, b, c] = this.triangle(r.faceIndex)
-    return { point: q, normal: this.faceNormal(r.faceIndex), face: r.faceIndex, distance: r.distance, bary: barycentric(q, at(this.positions, a), at(this.positions, b), at(this.positions, c)) }
+    const bary = barycentric(q, at(this.positions, a), at(this.positions, b), at(this.positions, c))
+    const sn = norm(add(add(scale(norm(at(this.vnormal, a)), bary[0]), scale(norm(at(this.vnormal, b)), bary[1])), scale(norm(at(this.vnormal, c)), bary[2])))
+    return { point: q, normal: this.faceNormal(r.faceIndex), face: r.faceIndex, distance: r.distance, bary, smoothNormal: sn }
   }
 
   /** 射线第一次碰到皮肤的距离；没碰到为 Infinity / distance to the first skin hit along a ray; Infinity when none */
