@@ -23,10 +23,10 @@ const KIND_OF: Record<HairPieceId, MaterialKind> = { short: 'short', long: 'long
 /** 材质参数（都是假设，按观感定）/ material parameters (all assumed, set by eye) */
 const MATERIAL: Record<MaterialKind, HairMaterialOptions> = {
   // 根端淡入按发片长度的比例：短发约 5 毫米，长发约 6 毫米 / the root fade is a fraction of the card length: about 5 mm for short hair, 6 mm for long
-  short: { roughness: 0.32, scatter: 0.8, rootShadow: 0.25, pigment: 1, rootFade: 0.12, tipFade: 0.8 },
-  long: { roughness: 0.32, scatter: 0.8, rootShadow: 0.4, pigment: 1, rootFade: 0.015, tipFade: 0.6 },
-  brow: { roughness: 0.4, scatter: 0.6, rootShadow: 0.2, pigment: 1.2, rootFade: 0, tipFade: 0 },
-  lash: { roughness: 0.35, scatter: 0.5, rootShadow: 0, pigment: 1.6, rootFade: 0, tipFade: 0 },
+  short: { roughness: 0.42, scatter: 0.8, rootShadow: 0.25, pigment: 1, rootFade: 0.12, tipFade: 0.8, layerShadow: 0.1 },
+  long: { roughness: 0.48, scatter: 0.8, rootShadow: 0.4, pigment: 1, rootFade: 0.015, tipFade: 0.6, layerShadow: 0.3 },
+  brow: { roughness: 0.4, scatter: 0.6, rootShadow: 0.2, pigment: 1.2, rootFade: 0, tipFade: 0, layerShadow: 0 },
+  lash: { roughness: 0.35, scatter: 0.5, rootShadow: 0, pigment: 1.6, rootFade: 0, tipFade: 0, layerShadow: 0 },
 }
 
 interface Piece {

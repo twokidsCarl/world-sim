@@ -14,7 +14,7 @@
    "lash": 0.0004
   }
  },
- "defaultStyle": "short",
+ "defaultStyle": "long",
  "hides": [
   "W_FJ2813",
   "W_FJ2812"
@@ -46,8 +46,8 @@
    ],
    "stats": {
     "strands": 4492,
-    "lengthMmP10": 15.387,
-    "lengthMmP50": 39.421,
+    "lengthMmP10": 15.379,
+    "lengthMmP50": 39.438,
     "lengthMmP90": 50.648,
     "follicles": 112569,
     "units": 55387,
@@ -62,32 +62,32 @@
   {
    "id": "long",
    "file": "long.cards.bin",
-   "bytes": 985008,
+   "bytes": 1302804,
    "lods": [
     {
-     "cards": 1803,
-     "segments": 14,
+     "cards": 2707,
+     "segments": 12,
      "maxDistance": 1.2,
      "offset": 0
     },
     {
-     "cards": 587,
-     "segments": 8,
+     "cards": 900,
+     "segments": 7,
      "maxDistance": 3,
-     "offset": 786108
+     "offset": 1028660
     },
     {
-     "cards": 226,
+     "cards": 316,
      "segments": 5,
      "maxDistance": 1000,
-     "offset": 943424
+     "offset": 1244660
     }
    ],
    "stats": {
     "strands": 4512,
-    "lengthMmP10": 246.224,
-    "lengthMmP50": 317.808,
-    "lengthMmP90": 408.393,
+    "lengthMmP10": 239.079,
+    "lengthMmP50": 311.437,
+    "lengthMmP90": 405.133,
     "follicles": 112569,
     "units": 55387,
     "scalpAreaCm2": 582,
@@ -161,24 +161,24 @@
  },
  "coverage": {
   "short": {
-   "all": 0.978,
-   "front": 0.962,
-   "threeQuarterL": 0.973,
-   "threeQuarterR": 0.973,
-   "sideL": 0.96,
-   "sideR": 0.975,
+   "all": 0.982,
+   "front": 0.958,
+   "threeQuarterL": 0.984,
+   "threeQuarterR": 0.976,
+   "sideL": 0.981,
+   "sideR": 0.97,
    "top": 0.996,
    "back": 0.99
   },
   "long": {
-   "all": 0.994,
-   "front": 0.985,
-   "threeQuarterL": 0.987,
-   "threeQuarterR": 0.989,
-   "sideL": 0.995,
+   "all": 0.99,
+   "front": 0.955,
+   "threeQuarterL": 0.984,
+   "threeQuarterR": 0.991,
+   "sideL": 1,
    "sideR": 1,
-   "top": 0.993,
-   "back": 0.997
+   "top": 0.991,
+   "back": 0.987
   }
  },
  "inputs": {

@@ -46,9 +46,9 @@
    ],
    "stats": {
     "strands": 5956,
-    "lengthMmP10": 16.795,
-    "lengthMmP50": 39.584,
-    "lengthMmP90": 50.541,
+    "lengthMmP10": 16.789,
+    "lengthMmP50": 39.583,
+    "lengthMmP90": 50.535,
     "follicles": 148080,
     "units": 72779,
     "scalpAreaCm2": 755,
@@ -62,32 +62,32 @@
   {
    "id": "long",
    "file": "long.cards.bin",
-   "bytes": 1294580,
+   "bytes": 1712660,
    "lods": [
     {
-     "cards": 2371,
-     "segments": 14,
+     "cards": 3557,
+     "segments": 12,
      "maxDistance": 1.2,
      "offset": 0
     },
     {
-     "cards": 770,
-     "segments": 8,
+     "cards": 1186,
+     "segments": 7,
      "maxDistance": 3,
-     "offset": 1033756
+     "offset": 1351660
     },
     {
-     "cards": 296,
+     "cards": 415,
      "segments": 5,
      "maxDistance": 1000,
-     "offset": 1240116
+     "offset": 1636300
     }
    ],
    "stats": {
     "strands": 5929,
-    "lengthMmP10": 191.813,
-    "lengthMmP50": 296.088,
-    "lengthMmP90": 401.12,
+    "lengthMmP10": 169.816,
+    "lengthMmP50": 286.604,
+    "lengthMmP90": 404.521,
     "follicles": 148080,
     "units": 72779,
     "scalpAreaCm2": 755,
@@ -161,24 +161,24 @@
  },
  "coverage": {
   "short": {
-   "all": 0.979,
-   "front": 0.966,
-   "threeQuarterL": 0.973,
-   "threeQuarterR": 0.976,
-   "sideL": 0.965,
-   "sideR": 0.97,
-   "top": 0.992,
-   "back": 0.996
+   "all": 0.981,
+   "front": 0.969,
+   "threeQuarterL": 0.969,
+   "threeQuarterR": 0.977,
+   "sideL": 0.974,
+   "sideR": 0.977,
+   "top": 0.991,
+   "back": 0.994
   },
   "long": {
-   "all": 0.995,
-   "front": 0.991,
+   "all": 0.991,
+   "front": 0.973,
    "threeQuarterL": 0.995,
-   "threeQuarterR": 0.995,
-   "sideL": 0.998,
+   "threeQuarterR": 0.988,
+   "sideL": 0.999,
    "sideR": 0.998,
-   "top": 0.997,
-   "back": 0.992
+   "top": 0.991,
+   "back": 0.985
   }
  },
  "inputs": {

@@ -60,6 +60,8 @@ export interface HairMaterialOptions {
   pigment: number
   /** 根端淡入的长度（根→梢的比例，0 = 不淡入）/ length of the root fade-in (fraction root → tip, 0 = none) */
   rootFade: number
+  /** 内层（贴头皮的层）暗多少（0–1）/ how much darker the inner layers are (0–1) */
+  layerShadow: number
   /** 发梢最后 20% 淡出的程度（0 不淡出 … 1 淡到无）：梢软一些，层与层的边不成硬线 / how much the last 20 % fades out (0 none … 1 to nothing): softer tips, so layer ends do not form hard lines */
   tipFade: number
 }
@@ -70,6 +72,8 @@ interface HairInputs {
   albedo: N
   ao: N
   rough: N
+  /** 每根发丝的毛鳞片倾角（弧度）/ per-strand cuticle tilt (radians) */
+  shift: N
   scatter: N
 }
 
@@ -77,7 +81,7 @@ const gauss = (B: N, x: N): N => exp(x.mul(x).mul(-0.5).div(B.mul(B))).div(B.mul
 const schlick = (c: N): N => float(F0).add(float(1 - F0).mul(pow(float(1).sub(clamp(c, 0, 1)), 5)))
 
 /** 一盏光的高光部分（R + TT + TRT），不含光的颜色 / the specular part for one light (R + TT + TRT), without the light's colour */
-function karis(T: N, L: N, V: N, C: N, rough: N): N {
+function karis(T: N, L: N, V: N, C: N, rough: N, shift: N): N {
   const sinL: N = clamp(dot(L, T), -1, 1)
   const sinV: N = clamp(dot(V, T), -1, 1)
   const cosThetaD: N = max(cos(abs(asin(sinV).sub(asin(sinL))).mul(0.5)), 0.05)
@@ -88,16 +92,16 @@ function karis(T: N, L: N, V: N, C: N, rough: N): N {
   const beta: N = rough.mul(rough)
   const s: N = sinL.add(sinV)
   // R
-  const mR = gauss(max(beta.mul(Math.SQRT2).mul(cosHalfPhi), 0.002), s.add(2 * SHIFT))
+  const mR = gauss(max(beta.mul(Math.SQRT2).mul(cosHalfPhi), 0.002), s.add(shift.mul(2)))
   const R: N = mR.mul(cosHalfPhi.mul(0.25)).mul(schlick(sqrt(clamp(dot(L, V).mul(0.5).add(0.5), 0, 1))))
   // TT
-  const mTT = gauss(beta.mul(0.5), s.sub(SHIFT))
+  const mTT = gauss(beta.mul(0.5), s.sub(shift))
   const h: N = cosHalfPhi.mul(a.mul(float(0.6).sub(cosPhi.mul(0.8))).add(1))
   const fTT: N = schlick(cosThetaD.mul(sqrt(clamp(float(1).sub(h.mul(h)), 0, 1))))
   const tTT: N = pow(C, vec3(float(0.5).mul(sqrt(clamp(float(1).sub(h.mul(a).mul(h.mul(a))), 0, 1))).div(cosThetaD)))
   const TT: N = tTT.mul(mTT.mul(exp(cosPhi.mul(-3.65).sub(3.98))).mul(float(1).sub(fTT).mul(float(1).sub(fTT))))
   // TRT
-  const mTRT = gauss(beta.mul(2), s.sub(4 * SHIFT))
+  const mTRT = gauss(beta.mul(2), s.sub(shift.mul(4)))
   const f: N = schlick(cosThetaD.mul(0.5))
   const tTRT: N = pow(C, vec3(float(0.8).div(cosThetaD)))
   const TRT: N = tTRT.mul(mTRT.mul(exp(cosPhi.mul(17).sub(16.78))).mul(float(1).sub(f).mul(float(1).sub(f)).mul(f)))
@@ -119,7 +123,7 @@ class HairLightingModel extends LightingModel {
 
   direct({ lightDirection, lightColor, reflectedLight }: { lightDirection: N; lightColor: N; reflectedLight: N }): void {
     const V: N = positionViewDirection
-    const spec = karis(this.i.T, lightDirection, V, this.i.C, this.i.rough)
+    const spec = karis(this.i.T, lightDirection, V, this.i.C, this.i.rough, this.i.shift)
     reflectedLight.directSpecular.addAssign(lightColor.mul(spec).mul(this.i.ao))
     reflectedLight.directDiffuse.addAssign(lightColor.mul(scatterTerm(this.i.T, lightDirection, V, this.i.albedo)).mul(this.i.scatter).mul(this.i.ao))
   }
@@ -129,7 +133,7 @@ class HairLightingModel extends LightingModel {
     const albedo: N = this.i.albedo
     reflectedLight.indirectDiffuse.addAssign(irradiance.add(iblIrradiance).mul(albedo).mul(1 / Math.PI).mul(this.i.ao))
     // 环境的反射只取一小份：R 瓣在掠射以外很弱 / only a small share of environment reflection: the R lobe is weak away from grazing
-    reflectedLight.indirectSpecular.addAssign(radiance.mul(0.06).mul(this.i.ao))
+    reflectedLight.indirectSpecular.addAssign(radiance.mul(0.035).mul(this.i.ao))
   }
 }
 
@@ -183,11 +187,15 @@ export function makeHairMaterial(look: HairLook, atlasA: Texture, atlasB: Textur
   // 遮挡：贴图深度（靠里的发丝暗）、层（贴头皮的暗）、发根（靠近头皮的一段暗）
   // occlusion: atlas depth (inner strands darker), layer (those against the scalp darker), root (the stretch near the scalp darker)
   const ao: N = mix(float(0.45), float(1), smoothstep(0.15, 0.85, depth))
-    .mul(mix(float(0.72), float(1), layer))
+    .mul(mix(float(1 - o.layerShadow), float(1), layer))
     .mul(mix(float(1 - o.rootShadow), float(1), smoothstep(0, 0.3, rootTip)))
     .toVar('hairAo')
 
-  const m = new HairNodeMaterial({ T, C, albedo, ao, rough: float(o.roughness), scatter: float(o.scatter) })
+  // 每根发丝的毛鳞片倾角在 2°±1.5° 之间（pbrt：一般 2–4°），粗糙度也各差 ±15%：高光不再是一条整齐的亮带（"湿"的观感主要来自它）
+  // per-strand cuticle tilt within 2° ± 1.5° (pbrt: generally 2–4°) and roughness ±15 %: the highlight is no longer one tidy bright band (the main source of the "wet" look)
+  const shift: N = float(SHIFT).add(id.sub(0.5).mul(0.05))
+  const rough: N = float(o.roughness).mul(fract(id.mul(7.3)).mul(0.3).add(0.85))
+  const m = new HairNodeMaterial({ T, C, albedo, ao, rough, shift, scatter: float(o.scatter) })
   // 环境光照用的"法线"：垂直于发丝、朝向相机（Karis 的假法线）/ the "normal" for ambient light: perpendicular to the strand, facing the camera (Karis's fake normal)
   m.normalNode = normalize(positionViewDirection.sub(T.mul(dot(positionViewDirection, T)))) as N
   m.roughnessNode = float(0.55) as N
