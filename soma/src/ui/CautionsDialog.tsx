@@ -1,3 +1,4 @@
+import { LOOK_HIDES_INTERNAL } from '../look/statements.ts'
 import { SOFT_CAUTION } from '../softbody/statements.ts'
 import { useApp } from '../state/store.ts'
 import { Icon } from './Icon.tsx'
@@ -30,6 +31,11 @@ export function CautionsDialog() {
             软组织物理 <span className="en">Soft-tissue physics</span>
           </h3>
           <CautionList items={[SOFT_CAUTION]} />
+          {/* 写实外观藏起皮肤下面的部件（由界面补上）/ the lifelike look hides the parts under the skin (added by the UI) */}
+          <h3>
+            写实外观 <span className="en">Lifelike look</span>
+          </h3>
+          <CautionList items={[LOOK_HIDES_INTERNAL]} />
           <div className="dialog-actions">
             <button className="primary-btn" onClick={dismiss}>
               知道了

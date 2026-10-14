@@ -3,6 +3,7 @@ import { CONSTRUCTION_COLOR, CONSTRUCTION_LABEL, PROVENANCE_LABEL, provenanceCol
 import { skinDrawnOpaque, type SectionAxis } from '../state/display.ts'
 import { isSolo, useApp } from '../state/store.ts'
 import { DEFAULT_TONE } from '../look/types.ts'
+import { LOOK_HIDES_HINT } from '../look/statements.ts'
 import { Icon } from './Icon.tsx'
 import { SkinMapPanel } from './SkinMapPanel.tsx'
 import { LumenPanel } from './LumenPanel.tsx'
@@ -120,6 +121,12 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
                 <input type="checkbox" checked={look} onChange={(e) => app.setLook(e.target.checked)} />
                 写实外观 <span className="en">Lifelike look</span>
               </label>
+            )}
+            {skinOpaque && look && (
+              <p className="hint">
+                {LOOK_HIDES_HINT.zh}
+                <span className="en"> {LOOK_HIDES_HINT.en}</span>
+              </p>
             )}
             {skinOpaque && look && (
               <div className="slider-row" title="Skin tone: epidermal melanin of a two-layer skin model fitted to the NIST skin reflectance data; double-click to reset">
