@@ -46,6 +46,11 @@ export class LookSkin {
     }
     this.patch = new SkinPatch(source, null, this.material, undefined, { vertices: uv.skinVertex, index })
     this.patch.mesh.geometry.setAttribute('uv', new BufferAttribute(uv.uv, 2))
+    // 三平面细节按静止姿势取：记下这一刻的皮肤位置和法线，作为随网格变形的属性
+    // the triplanar detail is read in the rest pose: the skin's positions and normals at this moment, as attributes that deform with the mesh
+    look.setRest(source.position, source.normal)
+    this.patch.setAttribute('restPosition', look.rest!.position, 3)
+    this.patch.setAttribute('restNormal', look.rest!.normal, 3)
     this.patch.mesh.renderOrder = 0
     this.patch.mesh.name = 'lifelike-skin'
     this.setSkinning('off')

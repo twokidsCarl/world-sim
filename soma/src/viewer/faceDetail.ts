@@ -180,6 +180,11 @@ export class FaceDetailLayer {
         m.polygonOffsetUnits = -2
         this.lookMaterial = m
         this.patch.setAttribute('uv', uv, 2)
+        // 与写实皮肤层同一份静止姿势，三平面细节在两层上对得上 / the same rest pose as the lifelike layer, so the triplanar detail matches across both
+        if (look.rest) {
+          this.patch.setAttribute('restPosition', look.rest.position, 3)
+          this.patch.setAttribute('restNormal', look.rest.normal, 3)
+        }
         this.setSkinning(this.skinningMode)
       }
       this.patch.mesh.material = this.lookMaterial

@@ -23,6 +23,10 @@ export interface LoadedSkinColour {
   lut: Uint16Array
   /** 部位贴图 RGBA8，第 0 行是 v = 0 / the region map, RGBA8, row 0 is v = 0 */
   regions: { width: number; height: number; data: Uint8Array }
+  /** 细节贴图、微细起伏贴图（RGBA8）和预积分表（half-float 位模式）；旧数据里没有 / the detail map, micro-relief tile (RGBA8) and pre-integrated table (half-float bits); absent in older data */
+  detail?: { width: number; height: number; data: Uint8Array } | null
+  micro?: { width: number; height: number; data: Uint8Array } | null
+  preint?: Uint16Array | null
 }
 
 /** 核对颜色数据的尺寸；不对就抛错 / Check the sizes of the colour data; throws when they are wrong. */
@@ -42,7 +46,34 @@ export async function loadSkinColour(dataset: string): Promise<LoadedSkinColour 
   if (!data || data.schema !== 1) return null
   const [lut, png] = await Promise.all([fetch(`${base}${data.lut.file}`), fetch(`${base}${data.regions.file}`)])
   if (!lut.ok || !png.ok) return null
-  return checkSkinColour(data, new Uint8Array(await lut.arrayBuffer()), await decodePngRgba(new Uint8Array(await png.arrayBuffer())))
+  const out = checkSkinColour(data, new Uint8Array(await lut.arrayBuffer()), await decodePngRgba(new Uint8Array(await png.arrayBuffer())))
+  // 细节、微细起伏和预积分表是附加的：缺了或坏了只告警 / detail, micro-relief and the pre-integrated table are extras: missing or broken only warns
+  const bytes = async (file: string | undefined): Promise<Uint8Array | null> => {
+    if (!file) return null
+    const r = await fetch(`${base}${file}`)
+    return r.ok ? new Uint8Array(await r.arrayBuffer()) : null
+  }
+  try {
+    const [detail, micro, preint] = await Promise.all([bytes(data.detail?.file), bytes(data.micro?.file), bytes(data.preintegrated?.file)])
+    Object.assign(out, checkSkinDetail(data, detail ? await decodePngRgba(detail) : null, micro ? await decodePngRgba(micro) : null, preint))
+  } catch (e) {
+    console.warn('[soma] lifelike skin detail unavailable:', e)
+  }
+  return out
+}
+
+/** 核对细节数据的尺寸；不对就抛错 / Check the sizes of the detail data; throws when they are wrong. */
+export function checkSkinDetail(
+  data: SkinColourData,
+  detail: { width: number; height: number; data: Uint8Array } | null,
+  micro: { width: number; height: number; data: Uint8Array } | null,
+  preint: Uint8Array | null,
+): Pick<LoadedSkinColour, 'detail' | 'micro' | 'preint'> {
+  if (detail && (detail.width !== data.detail?.size || detail.height !== data.detail.size)) throw new Error(`skin-detail.png is ${detail.width}×${detail.height}, skin-colour.json says ${data.detail?.size}`)
+  if (micro && (micro.width !== data.micro?.size || micro.height !== data.micro.size)) throw new Error(`skin-micro.png is ${micro.width}×${micro.height}, skin-colour.json says ${data.micro?.size}`)
+  const p = data.preintegrated
+  if (preint && (!p || preint.byteLength !== p.width * p.height * 8)) throw new Error(`skin-preint.bin has ${preint.byteLength} bytes, skin-colour.json implies ${p ? p.width * p.height * 8 : '?'}`)
+  return { detail, micro, preint: preint ? new Uint16Array(preint.slice().buffer) : null }
 }
 
 /** 解码 .bin；长度或下标不对就抛错 / Decode the .bin; throws on a wrong length or index. */

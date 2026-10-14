@@ -14,6 +14,28 @@
   "rowOrder": "row 0 is v = 0",
   "palmMelanin": 0.01789
  },
+ "detail": {
+  "file": "skin-detail.png",
+  "size": 1024,
+  "rowOrder": "row 0 is v = 0",
+  "reliefMax": 1.5,
+  "thicknessMaxMm": 40.0,
+  "kappaMax": 0.5,
+  "channels": "R relief amplitude / reliefMax; G relief type (0 body, 0.5 facial pores, 1 ridges); B sqrt(thickness / thicknessMaxMm); A sqrt(curvature / kappaMax)"
+ },
+ "micro": {
+  "file": "skin-micro.png",
+  "size": 512,
+  "tileMm": 10,
+  "channels": "R facial pores, G body micro-relief, B ridges; height = (x − 128) / 127"
+ },
+ "preintegrated": {
+  "file": "skin-preint.bin",
+  "width": 128,
+  "height": 32,
+  "kappaMax": 0.5,
+  "format": "RGBA half-float; u = N·L·0.5 + 0.5, v = sqrt(curvature / kappaMax)"
+ },
  "tone": {
   "cmMax": 0.3126,
   "default": 12,

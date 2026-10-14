@@ -42,6 +42,16 @@ COLOUR = 'data/curated/look/skin-colour.json'
 MHR_UV = 'data/raw/look/mhr-lod0-uv.bin'
 PREVIEW = 'data/raw/skin/maps'
 LOG_SCALE = 32.0  # 每个倍频程 32 级 / 32 steps per octave
+THICK_MM = 40.0   # 细节贴图里厚度的上限 / the thickness limit in the detail map
+KAPPA_MAX = 0.5   # 曲率上限 mm⁻¹，与 tools/look/preintegrated.ts 相同 / curvature limit in mm⁻¹, as in tools/look/preintegrated.ts
+# 每个部位的微细起伏：(幅度, 类型)；类型 0 = 身体的细毛孔和皮沟，0.5 = 面部毛孔，1 = 皮嵴。都是假设（面部毛孔的尺寸和密度见 micro.ts）
+# micro-relief per region: (amplitude, type); type 0 = the body's fine pores and furrows, 0.5 = facial pores, 1 = ridges.
+# All assumed (the size and density of facial pores are in micro.ts)
+RELIEF = {
+    'skin': (0.6, 0.0), 'cheek': (1.0, 0.5), 'forehead': (0.9, 0.5), 'nose': (1.25, 0.5), 'ears': (0.5, 0.0), 'eyelids': (0.45, 0.0),
+    'lips': (0.25, 0.0), 'dorsalForearm': (0.8, 0.0), 'elbowsKnees': (1.1, 0.0), 'backOfHand': (1.0, 0.0), 'palmsSoles': (0.9, 1.0),
+    'fingertips': (1.0, 1.0), 'nails': (0.06, 0.0), 'areola': (0.7, 0.0), 'genitalia': (0.8, 0.0),
+}
 
 
 def read_mhr_uv(path):
@@ -201,6 +211,8 @@ class Layers:
         self.blood = np.zeros(n)   # log2 血量倍数 / log2 blood multiplier
         self.palm = np.zeros(n)
         self.rough = np.full(n, 0.5)
+        self.relief = np.full(n, RELIEF['skin'][0])
+        self.rtype = np.full(n, RELIEF['skin'][1])
         self.ids = np.zeros(n, dtype=np.int16)  # 预览用：最后盖上去的部位 / for the preview: the last region laid on
         self.names = ['skin']
 
@@ -211,6 +223,9 @@ class Layers:
         self.rough = self.rough * (1 - w) + r.get('roughness', 0.5) * w
         if palm is not None:
             self.palm = self.palm * (1 - w) + palm * w
+        amp, kind = RELIEF[name]
+        self.relief = self.relief * (1 - w) + amp * w
+        self.rtype = self.rtype * (1 - w) + kind * w
         self.names.append(name)
         self.ids[w > 0.5] = len(self.names) - 1
 
@@ -411,6 +426,49 @@ def bake(body, colour):
     os.makedirs(f'{bdir}/look', exist_ok=True)
     Image.fromarray(out, 'RGBA').save(f'{bdir}/look/skin-regions.png', optimize=True)
 
+    # ── 细节贴图：起伏幅度、起伏类型、厚度、曲率 / the detail map: relief amplitude, relief type, thickness, curvature ──
+    thick_path = f'data/raw/skin/thickness-{body}.f32'
+    if not os.path.exists(thick_path):
+        sys.exit(f'{thick_path} is missing: run bun tools/look/thickness.ts {body} first')
+    thick = np.fromfile(thick_path, dtype='<f4').astype(np.float64)
+    # 最大主曲率的绝对值（1/m → 1/mm），再在网格上平滑几次 / the largest absolute principal curvature (1/m → 1/mm), smoothed a few times over the mesh
+    import igl
+    _, _, k1, k2, _ = igl.principal_curvature(P, F)
+    kappa = np.maximum(np.abs(k1), np.abs(k2)) / 1000.0
+    adj = [[] for _ in range(nv)]
+    for a, b in ((0, 1), (1, 2), (2, 0)):
+        for i, j in zip(F[:, a], F[:, b]):
+            adj[i].append(j)
+            adj[j].append(i)
+    nbr = [np.unique(np.array(x, dtype=np.int64)) for x in adj]
+    deg = np.array([len(x) for x in nbr])
+    rows = np.repeat(np.arange(nv), deg)
+    cols = np.concatenate(nbr)
+    from scipy.sparse import csr_matrix
+    A = csr_matrix((np.ones(len(rows)), (rows, cols)), shape=(nv, nv))
+    A = csr_matrix(A.multiply(1.0 / np.maximum(deg, 1)[:, None]))
+    for _ in range(4):
+        kappa = 0.5 * kappa + 0.5 * (A @ kappa)
+    th_t = np.einsum('nk,nk->n', bary, thick[corners])
+    # 注意：MHR 的耳是贴在头侧的浅浮雕，没有游离的耳廓，所以耳处并不薄（透光主要出现在手指、足趾）
+    # note: MHR's ear is a shallow relief on the side of the head with no free auricle, so the ear is not thin (transmission shows mostly at fingers and toes)
+    ka_t = np.einsum('nk,nk->n', bary, kappa[corners])
+    dvals = np.stack([255 * np.clip(L.relief / 1.5, 0, 1), 255 * np.clip(L.rtype, 0, 1),
+                      255 * np.sqrt(np.clip(th_t / THICK_MM, 0, 1)), 255 * np.sqrt(np.clip(ka_t / KAPPA_MAX, 0, 1))], axis=1)
+    dimg = np.zeros((SIZE * SIZE, 4))
+    dimg[texel] = dvals
+    dimg = push_pull(dimg.reshape(SIZE, SIZE, 4), mask.reshape(SIZE, SIZE))
+    dout = np.clip(np.round(dimg), 0, 255).astype(np.uint8)
+    # A 不能是 0：有的解码路径会把全透明的像素清零 / A must not be 0: some decode paths zero fully transparent pixels
+    dout[..., 3] = np.maximum(dout[..., 3], 1)
+    Image.fromarray(dout, 'RGBA').save(f'{bdir}/look/skin-detail.png', optimize=True)
+    thin = {}
+    for name in ('ears', 'nose', 'fingertips', 'cheek', 'skin'):
+        i = L.names.index(name) if name in L.names else -1
+        sel = L.ids == i
+        if sel.any():
+            thin[name] = round(float(np.median(th_t[sel])), 1)
+
     # ── 运行时说明 / runtime description ──
     meta = {
         'schema': 1,
@@ -418,6 +476,10 @@ def bake(body, colour):
         'lut': {'file': 'skin-lut.bin', **{k: colour['lut'][k] for k in ('size', 'cmMax', 'chdMax')}},
         'regions': {'file': 'skin-regions.png', 'size': SIZE, 'logScale': LOG_SCALE, 'rowOrder': 'row 0 is v = 0',
                     'palmMelanin': R['palmsSoles']['palmMelanin']},
+        'detail': {'file': 'skin-detail.png', 'size': SIZE, 'rowOrder': 'row 0 is v = 0', 'reliefMax': 1.5, 'thicknessMaxMm': THICK_MM, 'kappaMax': KAPPA_MAX,
+                   'channels': 'R relief amplitude / reliefMax; G relief type (0 body, 0.5 facial pores, 1 ridges); B sqrt(thickness / thicknessMaxMm); A sqrt(curvature / kappaMax)'},
+        'micro': {'file': 'skin-micro.png', 'size': 512, 'tileMm': 10, 'channels': 'R facial pores, G body micro-relief, B ridges; height = (x − 128) / 127'},
+        'preintegrated': {'file': 'skin-preint.bin', 'width': 128, 'height': 32, 'kappaMax': KAPPA_MAX, 'format': 'RGBA half-float; u = N·L·0.5 + 0.5, v = sqrt(curvature / kappaMax)'},
         'tone': {k: colour['tone'][k] for k in ('cmMax', 'default', 'nistMax', 'bloodChd')},
         'surfaceReflection': colour['model']['fixed']['surfaceReflection']['value'],
         'source': {
@@ -442,6 +504,9 @@ def bake(body, colour):
     size_kb = os.path.getsize(f'{bdir}/look/skin-regions.png') / 1024
     print(f'{body}: {len(texel)} texels covered ({100 * len(texel) / SIZE ** 2:.1f}%), png {size_kb:.0f} kB')
     print('  texels per region:', {k: v for k, v in counts.items() if v})
+    print(f'  detail png {os.path.getsize(f"{bdir}/look/skin-detail.png") / 1024:.0f} kB; median thickness by region (mm):', thin)
+    Image.fromarray(flip(dout[..., 2])).save(f'{PREVIEW}/{body}-thickness.png')
+    Image.fromarray(flip(dout[..., 3])).save(f'{PREVIEW}/{body}-curvature.png')
 
 
 def main():

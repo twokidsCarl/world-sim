@@ -62,6 +62,13 @@ export interface SkinColourData {
   tone: { cmMax: number; default: number; nistMax: number; bloodChd: number }
   /** 表面外反射（8° 菲涅尔）；查找表里不含它 / the external surface reflection (Fresnel at 8°); not in the table */
   surfaceReflection: number
+  /** 细节贴图 RGBA8 PNG（第 0 行是 v = 0）：R 起伏幅度 / reliefMax，G 起伏类型（0 身体、0.5 面部毛孔、1 皮嵴），B sqrt(厚度 / thicknessMaxMm)，A sqrt(曲率 / kappaMax)
+   * the detail map, RGBA8 PNG (row 0 is v = 0): R relief amplitude / reliefMax, G relief type (0 body, 0.5 facial pores, 1 ridges), B sqrt(thickness / thicknessMaxMm), A sqrt(curvature / kappaMax) */
+  detail?: { file: string; size: number; rowOrder: string; reliefMax: number; thicknessMaxMm: number; kappaMax: number; channels: string }
+  /** 可平铺的微细起伏高度贴图（RGB PNG，tileMm 毫米一块）/ the tileable micro-relief height map (RGB PNG, one tile = tileMm mm) */
+  micro?: { file: string; size: number; tileMm: number; channels: string }
+  /** 预积分皮肤散射表（RGBA half-float）/ the pre-integrated skin scattering table (RGBA half-float) */
+  preintegrated?: { file: string; width: number; height: number; kappaMax: number; format: string }
   source: { zh: string; en: string }
 }
 
