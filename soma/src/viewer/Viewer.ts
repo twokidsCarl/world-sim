@@ -74,7 +74,7 @@ import {
   type Scales,
 } from '../anatomy/rig.ts'
 import { clampPose, mergePoses } from '../../tools/rig/pose.ts'
-import { addLidGaze, faceFrame, lidGazeChannels, setFacePaused } from '../face/driver.ts'
+import { addBlink, addLidGaze, applyLidDrop, faceFrame, lidDropActive, lidGains, lidGazeChannels, setFacePaused } from '../face/driver.ts'
 import { displacePart, sameAUs, type AUs, type Activations, type LoadedFace } from '../pain/face.ts'
 import { Shaper } from '../../tools/rig/shape.ts'
 import { shapeIsDefault, type LoadedShape, type ShapeControls } from '../anatomy/shape.ts'
@@ -100,6 +100,7 @@ import { SkinLook } from '../look/skinMaterial.ts'
 import type { LoadedSkinUv } from '../look/load.ts'
 import { EyeLook, LookEyes } from '../look/eyes.ts'
 import { fitEye, type EyeFit, type M3 } from '../look/eyesFit.ts'
+import { pupilTarget } from '../look/eyesLife.ts'
 import { FLY_MIN_FILL, FLY_MIN_RADIUS, FLY_SPEED, displacementOf, ensureLumenData, fillingOf, lumenCandidates, registerLumenGeometry, reportFly, segmentIds, showCanal, useLumen, type LumenData, type LumenState } from '../lumen/state.ts'
 
 const LEGACY_SORT = typeof location !== 'undefined' && new URLSearchParams(location.search).get('sort') === 'origin'
@@ -211,6 +212,7 @@ export type ViewState = Pick<
   | 'tone'
   | 'iris'
   | 'gaze'
+  | 'blink'
   | 'skinUv'
   | 'shape'
   | 'shapeControls'
@@ -358,6 +360,7 @@ export class Viewer {
   private eyeParts: { L: number[]; R: number[]; sclera: number[] } = { L: [], R: [], sclera: [] }
   private eyesDirty = false
   private eyesT = 0
+  private lidGainCache: { face: LoadedFace; gains: Record<string, number> } | null = null
   private readonly detailWeights: number[] = []
   /** 被改写过静止几何的部件：原始的位置与法线 / Parts whose rest geometry was rewritten: their original positions and normals. */
   private restOrig = new Map<number, { position: Float32Array; normal: Float32Array }>()
@@ -1696,8 +1699,18 @@ export class Viewer {
       const rigid = this.poseRt.frames.rigid[row], full = this.poseRt.frames.xfs[row]
       if (rigid && full) skull = { rigid: rigid.r as M3, t: full.t as [number, number, number] }
     }
+    const s = this.source()
+    // 眨眼和微扫视（blink=0 时没有）/ blinks and microsaccades (none with blink=0)
+    const micro = eyes.advance(dt, s.blink)
+    // 瞳孔：主视图按疼痛模型的瞳孔输出（刺激时）或持续的疼痛强度 / the pupil: in the main view, the pain model's pupil output (during a stimulus) or the sustained pain level
+    const p = this.source === useApp.getState ? pupilTarget(useApp.getState()) : null
+    const pupil = p ? eyes.life.stepPupil(p.direct ? 0 : dt, p.target) : eyes.life.stepPupil(dt, this.eyeLook.baseline)
+    if (Math.abs(pupil - (this.eyeLook.pupil.value as number)) > 1e-7) {
+      this.eyeLook.setPupil(pupil)
+      this.dirty = true
+    }
     const c = this.camera.position
-    if (eyes.step(dt, [c.x, c.y, c.z], this.source().gaze, skull)) this.dirty = true
+    if (eyes.step(dt, [c.x, c.y, c.z], s.gaze, skull, micro)) this.dirty = true
   }
 
   /** 睑随注视：各眼此刻的垂直注视角（取到 0.5°，免得相机一动就重算皮肤）/ Lid coupling: each eye's current vertical gaze (to 0.5°, so the skin is not recomputed on every camera nudge). */
@@ -1705,6 +1718,19 @@ export class Viewer {
     const eyes = this.lookEyes
     if (!eyes?.visible) return null
     return eyes.angles().map((a) => ({ side: a.side, pitch: Math.round(a.pitch * 2) / 2, pupilDistance: eyes.pupilDistance(a.side) }))
+  }
+
+  /** 睑通道的标定（每单位激活睑缘中点的竖直移动），按表情数据缓存 / The lid channels' calibration (vertical mid-margin travel per unit activation), cached per face data. */
+  private lidGainsFor(face: LoadedFace): Record<string, number> {
+    if (this.lidGainCache?.face === face) return this.lidGainCache.gains
+    const i = this.mainSkinIndex()
+    let gains: Record<string, number> = {}
+    if (i >= 0 && this.openings && this.lookEyes && this.batches && this.mainSkin) {
+      const rest = this.origOf(i, this.batches.partBuffers(this.inst[i]!)).position
+      gains = lidGains(face, this.mainSkin, this.openings.margins, rest, this.lookEyes.eyes.map((e) => ({ side: e.fit.side, x: e.fit.centre[0] })))
+    }
+    this.lidGainCache = { face, gains }
+    return gains
   }
 
   /** 写实的眼的状态（验证用）/ State of the lifelike eyes (verification). */
@@ -2362,7 +2388,9 @@ export class Viewer {
     }
     // 写实的眼转动时，上下睑跟着垂直注视走（src/face/driver.ts 的 lidGazeChannels）/ while the lifelike eyes turn, the lids follow vertical gaze (lidGazeChannels of src/face/driver.ts)
     const lids = face ? this.lidGaze() : null
-    if (face && lids) addLidGaze(act.channels, lidGazeChannels(face.data, lids))
+    if (face && lids) addLidGaze(act.channels, lidGazeChannels(face.data, lids, this.lidGainsFor(face)))
+    // 自发眨眼：与表情的闭眼通道逐项取较大者 / spontaneous blinks: merged with the expression's lid-closing channels by maximum
+    if (face && lids && this.lookEyes) addBlink(act.channels, face.data, this.lookEyes.blink)
     // "差不多相同"不能挡住最后一步：表情已经完全放松而上次应用的还剩一点点时，必须真的归零，
     // 否则顶点留着亚微米的位移、姿势模式也回不到静止
     // "near enough" must not swallow the last step: when the expression has fully relaxed but a trace is
@@ -2390,7 +2418,7 @@ export class Viewer {
       for (const [partId, fields] of face.fields) {
         const i = this.graph.indexOf(partId)
         if (i < 0 || this.inst[i]! < 0) continue
-        const active = fields.some((f) => (act.channels[f.channel] ?? 0) > 0)
+        const active = fields.some((f) => (act.channels[f.channel] ?? 0) > 0) || lidDropActive(fields, act.channels)
         if (active) activeParts.add(i)
         if (active || this.faceDisplaced.has(i)) todo.add(i)
       }
@@ -2409,7 +2437,11 @@ export class Viewer {
       const orig = this.origOf(i, buf)
       const base = this.shaped.get(i) ?? orig.position
       const facing = !!face && activeParts.has(i)
-      if (facing) displacePart(face!, partId, base, act.channels, buf.position)
+      if (facing) {
+        displacePart(face!, partId, base, act.channels, buf.position)
+        // 下睑随向下注视下移：反过来用的下睑场（src/face/driver.ts 的 applyLidDrop）/ the lower lid dropping with down-gaze: the lower-lid field run backwards (applyLidDrop of src/face/driver.ts)
+        applyLidDrop(face!, partId, act.channels, buf.position)
+      }
       else buf.position.set(base)
       if (facing) this.faceDisplaced.add(i)
       else this.faceDisplaced.delete(i)

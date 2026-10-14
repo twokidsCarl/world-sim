@@ -18,7 +18,7 @@
 
 import { UPPER_FACE_AUS, blendFace, expressionAUs, mergeAUs, visemeAUs, type AUs, type Activations, type MouthPose, type SpeechStyle } from '../../tools/face/model.ts'
 import { painFrame, setPainPaused } from '../pain/controller.ts'
-import { cleanAUs } from '../pain/face.ts'
+import { cleanAUs, type LoadedFace } from '../pain/face.ts'
 import { useApp } from '../state/store.ts'
 import { sayFrame, setSayPaused } from './say.ts'
 import { setSpeechPaused, speechFrame } from './speech.ts'
@@ -200,30 +200,115 @@ export function setFacePaused(paused: boolean): void {
 /**
  * 睑随垂直注视（写实的眼转动时）：每只眼的上下睑缘该移动多少由 lidTravel 给出（Mastropietro 等 2009），换成睑的通道激活——
  * 上睑上移用上睑提肌通道，下移用眼轮匝肌睑部（上睑）通道，下睑上移用眼轮匝肌睑部（下睑）通道；激活 = 移动量 ÷ 通道的行程。
- * 下睑下移没有对应的通道，就不动。返回要加到通道上的量（与表情的激活相加，最多到 1）。
+ * 表情数据里没有降下睑的通道：下睑下移用反过来的"睑部（下睑）"位移场，记在伪通道 `drop:<通道 id>` 上（见 applyLidDrop）。
+ * 返回要加到通道上的量（与表情的激活相加；真通道最多到 1，伪通道最多到 LID_DROP_MAX）。
  * Lids following vertical gaze (while the lifelike eyes turn): lidTravel (Mastropietro et al. 2009) gives how far each eye's
  * upper and lower margins should move, turned into lid-channel activations — the upper lid up through the levator palpebrae
  * channel, down through the orbicularis oculi palpebral (upper lid) channel, the lower lid up through the palpebral (lower lid)
- * channel; activation = travel ÷ the channel's excursion. No channel lowers the lower lid, so it stays. Returns the amounts to add
- * to the channels (summed with the expression's activations, capped at 1).
+ * channel; activation = travel ÷ the channel's excursion. The expression data have no channel that lowers the lower lid: it is lowered
+ * by the palpebral (lower lid) field run backwards, recorded on the pseudo-channel `drop:<channel id>` (see applyLidDrop). Returns
+ * the amounts to add to the channels (summed with the expression's activations; real channels capped at 1, pseudo-channels at
+ * LID_DROP_MAX).
  */
-export function lidGazeChannels(face: Pick<FaceData, 'channels'>, eyes: readonly { side: 'L' | 'R'; pitch: number; pupilDistance: number }[]): Activations {
+export function lidGazeChannels(face: Pick<FaceData, 'channels'>, eyes: readonly { side: 'L' | 'R'; pitch: number; pupilDistance: number }[], gains: Readonly<Record<string, number>> = {}): Activations {
   const out: Activations = {}
   const channel = (muscle: string, side: string) => face.channels.find((c) => c.muscle === muscle && c.side === side && c.excursion > 0)
+  // 每单位激活睑缘中点实际移动多少米：有标定（lidGains）就用它，否则用通道声明的行程 / how far the mid-margin really moves per unit activation, metres: the calibration (lidGains) when there is one, else the channel's declared excursion
+  const gain = (c: { id: string; excursion: number }): number => gains[c.id] ?? c.excursion
   for (const e of eyes) {
     const { upper, lower } = lidTravel(e.pitch, e.pupilDistance)
     const mm = 1000
     const lift = upper > 0 ? channel('levator_palpebrae', e.side) : channel('orbicularis_oculi_palpebral_upper', e.side)
-    if (lift && Math.abs(upper) > 1e-3) out[lift.id] = Math.min(1, Math.abs(upper) / (lift.excursion * mm))
-    const low = lower > 0 ? channel('orbicularis_oculi_palpebral_lower', e.side) : undefined
-    if (low && lower > 1e-3) out[low.id] = Math.min(1, lower / (low.excursion * mm))
+    if (lift && Math.abs(upper) > 1e-3) out[lift.id] = Math.min(1, Math.abs(upper) / (gain(lift) * mm))
+    const low = channel('orbicularis_oculi_palpebral_lower', e.side)
+    if (low && lower > 1e-3) out[low.id] = Math.min(1, lower / (gain(low) * mm))
+    if (low && lower < -1e-3) out[LID_DROP + low.id] = Math.min(LID_DROP_MAX, -lower / (gain(low) * mm))
   }
   return out
 }
 
-/** 把睑随注视的量加到通道激活上（就地修改，最多到 1）/ Add the lid coupling to channel activations (in place, capped at 1). */
+/**
+ * 标定睑的通道：激活为 1 时，睑缘上离眼球心水平位置最近的那个皮肤顶点竖直移动多少米（取它在通道位移场里的 y 分量）。
+ * 通道声明的"行程"是沿肌肉作用线量的，到睑缘中点的竖直移动往往小一些（男性下睑约 2.1 mm 对 2.7 mm），所以按这个换算。
+ * Calibrate the lid channels: at activation 1, how far (metres, vertically) the skin vertex of the lid margin nearest the eye
+ * centre's horizontal position moves (the y component of its displacement in the channel's field). A channel's declared
+ * "excursion" is measured along the muscle's line, and the vertical travel at mid-margin is often less (about 2.1 mm against
+ * 2.7 mm for the male lower lid), so this is the conversion used.
+ */
+export function lidGains(face: LoadedFace, skin: string, margins: Readonly<Record<string, readonly number[]>>, rest: ArrayLike<number>, centres: readonly { side: 'L' | 'R'; x: number }[]): Record<string, number> {
+  const out: Record<string, number> = {}
+  const fields = face.fields.get(skin) ?? []
+  for (const { side, x } of centres) {
+    for (const [muscle, chain] of [['levator_palpebrae', 'upper'], ['orbicularis_oculi_palpebral_upper', 'upper'], ['orbicularis_oculi_palpebral_lower', 'lower']] as const) {
+      const ch = face.data.channels.find((c) => c.muscle === muscle && c.side === side)
+      const list = margins[`${chain}Lid${side}`]
+      const field = ch && fields.find((f) => f.channel === ch.id)
+      if (!ch || !list?.length || !field) continue
+      const v = list.reduce((b, k) => (Math.abs(rest[k * 3]! - x) < Math.abs(rest[b * 3]! - x) ? k : b), list[0]!)
+      const i = field.index.indexOf(v)
+      const dy = i >= 0 ? Math.abs(field.delta[i * 3 + 1]!) : 0
+      // 太小（场在那里几乎没有）就不标定，退回行程 / too small (the field barely reaches it): no calibration, the excursion is used
+      if (dy > 0.2 * ch.excursion) out[ch.id] = dy
+    }
+  }
+  return out
+}
+
+/** 伪通道的前缀：`drop:<通道 id>` = 把那个通道的位移场反过来用 / prefix of the pseudo-channels: `drop:<channel id>` = that channel's field run backwards */
+export const LID_DROP = 'drop:'
+/**
+ * 反过来用时最多到多少：下睑在 −30° 要下移约 3.3 mm，而"睑部（下睑）"通道在睑缘中点每单位只移动 1.3–2.1 mm，所以允许到 2
+ * （把场外推到两倍，假设）。
+ * How far the reversed field may go: the lower lid must drop about 3.3 mm at −30° while the palpebral (lower lid) channel moves
+ * the mid-margin only 1.3–2.1 mm per unit, so up to 2 is allowed (the field extrapolated to twice its size; an assumption).
+ */
+export const LID_DROP_MAX = 2
+
+/** 把睑随注视的量加到通道激活上（就地修改）/ Add the lid coupling to channel activations (in place). */
 export function addLidGaze(channels: Activations, extra: Activations): Activations {
-  for (const [id, v] of Object.entries(extra)) channels[id] = Math.min(1, (channels[id] ?? 0) + v)
+  for (const [id, v] of Object.entries(extra)) channels[id] = Math.min(id.startsWith(LID_DROP) ? LID_DROP_MAX : 1, (channels[id] ?? 0) + v)
+  return channels
+}
+
+/** 某个部件上有没有正在起作用的伪通道 / whether a pseudo-channel acts on any of these fields */
+export function lidDropActive(fields: readonly { channel: string }[], channels: Activations): boolean {
+  return fields.some((f) => (channels[LID_DROP + f.channel] ?? 0) > 0)
+}
+
+/**
+ * 在 displacePart 之后把伪通道 `drop:<id>` 的位移减掉：out −= a · D_id。只用表情数据里已有的场，不改 face.json / face.bin。
+ * After displacePart, subtract the pseudo-channels `drop:<id>`: out −= a · D_id. Uses only fields already in the face data;
+ * face.json / face.bin stay as they are.
+ */
+export function applyLidDrop(face: LoadedFace, part: string, channels: Activations, out: Float32Array): boolean {
+  let any = false
+  for (const f of face.fields.get(part) ?? []) {
+    const a = Math.min(LID_DROP_MAX, Math.max(0, channels[LID_DROP + f.channel] ?? 0))
+    if (a === 0) continue
+    any = true
+    const { index, delta } = f
+    for (let i = 0; i < index.length; i++) {
+      const v = index[i]! * 3
+      out[v] = out[v]! - a * delta[i * 3]!
+      out[v + 1] = out[v + 1]! - a * delta[i * 3 + 1]!
+      out[v + 2] = out[v + 2]! - a * delta[i * 3 + 2]!
+    }
+  }
+  return any
+}
+
+/**
+ * 眨眼：闭合程度 b（0–1）按 AU43（闭眼）在表情数据里的通道权重换成通道激活，与已有的激活逐项取较大者——这样眨眼和表情
+ * （包括 AU43 / AU45 自己）叠在一起时不会超过完全闭合。表情数据里没有 AU45（眨眼），所以用 AU43 的通道。
+ * A blink: closure b (0–1) is turned into channel activations by AU43's (eyes closed) channel weights in the face data and
+ * merged with the existing activations by maximum — so a blink on top of an expression (AU43 / AU45 included) never goes past
+ * full closure. The face data have no AU45 (blink), so AU43's channels are used.
+ */
+export function addBlink(channels: Activations, face: Pick<FaceData, 'aus'>, b: number): Activations {
+  if (!(b > 0)) return channels
+  const au = face.aus.find((a) => a.id === 'AU43')
+  if (!au) return channels
+  for (const [id, w] of Object.entries(au.channels)) channels[id] = Math.max(channels[id] ?? 0, Math.min(1, b * w))
   return channels
 }
 

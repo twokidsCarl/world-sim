@@ -249,6 +249,8 @@ export interface AppState {
   /** 写实的眼：虹膜颜色和注视（见 src/look/eyes.ts）/ The lifelike eyes: iris colour and gaze (see src/look/eyes.ts). */
   iris: IrisName
   gaze: GazeSetting
+  /** 写实的眼自发眨眼、有微扫视（缺省）；false 静止（截图、测试用）/ The lifelike eyes blink and make microsaccades (default); false = still (for screenshots, tests). */
+  blink: boolean
   selection: Selection
   hover: string | null
   explode: number
@@ -312,6 +314,7 @@ export interface AppState {
   setTone(tone: number | null): void
   setIris(iris: IrisName): void
   setGaze(gaze: GazeSetting): void
+  setBlink(on: boolean): void
   ensureSkinReport(): void
   setStimSettings(patch: Partial<StimSettings>): void
   setStimArmed(on: boolean): void
@@ -495,6 +498,7 @@ export const useApp = create<AppState>()((set, get) => ({
   tone: null,
   iris: DEFAULT_IRIS,
   gaze: 'camera',
+  blink: true,
   rig: null,
   rigStatus: 'idle',
   rigMessage: '',
@@ -832,6 +836,7 @@ export const useApp = create<AppState>()((set, get) => ({
   setTone: (tone) => set({ tone: tone === null ? null : Math.min(100, Math.max(0, Math.round(tone))) }),
   setIris: (iris) => set({ iris }),
   setGaze: (gaze) => set({ gaze }),
+  setBlink: (blink) => set({ blink }),
   rejectFace: (message) => set({ face: null, faceStatus: 'error', faceMessage: message }),
   setStimSettings: (patch) =>
     set((s) => {

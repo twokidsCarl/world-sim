@@ -27,12 +27,13 @@
 //     joint, so it follows the head pose and does not care about the jaw or the expression.
 
 import { BufferAttribute, BufferGeometry, Color, DataTexture, DoubleSide, FloatType, Group, Matrix3, Mesh, MeshPhysicalNodeMaterial, MeshSSSNodeMaterial, NearestFilter, RGBAFormat, Vector3 } from 'three/webgpu'
-import { Fn, abs, attribute, cameraPosition, clamp, cross, dot, float, floor, int, ivec2, length, max, min, mix, mx_noise_float, mx_worley_noise_float, normalLocal, normalize, positionGeometry, positionLocal, positionWorld, refract, select, smoothstep, textureLoad, uniform, varying, vec3, vec4 } from 'three/tsl'
+import { Fn, abs, attribute, cameraPosition, clamp, cross, dot, float, floor, int, ivec2, length, max, min, mix, mx_noise_float, mx_worley_noise_float, normalLocal, normalize, positionGeometry, positionLocal, positionWorld, refract, select, smoothstep, textureLoad, uniform, varying, vec2, vec3, vec4 } from 'three/tsl'
 import type { FaceOpenings } from '../face/types.ts'
 import type { SkinGeometry } from '../viewer/skinLayer.ts'
 import { SkinPatch } from '../viewer/skinPatch.ts'
 import { positionNodeFor, type SkinningData, type SkinningMode } from '../viewer/skinning.ts'
 import { EYE, eyeAngles, eyeBasis, eyeShape, fixedTarget, gazeRotation, m3apply, type EyeFit, type EyeShape, type EyeSide, type M3, type V3 } from './eyesFit.ts'
+import { EyeLife } from './eyesLife.ts'
 import { DEFAULT_IRIS, type GazeSetting, type IrisName } from './types.ts'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -90,6 +91,8 @@ export class EyeLook {
   readonly irisOuter = uniform(new Color())
   /** 瞳孔直径（米）/ pupil diameter (metres) */
   readonly pupil = uniform(EYE.pupilDefault)
+  /** 没有疼痛时的瞳孔直径（米）/ the pupil diameter without pain (metres) */
+  readonly baseline = EYE.pupilDefault
   iris: IrisName = DEFAULT_IRIS
 
   constructor() {
@@ -237,7 +240,11 @@ class Eye {
     // —— 虹膜 / the iris ——
     const iris = Fn(() => {
       const u: N = clamp(r.sub(rp).div(rl.sub(rp)), 0, 1)
-      const dir: N = h.div(max(r, float(1e-6)))
+      const dir0: N = h.div(max(r, float(1e-6)))
+      // 纤维不是笔直的放射线：按噪声把方向扭一点（域扭曲）/ the fibres are not straight rays: the direction is twisted a little by noise (domain warp)
+      const twist: N = mx_noise_float(vec3(dir0.x.mul(3.0), dir0.y.mul(3.0), u.mul(1.5).add(1.7))).mul(0.07)
+      const ct: N = twist.cos(), st: N = twist.sin()
+      const dir: N = vec2(dir0.x.mul(ct).sub(dir0.y.mul(st)), dir0.x.mul(st).add(dir0.y.mul(ct)))
       const base: N = mix((look.irisInner as N), (look.irisOuter as N), smoothstep(0.12, 0.7, u))
       // 放射状纤维：角向变化快、径向慢（用单位圆上的坐标，没有接缝）/ radial fibres: fast around, slow outwards (unit-circle coordinates, no seam)
       const f1: N = mx_noise_float(vec3(dir.x.mul(34), dir.y.mul(34), u.mul(2.2)))
@@ -249,6 +256,14 @@ class Eye {
       const uc: N = float(0.33).add(mx_noise_float(vec3(dir.x.mul(6), dir.y.mul(6), 3.0)).mul(0.05))
       const band: N = float(1).sub(smoothstep(0.0, 0.06, abs(u.sub(uc))))
       col.assign(mix(col, (look.irisInner as N).mul(1.45), band.mul(0.45)))
+      // 瞳孔区（卷缩轮以内）偏亮偏暖、纹理更细 / the pupillary zone (inside the collarette) a little lighter and warmer, with finer texture
+      const pz: N = float(1).sub(smoothstep(uc.sub(0.05), uc.add(0.03), u))
+      const f3: N = mx_noise_float(vec3(dir.x.mul(140), dir.y.mul(140), u.mul(9.0)))
+      col.mulAssign(float(1).add(pz.mul(float(0.12).add(f3.mul(0.12)))))
+      // 卷缩轮外侧紧挨着的一圈大隐窝（Fuchs 隐窝）/ a ring of large crypts just outside the collarette (Fuchs' crypts)
+      const wc: N = mx_worley_noise_float(vec3(dir.x.mul(5.0), dir.y.mul(5.0), u.mul(2.0).add(4.0)))
+      const ring: N = smoothstep(0.0, 0.05, u.sub(uc)).mul(float(1).sub(smoothstep(0.12, 0.24, u.sub(uc))))
+      col.mulAssign(float(1).sub(float(1).sub(smoothstep(0.1, 0.32, wc)).mul(ring).mul(0.7)))
       // 隐窝：中周部的暗洞 / crypts: dark pits in the mid-periphery
       // 在极坐标里取，隐窝沿径向拉长 / taken in polar terms, so the crypts are drawn out radially
       const w: N = mx_worley_noise_float(vec3(dir.x.mul(9.0), dir.y.mul(9.0), u.mul(3.2)))
@@ -257,6 +272,10 @@ class Eye {
       // 外周的收缩沟：几圈细的暗环 / contraction furrows in the periphery: a few thin dark rings
       const furrow: N = abs(mx_noise_float(vec3(dir.x.mul(3.0), dir.y.mul(3.0), u.mul(14.0))))
       col.mulAssign(float(1).sub(float(1).sub(smoothstep(0.0, 0.08, furrow)).mul(smoothstep(0.62, 0.8, u)).mul(0.35)))
+      // 几颗色素斑（虹膜痣），稀疏 / a few pigment spots (iris freckles), sparse
+      const fw: N = mx_worley_noise_float(vec3(h.x.mul(1.0 / (0.7 * MM)), h.y.mul(1.0 / (0.7 * MM)), 9.1))
+      const fmask: N = smoothstep(0.55, 0.75, mx_noise_float(vec3(h.x.mul(1.0 / (3.0 * MM)), h.y.mul(1.0 / (3.0 * MM)), 2.3)))
+      col.mulAssign(float(1).sub(float(1).sub(smoothstep(0.05, 0.12, fw)).mul(fmask).mul(0.6)))
       // 瞳孔缘的色素襞和外周的暗环 / the pupillary ruff and the dark outer rim
       col.assign(mix(col, vec3(0.03, 0.02, 0.015), float(1).sub(smoothstep(0.0, 0.07, u)).mul(0.85)))
       col.mulAssign(float(1).sub(smoothstep(0.72, 1.0, u).mul(0.75)))
@@ -653,7 +672,25 @@ export class LookEyes {
    * eye's uniforms. Returns whether anything changed. `camera` is in world coordinates; `skull` is the skull joint's current
    * transform (rest → now; null = at rest), `offset` the explode offset.
    */
-  step(dt: number, camera: V3, gaze: GazeSetting, skull: { rigid: M3; t: V3 } | null): boolean {
+  /** 眨眼、微扫视的时间表和瞳孔的平滑（src/look/eyesLife.ts）/ the blink and microsaccade schedules and the pupil smoothing (src/look/eyesLife.ts) */
+  readonly life = new EyeLife()
+  /** 眼的时钟（秒）：只在显示时走 / the eye clock (seconds): runs only while shown */
+  clock = 0
+  /** 此刻的眨眼闭合程度 0–1 / the current blink closure 0–1 */
+  blink = 0
+
+  /**
+   * 推进眼的时钟；`alive` 为 false（地址 blink=0）时不眨眼、没有微扫视。返回微扫视的偏移（度）。
+   * Advance the eye clock; with `alive` false (blink=0 in the address) there are no blinks and no microsaccades. Returns the
+   * microsaccade offset (degrees).
+   */
+  advance(dt: number, alive: boolean): { yaw: number; pitch: number } {
+    this.clock += Math.max(0, dt)
+    this.blink = alive ? this.life.blinkAt(this.clock) : 0
+    return alive ? this.life.offsetAt(this.clock) : { yaw: 0, pitch: 0 }
+  }
+
+  step(dt: number, camera: V3, gaze: GazeSetting, skull: { rigid: M3; t: V3 } | null, micro: { yaw: number; pitch: number } = { yaw: 0, pitch: 0 }): boolean {
     const offset = this.offset
     const centres = this.eyes.map((e) => e.fit.centre)
     let target: V3
@@ -667,7 +704,8 @@ export class LookEyes {
         target = [m[0] * d[0] + m[3] * d[1] + m[6] * d[2], m[1] * d[0] + m[4] * d[1] + m[7] * d[2], m[2] * d[0] + m[5] * d[1] + m[8] * d[2]]
       } else target = c
     } else target = fixedTarget(centres, gaze.yaw, gaze.pitch)
-    this.target = eyeAngles(centres, target)
+    // 微扫视两眼同向，加在限幅之后（偏移不到半度）/ microsaccades are conjugate, added after the clamp (the offset stays under half a degree)
+    this.target = eyeAngles(centres, target).map((a) => ({ yaw: a.yaw + micro.yaw, pitch: a.pitch + micro.pitch }))
     const k = dt > 0 ? 1 - Math.exp(-dt / GAZE_TAU) : 1
     let changed = false
     this.eyes.forEach((e, i) => {

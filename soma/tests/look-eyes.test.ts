@@ -6,7 +6,9 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import type { AnatomyData } from '../src/anatomy/types.ts'
 import type { FaceData, FaceOpenings } from '../src/face/types.ts'
-import { lidGazeChannels } from '../src/face/driver.ts'
+import { addBlink, applyLidDrop, lidGains, lidGazeChannels } from '../src/face/driver.ts'
+import { displacePart, indexFace } from '../src/pain/face.ts'
+import { BLINK, BLINK_SECONDS, EyeLife, MICROSACCADE, blinkCurve, pupilForPain, pupilTarget } from '../src/look/eyesLife.ts'
 import { EYE, GAZE_LIMITS, clampGaze, eyeAngles, eyeShape, fitEye, fitSphere, fixedTarget, gazeAngles, gazeDirection, gazeRotation, lidTravel, m3apply, surfaceRadius, type V3 } from '../src/look/eyesFit.ts'
 import { buildEyeGeometry, lidCurves } from '../src/look/eyes.ts'
 import { formatUrl, parseUrl } from '../src/state/urlState.ts'
@@ -151,7 +153,8 @@ describe('gaze', () => {
     expect(up['levator_palpebrae_L']).toBeLessThanOrEqual(1)
     expect(up['orbicularis_oculi_palpebral_lower_L']).toBeGreaterThan(0)
     const down = lidGazeChannels(face, [{ side: 'R', pitch: -20, pupilDistance: pd }])
-    expect(Object.keys(down)).toEqual(['orbicularis_oculi_palpebral_upper_R'])
+    // 向下看：上睑用闭合通道，下睑用反过来的下睑场（伪通道）/ looking down: the closing channel for the upper lid, the lower-lid field reversed (a pseudo-channel) for the lower
+    expect(Object.keys(down).sort()).toEqual(['drop:orbicularis_oculi_palpebral_lower_R', 'orbicularis_oculi_palpebral_upper_R'])
     expect(lidGazeChannels(face, [{ side: 'L', pitch: 0, pupilDistance: pd }])).toEqual({})
   })
 })
@@ -174,5 +177,116 @@ describe('iris and gaze in the URL', () => {
     expect(parseUrl('?gaze=90,-80').state.gaze).toEqual({ yaw: GAZE_LIMITS.yaw, pitch: -GAZE_LIMITS.down })
     expect(parseUrl('?gaze=left').warnings.length).toBe(1)
     expect(parseUrl('?iris=purple').warnings.length).toBe(1)
+  })
+})
+
+describe.each(BODIES)('the fissure follows vertical gaze (%s)', (body) => {
+  it('narrows in down-gaze about as Mastropietro et al. 2009 measured', async () => {
+    const dir = resolve(ROOT, 'public/anatomy', body)
+    const data = JSON.parse(readFileSync(resolve(dir, 'face.json'), 'utf8')) as FaceData
+    const face = indexFace(data, new Uint8Array(readFileSync(resolve(dir, 'face.bin'))))
+    const o = JSON.parse(readFileSync(resolve(dir, 'face/openings.json'), 'utf8')) as FaceOpenings
+    const skin = (await readGlbParts(resolve(dir, 'integumentary.glb'), new Set([o.skin]))).get(o.skin)!
+    for (const e of await scannedEyes(body)) {
+      const fit = fitEye(e.side, e.scleraMesh.positions, e.corneaMesh.positions)
+      const gains = lidGains(face, o.skin, o.margins, skin.positions, [{ side: e.side, x: fit.centre[0] }])
+      const fissure = (pitch: number): number => {
+        const ch = lidGazeChannels(data, [{ side: e.side, pitch, pupilDistance: eyeShape(fit.radius).pupilDistance }], gains)
+        const out = new Float32Array(skin.positions.length)
+        displacePart(face, o.skin, skin.positions, ch, out)
+        applyLidDrop(face, o.skin, ch, out)
+        const near = (list: number[]) => list.reduce((b, v) => (Math.abs(out[v * 3]! - fit.centre[0]) < Math.abs(out[b * 3]! - fit.centre[0]) ? v : b), list[0]!)
+        return out[near(o.margins[`upperLid${e.side}`]) * 3 + 1]! - out[near(o.margins[`lowerLid${e.side}`]) * 3 + 1]!
+      }
+      const f0 = fissure(0)
+      // 文献：睑裂 10.8 mm → −20° 时 8.7 mm、−30° 时 7.8 mm / literature: fissure 10.8 mm → 8.7 mm at −20°, 7.8 mm at −30°
+      expect(Math.abs(fissure(-20) / f0 - 8.7 / 10.8)).toBeLessThan(0.06)
+      // 女性下睑的场每单位只动约 1.3 mm，反用到两倍（LID_DROP_MAX）还差一点：−30° 时比文献窄约 15% / the female lower-lid field moves only about 1.3 mm per unit, and reversed up to twice (LID_DROP_MAX) it falls a little short: about 15% narrower than the literature at −30°
+      if (body === 'male') expect(Math.abs(fissure(-30) / f0 - 7.8 / 10.8)).toBeLessThan(0.05)
+      else expect(fissure(-30) / f0).toBeGreaterThan(0.58)
+      // 向上看时睑裂变大 / looking up the fissure widens
+      expect(fissure(20)).toBeGreaterThan(f0)
+    }
+  })
+})
+
+describe('blinks, microsaccades and the pupil', () => {
+  it('the blink schedule is deterministic for a seed', () => {
+    const a = new EyeLife(7), b = new EyeLife(7), c = new EyeLife(8)
+    const ts = Array.from({ length: 400 }, (_, i) => i * 0.3)
+    expect(ts.map((t) => a.blinkAt(t))).toEqual(ts.map((t) => b.blinkAt(t)))
+    expect(ts.map((t) => a.offsetAt(t))).toEqual(ts.map((t) => b.offsetAt(t)))
+    expect(c.blinkAt(119)).toBeGreaterThanOrEqual(0)
+    expect(c.blinks.slice(0, 5)).not.toEqual(a.blinks.slice(0, 5))
+    // 查询的次序不改变结果 / the order of queries does not change the result
+    const d = new EyeLife(7)
+    d.blinkAt(100)
+    expect(ts.map((t) => d.blinkAt(t))).toEqual(ts.map((t) => a.blinkAt(t)))
+  })
+
+  it('blinks come at the cited rate, never closer than the minimum interval', () => {
+    const life = new EyeLife(1)
+    life.blinkAt(1200)
+    const n = life.blinks.filter((t) => t < 1200).length
+    expect(n / 20).toBeGreaterThan(BLINK.ratePerMin - 2)
+    expect(n / 20).toBeLessThan(BLINK.ratePerMin + 2)
+    for (let i = 1; i < life.blinks.length; i++) expect(life.blinks[i]! - life.blinks[i - 1]!).toBeGreaterThanOrEqual(BLINK.minInterval)
+  })
+
+  it('a blink closes faster than it opens and lasts about 0.3 s', () => {
+    expect(blinkCurve(0)).toBe(0)
+    expect(blinkCurve(BLINK.close + BLINK.closed / 2)).toBe(1)
+    expect(blinkCurve(BLINK_SECONDS + 0.01)).toBe(0)
+    expect(BLINK_SECONDS).toBeCloseTo(0.3, 6)
+    const speed = (t0: number, t1: number): number => {
+      let m = 0
+      for (let t = t0; t < t1; t += 0.001) m = Math.max(m, Math.abs(blinkCurve(t + 0.001) - blinkCurve(t)) / 0.001)
+      return m
+    }
+    // Kwon 2013：峰速 243 对 157 mm/s，约 1.5 倍 / Kwon 2013: peak speeds 243 against 157 mm/s, about 1.5 times
+    expect(speed(0, BLINK.close) / speed(BLINK.close + BLINK.closed, BLINK_SECONDS)).toBeCloseTo(1.5, 1)
+  })
+
+  it('microsaccades stay within half a degree', () => {
+    const life = new EyeLife(3)
+    for (let t = 0; t < 60; t += 0.05) {
+      const o = life.offsetAt(t)
+      expect(Math.hypot(o.yaw, o.pitch)).toBeLessThanOrEqual(MICROSACCADE.bound + 1e-9)
+    }
+    expect(life.saccades.filter((s) => s.t < 60).length / 60).toBeGreaterThan(0.6)
+  })
+
+  it('a blink merges with the expression by maximum', () => {
+    const face = JSON.parse(readFileSync(resolve(ROOT, 'public/anatomy/male/face.json'), 'utf8')) as FaceData
+    const ch = addBlink({ orbicularis_oculi_palpebral_upper_L: 0.9 }, face, 0.5)
+    expect(ch['orbicularis_oculi_palpebral_upper_L']).toBe(0.9)
+    expect(ch['orbicularis_oculi_palpebral_upper_R']).toBe(0.5)
+    expect(addBlink({}, face, 1)['orbicularis_oculi_palpebral_upper_L']).toBe(1)
+    expect(addBlink({}, face, 0)).toEqual({})
+  })
+
+  it('the pupil follows the pain model', () => {
+    expect(pupilForPain(0)).toBeCloseTo(4 * MM, 9)
+    // 参考强度 6 时扩大 28% / 28% wider at the reference intensity 6
+    expect(pupilForPain(6)).toBeCloseTo(4 * 1.28 * MM, 9)
+    expect(pupilForPain(100)).toBe(EYE.pupilRange[1])
+    expect(pupilTarget({ pain: { level: 7, hold: true }, stimNow: null })).toEqual({ target: pupilForPain(7), direct: false })
+    expect(pupilTarget({ pain: { level: 7, hold: false }, stimNow: null }).target).toBeCloseTo(4 * MM, 9)
+    expect(pupilTarget({ pain: { level: 0, hold: false }, stimNow: { running: true, sample: { autonomic: { pupil: 4.6 } } } })).toEqual({ target: 4.6 * MM, direct: true })
+    // 扩大快、回缩慢 / widening is fast, narrowing slow
+    const life = new EyeLife(1)
+    const up = life.stepPupil(0.3, 6 * MM)
+    const life2 = new EyeLife(1)
+    life2.stepPupil(0, 6 * MM)
+    const down = life2.stepPupil(0.3, 4 * MM)
+    expect((up - 4 * MM) / (2 * MM)).toBeGreaterThan((6 * MM - down) / (2 * MM))
+  })
+
+  it('blink=0 round-trips', () => {
+    const p = parseUrl('?skin=1&blink=0')
+    expect(p.state.blink).toBe(false)
+    expect(formatUrl(p.state, [])).toBe('skin=1&blink=0')
+    expect(parseUrl('?blink=1').state.blink).toBeUndefined()
+    expect(parseUrl('?blink=x').warnings.length).toBe(1)
   })
 })
