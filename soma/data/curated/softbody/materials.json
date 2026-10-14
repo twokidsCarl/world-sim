@@ -149,6 +149,41 @@
       "zh": "没有快的支路：forearm2026 表 4 里脂肪只有一项 τ = 700 s。",
       "en": "No fast branch: fat has a single term with τ = 700 s in forearm2026 Table 4."
      }
+    },
+    "ogdenAlternative": {
+     "source": "mihai2015",
+     "where": "Table 4, lean fat, Ogden4: C1 = 2342, m1 = 1; C2 = 4083, m2 = −1; C3 = −418, m3 = 2; C4 = −1337, m4 = −2 (Pa); strain-energy form Σ C_p/(2m_p)·(λ1^{2m_p} + λ2^{2m_p} + λ3^{2m_p} − 3) from the model table of that paper",
+     "derivation": "small-strain shear modulus μ0 = Σ C_p·m_p = 97 Pa (the b → 0 limit of its μ0 formula); nominal uniaxial stress at λ = 0.8 is −302 Pa, a secant modulus of 1.5 kPa, and the tangent there is 4.6 kPa",
+     "why": {
+      "zh": "forearm2026 筛选了三种脂肪模型：该文的 Fat2 就是这一组（它引 Mihai 等 2015）。含 Fat2 的组合在 P1 拟合最好（Skin2–Fat2，R² = 0.972），在 P3 也最好（Skin2–Fat2–Muscle3，R² = 0.983，峰值力误差 0.044，表 10）；第二阶段用的 Fat1（neo-Hookean μ = 0.53 kPa）在 P1 和 P2 都落在实验曲线之下（表 7、8：Skin2–Fat1 在 P1 峰值力误差 0.759，Skin2–Fat1–Muscle3 在 P2 为 0.352）。脂肪在压缩下强烈变硬，单个 κ 的四次项拟合不了（最小二乘把 κ 推到上限仍差 30%），所以求解器加了 Ogden 型偏量能。",
+      "en": "forearm2026 screened three fat models; its Fat2 is this set (it cites Mihai et al. 2015). Fat2 combinations fitted best at P1 (Skin2–Fat2, R² = 0.972) and at P3 (Skin2–Fat2–Muscle3, R² = 0.983, peak-force error 0.044, Table 10); Fat1 of phase 2 (neo-Hookean μ = 0.53 kPa) stays below the measured curves at P1 and P2 (Tables 7 and 8: Skin2–Fat1 peak-force error 0.759 at P1, Skin2–Fat1–Muscle3 0.352 at P2). Fat stiffens strongly in compression, which a single quartic κ cannot fit (least squares drives κ to its bound and still misses by 30 %), so the solver gained an Ogden-type deviatoric energy."
+     },
+     "discrepancy": {
+      "zh": "forearm2026 表 4 印的是 C = {2.34, 4.08, −0.42, 1.34} kPa，第四项的符号与 Mihai 原文（−1337 Pa）相反；按印出的符号 Σ C_p·m_p = −5.26 kPa（不稳定），所以这里用原文。该文实际在 Abaqus 里用了哪一组，打开的文字里看不出。",
+      "en": "Table 4 of forearm2026 prints C = {2.34, 4.08, −0.42, 1.34} kPa, the sign of the fourth term opposite to Mihai's original (−1337 Pa); with the printed sign Σ C_p·m_p = −5.26 kPa (unstable), so the original is used here. Which set that paper actually ran in Abaqus cannot be told from the text opened."
+     },
+     "strainRange": {
+      "zh": "Mihai 等拟合的是 3.5% 剪切叠加最多 40% 压缩或拉伸的数据；更大的应变是外推。",
+      "en": "Mihai et al. fitted data of 3.5 % shear superposed on up to 40 % compression or tension; larger strains are an extrapolation."
+     },
+     "values": {
+      "c": [
+       2342,
+       4083,
+       -418,
+       -1337
+      ],
+      "m": [
+       1,
+       -1,
+       2,
+       -2
+      ]
+     },
+     "status": {
+      "zh": "没有启用（第三阶段的试算）：在本模型的前臂上它让压入力更低（3.2 mm 时 0.673 N，Fat1 为 0.909 N，实测 1.43 N）；小应变时它比 Fat1 软 5.5 倍，压到 20% 才与 Fat1 相当。要用时在 MixOptions.ogden 里按材料 id 给出这一组。",
+      "en": "Not active (a phase-3 trial): on this model's forearm it lowers the indentation force (0.673 N at 3.2 mm against 0.909 N with Fat1; measured 1.43 N); at small strain it is 5.5 times softer than Fat1 and matches it only at about 20 % compression. To use it, pass this set by material id in MixOptions.ogden."
+     }
     }
    },
    "stiffening": 6
@@ -577,6 +612,16 @@
    "note": {
     "zh": "十名健康男性（25–37 岁），半球形压头（半径 10 mm），进给 5 ± 1 mm/s；反演模型是半径和高都为 110 mm 的均质圆柱。",
     "en": "Ten healthy males (25–37 years), hemispherical tip (radius 10 mm), feed 5 ± 1 mm/s; the inverse model is a homogeneous cylinder with radius and height 110 mm."
+   }
+  },
+  "mihai2015": {
+   "citation": "Mihai LA, Chin L, Janmey PA, Goriely A. A comparison of hyperelastic constitutive models applicable to brain and fat tissues. J R Soc Interface 2015;12:20150486. doi:10.1098/rsif.2015.0486",
+   "url": "https://europepmc.org/article/PMC/PMC4614457",
+   "licence": "CC BY 4.0",
+   "opened": "full text XML: the model table (Ogden strain-energy form), the μ0 formula, Table 4 (lean fat)",
+   "note": {
+    "zh": "离体人脂肪（瘦人）在 3.5% 剪切叠加压缩/拉伸下的剪切模量拟合。",
+    "en": "Fits to the shear modulus of excised human fat (lean) under 3.5 % shear superposed on compression or tension."
    }
   }
  },

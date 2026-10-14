@@ -22,6 +22,7 @@ import { couple, press, surfaceSamples } from '../../src/softbody/press.ts'
 import { OUT, ROOT, build, loadBody, readMaterials, withRest0 } from './build.ts'
 import { bodyInside } from './cage.ts'
 import { blockDomain, cantilever, framesToWithin, punch } from './numerics.ts'
+import { type PhantomCase, phantom } from './phantom.ts'
 import { type Site, buildSite, linkToCoarse } from './site.ts'
 
 const DIR = join(OUT, 'validation')
@@ -648,10 +649,207 @@ async function breast(): Promise<Record<string, unknown>> {
   return out
 }
 
+// ── 第三阶段：站立平衡（零重力参考的反解）/ phase 3: standing equilibrium (the inverse solve for the zero-gravity reference) ──
+async function equilibrium(): Promise<Record<string, unknown>> {
+  const t0 = performance.now()
+  const L = await load('male', 0.027, undefined, true)
+  const out: Record<string, unknown> = { cell: 0.027, nodes: L.soft.data.nodeCount, tets: L.soft.data.tetCount, inverseSolve: L.rest0, inverseSeconds: r3((performance.now() - t0) / 1000) }
+  // 以反解出来的无重力形状为参考、加完整重力，走到静止：结点和皮肤顶点离发布的网格多远
+  // with the solved unloaded shape as reference and full gravity, run to rest: how far nodes and skin vertices end up from the shipped mesh
+  const sb = newBody(L, 12, { useRest0: true }, { damping: 12 })
+  const frames = sb.solver.settle(DT, 2e-5, 3000)
+  let worst = 0, sum = 0, cnt = 0
+  for (let i = 0; i < L.soft.data.nodeCount; i++) {
+    if (sb.solver.isPinned(i)) continue
+    const d = Math.hypot(sb.solver.x[i * 3]! - L.soft.nodes[i * 3]!, sb.solver.x[i * 3 + 1]! - L.soft.nodes[i * 3 + 1]!, sb.solver.x[i * 3 + 2]! - L.soft.nodes[i * 3 + 2]!)
+    worst = Math.max(worst, d)
+    sum += d
+    cnt++
+  }
+  // 皮肤顶点：x 插值到嵌入点，与发布的位置比 / skin vertices: x interpolated to the embedded points, against the shipped positions
+  const q = [0, 0, 0]
+  let skinWorst = 0, skinSum = 0, skinCnt = 0
+  const sp = L.skinPoints
+  for (let i = 0; i < sp.tet.length; i++) {
+    if (sp.bary[i * 4]! === 0 && sp.bary[i * 4 + 1]! === 0 && sp.bary[i * 4 + 2]! === 0 && sp.bary[i * 4 + 3]! === 0) continue
+    // 嵌入是对发布的笼子算的：用 x 插值得到的就是该顶点此刻的位置 / the embedding is against the shipped cage: interpolating x gives the vertex's present position
+    sb.solver.pointPosition(sp, i, q)
+    let rx = 0, ry = 0, rz = 0
+    for (let k = 0; k < 4; k++) {
+      const n = L.soft.tets[sp.tet[i]! * 4 + k]! * 3, w = sp.bary[i * 4 + k]!
+      rx += w * L.soft.nodes[n]!
+      ry += w * L.soft.nodes[n + 1]!
+      rz += w * L.soft.nodes[n + 2]!
+    }
+    const d = Math.hypot(q[0]! - rx, q[1]! - ry, q[2]! - rz)
+    skinWorst = Math.max(skinWorst, d)
+    skinSum += d
+    skinCnt++
+  }
+  let restShift = 0
+  for (let i = 0; i < L.soft.nodes.length; i += 3) restShift = Math.max(restShift, Math.hypot(L.soft.rest0![i]! - L.soft.nodes[i]!, L.soft.rest0![i + 1]! - L.soft.nodes[i + 1]!, L.soft.rest0![i + 2]! - L.soft.nodes[i + 2]!))
+  out.forwardUnderGravity = { frames, nodeLargestMm: mm(worst), nodeMeanMm: mm(sum / cnt), skinLargestMm: mm(skinWorst), skinMeanMm: mm(skinSum / skinCnt), largestReferenceShiftMm: mm(restShift), volumeRatioByMaterial: volumesByMaterial(L, sb), maxSpeed: sb.solver.maxSpeed() }
+  console.log('equilibrium', JSON.stringify(out))
+  return out
+}
+
+/** 渲染用的球面（经纬网格）/ a sphere for rendering (latitude–longitude mesh) */
+function sphereItem(c: [number, number, number], r: number, color: [number, number, number]): RenderItem {
+  const pos: number[] = [], idx: number[] = []
+  const nu = 24, nv = 12
+  for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++) {
+    const th = (j / nv) * Math.PI, ph = (i / nu) * 2 * Math.PI
+    pos.push(c[0] + r * Math.sin(th) * Math.cos(ph), c[1] + r * Math.cos(th), c[2] + r * Math.sin(th) * Math.sin(ph))
+  }
+  for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) {
+    const a = j * (nu + 1) + i, b = a + nu + 1
+    idx.push(a, b, a + 1, a + 1, b, b + 1)
+  }
+  return { positions: Float32Array.from(pos), indices: Uint32Array.from(idx), color }
+}
+
+// ── 第三阶段：接触（球形压头、平板）、左右对称、渲染 / phase 3: contact (spherical probe, flat plate), left–right symmetry, renders ──
+async function contact(): Promise<Record<string, unknown>> {
+  const out: Record<string, unknown> = {}
+  const L = await load('male', 0.027)
+  const { body, rig } = L
+  const rigBin = (await loadBody('male')).rigBin
+  const inBody = bodyInside(L.skin)
+  const at = (v: number): { site: [number, number, number]; normal: [number, number, number] } => ({ site: [L.skin.positions[v * 3]!, L.skin.positions[v * 3 + 1]!, L.skin.positions[v * 3 + 2]!], normal: [L.normals[v * 3]!, L.normals[v * 3 + 1]!, L.normals[v * 3 + 2]!] })
+  const fa = forearmSites(L).proximalThird!
+  // 男性胸部：乳头区，按 T4 的高度、离中线 10 cm 估计 / male chest, nipple region, estimated from the height of T4 and 10 cm from the midline
+  const t4 = L.rig.joints.find((j) => j.id === 'T4')!.center
+  let chestV = -1, bz = -Infinity
+  for (const v of subset(L, (i, x, y) => Math.abs(x - 0.1) < 0.01 && Math.abs(y - t4[1]) < 0.015 && L.normals[i * 3 + 2]! > 0.6).verts) if (L.skin.positions[v * 3 + 2]! > bz) (bz = L.skin.positions[v * 3 + 2]!), (chestV = v)
+  const views: ReturnType<typeof render>[] = []
+  const probeRow = (name: string, v: number, R: number, forces: number[], cells: (number | undefined)[]): Record<string, unknown> => {
+    const { site, normal } = at(v)
+    const res: Record<string, unknown> = { site, normal }
+    for (const cell of cells) {
+      const S = buildSite(body, rig, rigBin, site, normal, R, { ...(cell ? { cell } : {}), inBody })
+      const t0 = performance.now()
+      const rows = forces.map((f) => pressRow(press(S.domain, { kind: 'sphere', radiusMm: R * 1000 }, { forceN: f })) as { depthMm: number; forceN: number; peakPressureKPa: number; flags: string[] })
+      res[`sphere${R * 1000}mmCell${mm(S.domain.cell)}mm`] = { tissueThicknessMm: mm(S.domain.thickness ?? 0), tets: S.stats.tets, solveSeconds: r3((performance.now() - t0) / 1000), rows }
+      console.log(name, R, cell, JSON.stringify(rows.map((r) => [r.depthMm, r.forceN, r.peakPressureKPa, r.flags])))
+    }
+    return res
+  }
+  out.forearmSphere = probeRow('forearm', fa, 0.005, [1, 2, 5], [undefined, 0.0025])
+  out.chestSphere = probeRow('chest', chestV, 0.005, [1, 2, 5], [undefined])
+  // 平板：半径 30 mm，力控 / the plate: radius 30 mm, force control
+  {
+    const { site, normal } = at(fa)
+    const S = buildSite(body, rig, rigBin, site, normal, 0.03, { cell: 0.006, inBody })
+    out.forearmPlate = { cellMm: 6, rows: [2, 5].map((f) => pressRow(press(S.domain, { kind: 'plate', radiusMm: 30 }, { forceN: f }))) }
+    console.log('plate', JSON.stringify(out.forearmPlate))
+  }
+  // 左右对称：右前臂是左前臂的镜像（README），镜像点上的力应当相同 / left–right symmetry: the right forearm is a mirrored left (README), so mirrored sites must give the same force
+  {
+    const { site } = at(fa)
+    const v = nearestSkinVertex(L, [-site[0], site[1], site[2]], [0, 0, 1])
+    const r = at(v)
+    const SL = buildSite(body, rig, rigBin, site, at(fa).normal, 0.005, { inBody }), SR = buildSite(body, rig, rigBin, r.site, r.normal, 0.005, { inBody })
+    const fl = press(SL.domain, { kind: 'sphere', radiusMm: 5 }, { depthMm: 3 }), fr = press(SR.domain, { kind: 'sphere', radiusMm: 5 }, { depthMm: 3 })
+    out.leftRight = { siteL: site, siteR: r.site, mirrorMismatchMm: mm(Math.hypot(r.site[0] + site[0], r.site[1] - site[1], r.site[2] - site[2])), forceL: fl.forceN, forceR: fr.forceN, peakKPaL: fl.peakPressureKPa, peakKPaR: fr.peakPressureKPa }
+    console.log('left-right', JSON.stringify(out.leftRight))
+  }
+  // 渲染：压入前、压入后（5 N），压头画成灰球 / renders: before and after pressing (5 N), the probe drawn as a grey sphere
+  for (const [name, v] of [['forearm', fa], ['chest', chestV]] as const) {
+    const { site, normal } = at(v)
+    const S = buildSite(body, rig, rigBin, site, normal, 0.005, { inBody })
+    const r = press(S.domain, { kind: 'sphere', radiusMm: 5 }, { forceN: 5 })
+    // press() 结束时压头已撤掉，状态仍是压着的：按最终深度重新放一个球画出来 / press() removes the probe at the end but the state is still pressed: draw a sphere at the final depth
+    const n = S.domain.inward, dep = r.depthMm * 1e-3 - 0.005
+    const centre: [number, number, number] = [site[0] + n[0] * dep, site[1] + n[1] * dep, site[2] + n[2] * dep]
+    const patch = dentPatch(S, L.skin, 0.03, 0.0015)
+    const view = { yaw: 35, pitch: 25, center: site, halfHeight: 0.035, width: 520, height: 520 }
+    const side = { ...view, yaw: name === 'forearm' ? 90 : 90, pitch: 0 }
+    const flat = patchItem(patch.rest, patch.rest, patch.indices, 0.004), dent = patchItem(patch.rest, patch.pos, patch.indices, 0.004)
+    const ball = sphereItem(centre, 0.005, [150, 150, 160])
+    views.push(render([flat], view), render([dent, ball], view), render([dent, ball], side))
+    out[`${name}Render`] = { depthMm: r.depthMm, forceN: r.forceN, peakPressureKPa: r.peakPressureKPa }
+  }
+  const RENDERS = join(ROOT, 'data', 'raw', 'pipeline-scratch', 'softbody3')
+  mkdirSync(RENDERS, { recursive: true })
+  sheet(views.slice(0, 3), 3).save(join(RENDERS, 'forearm-sphere-5N-before-after.png'))
+  sheet(views.slice(3, 6), 3).save(join(RENDERS, 'male-chest-sphere-5N-before-after.png'))
+  return out
+}
+
+// ── 第三阶段：一万帧的稳定性和各区域体积 / phase 3: ten thousand frames of stability and volume by region ──
+async function stability(): Promise<Record<string, unknown>> {
+  const L = await load('male', 0.027)
+  const sb = newBody(L)
+  const frames = Number(process.env.SOFTBODY_FRAMES ?? 10000)
+  let worst = 0, finite = true, worstVolume = 0
+  const t0 = performance.now()
+  const volDev = (): number => Math.max(...Object.values(volumesByMaterial(L, sb)).map((v) => Math.abs(v - 1)))
+  for (let f = 0; f < frames; f++) {
+    const t = f * DT
+    const g = (2 * Math.PI * t) / 7
+    sb.step(DT, jointFrames(L.rig.joints, { hip_L: [0.6 * Math.sin(3 * t), 0, 0], elbow_R: [0.9 * (1 - Math.cos(4 * t)), 0], knee_L: [0.5 * (1 - Math.cos(3 * t))] }), [9.81 * Math.sin(g) * 0.7, -9.81 * Math.cos(g), 9.81 * Math.sin(g) * 0.7])
+    const m = maxDisplacement(sb)
+    if (!Number.isFinite(m)) {
+      finite = false
+      break
+    }
+    worst = Math.max(worst, m)
+    if (f % 100 === 99) worstVolume = Math.max(worstVolume, volDev())
+  }
+  const seconds = (performance.now() - t0) / 1000
+  // 回到站立、静止姿势：位移应回到零附近，体积回到原值 / back to standing in the rest pose: displacement returns near zero, volumes to their values
+  for (let f = 0; f < 600; f++) sb.step(DT, jointFrames(L.rig.joints, {}), [0, -9.81, 0])
+  const out = { frames, substeps: frames * sb.solver.substeps, finite, largestDisplacementMm: mm(worst), largestVolumeDeviationDuringRun: r3(worstVolume), afterReturn: { residualMm: mm(maxDisplacement(sb)), volumeRatioByMaterial: volumesByMaterial(L, sb), maxSpeed: sb.solver.maxSpeed() }, seconds: r3(seconds), msPerFrame: r3((seconds * 1000) / frames) }
+  console.log('stability', JSON.stringify(out))
+  return out
+}
+
+// ── 第三阶段：CPU 上每帧的耗时 / phase 3: milliseconds per frame on the CPU ──
+async function timing(): Promise<Record<string, unknown>> {
+  const rows: unknown[] = []
+  const { body, rig, rigBin } = await loadBody('male')
+  const time = (label: string, sb: { step: (dt: number) => void }, nodes: number, tets: number, substeps: number): void => {
+    for (let f = 0; f < 5; f++) sb.step(DT)
+    const t0 = performance.now(), n = 60
+    for (let f = 0; f < n; f++) sb.step(DT)
+    const ms = (performance.now() - t0) / n
+    rows.push({ cage: label, nodes, tets, substeps, msPerFrame: r3(ms), msPerSubstep: r3(ms / substeps) })
+    console.log('timing', JSON.stringify(rows[rows.length - 1]))
+  }
+  for (const [label, cell, region] of [['whole body 27 mm', 0.027, undefined], ['whole body 20 mm', 0.02, undefined], ['chest region 14 mm', 0.014, 'chest'], ['forearm region 12 mm', 0.012, 'forearm_L']] as const) {
+    const r = build(body, rig, rigBin, cell, region)
+    const soft = decodeSoft(r.json, r.bin)
+    time(label, new SoftBody(soft, { substeps: 10, damping: readMaterials().damping.rate }), soft.data.nodeCount, soft.data.tetCount, 10)
+  }
+  const L = await load('male', 0.027)
+  const inBody = bodyInside(L.skin)
+  const v = forearmSites(L).proximalThird!
+  for (const [R, cell] of [[0.013, 0.0043], [0.005, undefined]] as const) {
+    const S = buildSite(body, rig, rigBin, [L.skin.positions[v * 3]!, L.skin.positions[v * 3 + 1]!, L.skin.positions[v * 3 + 2]!], [L.normals[v * 3]!, L.normals[v * 3 + 1]!, L.normals[v * 3 + 2]!], R, { ...(cell ? { cell } : {}), inBody })
+    time(`press() site cage, probe ${R * 1000} mm, cell ${mm(S.domain.cell)} mm`, S.domain.solver, S.stats.nodes, S.stats.tets, S.domain.solver.substeps)
+  }
+  return { cpu: 'Bun, one thread, machine shared with other jobs', rows }
+}
+
+// ── 第三阶段：乳房体模（不读女性数据）/ phase 3: the breast phantom (no female data read) ──
+async function breastPhantom(): Promise<Record<string, unknown>> {
+  const base: PhantomCase = { volumeMl: 262, cell: 0.014, base: 'bonded', shear: 357.1 }
+  const cases: [string, Partial<PhantomCase>][] = [
+    ['262 mL, 14 mm, bonded (as the phase-2 model)', {}], ['cell 7 mm', { cell: 0.007 }], ['cell 5 mm', { cell: 0.005 }],
+    ['shear 166.6 Pa (softest published)', { shear: 166.6 }], ['base sliding (frictionless, bilateral)', { base: 'sliding' }],
+    ['supine gravity tilted 45° from the wall normal', { tiltDeg: 45 }], ['sliding and tilted 45°', { base: 'sliding', tiltDeg: 45 }],
+    ['600 mL', { volumeMl: 600 }], ['600 mL, tilted 45°', { volumeMl: 600, tiltDeg: 45 }],
+  ]
+  const rows = cases.map(([label, c]) => ({ label, ...phantom({ ...base, ...c }) }))
+  for (const r of rows) console.log('phantom', JSON.stringify(r))
+  return { what: 'hemisphere of breast tissue on a rigid wall, gravity from prone (away from the wall) to supine (towards it, optionally tilted); nipple = top of the dome; displacement prone → supine', published: { meanMm: 69.7, source: 'proneSupine2016' }, rows }
+}
+
 if (import.meta.main) {
   mkdirSync(DIR, { recursive: true })
   const which = process.argv[2] ?? 'all'
-  const groups: Record<string, () => Promise<Record<string, unknown>>> = { numerics, body: wholeBody, forearm, abdomen, breast }
+  // 'breast' 读女性身体：女性身体在重建时不要跑它（'all' 也会跑它）/ 'breast' reads the female body: do not run it while the female body is being rebuilt ('all' runs it too)
+  const groups: Record<string, () => Promise<Record<string, unknown>>> = { numerics, body: wholeBody, forearm, abdomen, breast, equilibrium, contact, stability, timing, breastPhantom }
   for (const [name, run] of Object.entries(groups)) {
     if (which !== 'all' && which !== name) continue
     const t0 = performance.now()

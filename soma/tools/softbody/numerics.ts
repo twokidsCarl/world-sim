@@ -47,6 +47,8 @@ export function topSamples(b: Block, centre: [number, number], radius: number, s
   for (let i = -k; i <= k; i++) for (let j = -k; j <= k; j++) {
     const x = centre[0] + (i + 0.5) * spacing, z = centre[1] + (j + 0.5) * spacing
     if (Math.hypot(x - centre[0], z - centre[1]) > radius) continue
+    // 方块之外的点不要（重心坐标会外推）/ points outside the block are dropped (their barycentric coordinates would extrapolate)
+    if (x < 0 || z < 0 || x > nx * c || z > nz * c) continue
     const ci = Math.min(nx - 1, Math.max(0, Math.floor(x / c))), ck = Math.min(nz - 1, Math.max(0, Math.floor(z / c)))
     const cellIndex = ci + nx * (ny - 1 + ny * ck)
     let best = -1, bw = -Infinity

@@ -24,6 +24,23 @@
    "caveat": {
     "zh": "单个受试者；该点在前臂上的确切位置没有在打开的文字里给出，本项目取前臂掌侧中段。",
     "en": "One subject; the exact position of the site on the forearm is not given in the text opened, so the mid volar forearm is used here."
+   },
+   "paperModel": {
+    "where": "Table 8 (P2, 27 skin–fat–muscle combinations in the paper's own subject-specific model); section 2.3 (site selection)",
+    "selection": {
+     "zh": "P2 选在手–前臂体表脂肪最厚的区域；受试者坐着，前臂放在水平支撑台上；模型里支撑面、模型底面和肱骨近端完全固定。",
+     "en": "P2 is the region of greatest fat thickness on the hand–forearm surface; the subject sat with the forearm on a horizontal support; in the model the support plane, the model base and the proximal humerus are fully fixed."
+    },
+    "peakForceErrorBySet": {
+     "Skin2–Fat1–Muscle3 (the phase-2 set of this project)": 0.352,
+     "Skin2–Fat2–Muscle3": 0.286,
+     "Skin3–Fat2–Muscle3 (the paper's transfer set)": 0.216,
+     "Skin3–Fat3–Muscle3 (best at P2)": 0.037
+    },
+    "note": {
+     "zh": "表中是绝对误差，正负号没有给出。即使在该文自己的解剖几何上，本项目第二阶段的材料组合在 P2 也差 35%。",
+     "en": "The table gives absolute errors without sign. Even on the paper's own anatomy, the material set of phase 2 of this project misses P2 by 35 %."
+    }
    }
   },
   {
@@ -46,6 +63,22 @@
    "caveat": {
     "zh": "同上。",
     "en": "As above."
+   },
+   "paperModel": {
+    "where": "Table 10 (P3, post hoc screening of all 27 combinations) and Table 9",
+    "selection": {
+     "zh": "P3 选在肌肉最厚的区域。",
+     "en": "P3 is the region of greatest muscle thickness."
+    },
+    "peakForceErrorBySet": {
+     "Skin2–Fat1–Muscle3 (the phase-2 set of this project)": 0.057,
+     "Skin2–Fat2–Muscle3 (best at P3)": 0.044,
+     "Skin3–Fat2–Muscle3 (the paper's transfer set)": 0.192
+    },
+    "note": {
+     "zh": "在该文的几何上，本项目的材料组合在 P3 差 5.7%；本模型在自己的前臂上差 36%，所以 P3 的差距来自几何（受试者与本模型的层厚、到骨的距离、曲率），不是材料。",
+     "en": "On the paper's geometry the material set of this project misses P3 by 5.7 %; this model misses it by 36 % on its own forearm, so the gap at P3 comes from geometry (layer thicknesses, depth to bone and curvature of the subject against this model), not from the material."
+    }
    }
   },
   {
@@ -179,6 +212,10 @@
      166.6,
      357.1
     ]
+   },
+   "phase3": {
+    "zh": "第三阶段没有在女性身体上重跑（女性身体正在重建，按要求不读）。原因的分析用不读人体数据的体模（tools/softbody/phantom.ts），结果在 validation-report.json 的 ours.breastPhantom。",
+    "en": "Not rerun on the female body in phase 3 (the female body is being rebuilt and was not to be read). The causes were analysed on a phantom that reads no body data (tools/softbody/phantom.ts); results under ours.breastPhantom of validation-report.json."
    }
   }
  ],

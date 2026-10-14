@@ -186,6 +186,12 @@ export interface MixOptions {
   scale?: Record<string, number>
   /** 覆盖某种材料的 κ / overrides κ of a material */
   kappa?: Record<string, number>
+  /**
+   * 按材料 id 给出 Ogden 型偏量能（取代该材料的 neo-Hookean 偏量部分，young 只定体积项）；false = 连材料表里给的也不用。
+   * Ogden-type deviatoric energy by material id (replacing that material's neo-Hookean deviatoric part; young then sets the
+   * volume term only); false = not even those given in the material table.
+   */
+  ogden?: Record<string, { c: number[]; m: number[] }> | false
 }
 
 /**
@@ -213,6 +219,14 @@ export function solverInput(soft: LoadedSoft, mix: MixOptions = {}): SolverInput
   const stiffening = new Float32Array(T), branchModulus = new Float32Array(T), branchTau = new Float32Array(T).fill(1)
   const kap = (m: (typeof mats)[number]): number => (mix.stiffening === false ? 0 : (mix.kappa?.[m.id] ?? m.stiffening ?? 0))
   const fibre = new Float32Array(T * 3), fibreModulus = new Float32Array(T), muscle = new Int32Array(T).fill(-1), stiff = new Float32Array(T).fill(1)
+  // Ogden 型材料：每种一组项 / Ogden-type materials: one set of terms each
+  const ogdenOf = new Map<number, number>(), terms: { c: number[]; m: number[] }[] = []
+  const extra = mix.ogden
+  if (extra !== false) mats.forEach((m, i) => {
+    const q = extra?.[m.id] ?? m.ogden
+    if (q && !m.rigid) (ogdenOf.set(i, terms.length), terms.push(q))
+  })
+  const ogMat = new Int16Array(T).fill(-1), ogScale = new Float32Array(T)
   for (let e = 0; e < T; e++) {
     const m = mats[soft.tetMaterial[e]!]!
     if (m.rigid) continue
@@ -223,9 +237,17 @@ export function solverInput(soft: LoadedSoft, mix: MixOptions = {}): SolverInput
     // stiffness gets a higher floor than mass ("ghost stiffness"): nodes of tetrahedra almost wholly outside the body are light and soft and would be flung out by many centimetres in fast motion
     const young = Math.max(STIFF_FILL, fill) * ((1 - fs) * ym + fs * ys)
     const l = lame(young, m.poisson)
+    const og = ogdenOf.get(soft.tetMaterial[e]!)
+    if (og !== undefined) {
+      // Ogden 材料：偏量部分由 Ogden 项给出（按体内比例和非皮肤比例加权），μ 只留混入的皮肤；λ 仍按整个混合物
+      // an Ogden material: the deviatoric part comes from the Ogden terms (weighted by fill and the non-skin share), μ keeps only the blended skin; λ still from the whole mixture
+      ogMat[e] = og
+      ogScale[e] = Math.max(STIFF_FILL, fill) * (1 - fs) * (mix.scale?.[m.id] ?? 1)
+      l.mu = lame(Math.max(STIFF_FILL, fill) * fs * ys, m.poisson).mu
+    }
     // 混合物的四次项和 Maxwell 支路同样按体积比例加权（Voigt）：κ 按 μ 加权，τ 按支路模量加权
     // the quartic term and the Maxwell branch of the mixture are volume-weighted likewise (Voigt): κ weighted by μ, τ by branch modulus
-    const wm = (1 - fs) * ym, ws = fs * ys
+    const wm = og !== undefined ? 0 : (1 - fs) * ym, ws = fs * ys
     if (wm + ws > 0) stiffening[e] = (wm * kap(m) + ws * (fs ? kap(skinMat!) : 0)) / (wm + ws)
     if (mix.viscous !== false) {
       const gm = wm * (m.branchRatio ?? 0), gs = ws * (skinMat?.branchRatio ?? 0)
@@ -259,7 +281,7 @@ export function solverInput(soft: LoadedSoft, mix: MixOptions = {}): SolverInput
     const shear = m.rigid ? Infinity : (m.young * (mix.scale?.[m.id] ?? 1)) / (2 * (1 + m.poisson))
     return anchorStiffness(shear, soft.data.lattice.cell, soft.anchorWeight[i] ?? 1)
   })
-  return { nodes: soft.nodes, tets: soft.tets, mu, lambda, density, pinned, fibre, fibreModulus, muscle, activeStiffening: stiff, anchors: soft.anchors, anchorStiffness: anchorK, stiffening, branchModulus, branchTau }
+  return { nodes: soft.nodes, tets: soft.tets, mu, lambda, density, pinned, fibre, fibreModulus, muscle, activeStiffening: stiff, anchors: soft.anchors, anchorStiffness: anchorK, stiffening, branchModulus, branchTau, ...(terms.length ? { ogden: { terms, material: ogMat, scale: ogScale } } : {}) }
 }
 
 export interface PoseFrames {
