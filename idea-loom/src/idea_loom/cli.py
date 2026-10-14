@@ -119,7 +119,12 @@ def _wish(fn, *args, **kw) -> None:
 def wishes_list(status: Optional[str] = typer.Option(None, help="open / accepted / done / declined / withdrawn")) -> None:
     """未处理和已采纳的愿望，遇到次数多的在前。 / Open and accepted wishes, most often met first."""
     for w in wish_store.listing(status).wishes:
-        typer.echo(f"{wish_store.name(w)}  [{w.status_label}] ×{w.occurrences}  {w.kind_label}  {w.title}")
+        typer.echo(f"{wish_store.name(w)}  [{w.status_label}]{_claim_flag(w)} ×{w.occurrences}  {w.kind_label}  {w.title}")
+
+
+def _claim_flag(w) -> str:
+    """有人在计划时的小标记。 / The small marker shown while someone is planning it."""
+    return f" [计划中：{w.claimed_by_label}]" if w.claimed_at else ""
 
 
 @wishes_app.command("show")
@@ -142,6 +147,8 @@ def _wish_text(w) -> str:
     lines += [f"  遇到 {seen.at}：{seen.question}" for seen in w.seen]
     lines += [f"  说明（{n.by_label}）：{n.text}" for n in w.notes]
     lines += [f"  关联：{link.kind} {link.title} {link.url or ''}".rstrip() for link in w.links]
+    if w.claimed_at:
+        lines.append(f"  计划中：{w.claimed_by_label} 从 {w.claimed_at} 起，到 {w.claim_until} 自动失效" + (f"（{w.claim_note}）" if w.claim_note else ""))
     return "\n".join(lines)
 
 
@@ -158,7 +165,7 @@ def wishes_brief(ids: list[str] = typer.Argument(None, help="愿望的编号（w
         for w in pending:
             flag = f"  ⚠ 界面里有一个作业正在做它（{busy[w.wish_id].phase_label}）" if w.wish_id in busy else ""
             outside = "  [外面提的]" if w.source.startswith(("visitor:", "agent:")) else ""
-            typer.echo(f"- {wish_store.name(w)}  [{w.status_label}] ×{w.occurrences}  {w.kind_label}{outside}{flag}\n    {w.title}\n    卡在哪：{w.stuck[:160]}")
+            typer.echo(f"- {wish_store.name(w)}  [{w.status_label}]{_claim_flag(w)} ×{w.occurrences}  {w.kind_label}{outside}{flag}\n    {w.title}\n    卡在哪：{w.stuck[:160]}")
         if not pending:
             typer.echo("（没有待处理的愿望）")
         return
@@ -171,6 +178,27 @@ def wishes_brief(ids: list[str] = typer.Argument(None, help="愿望的编号（w
         if w.wish_id in busy:
             typer.echo(f"⚠ 界面里有一个作业正在做这一条（{busy[w.wish_id].phase_label}），先确认要不要接手。")
         typer.echo(f"== {_wish_text(w)}\n")
+        # 带编号的 brief 就是开始计划：自动认领，许愿池页上马上显示"计划中"。只给清单（不带编号）时不认领。
+        # A brief with ids means planning starts: claim automatically so the wish pool page shows "planning" at once. The bare list claims nothing.
+        if w.status in ("open", "accepted"):
+            claimed = wish_store.claim(w.wish_id, note="/wishes")
+            typer.echo(f"（已在许愿池里标为计划中，{wish_store.CLAIM_HOURS} 小时后自动失效，到 {claimed.claim_until}；"
+                       f"采纳、不做、做完都会清掉它；不打算做了就运行 wishes release {wish_store.name(w)}）\n")
+
+
+@wishes_app.command("claim")
+def wishes_claim(ids: list[str] = typer.Argument(..., help=_WISH_REF), by: str = typer.Option("claude-code", help="谁在计划 / who is planning"),
+                 note: str = typer.Option("", help="一句说明 / a short note")) -> None:
+    """标上"计划中"：正在给它出计划。brief 带编号时会自动做。 / Mark as being planned. brief with ids does this by itself."""
+    for wish_id in ids:
+        _wish(wish_store.claim, wish_id, by=by, note=note)
+
+
+@wishes_app.command("release")
+def wishes_release(ids: list[str] = typer.Argument(..., help=_WISH_REF), note: str = typer.Option("", help="一句说明 / a short note")) -> None:
+    """放下"计划中"：不做计划了。 / Clear the planning marker: no longer planning it."""
+    for wish_id in ids:
+        _wish(wish_store.release, wish_id, note=note)
 
 
 @wishes_app.command("accept")

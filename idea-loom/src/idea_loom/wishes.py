@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Literal, Optional
 
@@ -30,8 +30,13 @@ STATUS_LABELS: dict[str, str] = {"open": "未处理", "accepted": "已采纳", "
 BY_LABELS: dict[str, str] = {"assistant": "小助手", "human": "你", "review": "回看", "claude-code": "Claude Code"}
 EVENT_LABELS: dict[str, str] = {
     "recorded": "记下", "seen": "又遇到一次", "edited": "改写", "withdrawn": "撤销", "restored": "恢复",
-    "status": "改状态", "noted": "说明", "linked": "关联",
+    "status": "改状态", "noted": "说明", "linked": "关联", "claimed": "开始计划", "released": "放下",
 }
+# 认领：有一个 Claude Code 会话正在给这条愿望出计划（/wishes 带编号时自动认领）。不是一个状态，只是一个标记：
+# 采纳、不做、做完或放下就清掉；放着不管的过了 CLAIM_HOURS 小时也自动失效，免得丢下的会话一直占着。
+# A claim: a Claude Code session is planning this wish (/wishes with ids claims them automatically). It is a marker,
+# not a status: accepting, declining, finishing or releasing clears it, and an abandoned one lapses after CLAIM_HOURS hours.
+CLAIM_HOURS = 6
 # 状态分成两组：待处理的和已完结的。界面的筛选先选组，再在组里选状态。
 # Statuses fall into two groups, pending and closed. The UI filter picks a group first, then a status within it.
 GROUPS: dict[str, tuple[str, ...]] = {"pending": ("open", "accepted"), "closed": ("done", "declined", "withdrawn"), "all": tuple(STATUS_LABELS)}
@@ -104,6 +109,12 @@ class Wish(BaseModel):
     job_phase: Optional[str] = None
     job_label: Optional[str] = None
     job_queued: bool = False
+    # 谁在给它出计划、从什么时候起、到什么时候失效；没人认领时都是空的。 / Who is planning it, since when and until when; all empty when unclaimed.
+    claimed_by: Optional[str] = None
+    claimed_by_label: Optional[str] = None
+    claimed_at: Optional[str] = None
+    claim_until: Optional[str] = None
+    claim_note: Optional[str] = None
 
 
 class WishDetail(Wish):
@@ -136,7 +147,21 @@ def _clip(text: Any, limit: int) -> str:
     return str(text or "").strip()[:limit]
 
 
-def fold(rows: list[dict[str, Any]]) -> dict[str, WishDetail]:
+def _parse(at: str) -> Optional[datetime]:
+    try:
+        when = datetime.fromisoformat(at)
+    except ValueError:
+        return None
+    return when if when.tzinfo else when.replace(tzinfo=timezone.utc)
+
+
+def _clear_claim(w: WishDetail) -> None:
+    w.claimed_by = w.claimed_by_label = w.claimed_at = w.claim_until = w.claim_note = None
+
+
+def fold(rows: list[dict[str, Any]], at_time: Optional[datetime] = None) -> dict[str, WishDetail]:
+    """把事件折成每条愿望现在的样子。认领是否已过期按 at_time（缺省是现在）判断。
+    Fold the events into each wish's current state. Whether a claim has lapsed is judged at at_time (now by default)."""
     out: dict[str, WishDetail] = {}
     for r in rows:
         wid, event, at, by = r.get("wish_id"), r.get("event"), str(r.get("at", "")), str(r.get("by", "assistant"))
@@ -171,10 +196,12 @@ def fold(rows: list[dict[str, Any]]) -> dict[str, WishDetail]:
             text = w.title
         elif event == "withdrawn":
             w.status = "withdrawn"
+            _clear_claim(w)
         elif event == "restored":
             w.status = "open"
         elif event == "status" and r.get("status") in STATUS_LABELS:
             w.status = r["status"]
+            _clear_claim(w)
             w.status_note = _clip(r.get("note"), MAX_TEXT) or None
             if isinstance(r.get("pr"), int):
                 w.pr = r["pr"]
@@ -186,8 +213,21 @@ def fold(rows: list[dict[str, Any]]) -> dict[str, WishDetail]:
             w.links.insert(0, LinkItem(at=at, by=by, kind=r["kind"], pr=r.get("pr") if isinstance(r.get("pr"), int) else None,
                                        url=r.get("url"), title=_clip(r.get("title"), MAX_TITLE)))
             text = _clip(r.get("title"), MAX_TITLE)
+        elif event == "claimed":
+            w.claimed_by, w.claimed_by_label, w.claimed_at = by, BY_LABELS.get(by, by), at
+            w.claim_note = _clip(r.get("note"), MAX_TEXT) or None
+            start = _parse(at)
+            w.claim_until = (start + timedelta(hours=CLAIM_HOURS)).isoformat(timespec="seconds") if start else None
+            text = w.claim_note or ""
+        elif event == "released":
+            _clear_claim(w)
+            text = _clip(r.get("note"), MAX_TEXT)
         w.history.insert(0, HistoryItem(at=at, event=event, event_label=EVENT_LABELS[event], by=by, by_label=BY_LABELS.get(by, by), text=text))
+    moment = at_time or datetime.now(timezone.utc)
     for w in out.values():
+        until = _parse(w.claim_until) if w.claim_until else None
+        if w.claimed_at and (until is None or until <= moment):
+            _clear_claim(w)
         w.status_label = STATUS_LABELS[w.status]
         w.copy_text = (
             f"请处理 idea-loom 许愿池里的这条愿望（{name(w)}）：{w.title}\n卡在哪：{w.stuck}\n建议：{w.suggestion}\n"
@@ -363,6 +403,24 @@ def add_link(wish_id: str, kind: str, *, title: str = "", url: Optional[str] = N
     if kind not in ("plan", "pr", "job"):
         raise WishError("关联只能是方案、合并请求或作业")
     _append(wish_id, "linked", by, kind=kind, title=_clip(title, MAX_TITLE), url=url, pr=pr)
+
+
+def claim(wish_id: str, *, by: str = "claude-code", note: str = "") -> WishDetail:
+    """标上"计划中"：有人在给这条愿望出计划。只有未处理和已采纳的能认领；再认领一次就从现在重新计时。
+    Mark the wish as being planned. Only open and accepted wishes can be claimed; claiming again restarts the clock."""
+    wish = get(wish_id)
+    if wish.status not in ("open", "accepted"):
+        raise WishError(f"已经是「{wish.status_label}」，不能再认领")
+    _append(wish.wish_id, "claimed", by, note=_clip(note, MAX_TEXT) or None)
+    return get(wish.wish_id)
+
+
+def release(wish_id: str, *, by: str = "claude-code", note: str = "") -> None:
+    """放下认领：不做计划了。 / Release the claim: no longer planning it."""
+    wish = get(wish_id)
+    if not wish.claimed_at:
+        raise WishError(f"{name(wish)} 没有人在计划，不用放下")
+    _append(wish.wish_id, "released", by, note=_clip(note, MAX_TEXT) or None)
 
 
 def open_titles() -> list[tuple[str, str, int, str]]:

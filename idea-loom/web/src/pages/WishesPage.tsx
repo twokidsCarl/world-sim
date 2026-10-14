@@ -51,6 +51,25 @@ function JobStage({ wish }: { wish: Wish }) {
   )
 }
 
+// 有 Claude Code 会话在给这条愿望出计划（/wishes 带编号时自动认领）时标"计划中"。采纳、不做、做完、放下或过了时限就消失。
+// "Planning" while a Claude Code session is planning this wish (/wishes with ids claims it). It goes away on accept, decline, done, release or when it lapses.
+export function ClaimMark({ wish, full = false }: { wish: Wish; full?: boolean }) {
+  const lang = useLang()
+  const t = useT()
+  if (!wish.claimed_at) return null
+  const who = label(lang, 'wishBy', wish.claimed_by ?? '', wish.claimed_by_label ?? wish.claimed_by ?? '')
+  const tip = t(`${who} 从 ${formatTime(wish.claimed_at)} 起在出计划，${formatTime(wish.claim_until ?? '')} 自动失效`, `${who} has been planning it since ${formatTime(wish.claimed_at)}; lapses at ${formatTime(wish.claim_until ?? '')}`)
+  return (
+    <>
+      {' '}
+      <span className="badge w-claimed" title={tip}>
+        <span className="spin" aria-hidden="true">◌</span> {t('计划中', 'Planning')}
+      </span>
+      {full && <span className="muted small"> {tip}</span>}
+    </>
+  )
+}
+
 export function WishesPage() {
   const [params, setParams] = useSearchParams()
   const { group, status } = readFilter(params)
@@ -160,6 +179,7 @@ export function WishesPage() {
                     <td className="r num">{w.occurrences}</td>
                     <td>
                       <WishBadge status={w.status} label={w.status_label} />
+                      <ClaimMark wish={w} />
                       <JobStage wish={w} />
                       {w.pr != null && <span className="muted small"> {t(`合并请求 #${w.pr}`, `Pull request #${w.pr}`)}</span>}
                     </td>
@@ -232,6 +252,7 @@ export function WishPage() {
     >
       <div className="meta-row">
         <WishBadge status={wish.status} label={wish.status_label} />
+        <ClaimMark wish={wish} full />
         {wish.status_note && <span className="muted">{wish.status_note}</span>}
         <span className="muted small">{t('记于', 'Recorded')} {formatTime(wish.created_at)}</span>
         <span className="muted small">{t('最近变化', 'Last change')} {formatTime(wish.updated_at)}</span>

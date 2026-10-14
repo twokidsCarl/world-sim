@@ -174,3 +174,70 @@ def test_every_command_takes_the_new_name(data):
     assert {r["wish_id"] for r in rows} == {wid}
     w = wishes.get("wish-1")
     assert (w.status, w.notes[0].text, w.links[0].title, w.occurrences) == ("accepted", "先看看", "方案", 2)
+
+
+def test_claim_marks_planning_until_cleared(data):
+    """认领标"计划中"，不改状态；采纳、不做、做完、放下都清掉它。
+    A claim marks "planning" without changing the status; accept, decline, done and release all clear it."""
+    a, b, c = make(title="甲"), make(title="乙"), make(title="丙")
+    w = wishes.claim("wish-1", note="出计划")
+    assert (w.status, w.claimed_by, w.claimed_by_label, w.claim_note) == ("open", "claude-code", "Claude Code", "出计划")
+    assert w.history[0].event == "claimed" and w.claim_until > w.claimed_at
+    assert [x.title for x in wishes.listing().wishes if x.claimed_at] == ["甲"]  # 列表里也带着 / the list carries it too
+    wishes.set_status(a, "accepted", note="做")
+    assert wishes.get(a).claimed_at is None                                       # 采纳清掉 / accept clears it
+    wishes.claim(a)                                                               # 已采纳的也能再认领 / an accepted wish can be claimed again
+    wishes.add_link(a, "pr", pr=5)
+    wishes.set_status(a, "done", pr=5)
+    assert wishes.get(a).claimed_at is None                                       # 做完清掉 / done clears it
+    wishes.claim(b, by="human")
+    wishes.set_status(b, "declined", note="不做")
+    assert wishes.get(b).claimed_at is None                                       # 不做清掉 / decline clears it
+    wishes.claim(c)
+    wishes.release("wish-3", note="主人说先不做")
+    assert wishes.get(c).claimed_at is None and wishes.get(c).history[0].event == "released"
+    with pytest.raises(wishes.WishError, match="没有人在计划"):
+        wishes.release(c)
+    with pytest.raises(wishes.WishError, match="不能再认领"):
+        wishes.claim(a)
+
+
+def test_claim_lapses_after_six_hours(data):
+    """丢下的会话不会一直占着：认领过了 CLAIM_HOURS 小时自动失效。
+    An abandoned session does not hold on forever: a claim lapses after CLAIM_HOURS hours."""
+    from datetime import datetime, timedelta, timezone
+
+    wid = make()
+    wishes.claim(wid)
+    rows, _ = store.read_lines(wishes.path())
+    start = datetime.fromisoformat(rows[-1]["at"])
+    assert wishes.fold(rows, start + timedelta(hours=5, minutes=59))[wid].claimed_at is not None
+    assert wishes.fold(rows, start + timedelta(hours=wishes.CLAIM_HOURS))[wid].claimed_at is None
+    assert wishes.fold(rows, datetime.now(timezone.utc) + timedelta(days=1))[wid].claim_until is None
+
+
+def test_brief_with_ids_claims_but_the_list_does_not(data):
+    """/wishes 带编号就是开始计划，自动认领；只看清单不认领；已完结的不认领。
+    /wishes with ids starts planning and claims automatically; the bare list claims nothing; closed wishes are not claimed."""
+    from typer.testing import CliRunner
+
+    from idea_loom.cli import app
+
+    a, b = make(title="甲"), make(title="乙")
+    gone = make(title="丙")
+    wishes.set_status(gone, "declined", note="不做")
+    run = CliRunner().invoke
+    run(app, ["wishes", "brief"])
+    assert not any(w.claimed_at for w in wishes.load()[0].values())
+    out = run(app, ["wishes", "brief", "wish-1", "wish-3"]).output
+    assert "已在许愿池里标为计划中" in out and "wishes release wish-1" in out and "wishes release wish-3" not in out
+    assert (wishes.get(a).claimed_at is not None, wishes.get(b).claimed_at, wishes.get(gone).claimed_at) == (True, None, None)
+    assert "[计划中：Claude Code]" in run(app, ["wishes", "list"]).output
+    assert "[计划中：Claude Code]" in run(app, ["wishes", "brief"]).output
+    # 手动认领和放下，一次可以给好几条。 / Claim and release by hand, several at once.
+    assert run(app, ["wishes", "claim", "wish-2", "--by", "human", "--note", "看看"]).exit_code == 0
+    assert wishes.get(b).claimed_by_label == "你"
+    assert run(app, ["wishes", "release", "wish-1", "wish-2"]).exit_code == 0
+    assert not any(w.claimed_at for w in wishes.load()[0].values())
+    bad = run(app, ["wishes", "claim", "wish-3"])
+    assert bad.exit_code == 1 and "不能再认领" in bad.output
