@@ -26,6 +26,9 @@ import { Icon } from './Icon.tsx'
 
 const BODY_LABEL: Record<string, string> = { male: '男性 Male', female: '女性 Female' }
 const EMPTY_POSE = {}
+// 对照窗格不穿衣服；用同一个空数组，免得每次都被当成变化 / the compare pane wears nothing; one shared empty array so it never reads as a change
+const NO_WEAR: ViewState['wear'] = []
+const NO_CLOTHES: ViewState['clothes'] = []
 const NO_SHAPE: { controls: ShapeControls; scales: Scales | null } = { controls: {}, scales: null }
 const graphCache = new Map<string, Promise<AnatomyGraph>>()
 
@@ -176,6 +179,8 @@ export function ComparePane({ graph, dataset, system }: { graph: AnatomyGraph; d
             blink: s.blink,
             hairStyle: null,
             hairColor: s.hairColor,
+            wear: NO_WEAR,
+            clothes: NO_CLOTHES,
             skinHide: assets.hide ?? null,
             skinOpaque: s.skinOpaque,
             shape: assets.shape ?? null,

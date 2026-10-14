@@ -103,6 +103,8 @@ import { EyeLook, LookEyes } from '../look/eyes.ts'
 import { fitEye, type EyeFit, type M3 } from '../look/eyesFit.ts'
 import { pupilTarget } from '../look/eyesLife.ts'
 import { HairLayer } from '../hair/layer.ts'
+import { ClothLayer } from '../cloth/layer.ts'
+import type { LoadedCloth } from '../cloth/load.ts'
 import { FLY_MIN_FILL, FLY_MIN_RADIUS, FLY_SPEED, displacementOf, ensureLumenData, fillingOf, lumenCandidates, registerLumenGeometry, reportFly, segmentIds, showCanal, useLumen, type LumenData, type LumenState } from '../lumen/state.ts'
 
 const LEGACY_SORT = typeof location !== 'undefined' && new URLSearchParams(location.search).get('sort') === 'origin'
@@ -225,6 +227,8 @@ export type ViewState = Pick<
   | 'skinUv'
   | 'hairStyle'
   | 'hairColor'
+  | 'wear'
+  | 'clothes'
   | 'shape'
   | 'shapeControls'
 >
@@ -365,6 +369,8 @@ export class Viewer {
   /** 写实皮肤层、它的参数和光照环境（见 src/look/）/ the lifelike skin layer, its parameters and lighting environment (see src/look/) */
   private lookSkin: LookSkin | null = null
   private appliedSkinUv: LoadedSkinUv | null = null
+  /** 穿着的衣服（静止预览，见 src/cloth/layer.ts）/ the garments worn (static preview, see src/cloth/layer.ts) */
+  private clothLayers = new Map<LoadedCloth, ClothLayer | null>()
   private readonly skinLook = new SkinLook()
   private lookEnv!: LookEnvironment
   private lookWanted = true
@@ -845,6 +851,7 @@ export class Viewer {
     this.lookUvPerSkin = null
     this.lookEyes = null
     this.eyeParts = { L: [], R: [], sclera: [] }
+    this.clothLayers = new Map()
     this.painOverlay = null
     this.dispOverlay = null
     this.clearStim()
@@ -1200,6 +1207,8 @@ export class Viewer {
       p.look !== s.look ||
       p.skinUv !== s.skinUv ||
       this.hairDirty ||
+      p.wear !== s.wear ||
+      p.clothes !== s.clothes ||
       skinDrawnOpaque(p, this.mainSkin) !== skinDrawnOpaque(s, this.mainSkin) ||
       p.selection !== s.selection
     this.stimDirty = false
@@ -1219,6 +1228,7 @@ export class Viewer {
     this.syncEyes(s)
     // 发型、发色变了：只告诉毛发层 / hair style or colour changed: only the hair layer needs telling
     if (this.hair && (!p || p.hairStyle !== s.hairStyle || p.hairColor !== s.hairColor)) this.syncHair(this.lookShowing())
+    this.syncClothes(s)
     // 写实外观：皮肤画成不透明时才去取 UV 网格 / lifelike look: the UV mesh is fetched only once the skin is drawn opaque
     if (this.source === useApp.getState && s.look && !s.skinUv && skinDrawnOpaque(s, this.mainSkin)) void useApp.getState().ensureSkinUv()
     // 皮肤不透明时要藏哪些部件，写在管线报告里：第一次用到时去取 / which parts to hide under an opaque skin is in the pipeline report: fetched on first use
@@ -1759,6 +1769,38 @@ export class Viewer {
   eyesState(): { built: boolean; visible: boolean; fits: EyeFit[]; angles: { side: string; yaw: number; pitch: number }[] } {
     const e = this.lookEyes
     return { built: !!e, visible: !!e?.visible, fits: e ? e.eyes.map((x) => x.fit) : [], angles: e ? e.angles() : [] }
+  }
+
+  /**
+   * 衣服：为已加载的衣服建预览层；穿着、皮肤没被剥掉 / 藏起 / 隔离时才显示（衣服是最外一层，剥层先剥它）。
+   * Clothes: a preview layer for every loaded garment; shown while worn and the skin is not peeled, hidden or
+   * isolated away (clothes are the outermost layer and peel first).
+   */
+  private syncClothes(s: ViewState): void {
+    const i = this.mainSkinIndex()
+    if (i < 0) return
+    for (const c of s.clothes) {
+      if (this.clothLayers.has(c)) continue
+      const geo = this.skinGeometry.get(i)!
+      if (c.data.skin !== this.mainSkin || !ClothLayer.fits(geo, c)) {
+        console.warn(`[soma] garment ${c.data.garment} rejected: it is for ${c.data.skin} with ${c.data.skinVertexCount} vertices`)
+        this.clothLayers.set(c, null)
+        continue
+      }
+      const layer = new ClothLayer(geo, c, this.skinning)
+      this.clothLayers.set(c, layer)
+      this.addFollower(layer)
+    }
+    const skin = this.mainSkin ? this.graph.part(this.mainSkin) : undefined
+    const skinShown = !!skin && (s.systems[skin.system]?.visible ?? true) && s.peel <= 0 && !s.hidden.has(skin.id) && !s.isolated
+    for (const [c, layer] of this.clothLayers) {
+      if (!layer) continue
+      const show = skinShown && s.wear.includes(c.data.garment) && s.clothes.includes(c)
+      if (layer.patch.mesh.visible !== show) {
+        layer.patch.mesh.visible = show
+        this.dirty = true
+      }
+    }
   }
 
   /** 写实外观是否正在显示：要了写实、有数据、皮肤画成不透明（不是体表图）/ Whether the lifelike look is showing: wanted, with data, and the skin drawn opaque (not as a skin map). */

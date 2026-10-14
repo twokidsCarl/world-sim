@@ -58,6 +58,8 @@
 //   hair   none | short | long                    写实模式的发型（缺省按人体：男短、女长）/ the lifelike hair style (default by body: short for the male, long for the female)
 //   hc     black | darkbrown | brown | blonde | red | grey
 //                                                 写实模式的发色（缺省 darkbrown）/ the lifelike hair colour (default darkbrown)
+//   wear   tee,pants                              穿的衣服（缺省不穿），逗号分隔：tee pants skirt compression-top sports-bra tights
+//                                                 the garments worn (none by default), comma-separated: tee pants skirt compression-top sports-bra tights
 //   shape  h1.80,b28,l0,c0                        体型：h 身高（米）、b BMI、l 腿长比例（SD）、c 躯干体格（SD）；只写不在默认值的项，
 //                                                 超出该人体可用范围的值会被截断
 //                                                 body shape: h stature (m), b BMI, l leg length (SD), c central build (SD); only non-default
@@ -83,6 +85,7 @@
 // Other parameters (dev ones such as renderer, scene) pass through untouched. Unknown or
 // invalid values are ignored with a warning.
 
+import { GARMENTS, type GarmentId, parseWear } from '../cloth/garments.ts'
 import type { SystemId } from '../anatomy/types.ts'
 import { formatShapeParam, parseShapeParam, type ShapeControls } from '../anatomy/shape.ts'
 import { formatStimParam, parseStimParam, type StimParam } from '../pain/stimulus.ts'
@@ -114,7 +117,7 @@ const AXES: Record<string, SectionAxis> = { a: 'axial', c: 'coronal', s: 'sagitt
 const MAPS = { d: 'dermatome', n: 'cutaneousNerve' } as const
 const BODIES = new Set(['male', 'female', 'fixture', 'stress'])
 /** 本模块负责的参数名；其余的原样保留 / Parameter names owned here; all others pass through. */
-export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'say', 'drive', 'style', 'skin', 'look', 'tone', 'shape', 'stim', 'src', 'cmp', 'iris', 'gaze', 'blink', 'hair', 'hc'] as const
+export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'say', 'drive', 'style', 'skin', 'look', 'tone', 'shape', 'stim', 'src', 'cmp', 'iris', 'gaze', 'blink', 'hair', 'hc', 'wear'] as const
 /** 超过这个数量的部件 id 不写进 URL / Part id lists longer than this are not written to the URL. */
 export const MAX_URL_IDS = 60
 export const MAX_URL_DOFS = 40
@@ -168,6 +171,8 @@ export interface UrlState {
   hair?: HairStyle
   /** 写实模式的发色；缺省不写 / the lifelike hair colour; the default is not written */
   hc?: HairColour
+  /** 穿的衣服 / the garments worn */
+  wear?: GarmentId[]
   /** 体型控制量（未限幅）/ shape controls (not yet clamped). */
   shape?: ShapeControls
   /** 一个刺激及其部位 / one stimulus and its site */
@@ -401,6 +406,12 @@ export function parseUrl(search: string): ParsedUrl {
         if (Object.keys(r.controls).length) state.shape = r.controls
         break
       }
+      case 'wear': {
+        const w = parseWear(value)
+        if (w.length) state.wear = w
+        else warn(`wear: 应为 ${GARMENTS.join(' / ')} 中的若干个，逗号分隔 / expected some of these, comma-separated`)
+        break
+      }
       case 'cmp': {
         const id = CODE_TO_SYSTEM.get(value)
         if (id) state.cmp = id
@@ -481,6 +492,7 @@ export function formatUrl(state: UrlState, passthrough: readonly [string, string
   }
   if (state.hair) put('hair', state.hair)
   if (state.hc && state.hc !== DEFAULT_HAIR_COLOUR) put('hc', state.hc)
+  if (state.wear?.length) put('wear', state.wear.join(','))
   if (state.shape && Object.keys(state.shape).length) put('shape', formatShapeParam(state.shape))
   if (state.stim) put('stim', formatStimParam(state.stim))
   if (state.src) put('src', '1')

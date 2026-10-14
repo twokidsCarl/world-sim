@@ -8,6 +8,7 @@ import { SkinMapPanel } from './SkinMapPanel.tsx'
 import { LumenPanel } from './LumenPanel.tsx'
 import { IRIS_LABELS, IRIS_NAMES, type IrisName } from '../look/types.ts'
 import { HairPanel } from './HairPanel.tsx'
+import { OUTFITS } from '../cloth/garments.ts'
 
 const AXES: { id: SectionAxis; zh: string; en: string }[] = [
   { id: 'axial', zh: '横断面', en: 'Axial' },
@@ -33,6 +34,10 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
   const iris = useApp((s) => s.iris)
   const gaze = useApp((s) => s.gaze)
   const blink = useApp((s) => s.blink)
+  const wear = useApp((s) => s.wear)
+  const dataset = useApp((s) => s.dataset)
+  const outfits = OUTFITS[dataset] ?? []
+  const outfit = outfits.find((o) => o.wear.length === wear.length && o.wear.every((g) => wear.includes(g)))?.id ?? (wear.length ? 'custom' : '')
   const mainSkin = graph.mainSkinId()
   const opaqueNow = useApp((s) => skinDrawnOpaque(s, mainSkin))
   const skinHide = useApp((s) => s.skinHide)
@@ -173,6 +178,20 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
               </div>
             )}
             {skinOpaque && look && <HairPanel />}
+            {outfits.length > 0 && (
+              <label className="check" title="Clothes generated from sewing patterns and draped by cloth simulation at rest; in a pose they only follow the skin roughly for now">
+                衣服 <span className="en">Clothes</span>{' '}
+                <select value={outfit} onChange={(e) => app.setWear(outfits.find((o) => o.id === e.target.value)?.wear ?? [])}>
+                  <option value="">不穿 / none</option>
+                  {outfits.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.zh} / {o.en}
+                    </option>
+                  ))}
+                  {outfit === 'custom' && <option value="custom">{wear.join(', ')}</option>}
+                </select>
+              </label>
+            )}
             {opaqueNow && hiddenNames.length > 0 && (
               <p className="hint">
                 皮肤不透明时暂时隐藏：{hiddenNames.map((n) => n.zh).join('、')}。

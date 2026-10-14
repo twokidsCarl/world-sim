@@ -1,0 +1,154 @@
+{
+ "schema": 1,
+ "body": "male",
+ "garment": "pants",
+ "skin": "FJ2810",
+ "skinVertexCount": 53576,
+ "skinTriangleCount": 107019,
+ "vertexCount": 7348,
+ "triangleCount": 13661,
+ "fabric": {
+  "id": "cotton-twill",
+  "density": 0.354,
+  "stretchWarp": 5800,
+  "stretchWeft": 5800,
+  "shear": 197,
+  "bending": 0.0000268,
+  "thickness": 0.0008,
+  "friction": 0.35
+ },
+ "ease": 1,
+ "lengthScale": 1,
+ "panels": [
+  {
+   "name": "pant_b_l",
+   "part": "leg_L",
+   "front": false,
+   "offset": 0,
+   "count": 2040
+  },
+  {
+   "name": "pant_b_r",
+   "part": "leg_R",
+   "front": false,
+   "offset": 2040,
+   "count": 2041
+  },
+  {
+   "name": "pant_f_l",
+   "part": "leg_L",
+   "front": true,
+   "offset": 4081,
+   "count": 1570
+  },
+  {
+   "name": "pant_f_r",
+   "part": "leg_R",
+   "front": true,
+   "offset": 5651,
+   "count": 1566
+  },
+  {
+   "name": "wb_back",
+   "part": "torso",
+   "front": false,
+   "offset": 7217,
+   "count": 66
+  },
+  {
+   "name": "wb_front",
+   "part": "torso",
+   "front": true,
+   "offset": 7283,
+   "count": 65
+  }
+ ],
+ "edgeKinds": [
+  "seam",
+  "hem",
+  "neckline",
+  "armhole",
+  "cuff",
+  "waistband",
+  "edge"
+ ],
+ "buffers": {
+  "position": {
+   "offset": 0,
+   "count": 22044,
+   "type": "f32",
+   "itemSize": 3
+  },
+  "uv": {
+   "offset": 88176,
+   "count": 14696,
+   "type": "f32",
+   "itemSize": 2
+  },
+  "index": {
+   "offset": 146960,
+   "count": 40983,
+   "type": "u16",
+   "itemSize": 3
+  },
+  "stitch": {
+   "offset": 228928,
+   "count": 924,
+   "type": "u16",
+   "itemSize": 2
+  },
+  "bindVert": {
+   "offset": 230776,
+   "count": 22044,
+   "type": "u32",
+   "itemSize": 3
+  },
+  "bindBary": {
+   "offset": 318952,
+   "count": 14696,
+   "type": "f32",
+   "itemSize": 2
+  },
+  "bindOffset": {
+   "offset": 377736,
+   "count": 7348,
+   "type": "f32",
+   "itemSize": 1
+  },
+  "edgeKind": {
+   "offset": 407128,
+   "count": 7348,
+   "type": "i8",
+   "itemSize": 1
+  },
+  "panel": {
+   "offset": 414476,
+   "count": 7348,
+   "type": "u8",
+   "itemSize": 1
+  }
+ },
+ "checks": {
+  "garment": "pants",
+  "vertices": 7348,
+  "triangles": 13661,
+  "stitchPairs": 462,
+  "maxPenetrationMm": 0,
+  "p99PenetrationMm": 0,
+  "verticesInsideOver1mm": 0,
+  "maxStitchGapMm": 0,
+  "strain": {
+   "weftMeanPct": 0.6,
+   "warpMeanPct": 0.5,
+   "weftP95Pct": 3.2,
+   "warpP95Pct": 2.5,
+   "weftMaxPct": 119.1,
+   "warpMaxPct": 54.4
+  },
+  "bytes": 424354
+ },
+ "source": {
+  "pattern": "data/curated/cloth/patterns/male-pants.json",
+  "generator": "GarmentCode (pygarment), MIT; dressed by tools/cloth/dress.ts"
+ }
+}
