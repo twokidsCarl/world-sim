@@ -9,7 +9,8 @@
 // in the blend-and-apply step.
 
 import { dqFromXf, type V3, type Xf } from '../../tools/rig/math.ts'
-import { clampPose, jointFrames, muscleLength, skin, straightLine, type JointFrames, type Pose, type Scales } from '../../tools/rig/pose.ts'
+import { VIA_SAMPLES, hasViaPush } from '../../tools/rig/musclepath.ts'
+import { clampPose, jointFrames, muscleLength, skin, straightLine, viaPrepFor, viaPushFor, type JointFrames, type Pose, type Scales } from '../../tools/rig/pose.ts'
 import { standardPostures } from '../../tools/rig/postures.ts'
 import { fetchJson } from './load.ts'
 import type { Joint, MuscleLine, Rig, RigBinding } from './types.ts'
@@ -22,7 +23,10 @@ export const RIG_BYTES_PER_VERTEX = 12
 /** 关节纹理每行的纹素数（RGBA32F）/ Texels per joint row (RGBA32F). */
 export const JOINT_TEXELS = 8
 /** 肌肉纹理每行的纹素数 / Texels per muscle row. */
-export const MUSCLE_TEXELS = 2
+export const MUSCLE_TEXELS = 3
+/** 经过点纹理：每行（一条有 viaPush 的作用线）VIA_SAMPLES 个纹素，最多这么多行 / The via texture: VIA_SAMPLES texels per row (one line with viaPush), at most this many rows. */
+export const VIA_ROWS = 64
+export { VIA_SAMPLES }
 /** 与参考实现一致的横截面缩放上下限 / Cross-section scale bounds, as in the reference. */
 const VOLUME_MIN = 0.75
 const VOLUME_MAX = 1.4
@@ -40,6 +44,8 @@ export interface LoadedRig {
   bindingOf: Map<string, RigBinding>
   /** 部件 id → 肌肉作用线在 rig.muscles 中的下标 / Part id → index of its line in rig.muscles. */
   muscleOf: Map<string, number>
+  /** 有 viaPush 的作用线（下标）→ 它在经过点纹理里的行 / Lines with viaPush (by index) → their row in the via texture. */
+  viaRow: Map<number, number>
 }
 
 export function indexRig(rig: Rig, bin: Uint8Array, report: RigReport | null = null): LoadedRig {
@@ -50,6 +56,7 @@ export function indexRig(rig: Rig, bin: Uint8Array, report: RigReport | null = n
     jointIndex: new Map(rig.joints.map((j, i) => [j.id, i])),
     bindingOf: new Map(rig.bindings.map((b) => [b.part, b])),
     muscleOf: new Map(rig.muscles.map((m, i) => [m.part, i])),
+    viaRow: new Map(rig.muscles.flatMap((m, i) => (hasViaPush(m) ? [i] : [])).slice(0, VIA_ROWS).map((li, row) => [li, row])),
   }
 }
 
@@ -80,6 +87,8 @@ export function validateRig(r: LoadedRig, vertexCount: (partId: string) => numbe
     }
   }
   if (bad > 0) problems.push(`${bad} 个部件的绑定与网格不符（绑定是为另一版几何生成的）/ ${bad} bindings do not match the meshes (the rig was built for other geometry)`)
+  const viaLines = r.rig.muscles.filter(hasViaPush).length
+  if (viaLines > VIA_ROWS) problems.push(`有 ${viaLines} 条作用线带 viaPush，经过点纹理只有 ${VIA_ROWS} 行 / ${viaLines} lines carry viaPush, the via texture has ${VIA_ROWS} rows`)
   for (const m of r.rig.muscles) {
     if (!r.jointIndex.has(m.origin.joint) || !r.jointIndex.has(m.insertion.joint)) {
       problems.push(`肌肉作用线 ${m.part} 指向未知关节 / muscle line refers to an unknown joint`)
@@ -361,9 +370,11 @@ export function taperCoefficient(rest: number, length: number, gain: number): nu
 }
 
 /**
- * 肌肉纹理：每条作用线一行，2 个纹素：(起点 xyz, 1/当前长度)、(单位方向 xyz, k)。k = 0 表示不修正。
- * Muscle texture: one row per line, two texels: (posed origin xyz, 1 / current length),
- * (unit direction xyz, k). k = 0 means no correction.
+ * 肌肉纹理：每条作用线一行，3 个纹素：(起点 xyz, 1/当前长度)、(单位方向 xyz, k)、(经过点纹理的行 + 1, 0, 0, 0)。
+ * k = 0 表示不修正；行 + 1 = 0 表示这条作用线没有 viaPush。
+ * Muscle texture: one row per line, three texels: (posed origin xyz, 1 / current length),
+ * (unit direction xyz, k), (row in the via texture + 1, 0, 0, 0). k = 0 means no correction; row + 1 = 0 means the
+ * line has no viaPush.
  */
 export function packMuscles(r: LoadedRig, frames: JointFrames, out?: Float32Array): Float32Array {
   const lines: MuscleLine[] = r.rig.muscles
@@ -373,7 +384,7 @@ export function packMuscles(r: LoadedRig, frames: JointFrames, out?: Float32Arra
   lines.forEach((line, i) => {
     // 体积修正按直线（经过点不影响网格，见 tools/rig/pose.ts 的 straightLine）/ the volume correction uses the straight line (via points do not affect the mesh; see straightLine in tools/rig/pose.ts)
     const m = muscleLength(straightLine(line), frames.xfs, r.jointIndex)
-    const o = i * 8
+    const o = i * MUSCLE_TEXELS * 4
     const len = m.length > 1e-6 ? m.length : 1
     data[o] = m.origin[0]
     data[o + 1] = m.origin[1]
@@ -383,8 +394,47 @@ export function packMuscles(r: LoadedRig, frames: JointFrames, out?: Float32Arra
     data[o + 5] = (m.insertion[1] - m.origin[1]) / len
     data[o + 6] = (m.insertion[2] - m.origin[2]) / len
     data[o + 7] = taperCoefficient(m.rest, m.length, line.gain ?? 1)
+    data[o + 8] = (r.viaRow.get(i) ?? -1) + 1
   })
   return data
+}
+
+/**
+ * 经过点纹理：VIA_ROWS 行，每行 VIA_SAMPLES 个纹素，纹素 k = 样本 k 在当前姿势下的平移 (xyz, 0)（tools/rig/pose.ts 的 viaPushFor）。
+ * The via texture: VIA_ROWS rows of VIA_SAMPLES texels, texel k = the translation of sample k in the current pose
+ * (xyz, 0) (viaPushFor in tools/rig/pose.ts).
+ */
+export function packVia(r: LoadedRig, frames: JointFrames, out?: Float32Array): Float32Array {
+  const stride = VIA_SAMPLES * 4
+  const data = out && out.length === VIA_ROWS * stride ? out : new Float32Array(VIA_ROWS * stride)
+  data.fill(0)
+  for (const [li, row] of r.viaRow) {
+    const line = r.rig.muscles[li]
+    if (!line) continue
+    const D = viaPushFor(line, frames.angles, frames.rigid, r.jointIndex)
+    for (let k = 0; k < VIA_SAMPLES; k++) {
+      const o = row * stride + k * 4
+      data[o] = D[k * 3]!
+      data[o + 1] = D[k * 3 + 1]!
+      data[o + 2] = D[k * 3 + 2]!
+    }
+  }
+  return data
+}
+
+/**
+ * 肌肉部件的 aThin：−(作用线下标 + 1)；有 viaPush 且给了静止几何的部件再减 ¼·(½ + ½·s)，s 是顶点参数
+ * （tools/rig/musclepath.ts）。着色器由此解出下标和 s，小数部分为 0 的顶点不推。不是肌肉的部件不写。
+ * The aThin of a muscle part: −(line index + 1); a part with viaPush whose rest geometry is given further subtracts
+ * ¼·(½ + ½·s), s being the vertex parameter (tools/rig/musclepath.ts). The shader decodes the index and s from it,
+ * and a vertex whose fraction is 0 is not pushed. Parts that are not muscles are left alone.
+ */
+export function writeMuscleThin(r: LoadedRig, partId: string, vertexCount: number, aux: Float32Array, at: number, rest?: ArrayLike<number>): void {
+  const li = r.muscleOf.get(partId)
+  if (li === undefined) return
+  const line = r.rig.muscles[li]!
+  const prep = rest && r.viaRow.has(li) && rest.length === vertexCount * 3 ? viaPrepFor(line, rest, r.bin, r.bindingOf.get(partId), r.jointIndex) : null
+  for (let i = 0; i < vertexCount; i++) aux[at + i] = prep ? -(li + 1) - 0.25 * (0.5 + 0.5 * prep.s[i]!) : -(li + 1)
 }
 
 /**
@@ -400,7 +450,7 @@ export function skinLikeShader(
   weights: ArrayLike<number>,
   jointData: Float32Array,
   withShape: boolean,
-  muscle?: { data: Float32Array; line: number },
+  muscle?: { data: Float32Array; line: number; via?: Float32Array; thin?: number },
 ): [number, number, number] {
   const f = Math.fround
   const stride = JOINT_TEXELS * 4
@@ -436,7 +486,7 @@ export function skinLikeShader(
   oy += 2 * (qw * dy - dw * qy + (qz * dx - qx * dz))
   oz += 2 * (qw * dz - dw * qz + (qx * dy - qy * dx))
   if (muscle) {
-    const m = muscle.data, o = muscle.line * 8
+    const m = muscle.data, o = muscle.line * MUSCLE_TEXELS * 4
     const k = m[o + 7]!
     const px = ox - m[o]!, py = oy - m[o + 1]!, pz = oz - m[o + 2]!
     const t = px * m[o + 4]! + py * m[o + 5]! + pz * m[o + 6]!
@@ -446,6 +496,21 @@ export function skinLikeShader(
     ox = m[o]! + fx + s * (px - fx)
     oy = m[o + 1]! + fy + s * (py - fy)
     oz = m[o + 2]! + fz + s * (pz - fz)
+    // 推出骨面：与着色器同样从 aThin 解出 s，按 s 在两侧样本的平移间插值（float32）
+    // push out of the bone: s decoded from aThin as the shader does, the translations of the samples either side interpolated by it (float32)
+    const fr = f(f(f(-f(muscle.thin ?? -(muscle.line + 1))) - (muscle.line + 1)) * 4)
+    const row = m[o + 8]!
+    if (muscle.via && fr > 0.25 && row > 0.5) {
+      const base = Math.trunc(row - 0.5) * VIA_SAMPLES * 4
+      const sv = Math.min(1, Math.max(0, f(fr * 2 - 1)))
+      const fk = f(sv * (VIA_SAMPLES - 1))
+      const i0 = Math.min(Math.floor(fk), VIA_SAMPLES - 2)
+      const a = f(fk - i0)
+      const v = muscle.via, p0 = base + i0 * 4, p1 = p0 + 4
+      ox = f(ox) + f(v[p0]! + f(v[p1]! - v[p0]!) * a)
+      oy = f(oy) + f(v[p0 + 1]! + f(v[p1 + 1]! - v[p0 + 1]!) * a)
+      oz = f(oz) + f(v[p0 + 2]! + f(v[p1 + 2]! - v[p0 + 2]!) * a)
+    }
   }
   return [f(ox), f(oy), f(oz)]
 }
@@ -457,16 +522,22 @@ export function skinLikeShader(
  * (rigid), or the identity row when unbound; written as the shader attributes, 4 × uint16
  * indices and 4 × uint8 weights.
  */
-export function writeInfluences(r: LoadedRig, partId: string, vertexCount: number, index: Uint16Array, weight: Uint8Array, at: number): void {
+export function writeInfluences(r: LoadedRig, partId: string, vertexCount: number, index: Uint16Array, weight: Uint8Array, at: number, rest?: ArrayLike<number>): void {
   const b = r.bindingOf.get(partId)
   const identity = r.rig.joints.length
   if (b && b.joint === undefined && b.offset !== undefined && b.vertexCount === vertexCount) {
-    const dv = new DataView(r.bin.buffer, r.bin.byteOffset, r.bin.byteLength)
+    // 有 viaPush 且给了静止几何：写横截面影响（与 CPU 参考同一份，tools/rig/pose.ts 的 viaPrepFor）
+    // with viaPush and the rest geometry given: write the cross-section influences (the very ones of the CPU reference, viaPrepFor in tools/rig/pose.ts)
+    const li = r.muscleOf.get(partId)
+    const prep = rest && li !== undefined && r.viaRow.has(li) && rest.length === vertexCount * 3 ? viaPrepFor(r.rig.muscles[li]!, rest, r.bin, b, r.jointIndex) : null
+    const src = prep ? prep.vertices : r.bin
+    const base = prep ? 0 : b.offset
+    const dv = new DataView(src.buffer, src.byteOffset, src.byteLength)
     for (let i = 0; i < vertexCount; i++) {
-      const o = b.offset + i * RIG_BYTES_PER_VERTEX
+      const o = base + i * RIG_BYTES_PER_VERTEX
       const d = (at + i) * 4
       for (let k = 0; k < 4; k++) {
-        const w = r.bin[o + 8 + k]!
+        const w = src[o + 8 + k]!
         // 权重为 0 的影响改指向第一个影响的关节，这样着色器里不必判断
         // zero-weight influences are pointed at the first influence's joint, so the shader needs no test
         index[d + k] = w === 0 ? dv.getUint16(o, true) : dv.getUint16(o + k * 2, true)

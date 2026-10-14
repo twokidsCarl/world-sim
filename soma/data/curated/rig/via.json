@@ -1,7 +1,7 @@
 {
   "_doc": {
-    "zh": "膝周肌肉的经过点规则，由 tools/rig/via.ts 读取，在构建绑定时按本模型的骨网格放置（不取参照模型的坐标）。match 是去掉左右之后的小写肌肉名的正则。condyle：股骨髁后面的缠绕点（只在作用线会穿进股骨髁时起作用），anglesDeg 是以膝屈伸轴为心的极角（0 = 正后方，正值向近侧），半径 = 该处股骨面的最大半径 + clearanceMm；tibia：胫骨上的固定经过点，半径 = 胫骨面 + clearanceMm；patella：股四头肌经髌骨，经过点是髌骨点绕髌骨轴往近侧转 backDeg 度、固定在股骨上的位置（原在 data/curated/activity/params.json）；另沿髌骨轨道往远侧每 arcDeg 度放一个固定在股骨上的缠绕点，深屈时肌腱走弧线而不是弦。clearanceMm 约为肌腱的半径，是假设，不是测量值。",
-    "en": "Via-point rules for the muscles round the knee, read by tools/rig/via.ts and placed on this model's bone meshes when the rig is built (no coordinates are taken from the reference models). match is a regex on the lower-case muscle name without its side. condyle: wrapping points behind the femoral condyles (in use only when the line would pass into the condyles); anglesDeg are polar angles about the knee's flexion axis (0 = straight back, positive proximal) and the radius is the largest radius of the femur's surface there plus clearanceMm. tibia: a fixed via point on the tibia, radius = the tibia's surface plus clearanceMm. patella: the quadriceps act through the patella; the via point is the patella point turned backDeg degrees proximally about the patellar axis and fixed to the femur (formerly in data/curated/activity/params.json); further wrapping points fixed to the femur lie along the patellar track at the angles arcDeg distal of it, so that in deep flexion the tendon follows the arc instead of its chord. clearanceMm is about a tendon's radius: an assumption, not a measurement."
+    "zh": "膝周肌肉的经过点规则，由 tools/rig/via.ts 读取，在构建绑定时按本模型的骨网格放置（不取参照模型的坐标）。match 是去掉左右之后的小写肌肉名的正则。condyle：股骨髁后面的缠绕点（只在作用线会穿进股骨髁时起作用），anglesDeg 是以膝屈伸轴为心的极角（0 = 正后方，正值向近侧），半径 = 该处股骨面的最大半径 + clearanceMm；tibia：胫骨上的固定经过点，半径 = 胫骨面 + clearanceMm；patella：股四头肌经髌骨，经过点是髌骨点绕髌骨轴往近侧转 backDeg 度、固定在股骨上的位置（原在 data/curated/activity/params.json）；另沿髌骨轨道往远侧每 arcDeg 度放一个固定在股骨上的缠绕点，深屈时肌腱走弧线而不是弦。clearanceMm 约为肌腱的半径，是假设，不是测量值。 meshPlain：网格不随路径变形、照旧普通蒙皮的肌肉（经过点仍用于长度、力臂和活动），可限于某几副身体，why 写明理由（tools/rig/viapush.ts）。",
+    "en": "Via-point rules for the muscles round the knee, read by tools/rig/via.ts and placed on this model's bone meshes when the rig is built (no coordinates are taken from the reference models). match is a regex on the lower-case muscle name without its side. condyle: wrapping points behind the femoral condyles (in use only when the line would pass into the condyles); anglesDeg are polar angles about the knee's flexion axis (0 = straight back, positive proximal) and the radius is the largest radius of the femur's surface there plus clearanceMm. tibia: a fixed via point on the tibia, radius = the tibia's surface plus clearanceMm. patella: the quadriceps act through the patella; the via point is the patella point turned backDeg degrees proximally about the patellar axis and fixed to the femur (formerly in data/curated/activity/params.json); further wrapping points fixed to the femur lie along the patellar track at the angles arcDeg distal of it, so that in deep flexion the tendon follows the arc instead of its chord. clearanceMm is about a tendon's radius: an assumption, not a measurement. meshPlain: muscles whose meshes do not follow the path and stay plainly skinned (their via points still give lengths, moment arms and activity), optionally limited to some bodies, with the reason under why (tools/rig/viapush.ts)."
   },
   "assumption": true,
   "rules": [
@@ -43,5 +43,44 @@
       100,
       125
     ]
-  }
+  },
+  "meshPlain": [
+    {
+      "match": "^vastus (medialis|lateralis|intermedius)$",
+      "why": {
+        "zh": "股肌的网格比作用线（股骨中段 → 髌骨）长，远端延续成髌腱（男性多出 34–61 mm）。随路径变形时，那一段的参数被夹在止点、整段随髌骨刚性转动，在屈膝 135° 和下蹲时伸出成悬空的细条。止点之外改回普通蒙皮之后细条没有了，但股肌随路径变形仍使女性股骨远端前面的覆盖从 0.736 降到 0.664（屈膝 90°），所以照旧普通蒙皮。",
+        "en": "The vasti meshes are longer than their lines (mid-femur → patella) and run on into the patellar tendon (34–61 mm more on the male). Following the path, that piece had its parameter clamped at the insertion and turned rigidly with the patella, sticking out as a free strip at 135° and in the squat. With plain skinning beyond the ends the strip is gone, but the vasti following the path still lower the female's coverage of the anterior distal femur from 0.736 to 0.664 (90°), so they stay plainly skinned."
+      }
+    },
+    {
+      "match": "^(short head of biceps femoris|semimembranosus)$",
+      "bodies": [
+        "male"
+      ],
+      "why": {
+        "zh": "男性加上它们门槛就不过：股二头肌短头使屈膝 135° 股骨远端前面的覆盖从 0.814 降到 0.804；半膜肌使屈膝 135° 的悬空顶点从 27 增到 28。",
+        "en": "On the male either one breaks the gate: the short head of biceps femoris lowers the coverage of the anterior distal femur at 135° from 0.814 to 0.804; semimembranosus raises the detached vertices at 135° from 27 to 28."
+      }
+    },
+    {
+      "match": "^(medial head of gastrocnemius|lateral head of gastrocnemius)$",
+      "bodies": [
+        "female"
+      ],
+      "why": {
+        "zh": "女性加上腓肠肌门槛就不过：屈膝 90° 翻转的三角形 428 → 461，屈膝 135° 股骨髁后面的覆盖 0.271 → 0.225；力臂标定也变差（外侧头 8.0 → 2.4 mm）。",
+        "en": "On the female gastrocnemius breaks the gate: inverted triangles at 90° 428 → 461, coverage of the posterior condyles at 135° 0.271 → 0.225; its calibrated moment arm also gets worse (lateral head 8.0 → 2.4 mm)."
+      }
+    },
+    {
+      "match": "^(long head of biceps femoris|semimembranosus|semitendinosus|sartorius|rectus femoris|gracilis)$",
+      "bodies": [
+        "female"
+      ],
+      "why": {
+        "zh": "女性加上其中任何一块门槛就不过：股二头肌长头使屈膝 135° 皮肤外的顶点 1886 → 1891；半膜肌、半腱肌使屈膝 90° 股骨髁后面的覆盖 0.271 → 0.264；缝匠肌使屈膝 135° 的悬空顶点 32 → 39；股直肌使屈膝 135° 的最大悬空 21.2 → 23 mm；股薄肌使下蹲时皮肤外的顶点 3622 → 3627。",
+        "en": "On the female any one of these breaks the gate: long head of biceps femoris raises the vertices outside the skin at 135° from 1886 to 1891; semimembranosus and semitendinosus lower the coverage of the posterior condyles at 90° from 0.271 to 0.264; sartorius raises the detached vertices at 135° from 32 to 39; rectus femoris raises the largest stand-off at 135° from 21.2 to 23 mm; gracilis raises the vertices outside the skin in the squat from 3622 to 3627."
+      }
+    }
+  ]
 }

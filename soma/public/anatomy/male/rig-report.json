@@ -22,7 +22,7 @@
   "data/curated/rig/rom.json#data": "70e54d91f6449e27",
   "data/curated/rig/bindings.json#data": "d926f612debb3935",
   "data/curated/rig/overrides.json#data": "30eec83cd59b485a",
-  "data/curated/rig/via.json#data": "e5a14548614330a0",
+  "data/curated/rig/via.json#data": "069774741f4bab6d",
   "data/raw/bodyshape/out/male-skin-open/weights.bin": "ec709fb20d148a3c",
   "data/raw/bodyshape/out/male-skin-open/joints.json": "bb8935a85433c32e",
   "data/raw/bodyshape/out/male-skin-open/skin.obj": "3a73b3dccf48c1f8",
@@ -3487,7 +3487,7 @@
   "labelledVoxels": 563926,
   "meanLabels": 8,
   "leaked": false,
-  "buildMs": 9217
+  "buildMs": 9801
  },
  "bindings": {
   "field": {
@@ -5784,7 +5784,9 @@
       "joint": "hip_R",
       "wrap": true
      }
-    ]
+    ],
+    "pushMaxMm": 22.4,
+    "pushAtDeg": 140
    },
    {
     "part": "FJ1394M",
@@ -5806,7 +5808,9 @@
       "joint": "hip_L",
       "wrap": true
      }
-    ]
+    ],
+    "pushMaxMm": 23.8,
+    "pushAtDeg": 120
    },
    {
     "part": "FJ1395",
@@ -5842,7 +5846,9 @@
       "joint": "hip_R",
       "wrap": true
      }
-    ]
+    ],
+    "pushMaxMm": 8.7,
+    "pushAtDeg": 140
    },
    {
     "part": "FJ1395M",
@@ -5878,7 +5884,9 @@
       "joint": "hip_L",
       "wrap": true
      }
-    ]
+    ],
+    "pushMaxMm": 8.8,
+    "pushAtDeg": 140
    },
    {
     "part": "FJ1397",
@@ -5900,7 +5908,9 @@
       "joint": "hip_R",
       "wrap": true
      }
-    ]
+    ],
+    "pushMaxMm": 26.8,
+    "pushAtDeg": 110
    },
    {
     "part": "FJ1397M",
@@ -5922,7 +5932,9 @@
       "joint": "hip_L",
       "wrap": true
      }
-    ]
+    ],
+    "pushMaxMm": 23.1,
+    "pushAtDeg": 110
    },
    {
     "part": "FJ1421",
@@ -5958,7 +5970,9 @@
       "joint": "hip_R",
       "wrap": true
      }
-    ]
+    ],
+    "pushMaxMm": 2.7,
+    "pushAtDeg": 90
    },
    {
     "part": "FJ1421M",
@@ -5994,7 +6008,9 @@
       "joint": "hip_L",
       "wrap": true
      }
-    ]
+    ],
+    "pushMaxMm": 2.7,
+    "pushAtDeg": 90
    },
    {
     "part": "FJ1433",
@@ -6051,7 +6067,9 @@
       "joint": "patella_R",
       "wrap": false
      }
-    ]
+    ],
+    "pushMaxMm": 13.7,
+    "pushAtDeg": 65
    },
    {
     "part": "FJ1433M",
@@ -6108,7 +6126,9 @@
       "joint": "patella_L",
       "wrap": false
      }
-    ]
+    ],
+    "pushMaxMm": 13.8,
+    "pushAtDeg": 60
    },
    {
     "part": "FJ1434",
@@ -6144,7 +6164,9 @@
       "joint": "hip_R",
       "wrap": true
      }
-    ]
+    ],
+    "pushMaxMm": 0,
+    "pushAtDeg": 0
    },
    {
     "part": "FJ1434M",
@@ -6180,7 +6202,9 @@
       "joint": "hip_L",
       "wrap": true
      }
-    ]
+    ],
+    "pushMaxMm": 0,
+    "pushAtDeg": 0
    },
    {
     "part": "FJ1435",
@@ -6288,7 +6312,9 @@
       "joint": "hip_R",
       "wrap": true
      }
-    ]
+    ],
+    "pushMaxMm": 7.2,
+    "pushAtDeg": 90
    },
    {
     "part": "FJ1436M",
@@ -6324,7 +6350,9 @@
       "joint": "hip_L",
       "wrap": true
      }
-    ]
+    ],
+    "pushMaxMm": 6.6,
+    "pushAtDeg": 90
    },
    {
     "part": "FJ1441",
@@ -6863,34 +6891,34 @@
   },
   {
    "part": "FJ1394",
-   "gain": 0.89,
+   "gain": 0.7,
    "probes": 4,
-   "rmsAfterPct": 9.4,
-   "rmsBeforePct": 10.5,
+   "rmsAfterPct": 7.5,
+   "rmsBeforePct": 8.5,
    "kept": true
   },
   {
    "part": "FJ1394M",
-   "gain": 0.84,
+   "gain": 0.73,
    "probes": 4,
-   "rmsAfterPct": 9,
-   "rmsBeforePct": 10,
+   "rmsAfterPct": 7.8,
+   "rmsBeforePct": 8.8,
    "kept": true
   },
   {
    "part": "FJ1395",
    "gain": 0,
    "probes": 6,
-   "rmsAfterPct": 3.8,
-   "rmsBeforePct": 3.8,
+   "rmsAfterPct": 2,
+   "rmsBeforePct": 2,
    "kept": true
   },
   {
    "part": "FJ1395M",
    "gain": 0,
    "probes": 6,
-   "rmsAfterPct": 3.5,
-   "rmsBeforePct": 3.5,
+   "rmsAfterPct": 2.1,
+   "rmsBeforePct": 2.1,
    "kept": true
   },
   {
@@ -6911,18 +6939,18 @@
   },
   {
    "part": "FJ1397",
-   "gain": 0.5,
+   "gain": 0.58,
    "probes": 4,
-   "rmsAfterPct": 5,
-   "rmsBeforePct": 5.9,
+   "rmsAfterPct": 5.9,
+   "rmsBeforePct": 6.9,
    "kept": true
   },
   {
    "part": "FJ1397M",
-   "gain": 0.48,
+   "gain": 0.59,
    "probes": 4,
-   "rmsAfterPct": 4.6,
-   "rmsBeforePct": 5.6,
+   "rmsAfterPct": 5.6,
+   "rmsBeforePct": 6.7,
    "kept": true
   },
   {
@@ -7233,16 +7261,16 @@
    "part": "FJ1421",
    "gain": 0,
    "probes": 6,
-   "rmsAfterPct": 15.8,
-   "rmsBeforePct": 15.8,
+   "rmsAfterPct": 13.7,
+   "rmsBeforePct": 13.7,
    "kept": true
   },
   {
    "part": "FJ1421M",
    "gain": 0,
    "probes": 6,
-   "rmsAfterPct": 20,
-   "rmsBeforePct": 20,
+   "rmsAfterPct": 13.2,
+   "rmsBeforePct": 13.2,
    "kept": true
   },
   {
@@ -7391,34 +7419,34 @@
   },
   {
    "part": "FJ1433",
-   "gain": 0.69,
+   "gain": 0.55,
    "probes": 4,
-   "rmsAfterPct": 7.3,
-   "rmsBeforePct": 9.8,
+   "rmsAfterPct": 4.3,
+   "rmsBeforePct": 7.2,
    "kept": true
   },
   {
    "part": "FJ1433M",
-   "gain": 0.69,
+   "gain": 0.53,
    "probes": 4,
-   "rmsAfterPct": 7,
-   "rmsBeforePct": 10,
+   "rmsAfterPct": 4,
+   "rmsBeforePct": 7.1,
    "kept": true
   },
   {
    "part": "FJ1434",
-   "gain": 0.74,
+   "gain": 0.45,
    "probes": 4,
-   "rmsAfterPct": 8,
-   "rmsBeforePct": 15.1,
+   "rmsAfterPct": 6.3,
+   "rmsBeforePct": 10.3,
    "kept": true
   },
   {
    "part": "FJ1434M",
-   "gain": 0.91,
+   "gain": 0.46,
    "probes": 4,
-   "rmsAfterPct": 8.7,
-   "rmsBeforePct": 17.4,
+   "rmsAfterPct": 6.5,
+   "rmsBeforePct": 10.4,
    "kept": true
   },
   {
@@ -7439,18 +7467,18 @@
   },
   {
    "part": "FJ1436",
-   "gain": 0.2,
+   "gain": 0.3,
    "probes": 6,
-   "rmsAfterPct": 1.6,
-   "rmsBeforePct": 4.3,
+   "rmsAfterPct": 7.7,
+   "rmsBeforePct": 10.3,
    "kept": true
   },
   {
    "part": "FJ1436M",
-   "gain": 0,
+   "gain": 0.29,
    "probes": 6,
-   "rmsAfterPct": 3.1,
-   "rmsBeforePct": 3.1,
+   "rmsAfterPct": 6.7,
+   "rmsBeforePct": 9.2,
    "kept": true
   },
   {
@@ -36059,10 +36087,10 @@
      },
      "muscle": {
       "p99": 1.01,
-      "p999": 2.09,
+      "p999": 2.05,
       "over2Pct": 0.11,
-      "max": 16.53,
-      "worst": "Left semitendinosus"
+      "max": 13.3,
+      "worst": "Left transversus abdominis"
      },
      "tendon": {
       "p99": 4.03,
@@ -36166,8 +36194,8 @@
     "volume": {
      "muscles": 333,
      "lengthChanged": 20,
-     "medianAbsErrSkinnedPct": 12.06,
-     "medianAbsErrUniformPct": 7.16,
+     "medianAbsErrSkinnedPct": 12.24,
+     "medianAbsErrUniformPct": 8.29,
      "medianAbsErrTaperedPct": 8.29,
      "p90AbsErrSkinnedPct": 39.8,
      "p90AbsErrUniformPct": 33.36,
@@ -36268,8 +36296,8 @@
       "sampled": 2738
      },
      "muscle": {
-      "insidePct": 15.6,
-      "deepPct": 6.9,
+      "insidePct": 15.5,
+      "deepPct": 6.8,
       "sampled": 72520
      },
      "artery": {
@@ -36293,8 +36321,8 @@
      },
      "muscle": {
       "p99": 1.01,
-      "p999": 1.17,
-      "over2Pct": 0.02,
+      "p999": 1.15,
+      "over2Pct": 0.01,
       "max": 17.1,
       "worst": "Left vastus intermedius"
      },
@@ -36400,12 +36428,12 @@
     "volume": {
      "muscles": 333,
      "lengthChanged": 13,
-     "medianAbsErrSkinnedPct": 2.53,
-     "medianAbsErrUniformPct": 2.53,
-     "medianAbsErrTaperedPct": 2.28,
+     "medianAbsErrSkinnedPct": 2.22,
+     "medianAbsErrUniformPct": 2.22,
+     "medianAbsErrTaperedPct": 1.97,
      "p90AbsErrSkinnedPct": 15.82,
-     "p90AbsErrUniformPct": 8.32,
-     "p90AbsErrTaperedPct": 7.82
+     "p90AbsErrUniformPct": 7.09,
+     "p90AbsErrTaperedPct": 6.66
     },
     "skin": {
      "flippedPct": 0,
@@ -36502,7 +36530,7 @@
       "sampled": 2738
      },
      "muscle": {
-      "insidePct": 15.6,
+      "insidePct": 15.5,
       "deepPct": 6.9,
       "sampled": 72520
      },
@@ -36527,8 +36555,8 @@
      },
      "muscle": {
       "p99": 1.01,
-      "p999": 1.35,
-      "over2Pct": 0.04,
+      "p999": 1.31,
+      "over2Pct": 0.03,
       "max": 23.36,
       "worst": "Left vastus intermedius"
      },
@@ -36634,12 +36662,12 @@
     "volume": {
      "muscles": 333,
      "lengthChanged": 11,
-     "medianAbsErrSkinnedPct": 6.21,
-     "medianAbsErrUniformPct": 6.44,
-     "medianAbsErrTaperedPct": 6.08,
+     "medianAbsErrSkinnedPct": 5.85,
+     "medianAbsErrUniformPct": 6.5,
+     "medianAbsErrTaperedPct": 7.63,
      "p90AbsErrSkinnedPct": 21.91,
-     "p90AbsErrUniformPct": 15.19,
-     "p90AbsErrTaperedPct": 14.91
+     "p90AbsErrUniformPct": 11.91,
+     "p90AbsErrTaperedPct": 12.48
     },
     "skin": {
      "flippedPct": 0,
@@ -37178,7 +37206,7 @@
      "medianAbsErrUniformPct": 2.16,
      "medianAbsErrTaperedPct": 2.53,
      "p90AbsErrSkinnedPct": 15.44,
-     "p90AbsErrUniformPct": 7.44,
+     "p90AbsErrUniformPct": 7.1,
      "p90AbsErrTaperedPct": 7.96
     },
     "skin": {
@@ -38200,9 +38228,9 @@
       "worst": "Distal part of ileum"
      },
      "muscle": {
-      "p99": 1.47,
-      "p999": 4.01,
-      "over2Pct": 0.47,
+      "p99": 1.45,
+      "p999": 3.65,
+      "over2Pct": 0.43,
       "max": 27.15,
       "worst": "Right vastus intermedius"
      },
@@ -38308,12 +38336,12 @@
     "volume": {
      "muscles": 333,
      "lengthChanged": 89,
-     "medianAbsErrSkinnedPct": 8.24,
-     "medianAbsErrUniformPct": 4.21,
+     "medianAbsErrSkinnedPct": 8.25,
+     "medianAbsErrUniformPct": 4.3,
      "medianAbsErrTaperedPct": 4.87,
      "p90AbsErrSkinnedPct": 43.3,
      "p90AbsErrUniformPct": 34.28,
-     "p90AbsErrTaperedPct": 29.1
+     "p90AbsErrTaperedPct": 26.09
     },
     "skin": {
      "flippedPct": 0.2,
@@ -38444,8 +38472,8 @@
      },
      "muscle": {
       "p99": 1.21,
-      "p999": 3.21,
-      "over2Pct": 0.3,
+      "p999": 2.93,
+      "over2Pct": 0.26,
       "max": 19.57,
       "worst": "Right vastus intermedius"
      },
@@ -38551,9 +38579,9 @@
     "volume": {
      "muscles": 333,
      "lengthChanged": 56,
-     "medianAbsErrSkinnedPct": 11.8,
+     "medianAbsErrSkinnedPct": 8.29,
      "medianAbsErrUniformPct": 6.8,
-     "medianAbsErrTaperedPct": 6.8,
+     "medianAbsErrTaperedPct": 6.66,
      "p90AbsErrSkinnedPct": 39.22,
      "p90AbsErrUniformPct": 25.13,
      "p90AbsErrTaperedPct": 23.51
@@ -38843,10 +38871,10 @@
     "lineRangeMm": -26.77,
     "lineR": -0.63,
     "lineRmsMm": 34.77,
-    "meshRangeMm": 51.85,
+    "meshRangeMm": 63.03,
     "meshR": 1,
-    "meshRmsMm": 9.01,
-    "meshNrms": 0.11
+    "meshRmsMm": 5.43,
+    "meshNrms": 0.07
    },
    {
     "muscle": "rect_fem_r",
@@ -38858,9 +38886,9 @@
     "lineRangeMm": -66.04,
     "lineR": 0.99,
     "lineRmsMm": 6.57,
-    "meshRangeMm": -46.28,
+    "meshRangeMm": -46.06,
     "meshR": 1,
-    "meshRmsMm": 12.39,
+    "meshRmsMm": 12.49,
     "meshNrms": 0.15
    },
    {
@@ -38918,10 +38946,10 @@
     "lineRangeMm": -97.11,
     "lineR": 0.96,
     "lineRmsMm": 17.49,
-    "meshRangeMm": -35.02,
-    "meshR": 0.99,
-    "meshRmsMm": 7.16,
-    "meshNrms": 0.14
+    "meshRangeMm": -40.28,
+    "meshR": 0.97,
+    "meshRmsMm": 7.58,
+    "meshNrms": 0.15
    },
    {
     "muscle": "bifemlh_r",
@@ -38933,9 +38961,9 @@
     "lineRangeMm": 99.44,
     "lineR": 1,
     "lineRmsMm": 3.79,
-    "meshRangeMm": 108.13,
-    "meshR": 1,
-    "meshRmsMm": 5.56,
+    "meshRangeMm": 108.24,
+    "meshR": 0.99,
+    "meshRmsMm": 5.76,
     "meshNrms": 0.06
    },
    {
@@ -38948,10 +38976,10 @@
     "lineRangeMm": -123.49,
     "lineR": 0.95,
     "lineRmsMm": 23.06,
-    "meshRangeMm": -42.42,
+    "meshRangeMm": -39.99,
     "meshR": 1,
-    "meshRmsMm": 14.15,
-    "meshNrms": 0.17
+    "meshRmsMm": 14.8,
+    "meshNrms": 0.18
    },
    {
     "muscle": "semiten_r",
@@ -38963,9 +38991,9 @@
     "lineRangeMm": 95.43,
     "lineR": 1,
     "lineRmsMm": 5.25,
-    "meshRangeMm": 100.04,
+    "meshRangeMm": 100.86,
     "meshR": 0.99,
-    "meshRmsMm": 6.69,
+    "meshRmsMm": 6.9,
     "meshNrms": 0.06
    },
    {
@@ -39008,10 +39036,10 @@
     "lineRangeMm": -30.19,
     "lineR": 1,
     "lineRmsMm": 1.71,
-    "meshRangeMm": -26.92,
-    "meshR": 0.99,
-    "meshRmsMm": 2.81,
-    "meshNrms": 0.08
+    "meshRangeMm": -21.32,
+    "meshR": 0.92,
+    "meshRmsMm": 6,
+    "meshNrms": 0.17
    },
    {
     "muscle": "med_gas_r",
@@ -39038,10 +39066,10 @@
     "lineRangeMm": -26.58,
     "lineR": 0.99,
     "lineRmsMm": 2.94,
-    "meshRangeMm": -24.81,
+    "meshRangeMm": -23.52,
     "meshR": 0.99,
-    "meshRmsMm": 2.77,
-    "meshNrms": 0.08
+    "meshRmsMm": 3.28,
+    "meshNrms": 0.1
    },
    {
     "muscle": "lat_gas_r",
