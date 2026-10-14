@@ -4,6 +4,7 @@ import { type Attached, MAX_IMAGES, fromFile, imagesIn } from '../assistant/imag
 import { Markdown } from '../assistant/Markdown'
 import { useT } from '../state/store'
 import { useRestartNeeded } from '../version'
+import { useDraft } from './drafts'
 import { mark, tell } from './notify'
 import { type Item, type Question, type SessionEvent, type View, emptyView, fold, pending } from './view'
 
@@ -18,8 +19,8 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
   const t = useT()
   const [view, setView] = useState<View>(emptyView)
   const [meta, setMeta] = useState<SessionMeta | null>(null)
-  const [draft, setDraft] = useState('')
-  const [attached, setAttached] = useState<Attached[]>([])
+  // 草稿每个会话一份，换会话、刷新都还在。 / One draft per session, surviving a switch and a reload.
+  const { text: draft, setText: setDraft, images: attached, setImages: setAttached } = useDraft(`session:${id}`)
   const [error, setError] = useState<string | null>(null)
   const log = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
