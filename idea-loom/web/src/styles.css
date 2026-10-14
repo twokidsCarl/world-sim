@@ -270,6 +270,8 @@ a.button.inline { display: inline-block; }
 .session-pick.on { border-color: var(--accent); background: var(--accent-soft); }
 .session-pick strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .session-needs { color: var(--accent); font-weight: 600; }
+.session-filter { display: grid; gap: 6px; justify-items: start; }
+.session-filter .seg button { padding: 4px 10px; }
 .session { display: grid; gap: 10px; min-width: 0; }
 .session-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .session-status.waiting { border-color: var(--accent); color: var(--accent); }
