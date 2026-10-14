@@ -31,6 +31,7 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
   const toneDefault = toneData?.default ?? DEFAULT_TONE
   const iris = useApp((s) => s.iris)
   const gaze = useApp((s) => s.gaze)
+  const blink = useApp((s) => s.blink)
   const mainSkin = graph.mainSkinId()
   const opaqueNow = useApp((s) => skinDrawnOpaque(s, mainSkin))
   const skinHide = useApp((s) => s.skinHide)
@@ -163,6 +164,10 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
                       </option>
                     )}
                   </select>
+                </label>{' '}
+                <label className="check" title="Spontaneous blinks and microsaccades (blink=0 turns them off)">
+                  <input type="checkbox" checked={blink} onChange={(e) => app.setBlink(e.target.checked)} />
+                  眨眼 <span className="en">Blinks</span>
                 </label>
               </div>
             )}

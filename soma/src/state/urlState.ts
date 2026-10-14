@@ -53,6 +53,8 @@
 //   gaze   c | 20,-10                             写实的眼的注视：c 看相机（缺省）；或固定角度 yaw,pitch（度；yaw 正 = 向人体左侧，pitch 正 = 向上）
 //                                                 gaze of the lifelike eyes: c = at the camera (default); or fixed angles yaw,pitch
 //                                                 (degrees; positive yaw = towards the body's left, positive pitch = up)
+//   blink  0                                      写实的眼不眨眼、没有微扫视（截图和测试用；缺省是有）
+//                                                 the lifelike eyes do not blink or make microsaccades (for screenshots and tests; on by default)
 //   shape  h1.80,b28,l0,c0                        体型：h 身高（米）、b BMI、l 腿长比例（SD）、c 躯干体格（SD）；只写不在默认值的项，
 //                                                 超出该人体可用范围的值会被截断
 //                                                 body shape: h stature (m), b BMI, l leg length (SD), c central build (SD); only non-default
@@ -107,7 +109,7 @@ const AXES: Record<string, SectionAxis> = { a: 'axial', c: 'coronal', s: 'sagitt
 const MAPS = { d: 'dermatome', n: 'cutaneousNerve' } as const
 const BODIES = new Set(['male', 'female', 'fixture', 'stress'])
 /** 本模块负责的参数名；其余的原样保留 / Parameter names owned here; all others pass through. */
-export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'say', 'drive', 'style', 'skin', 'look', 'tone', 'shape', 'stim', 'src', 'cmp', 'iris', 'gaze'] as const
+export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'say', 'drive', 'style', 'skin', 'look', 'tone', 'shape', 'stim', 'src', 'cmp', 'iris', 'gaze', 'blink'] as const
 /** 超过这个数量的部件 id 不写进 URL / Part id lists longer than this are not written to the URL. */
 export const MAX_URL_IDS = 60
 export const MAX_URL_DOFS = 40
@@ -155,6 +157,8 @@ export interface UrlState {
   iris?: IrisName
   /** 注视；看相机（缺省）不写 / gaze; the camera (default) is not written */
   gaze?: GazeSetting
+  /** false：不眨眼；缺省（眨）不写 / false: no blinks; the default (blinking) is not written */
+  blink?: boolean
   /** 体型控制量（未限幅）/ shape controls (not yet clamped). */
   shape?: ShapeControls
   /** 一个刺激及其部位 / one stimulus and its site */
@@ -225,6 +229,12 @@ export function parseUrl(search: string): ParsedUrl {
       case 'iris': {
         if ((IRIS_NAMES as readonly string[]).includes(value)) state.iris = value as IrisName
         else warn(`${key}: 应为 ${IRIS_NAMES.join(' | ')} / expected ${IRIS_NAMES.join(' | ')}`)
+        break
+      }
+      case 'blink': {
+        const f = flag(value)
+        if (f === null) warn(`${key}: 应为 1 或 0 / expected 1 or 0`)
+        else if (!f) state.blink = false
         break
       }
       case 'gaze': {
@@ -447,6 +457,7 @@ export function formatUrl(state: UrlState, passthrough: readonly [string, string
   if (state.look === false) put('look', '0')
   if (state.tone !== undefined) put('tone', String(Math.round(state.tone)))
   if (state.iris && state.iris !== 'brown') put('iris', state.iris)
+  if (state.blink === false) put('blink', '0')
   if (state.gaze) {
     const g = formatGaze(state.gaze)
     if (g) put('gaze', g)
