@@ -1035,6 +1035,25 @@ input[type='checkbox'] {
   font-size: 12px;
 }
 
+/* 相机操作的提示，左上角，不拦截指针；窄屏上不显示 / camera-control hint, top left, not catching the pointer; hidden on narrow screens */
+.embed-hint {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  max-width: calc(100% - 300px);
+  color: var(--text-3);
+  font-size: 11px;
+  line-height: 1.4;
+  pointer-events: none;
+  z-index: 3;
+}
+
+@media (max-width: 720px) {
+  .embed-hint {
+    display: none;
+  }
+}
+
 .embed-cautions {
   position: absolute;
   top: 8px;

@@ -108,6 +108,11 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
         </div>
       )}
 
+      <div className="embed-hint">
+        拖动旋转 · 右键、Shift + 拖动或双指滑动平移 · 滚轮或捏合缩放{' '}
+        <span className="en">drag to rotate · right-drag, Shift + drag or two-finger swipe to pan · wheel or pinch to zoom</span>
+      </div>
+
       <div className="embed-strip">
         <button className="tool-btn" onClick={() => app.requestHome()} title="复位视角 Reset view">
           <Icon name="home" /> <span>复位</span>

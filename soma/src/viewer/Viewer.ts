@@ -90,6 +90,7 @@ import { layerWeights, type LoadedDetail } from '../pain/detail.ts'
 import { LumenLayer } from './lumenLayer.ts'
 import { ORIGIN_BOUNDED, ORIGIN_CONSTRUCTION, ORIGIN_MIXED, applyFilling, buildCanalPath, pathPoint, radiusAt, ringStations, ringsOf, segmentAt, widenRings, type CanalPath, type PathSegmentInput, type RingMesh, type V3 } from '../lumen/core.ts'
 import { LUMEN_COLOR } from '../lumen/colors.ts'
+import { isTrackpadScroll } from './wheel.ts'
 import { FLY_MIN_FILL, FLY_MIN_RADIUS, FLY_SPEED, displacementOf, ensureLumenData, fillingOf, lumenCandidates, registerLumenGeometry, reportFly, segmentIds, showCanal, useLumen, type LumenData, type LumenState } from '../lumen/state.ts'
 
 const LEGACY_SORT = typeof location !== 'undefined' && new URLSearchParams(location.search).get('sort') === 'origin'
@@ -587,11 +588,14 @@ export class Viewer {
     el.addEventListener('pointermove', this.onPointerMove)
     el.addEventListener('pointerleave', this.onPointerLeave)
     el.addEventListener('contextmenu', this.onContextMenu)
+    // 先于相机控制器：触控板双指滑动改为平移（嵌入模式下排在 onEmbedWheel 之后，未激活时被它拦下）
+    // ahead of the camera controls: a two-finger trackpad swipe pans (in embed mode it comes after onEmbedWheel, which stops it while inactive)
     if (this.embed) {
       el.addEventListener('wheel', this.onEmbedWheel, { capture: true })
+      el.addEventListener('wheel', this.onTrackpadWheel, { capture: true, passive: false })
       el.addEventListener('focus', this.onEmbedFocus)
       el.addEventListener('blur', this.onEmbedBlur)
-    }
+    } else el.addEventListener('wheel', this.onTrackpadWheel, { capture: true, passive: false })
     document.addEventListener('visibilitychange', this.onVisibility)
     if (typeof IntersectionObserver !== 'undefined') {
       this.intersection = new IntersectionObserver((entries) => {
@@ -653,6 +657,25 @@ export class Viewer {
     // not activated and no modifier: keep it from the camera controls and let the page scroll
     if (document.activeElement !== this.renderer.domElement && !e.ctrlKey && !e.metaKey) e.stopImmediatePropagation()
   }
+  private onTrackpadWheel = (e: WheelEvent): void => {
+    // 捏合（带 ctrlKey）和鼠标滚轮照旧交给控制器缩放；触控板的双指滑动平移，内容跟着手指走
+    // a pinch (ctrlKey set) and a mouse wheel still go to the controls and zoom; a two-finger trackpad swipe pans, the content following the fingers
+    if (e.ctrlKey || !isTrackpadScroll(e)) return
+    e.preventDefault()
+    e.stopImmediatePropagation()
+    this.tween = null
+    this.controls.pan(-e.deltaX, -e.deltaY)
+    this.reportCameraSoon()
+  }
+  private panSettle: ReturnType<typeof setTimeout> | null = null
+  private reportCameraSoon(): void {
+    // 滑动没有 end 事件：停下 200 ms 后记一次相机 / a swipe has no end event: record the camera once it has stopped for 200 ms
+    if (this.panSettle) clearTimeout(this.panSettle)
+    this.panSettle = setTimeout(() => {
+      this.panSettle = null
+      this.reportCamera()
+    }, 200)
+  }
   private onEmbedFocus = (): void => {
     this.renderer.domElement.style.touchAction = 'none'
   }
@@ -683,6 +706,8 @@ export class Viewer {
     el.removeEventListener('pointerleave', this.onPointerLeave)
     el.removeEventListener('contextmenu', this.onContextMenu)
     el.removeEventListener('wheel', this.onEmbedWheel, { capture: true })
+    el.removeEventListener('wheel', this.onTrackpadWheel, { capture: true })
+    if (this.panSettle) clearTimeout(this.panSettle)
     el.removeEventListener('focus', this.onEmbedFocus)
     el.removeEventListener('blur', this.onEmbedBlur)
     this.controls.dispose()
