@@ -420,3 +420,27 @@ describe('lobed beads', () => {
     expect([mol.pos[0], mol.pos[3]].sort((a, b) => a! - b!).map((v) => Math.round(v!))).toEqual([18, 58])
   })
 })
+
+describe('fanned lobes on a spike head', () => {
+  it('ripple raises and lowers the top of the head with distance from the axis, and leaves the stalk alone', async () => {
+    const { exaggerate } = await import('../src/infer/idealise')
+    // 一根沿 z 的“刺”：柄在下（z 0–60），头在上（z 60–100，宽 30）/ a "spike" along z: stalk below (z 0–60), head above (z 60–100, 30 wide)
+    const pts: number[] = []
+    for (let z = 0; z <= 60; z += 4) pts.push(0, 0, z)
+    for (let z = 64; z <= 100; z += 4) for (let r = 0; r <= 30; r += 6) pts.push(r, 0, z)
+    const n = pts.length / 3
+    const make = () => ({ atomCount: n, pos: new Float32Array(pts), chains: [{ start: 0, count: n, entity: 0 }], entities: [{ kind: 'protein', description: 'S' }] }) as never as import('../src/mol/types').Molecule
+    const t = { origin: [0, 0, 50] as [number, number, number], up: [0, 0, 1] as [number, number, number], distance: 50, tilt: 0 }
+    const plain = make(), rippled = make()
+    exaggerate(plain, t, { stretch: 1, stalk: 1, head: 1, split: 0.6 })
+    exaggerate(rippled, t, { stretch: 1, stalk: 1, head: 1, split: 0.6, ripple: [10, 24] })
+    let stalkMoved = 0, topMoved = 0
+    for (let i = 0; i < n; i++) {
+      const dz = Math.abs(rippled.pos[i * 3 + 2]! - plain.pos[i * 3 + 2]!)
+      if (pts[i * 3 + 2]! <= 60) stalkMoved = Math.max(stalkMoved, dz)
+      if (pts[i * 3 + 2]! >= 96) topMoved = Math.max(topMoved, dz)
+    }
+    expect(stalkMoved).toBeLessThan(0.01)
+    expect(topMoved).toBeGreaterThan(5)
+  })
+})

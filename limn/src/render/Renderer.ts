@@ -615,8 +615,10 @@ export class Renderer {
     const gl = this.gl
     const cw = this.canvas.width, ch = this.canvas.height
     if (cw === 0 || ch === 0) return
-    const ss = fast ? 1 : this.supersample(cw, ch)
-    const t = this.renderInternal(view, style, cw * ss, ch * ss, fast)
+    // 拖动时，几百万个球以上的场景用一半的分辨率画：拖的时候看的是转动，不是细节，松手后马上补画完整的
+    // while dragging, a scene of several million spheres or more is drawn at half resolution: what matters during a drag is the turning, not the detail, and the full picture follows on release
+    const ss = fast ? (this.lastAtoms > 4_000_000 ? 0.5 : 1) : this.supersample(cw, ch)
+    const t = this.renderInternal(view, style, Math.max(1, Math.round(cw * ss)), Math.max(1, Math.round(ch * ss)), fast)
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, t.outFbo)
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null)
     gl.blitFramebuffer(0, 0, t.w, t.h, 0, 0, cw, ch, gl.COLOR_BUFFER_BIT, gl.LINEAR)
