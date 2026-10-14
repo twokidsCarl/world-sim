@@ -36,7 +36,7 @@ from typing import Any, Iterable, Iterator, Optional
 # 进数据库的日志。别的（每个作业、每轮对话自己的事件）仍是运行目录里的文件。
 # The logs that go into the database. Others (each job's and each conversation turn's own events) stay files in the runs directory.
 DATA_STREAMS = ("ideas", "wishes", "tasks")
-RUNS_STREAMS = ("trail", "proposals", "llm", "suggestions")
+RUNS_STREAMS = ("trail", "proposals", "llm", "suggestions", "reviews")
 
 
 def data_dir() -> Path:

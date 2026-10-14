@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { VisitorQueue } from './SuggestPage'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
-import { type Job, type Suggestion, type Wish, type WishDetail, type WishList, api } from '../api'
+import { type Job, type ReviewRun, type ReviewStatus, type Wish, type WishDetail, type WishList, api } from '../api'
 import { JobPanel } from '../ui/JobPanel'
 import { useAssistant } from '../assistant/store'
 import { label, plural } from '../i18n'
@@ -78,8 +78,8 @@ export function WishesPage() {
     <Page
       title={t('许愿池', 'Wish pool')}
       lead={t(
-        '对 idea-loom 这个工具本身的改进愿望。愿望不是在这里填的：和右边的小助手说话时，它发现工具哪里不顺手就会记一条，你也可以直接跟它说"把这个记下来"。处理它们：在 Claude Code 里运行 /wishes。',
-        'Wishes for improving the idea-loom tool itself. Wishes are not filled in here: while you talk to the assistant on the right, it records one whenever it notices the tool getting in your way, and you can also just tell it "write this down". To handle them, run /wishes in Claude Code.',
+        '对 idea-loom 这个工具本身的改进愿望。愿望不是在这里填的：和右边的小助手说话时，它发现工具哪里不顺手就会记一条，你也可以直接跟它说"把这个记下来"；回看你最近的使用时，也会自己记下重要的几条。处理它们：在 Claude Code 里运行 /wishes。',
+        'Wishes for improving the idea-loom tool itself. Wishes are not filled in here: while you talk to the assistant on the right, it records one whenever it notices the tool getting in your way, and you can also just tell it "write this down"; reviewing your recent use also records the important findings by itself. To handle them, run /wishes in Claude Code.',
       )}
     >
       {error && <div className="notice bad" role="alert">{error}</div>}
@@ -414,66 +414,108 @@ export function WishPage() {
   )
 }
 
-// 回看：让模型读一遍最近的操作，提出最多三条愿望，由你取舍。
-// Review: the model reads your recent actions and proposes up to three wishes for you to keep or drop.
+// 回看：攒够一批操作，后台自己让模型读一遍，给每条发现打重要程度；重要的直接记进许愿池，其余的丢掉。
+// 这里显示攒了多少、能"现在回看"，下面是最近几次回看的记录，丢掉的可以捞回来。
+// Review: once enough actions pile up, the backend has the model read them and rate each finding's importance; important ones go
+// straight into the wish pool and the rest are dropped. Here: how many have piled up, "review now", and the recent reviews, where a dropped one can be rescued.
 function Review({ onRecorded }: { onRecorded: () => void }) {
   const refresh = useAssistant((s) => s.refresh)
-  const [status, setStatus] = useState<{ actions_since: number; due: boolean; last_at: string | null } | null>(null)
-  const [items, setItems] = useState<Suggestion[] | null>(null)
-  const [busy, setBusy] = useState(false)
+  const [status, setStatus] = useState<ReviewStatus | null>(null)
   const [error, setError] = useState<string | null>(null)
   const t = useT()
+  const running = status?.running ?? false
+  const load = () => api.reviewStatus().then(setStatus, () => undefined)
   useEffect(() => {
-    api.reviewStatus().then(setStatus, () => undefined)
-  }, [items])
+    void load()
+  }, [])
+  // 在回看的时候每隔几秒看一眼，做完了刷新愿望列表。 / While a review runs, look every few seconds; when it ends, refresh the wish list.
+  useEffect(() => {
+    if (!running) return
+    const timer = setInterval(() => {
+      api.reviewStatus().then((s) => {
+        setStatus(s)
+        if (!s.running) (onRecorded(), void refresh())
+      }, () => undefined)
+    }, 3000)
+    return () => clearInterval(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running])
   const run = () => {
-    setBusy(true)
     setError(null)
-    api.review().then(
-      (found) => (setItems(found), setBusy(false)),
-      (e: Error) => (setError(e.message), setBusy(false)),
-    )
+    api.review().then(setStatus, (e: Error) => setError(e.message))
   }
-  const drop = (s: Suggestion) => setItems((old) => (old ?? []).filter((x) => x !== s))
+  const rescue = (r: ReviewRun, i: number) =>
+    void api.rescueFinding(r.id, i).then(() => (void load(), onRecorded(), void refresh()), (e: Error) => setError(e.message))
+  const dueAfter = status?.due_after ?? 300
+  const recordAt = status?.record_at ?? 4
   return (
     <div className="review">
       <div className="row wrap">
-        <button disabled={busy} onClick={run}>
-          {busy ? t('正在回看，大约二十秒…', 'Reviewing, about twenty seconds…') : t('回看我最近的使用', 'Review my recent use')}
+        <button disabled={running} onClick={run}>
+          {running ? t('正在回看，大约二十秒…', 'Reviewing, about twenty seconds…') : t('现在回看', 'Review now')}
         </button>
         <span className="muted small">
           {t(
-            '让模型读一遍你最近在界面里的操作（不含输入的文字），自己提出最多三条愿望，记不记由你定。',
-            'The model reads what you did in the UI recently (not the text you typed) and proposes up to three wishes of its own; whether to record them is up to you.',
+            `每攒够 ${dueAfter} 条操作，后台就自己回看一次：模型读一遍你最近在界面里的操作（不含输入的文字），提出改进愿望，并给每条打 1–5 分的重要程度。${recordAt} 分及以上的直接记进许愿池，其余的丢掉；下面留着记录，丢掉的也能捞回来。`,
+            `Every ${dueAfter} actions the backend reviews by itself: the model reads what you did in the UI recently (not the text you typed), proposes wishes and rates each one's importance from 1 to 5. Those at ${recordAt} or above go straight into the wish pool and the rest are dropped; the log below keeps them, and a dropped one can still be rescued.`,
           )}
           {status && t(` 上次回看之后攒了 ${status.actions_since} 条操作。`, ` ${plural(status.actions_since, 'action')} since the last review.`)}
-          {status?.due && t(' 可以回看一次了。', ' Time for a review.')}
+          {status && !status.auto && t(' 现在没有可用的模型，不会自己回看。', ' No model is available right now, so no review runs by itself.')}
         </span>
       </div>
       {error && <p className="err" role="alert">{error}</p>}
-      {items && items.length === 0 && <p className="muted">{t('这次没看出什么值得记的。', 'Nothing worth recording this time.')}</p>}
-      {items && items.length > 0 && (
-        <div className="proposals">
-          {items.map((s) => (
-            <article key={s.title} className="proposal">
-              <h3>{s.title}</h3>
-              <p><span className="muted small">{t('卡在哪', 'Where it gets stuck')}</span> {s.stuck}</p>
-              <p><span className="muted small">{t('建议', 'Suggestion')}</span> {s.suggestion}</p>
-              <p className="muted small p-why">{t('它的依据：', 'Its evidence: ')}{s.evidence}</p>
-              <div className="row">
-                <button
-                  className="primary"
-                  onClick={() => void api.recordWish(s).then(() => (drop(s), onRecorded(), void refresh()), (e: Error) => setError(e.message))}
-                >
-                  {t('记进许愿池', 'Record in the wish pool')}
-                </button>
-                <button onClick={() => drop(s)}>{t('不要', 'Dismiss')}</button>
-              </div>
-            </article>
+      {status && status.runs.length > 0 && (
+        <div className="review-log">
+          {status.runs.map((r, n) => (
+            <ReviewEntry key={r.id} run={r} open={n === 0} recordAt={recordAt} onRescue={(i) => rescue(r, i)} />
           ))}
         </div>
       )}
     </div>
+  )
+}
+
+// 一次回看的记录：什么时候、怎么开始的、记了几条、丢了几条；展开看每条的分数和理由。
+// One review in the log: when, how it started, how many were recorded and dropped; open it for each finding's score and reason.
+function ReviewEntry({ run, open, recordAt, onRescue }: { run: ReviewRun; open: boolean; recordAt: number; onRescue: (index: number) => void }) {
+  const lang = useLang()
+  const t = useT()
+  const kept = run.findings.filter((f) => f.wish_id).length
+  const how = run.trigger === 'auto' ? t('自动', 'Automatic') : t('手动', 'Manual')
+  const outcome = run.error
+    ? t(`没做成：${run.error}`, `Failed: ${run.error}`)
+    : run.findings.length === 0
+      ? t('没看出什么值得记的', 'nothing worth recording')
+      : t(`记了 ${kept} 条，丢了 ${run.findings.length - kept} 条`, `${kept} recorded, ${run.findings.length - kept} dropped`)
+  return (
+    <details className="review-run" open={open}>
+      <summary>
+        {formatTime(run.at)} · {how} · {t(`读了 ${run.actions} 条操作`, `read ${plural(run.actions, 'action')}`)} ·{' '}
+        <span className={run.error ? 'err' : ''}>{outcome}</span>
+      </summary>
+      <ul className="review-findings">
+        {run.findings.map((f, i) => (
+          <li key={i} className={f.wish_id ? '' : 'dropped'}>
+            <span className={`badge ${f.importance >= recordAt ? 'w-open' : 'w-quiet'}`} title={t('重要程度（1–5）', 'Importance (1–5)')}>
+              {f.importance}/5
+            </span>{' '}
+            {f.wish_id ? <Link to={`/wishes/${f.wish_id}`}>{f.title}</Link> : <strong>{f.title}</strong>}{' '}
+            <span className="muted small">{label(lang, 'wishKind', f.kind, f.kind)}</span>
+            {f.rescued && <span className="muted small"> · {t('捞回来的', 'rescued')}</span>}
+            <div className="muted small">
+              {f.reason && <>{t('为什么是这个分：', 'Why this score: ')}{f.reason}</>}
+              {f.stuck && <> · {t('卡在哪：', 'Stuck at: ')}{f.stuck}</>}
+              {f.suggestion && <> · {t('建议：', 'Suggestion: ')}{f.suggestion}</>}
+            </div>
+            {!f.wish_id && (
+              <button className="link" onClick={() => onRescue(i)}>
+                {t('还是记进许愿池', 'Record it anyway')}
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </details>
   )
 }
 

@@ -99,7 +99,17 @@ export type Job = {
   queued: string | null; waiting: string | null
 }
 export type JobEvent = { seq: number; at: string; type: string; text?: string; label?: string; state?: string; id?: string; message?: string }
-export type Suggestion = { title: string; kind: string; stuck: string; suggestion: string; evidence: string }
+// 回看的一条发现：模型打了重要程度，够分的直接记进了许愿池（wish_id），其余的丢掉了。
+// One finding of a review: the model rated its importance; those that scored high enough were recorded (wish_id), the rest dropped.
+export type ReviewFinding = {
+  title: string; kind: string; stuck: string; suggestion: string; evidence: string
+  importance: number; reason: string; wish_id: string | null; rescued: boolean
+}
+export type ReviewRun = { id: string; at: string; trigger: 'auto' | 'manual'; actions: number; findings: ReviewFinding[]; error: string }
+export type ReviewStatus = {
+  actions_since: number; due: boolean; due_after: number; record_at: number; running: boolean; auto: boolean
+  last_at: string | null; runs: ReviewRun[]
+}
 export type Text2 = { zh: string; en: string }
 export type SimView = {
   name: string; title: Text2; level: string | null; ready: boolean; source: string; origin: string; status: string; playable: boolean
@@ -161,9 +171,9 @@ export const api = {
   worker: () => call<WorkerStatus>('/api/worker'),
   chain: (directory: string, steps: number) => call<Record<string, number>>('/api/chains', { directory, steps }),
   advance: (dir: string) => call<Task>(`/api/projects/${dir}/advance`, {}),
-  reviewStatus: () => call<{ actions_since: number; due: boolean; last_at: string | null }>('/api/review'),
-  review: () => call<Suggestion[]>('/api/review', {}),
-  recordWish: (body: { title: string; kind: string; stuck: string; suggestion: string }) => call<WishDetail>('/api/wishes', body),
+  reviewStatus: () => call<ReviewStatus>('/api/review'),
+  review: () => call<ReviewStatus>('/api/review', {}),
+  rescueFinding: (runId: string, index: number) => call<WishDetail>(`/api/review/${runId}/rescue/${index}`, {}),
   play: (fresh = false) => call<PlayView>(`/api/play${fresh ? '?fresh=true' : ''}`),
   sendSuggestion: (body: { title: string; stuck: string; where_url: string; where_title: string }) => call<VisitorWish>('/api/suggestions', body),
   mySuggestions: () => call<VisitorWish[]>('/api/suggestions/mine'),
