@@ -1,5 +1,6 @@
 """hub 把模型调用交给 worker：用假 claude 测。 / The hub hands model calls to the worker; tested with a fake claude."""
 
+import base64
 import json
 import threading
 import time
@@ -95,6 +96,12 @@ def test_an_assistant_turn_on_the_hub_streams_back_from_the_worker(tmp_path, mon
     events = wait_done(cid, turn)
     assert [e["type"] for e in events] == ["started", "text", "step", "step", "text", "done"] and events[-1]["text"] == "这一条讲的是临界。"
     (call,) = fc.calls(log)
+    # 走 worker 时，前一问附的图同样跟着下一问。 / Through the worker, an earlier turn's image goes along with the next turn too.
+    png = base64.b64encode(b"\x89PNG\r\n\x1a\nhub").decode()
+    wait_done(cid, turns.start(cid, turns.TurnRequest(question="看图", page=PAGE, images=[{"media_type": "image/png", "data": png}])))
+    wait_done(cid, turns.start(cid, turns.TurnRequest(question="接着说那张图", page=PAGE)))
+    later = json.loads(fc.calls(log)[2]["stdin"])["message"]["content"]
+    assert [b["type"] for b in later] == ["text", "image"] and later[1]["source"]["data"] == png and "第 2 问附的" in later[0]["text"]
     assert "这一页讲什么？" in call["stdin"] and call["has_push_token"] is False and call["scrub"] == "1"
     mcp = json.loads(call["argv"][call["argv"].index("--mcp-config") + 1])
     assert mcp["mcpServers"]["loom"]["env"]["IDEA_LOOM_TURN_TOKEN"]             # 工具回调用这一轮的令牌 / tool callbacks use this turn's token

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { type Action, Dwell, stuck } from '../src/assistant/stuck'
-import { emptyTurn, fold, parseSse } from '../src/assistant/turnView'
+import { emptyTurn, fold, imageUrls, parseSse } from '../src/assistant/turnView'
 
 const T0 = new Date('2026-10-11T08:00:00Z').getTime()
 const at = (sec: number) => new Date(T0 + sec * 1000).toISOString()
@@ -70,6 +70,15 @@ describe('turn view', () => {
   })
   it('uses the final text when nothing was streamed', () => {
     expect(fold(emptyTurn(), [{ seq: 1, type: 'done', text: '整段回答', seconds: 1 }]).blocks).toEqual([{ kind: 'text', text: '整段回答' }])
+  })
+  it('finds the thumbnails of a question by the backend turn number, not by position', () => {
+    // 刚发的：本地的图。 / Fresh: the local images.
+    expect(imageUrls(emptyTurn('q', '', ['data:image/png;base64,AA']), 'c-1')).toEqual(['data:image/png;base64,AA'])
+    // 回看：第 3 问（前面有一问没开成）就去取第 3 问的图。 / Looking back: turn 3 (after a question that failed to start) fetches turn 3's images.
+    const back = fold(emptyTurn('q', '', [], 3), [{ seq: 1, type: 'started', question: 'q', images: 2 }])
+    expect(imageUrls(back, 'c-1')).toEqual(['/api/assistant/conversations/c-1/turns/3/images/0', '/api/assistant/conversations/c-1/turns/3/images/1'])
+    expect(imageUrls({ ...back, turn: null }, 'c-1')).toEqual([])
+    expect(imageUrls(back, null)).toEqual([])
   })
 })
 

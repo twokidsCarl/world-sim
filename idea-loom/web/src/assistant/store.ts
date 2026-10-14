@@ -80,7 +80,10 @@ export const useAssistant = create<AssistantState>((set, get) => {
           if (done) break
           const parsed = parseSse(buffer + decoder.decode(value, { stream: true }))
           buffer = parsed.rest
-          if (parsed.turn !== null) turn = parsed.turn
+          if (parsed.turn !== null) {
+            const n = (turn = parsed.turn)
+            patchLast((t) => ({ ...t, turn: n }))
+          }
           if (parsed.events.length) patchLast((t) => fold(t, parsed.events))
         }
       } catch {
@@ -175,10 +178,10 @@ export const useAssistant = create<AssistantState>((set, get) => {
     openConversation: async (id) => {
       if (get().running) return
       try {
-        const c = await json<{ id: string; turns: { question: string; page_title: string; events: never[] }[] }>(`/api/assistant/conversations/${id}`)
+        const c = await json<{ id: string; turns: { turn: number; question: string; page_title: string; events: never[] }[] }>(`/api/assistant/conversations/${id}`)
         save('conversation', id)
         set({ conversationId: id, error: null, turns: c.turns.map((t) => {
-          const view = fold(emptyTurn(t.question, t.page_title), t.events)
+          const view = fold(emptyTurn(t.question, t.page_title, [], t.turn), t.events)
           return view.status === 'running' ? { ...view, status: 'stopped' as const } : view
         }) })
       } catch (e) {

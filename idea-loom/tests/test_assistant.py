@@ -203,3 +203,43 @@ def test_images_go_to_the_model_and_are_kept_as_files(tmp_path, monkeypatch, see
                          ([{"media_type": "image/png", "data": png}] * 5, "最多带 4 张"), ([{"media_type": "image/png", "data": ""}], "太大了")]:
         with pytest.raises(turns.TurnError, match=message):
             turns.start(cid, turns.TurnRequest(question="x", page=PAGE, images=bad))
+    assert [d.name for d in turns._turn_dirs(cid)] == ["1"]          # 图不对时不留空回合 / a bad image leaves no empty turn
+
+
+def _png(tag: bytes) -> str:
+    import base64
+
+    return base64.b64encode(b"\x89PNG\r\n\x1a\n" + tag).decode()
+
+
+def test_earlier_images_go_along_with_a_follow_up(tmp_path, monkeypatch, seeded):
+    log = fc.install_stream(tmp_path, monkeypatch, [fc.text_delta("看到了。"), fc.result()])
+    cid = turns.new_conversation()
+    first = [{"media_type": "image/png", "data": _png(b"one"), "name": "当前页面的截屏"}, {"media_type": "image/png", "data": _png(b"two")}]
+    wait_done(cid, turns.start(cid, turns.TurnRequest(question="这张图怎么了？", page=PAGE, images=first)))
+    wait_done(cid, turns.start(cid, turns.TurnRequest(question="左上角那个按钮呢？", page=PAGE)))
+    content = json.loads(fc.calls(log)[1]["stdin"])["message"]["content"]
+    # 接着问时，第 1 问的两张图又附上了，文字里说清楚是哪一问的。 / On the follow-up the first turn's two images go along again, and the text says which turn they came from.
+    assert [b["type"] for b in content] == ["text", "image", "image"]
+    assert [b["source"]["data"] for b in content[1:]] == [first[0]["data"], first[1]["data"]]
+    text = content[0]["text"]
+    assert "现在看不到了" not in text and "就是这条消息后面的第 1、2 张" in text
+    assert "这次又附上了 2 张" in text and "第 1 张：第 1 问附的（当前页面的截屏）" in text
+
+
+def test_earlier_images_are_bounded_and_the_most_recent_win(tmp_path, monkeypatch, seeded):
+    fc.install_stream(tmp_path, monkeypatch, [fc.text_delta("好。"), fc.result()])
+    cid = turns.new_conversation()
+    for n, count in enumerate([3, 2], 1):
+        images = [{"media_type": "image/png", "data": _png(f"t{n}-{k}".encode())} for k in range(count)]
+        wait_done(cid, turns.start(cid, turns.TurnRequest(question=f"第 {n} 问", page=PAGE, images=images)))
+    now = turns.TurnRequest(question="三张一起看", page=PAGE, images=[{"media_type": "image/png", "data": _png(b"t3-0")}])
+    images = turns.turn_images(cid, 3, now)
+    # 这次的 1 张在前，然后是第 2 问的 2 张，最后第 1 问只剩 1 张的位置。 / This turn's one first, then turn 2's two, leaving room for one of turn 1's.
+    assert [(i["turn"], i["index"]) for i in images] == [(3, 0), (2, 0), (2, 1), (1, 0)] and len(images) == turns.MAX_IMAGES
+    text = turns.question_text(cid, 3, now, images)
+    assert "他：第 1 问（附了 3 张图，其中 1 张是这条消息后面的第 4 张，其余的这次没有再附上）" in text
+    assert "他：第 2 问（附了 2 张图，就是这条消息后面的第 2、3 张）" in text
+    full = turns.TurnRequest(question="四张", page=PAGE, images=[{"media_type": "image/png", "data": _png(b"x")}] * 4)
+    assert [i["turn"] for i in turns.turn_images(cid, 3, full)] == [3, 3, 3, 3]
+    assert "这次没有再附上，现在看不到了" in turns.question_text(cid, 3, full)

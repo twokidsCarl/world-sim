@@ -11,6 +11,9 @@ export type Block =
   | { kind: 'point'; points: { ref: string; note: string }[] }
 
 export type TurnView = {
+  // 后端给这一问的编号（从 1 起）。发出去但没开成的问题没有编号，所以不能拿它在列表里的位置去猜。
+  // The number the backend gave this turn (from 1). A question that was sent but failed to start has none, so its position in the list cannot stand in for it.
+  turn: number | null
   question: string
   page_title: string
   images: string[] // 附的图的地址：刚发的是本地的，回看的是服务器上的 / URLs of attached images: local for a fresh turn, on the server when looking back
@@ -23,8 +26,16 @@ export type TurnView = {
   lastSeq: number
 }
 
-export function emptyTurn(question = '', page_title = '', images: string[] = []): TurnView {
-  return { question, page_title, images, imageCount: images.length, steps: [], blocks: [], status: 'running', seconds: null, message: null, lastSeq: 0 }
+export function emptyTurn(question = '', page_title = '', images: string[] = [], turn: number | null = null): TurnView {
+  return { turn, question, page_title, images, imageCount: images.length, steps: [], blocks: [], status: 'running', seconds: null, message: null, lastSeq: 0 }
+}
+
+// 问题下面的缩略图：刚发的用本地的图；回看时按后端的回合编号从服务器取。
+// Thumbnails under a question: local images for a fresh turn; when looking back, fetched from the server by the backend's turn number.
+export function imageUrls(view: TurnView, conversationId: string | null): string[] {
+  if (view.images.length) return view.images
+  if (!conversationId || view.turn === null) return []
+  return Array.from({ length: view.imageCount }, (_, i) => `/api/assistant/conversations/${conversationId}/turns/${view.turn}/images/${i}`)
 }
 
 export function fold(view: TurnView, events: TurnEvent[]): TurnView {
