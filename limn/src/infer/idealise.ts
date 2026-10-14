@@ -351,3 +351,46 @@ export function lobed(mol: Molecule, skip: (chain: number) => boolean = () => fa
     })
   })
 }
+
+/**
+ * “须”：链上露在膜外（离膜中心超过 `outer`）的那一截沿法线 `up` 拉长 `stretch` 倍、横向收细到 `narrow`，成一根细长的须。
+ * 这是夸张（Goodsell 画小泡上的蛋白是这样的）。就地改 `mol` 里 `chains` 这几条链的坐标。
+ * "Whiskers": the part of each chain that stands outside the membrane (farther than `outer` from its centre) is stretched `stretch` times along the normal `up` and narrowed to `narrow` across it, into a long thin whisker.
+ * This is an exaggeration (it is how Goodsell paints the proteins on vesicles). The coordinates of the chains `chains` of `mol` are changed in place.
+ */
+export function whiskers(mol: Molecule, chains: number[], centre: V3, up: V3, outer: number, stretch: number, narrow: number): void {
+  for (const ci of chains) {
+    const ch = mol.chains[ci]!
+    for (let i = ch.start; i < ch.start + ch.count; i++) {
+      const q: V3 = [mol.pos[i * 3]! - centre[0], mol.pos[i * 3 + 1]! - centre[1], mol.pos[i * 3 + 2]! - centre[2]]
+      const h = dot(q, up)
+      const out = Math.max(0, h - outer)
+      const k = out > 0 ? narrow : 1
+      for (let d = 0; d < 3; d++) mol.pos[i * 3 + d] = centre[d]! + up[d]! * (h + out * (stretch - 1)) + (q[d]! - up[d]! * h) * k
+    }
+  }
+}
+
+/**
+ * 两个连通的细胞：去掉 x 越过 `plane` 的部分。多份拷贝的组按每份的中心整份去掉；只有一份的组（一整张膜、一团生成的东西）逐个原子去掉（半径设成 -1，不画）。
+ * 第二个细胞是第一个转了半圈摆过去的，所以只要对第一个做一次，两边的相接处都成了开口。就地改。
+ * Two joined cells: what lies past `plane` in x is removed. A group of many copies loses whole copies by each one's centre; a group of a single copy (a membrane in one piece, a generated mass) loses atom by atom (radius set to -1, not drawn).
+ * The second cell is the first turned half a circle and set across, so doing this once to the first leaves an opening on both sides where they meet. Changed in place.
+ */
+export function cutPast(mols: Molecule[], plane: number): void {
+  for (const pm of mols)
+    for (const a of pm.assemblies)
+      for (const g of a.groups) {
+        if (g.operators.length > 1) {
+          const c0 = chainCentre(pm, g.chains[0]!)
+          g.operators = g.operators.filter((op) => op[0]! * c0[0] + op[4]! * c0[1] + op[8]! * c0[2] + op[12]! <= plane)
+        } else if (g.operators.length === 1) {
+          const op = g.operators[0]!
+          if (!pm.radius) pm.radius = new Float32Array(pm.atomCount).fill(1.7)
+          for (const ci of g.chains) {
+            const ch = pm.chains[ci]!
+            for (let i = ch.start; i < ch.start + ch.count; i++) if (op[0]! * pm.pos[i * 3]! + op[4]! * pm.pos[i * 3 + 1]! + op[8]! * pm.pos[i * 3 + 2]! + op[12]! > plane) pm.radius[i] = -1
+          }
+        }
+      }
+}

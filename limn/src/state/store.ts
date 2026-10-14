@@ -23,7 +23,7 @@ import { coarsen } from '../mol/coarse'
 import { preparedMolecule } from '../mol/prepared'
 import { clipToCavity, fibonacciSphere, helicalLayer, layerOnSphere, rnaPath, rnpBundle, shell } from '../infer/influenza'
 import { outsideOf, randomRotation, scatter, serpentine, stringThrough, threads, type Box } from '../infer/environment'
-import { chainCentre, complexes, exaggerate, lobed, placeTemplate, ringSites, shellMembrane, subMolecule, templateOf } from '../infer/idealise'
+import { chainCentre, complexes, cutPast, exaggerate, lobed, placeTemplate, whiskers, ringSites, shellMembrane, subMolecule, templateOf } from '../infer/idealise'
 import { assemblyAtPicks, assemblyAtPoints, readPicks, type TemplateFit } from '../mol/points'
 import { rng } from '../landscape/pack'
 import { placedAtomCount } from '../scene/build'
@@ -594,16 +594,7 @@ function arrange(entry: CatalogEntry, model: Molecule, assembly: string, notes: 
     const up: V3 = [(c[0] - centre[0]) / distance, (c[1] - centre[1]) / distance, (c[2] - centre[2]) / distance]
     // whiskers [拉长, 收细]：膜外的那一截沿法线拉长、横向收细，成一根根细长的须（他画的小泡是这样的）。这是夸张
     // whiskers [stretch, narrow]: the part outside the membrane is stretched along the normal and narrowed across it, into long thin whiskers (as on the vesicles he paints). This is an exaggeration
-    if (spec.whiskers && EXAGGERATE()) for (const ci of own) {
-      const ch = sub.chains[ci]!
-      for (let i = ch.start; i < ch.start + ch.count; i++) {
-        const q: V3 = [sub.pos[i * 3]! - centre[0], sub.pos[i * 3 + 1]! - centre[1], sub.pos[i * 3 + 2]! - centre[2]]
-        const h = q[0] * up[0] + q[1] * up[1] + q[2] * up[2]
-        const out = Math.max(0, h - (mid + 19))
-        const k = out > 0 ? spec.whiskers[1] : 1
-        for (let d = 0; d < 3; d++) sub.pos[i * 3 + d] = centre[d]! + up[d]! * (h + out * (spec.whiskers[0] - 1)) + (q[d]! - up[d]! * h) * k
-      }
-    }
+    if (spec.whiskers && EXAGGERATE()) whiskers(sub, own, centre, up, mid + 19, spec.whiskers[0], spec.whiskers[1])
     groups.push({ chains: own, operators: placeTemplate({ origin: c, up, distance, tilt: 0 }, centre, mine[j]!) })
     k.g.chains = k.g.chains.filter((ci) => !k.chains.includes(ci))
   })
@@ -1215,22 +1206,7 @@ export const useStore = create<State>((set, get) => ({
         // The two are joined: whatever of each cell lies past the plane midway between them is removed (membrane, its proteins, what is inside), so they meet at an opening and not at two membranes.
         // The second is the first turned half a circle, so "what of the first lies past the plane" turns into "what of the second lies past it", and removing once does for both.
         const plane = c[0] + (rim * entry.twin) / 2
-        for (const p of [{ mol } as Panel, ...inferred]) {
-          const pm = p.mol
-          for (const a of pm.assemblies) for (const g of a.groups) {
-            if (g.operators.length > 1) {
-              const c0 = chainCentre(pm, g.chains[0]!)
-              g.operators = g.operators.filter((op) => op[0]! * c0[0] + op[4]! * c0[1] + op[8]! * c0[2] + op[12]! <= plane)
-            } else if (g.operators.length === 1) {
-              const op = g.operators[0]!
-              if (!pm.radius) pm.radius = new Float32Array(pm.atomCount).fill(1.7)
-              for (const ci of g.chains) {
-                const ch = pm.chains[ci]!
-                for (let i = ch.start; i < ch.start + ch.count; i++) if (op[0]! * pm.pos[i * 3]! + op[4]! * pm.pos[i * 3 + 1]! + op[8]! * pm.pos[i * 3 + 2]! + op[12]! > plane) pm.radius[i] = -1
-              }
-            }
-          }
-        }
+        cutPast([mol, ...inferred.map((p) => p.mol)], plane)
         const m = new Float32Array([-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 2 * c[0] + rim * entry.twin, 2 * c[1], 0, 1])
         for (const p of [{ spec, mol, coloring, align: null } as Panel, ...inferred]) twins.push({ ...p, align: m, spec: { ...p.spec, label: `${p.spec.label}（第二个，示意）`, labelEn: `${p.spec.labelEn ?? p.spec.label} (the second, schematic)`, source: { ...p.spec.source, id: `${p.spec.source.id}:twin` } } })
         inferred.push(...twins)

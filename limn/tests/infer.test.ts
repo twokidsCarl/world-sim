@@ -444,3 +444,43 @@ describe('fanned lobes on a spike head', () => {
     expect(topMoved).toBeGreaterThan(5)
   })
 })
+
+describe('whiskers and joined cells', () => {
+  it('whiskers stretch and narrow only what stands outside the membrane', async () => {
+    const { whiskers } = await import('../src/infer/idealise')
+    // 一条沿 z 的链：z 90–130，膜外沿在 z = 100 / a chain along z from 90 to 130, the membrane's outer edge at z = 100
+    const pts: number[] = []
+    for (let z = 90; z <= 130; z += 10) pts.push(4, 0, z)
+    const n = pts.length / 3
+    const mol = { atomCount: n, pos: new Float32Array(pts), chains: [{ start: 0, count: n, entity: 0 }], entities: [{ kind: 'protein' }] } as never as import('../src/mol/types').Molecule
+    whiskers(mol, [0], [0, 0, 0], [0, 0, 1], 100, 2, 0.5)
+    // z 90、100 不动；z 130 在膜外 30，拉长到 60，所以到 160；横向 4 收到 2
+    // z 90 and 100 stay; z 130 is 30 outside, stretched to 60, so at 160; across, 4 narrows to 2
+    expect(Array.from(mol.pos.slice(0, 3))).toEqual([4, 0, 90])
+    expect(Array.from(mol.pos.slice(3, 6))).toEqual([4, 0, 100])
+    expect(mol.pos[(n - 1) * 3 + 2]).toBeCloseTo(160)
+    expect(mol.pos[(n - 1) * 3]).toBeCloseTo(2)
+  })
+
+  it('cutPast drops whole copies past the plane, and single-copy atoms one by one', async () => {
+    const { cutPast } = await import('../src/infer/idealise')
+    const at = (x: number) => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, 0, 0, 1])
+    // 一个原子放 4 份（x = 0、50、100、150）；另一条链 3 个原子只放 1 份（x = 20、80、140）
+    // one atom placed 4 times (x = 0, 50, 100, 150); another chain of 3 atoms placed once (x = 20, 80, 140)
+    const mol = {
+      atomCount: 4, pos: new Float32Array([0, 0, 0, 20, 0, 0, 80, 0, 0, 140, 0, 0]),
+      chains: [{ start: 0, count: 1, entity: 0 }, { start: 1, count: 3, entity: 0 }], entities: [{ kind: 'protein' }],
+      assemblies: [{ id: 'a', groups: [{ chains: [0], operators: [at(0), at(50), at(100), at(150)] }, { chains: [1], operators: [at(0)] }] }],
+    } as never as import('../src/mol/types').Molecule
+    cutPast([mol], 90)
+    expect(mol.assemblies[0]!.groups[0]!.operators.map((m) => m[12])).toEqual([0, 50])
+    expect(Array.from(mol.radius!.slice(1)).map((r) => r < 0)).toEqual([false, false, true])
+  })
+
+  it('decoration is left out of the quick drawing only', async () => {
+    const { drawnNow } = await import('../src/render/Renderer')
+    expect(drawnNow({ decor: true }, true)).toBe(false)
+    expect(drawnNow({ decor: true }, false)).toBe(true)
+    expect(drawnNow({}, true)).toBe(true)
+  })
+})
