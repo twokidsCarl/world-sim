@@ -163,8 +163,10 @@ export function makeHairMaterial(look: HairLook, atlasA: Texture, atlasB: Textur
   const id: N = clamp(A.b.mul(inv), 0, 1)
   const depth: N = clamp(A.a.mul(inv), 0, 1)
   const angle: N = clamp(texture(atlasB, coord).r.mul(inv), 0, 1).sub(0.5).mul(Math.PI)
-  const layer: N = attribute('aLayer', 'float')
-  const cardRandom: N = attribute('aRandom', 'float')
+  // aCard = (层, 每张发片的随机数, 模拟发丝, 根→梢)：合成一个属性，WebGPU 每个管线最多 8 个顶点缓冲 / aCard = (layer, per-card random, simulated strand, root → tip): one attribute, as WebGPU allows at most 8 vertex buffers per pipeline
+  const card: N = attribute('aCard', 'vec4')
+  const layer: N = card.x
+  const cardRandom: N = card.y
 
   // 发丝走向：几何"法线"属性里存的是发片中心线的走向（蒙皮时与法线一样旋转），再按贴图里每根发丝的偏角在发片平面内转一下
   // strand direction: the geometry's "normal" attribute holds the card centre line's direction (rotated by skinning like a normal), then turned within the card plane by each strand's angle from the atlas
