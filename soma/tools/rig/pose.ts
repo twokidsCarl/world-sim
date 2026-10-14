@@ -29,6 +29,7 @@
 
 import type { Joint, JointDof, MuscleLine, Rig, RigBinding } from '../../src/anatomy/types.ts'
 import { type DualQuat, type M3, type V3, type Xf, M3_ID, XF_ID, axisAngle, dqFromXf, m3mul, norm, rotateAbout, sub, xfApply, xfFromDq, xfMul } from './math.ts'
+import { hasVia, musclePath, polylineLength, xfLookup } from './musclepath.ts'
 
 /** 关节 id → 各自由度的角度（弧度，相对静止姿势）。缺省为 0。 Joint id → angle per dof (radians, relative to rest). Missing = 0. */
 export type Pose = Record<string, number[]>
@@ -270,13 +271,32 @@ export interface VolumeOptions {
   maxScale?: number
 }
 
-/** 肌肉作用线当前长度与静止长度。 Current and rest length of a muscle's line of action. */
-export function muscleLength(line: MuscleLine, xfs: Xf[], jointIndex: Map<string, number>): { rest: number; length: number; origin: V3; insertion: V3 } {
+/**
+ * 肌肉作用线当前长度与静止长度。有经过点时是折线（起点 → 起作用的经过点 → 止点）的长度，`path` 给出当前的折线。
+ * Current and rest length of a muscle's line of action. With via points these are lengths of the polyline (origin →
+ * the via points in use → insertion), and `path` gives the current polyline.
+ */
+export function muscleLength(line: MuscleLine, xfs: Xf[], jointIndex: Map<string, number>): { rest: number; length: number; origin: V3; insertion: V3; path?: V3[] } {
   const o0 = line.origin.point as V3, i0 = line.insertion.point as V3
   const o = xfApply(xfs[jointIndex.get(line.origin.joint)!] ?? XF_ID, o0)
   const i = xfApply(xfs[jointIndex.get(line.insertion.joint)!] ?? XF_ID, i0)
+  if (hasVia(line)) {
+    const path = musclePath(line, xfLookup(xfs, jointIndex))
+    return { rest: polylineLength(musclePath(line, () => XF_ID)), length: polylineLength(path), origin: o, insertion: i, path }
+  }
   const d0 = sub(i0, o0), d = sub(i, o)
   return { rest: Math.hypot(d0[0], d0[1], d0[2]), length: Math.hypot(d[0], d[1], d[2]), origin: o, insertion: i }
+}
+
+/**
+ * 去掉经过点的作用线（起点到止点的直线）。体积修正只按它算：有经过点的肌肉网格与没有经过点时逐位相同。
+ * The line of action without its via points (the straight line from origin to insertion). The volume correction uses
+ * this only, so the mesh of a muscle with via points is bit for bit the mesh without them.
+ */
+export function straightLine(line: MuscleLine): MuscleLine {
+  if (!hasVia(line)) return line
+  const { via: _via, ...rest } = line
+  return rest
 }
 
 /**
@@ -285,7 +305,8 @@ export function muscleLength(line: MuscleLine, xfs: Xf[], jointIndex: Map<string
  * (origin → insertion). Modifies `posed` in place and returns the mid-belly scale applied.
  */
 export function correctMuscleVolume(posed: Float32Array, line: MuscleLine, xfs: Xf[], jointIndex: Map<string, number>, opts: VolumeOptions = {}): number {
-  const { rest, length, origin } = muscleLength(line, xfs, jointIndex)
+  // 长度取直线的（经过点不影响网格）/ lengths of the straight line (via points do not affect the mesh)
+  const { rest, length, origin } = muscleLength(straightLine(line), xfs, jointIndex)
   if (!(rest > 1e-6) || !(length > 1e-6)) return 1
   const lo = opts.minScale ?? 0.75, hi = opts.maxScale ?? 1.4
   // gain（提议的扩展字段）：该肌肉的网格体积实际随作用线长度变化的程度，构建时标定；缺省为 1

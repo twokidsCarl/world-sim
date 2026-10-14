@@ -20,8 +20,9 @@
   "skin-source.u32": "b7407b92b37146fc",
   "data/curated/rig/joints.json#data": "4cf0339dc3e6948b",
   "data/curated/rig/rom.json#data": "70e54d91f6449e27",
-  "data/curated/rig/bindings.json#data": "c1b2e94e1d948a6c",
+  "data/curated/rig/bindings.json#data": "d926f612debb3935",
   "data/curated/rig/overrides.json#data": "30eec83cd59b485a",
+  "data/curated/rig/via.json#data": "e5a14548614330a0",
   "data/raw/bodyshape/out/male-skin-open/weights.bin": "ec709fb20d148a3c",
   "data/raw/bodyshape/out/male-skin-open/joints.json": "bb8935a85433c32e",
   "data/raw/bodyshape/out/male-skin-open/skin.obj": "3a73b3dccf48c1f8",
@@ -3486,7 +3487,7 @@
   "labelledVoxels": 563926,
   "meanLabels": 8,
   "leaked": false,
-  "buildMs": 8976
+  "buildMs": 9217
  },
  "bindings": {
   "field": {
@@ -5760,6 +5761,942 @@
     "part": "R3_FMA55611",
     "name": "Left procerus",
     "why": "all attachments on one joint"
+   }
+  ],
+  "via": [
+   {
+    "part": "FJ1394",
+    "name": "Lateral head of right gastrocnemius",
+    "side": "R",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 0,
+      "radiusMm": 26.9,
+      "medMm": -22.5,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 27.3,
+      "medMm": -20.4,
+      "joint": "hip_R",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1394M",
+    "name": "Lateral head of left gastrocnemius",
+    "side": "L",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 0,
+      "radiusMm": 27.1,
+      "medMm": -24.4,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 27.8,
+      "medMm": -22.3,
+      "joint": "hip_L",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1395",
+    "name": "Long head of right biceps femoris",
+    "side": "R",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 60,
+      "radiusMm": 22.3,
+      "medMm": -31.4,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 30,
+      "radiusMm": 24.7,
+      "medMm": -31.4,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 0,
+      "radiusMm": 26.8,
+      "medMm": -36.9,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 26.8,
+      "medMm": -39.9,
+      "joint": "hip_R",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1395M",
+    "name": "Long head of left biceps femoris",
+    "side": "L",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 60,
+      "radiusMm": 22.8,
+      "medMm": -40.1,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 30,
+      "radiusMm": 24.7,
+      "medMm": -34.2,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 0,
+      "radiusMm": 26.9,
+      "medMm": -39,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 27,
+      "medMm": -41.7,
+      "joint": "hip_L",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1397",
+    "name": "Medial head of right gastrocnemius",
+    "side": "R",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 0,
+      "radiusMm": 30.1,
+      "medMm": 13.8,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 30.9,
+      "medMm": 16.8,
+      "joint": "hip_R",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1397M",
+    "name": "Medial head of left gastrocnemius",
+    "side": "L",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 0,
+      "radiusMm": 29.6,
+      "medMm": 12.4,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 30.6,
+      "medMm": 15.3,
+      "joint": "hip_L",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1421",
+    "name": "Right gracilis",
+    "side": "R",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 60,
+      "radiusMm": 23.8,
+      "medMm": 51.2,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 30,
+      "radiusMm": 27.3,
+      "medMm": 50.9,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 0,
+      "radiusMm": 30.7,
+      "medMm": 50,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 30.6,
+      "medMm": 50.4,
+      "joint": "hip_R",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1421M",
+    "name": "Left gracilis",
+    "side": "L",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 60,
+      "radiusMm": 20.8,
+      "medMm": 48.8,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 30,
+      "radiusMm": 27.6,
+      "medMm": 49,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 0,
+      "radiusMm": 30.6,
+      "medMm": 48.1,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 29.6,
+      "medMm": 46.2,
+      "joint": "hip_L",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1433",
+    "name": "Right rectus femoris",
+    "side": "R",
+    "kind": "patella",
+    "points": [
+     {
+      "angleDeg": -5,
+      "radiusMm": 43.8,
+      "medMm": -11.5,
+      "joint": "hip_R",
+      "wrap": false
+     },
+     {
+      "angleDeg": 25,
+      "radiusMm": 43.8,
+      "medMm": -11.5,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 50,
+      "radiusMm": 43.8,
+      "medMm": -11.5,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 75,
+      "radiusMm": 43.8,
+      "medMm": -11.5,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 100,
+      "radiusMm": 43.8,
+      "medMm": -11.5,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 125,
+      "radiusMm": 43.8,
+      "medMm": -11.5,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": null,
+      "radiusMm": null,
+      "medMm": -11.5,
+      "joint": "patella_R",
+      "wrap": false
+     }
+    ]
+   },
+   {
+    "part": "FJ1433M",
+    "name": "Left rectus femoris",
+    "side": "L",
+    "kind": "patella",
+    "points": [
+     {
+      "angleDeg": -5,
+      "radiusMm": 43.2,
+      "medMm": -13.3,
+      "joint": "hip_L",
+      "wrap": false
+     },
+     {
+      "angleDeg": 25,
+      "radiusMm": 43.2,
+      "medMm": -13.3,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 50,
+      "radiusMm": 43.2,
+      "medMm": -13.3,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 75,
+      "radiusMm": 43.2,
+      "medMm": -13.3,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 100,
+      "radiusMm": 43.2,
+      "medMm": -13.3,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 125,
+      "radiusMm": 43.2,
+      "medMm": -13.3,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": null,
+      "radiusMm": null,
+      "medMm": -13.3,
+      "joint": "patella_L",
+      "wrap": false
+     }
+    ]
+   },
+   {
+    "part": "FJ1434",
+    "name": "Right sartorius",
+    "side": "R",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 60,
+      "radiusMm": 23.8,
+      "medMm": 48.1,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 30,
+      "radiusMm": 27.3,
+      "medMm": 47.3,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 0,
+      "radiusMm": 30.7,
+      "medMm": 46.7,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 30.6,
+      "medMm": 45.3,
+      "joint": "hip_R",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1434M",
+    "name": "Left sartorius",
+    "side": "L",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 60,
+      "radiusMm": 20.8,
+      "medMm": 46,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 30,
+      "radiusMm": 27.6,
+      "medMm": 44.6,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 0,
+      "radiusMm": 30.6,
+      "medMm": 44.7,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 29.6,
+      "medMm": 44.3,
+      "joint": "hip_L",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1435",
+    "name": "Right semimembranosus",
+    "side": "R",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 60,
+      "radiusMm": 23.8,
+      "medMm": 37.3,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 30,
+      "radiusMm": 27.3,
+      "medMm": 38.6,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 0,
+      "radiusMm": 30.7,
+      "medMm": 41.3,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 30.6,
+      "medMm": 43.6,
+      "joint": "hip_R",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1435M",
+    "name": "Left semimembranosus",
+    "side": "L",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 60,
+      "radiusMm": 20.8,
+      "medMm": 35.6,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 30,
+      "radiusMm": 27.6,
+      "medMm": 36.5,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 0,
+      "radiusMm": 30.6,
+      "medMm": 39.4,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 29.6,
+      "medMm": 42.4,
+      "joint": "hip_L",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1436",
+    "name": "Right semitendinosus",
+    "side": "R",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 60,
+      "radiusMm": 23.8,
+      "medMm": 42.6,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 30,
+      "radiusMm": 27.3,
+      "medMm": 42.8,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 0,
+      "radiusMm": 30.7,
+      "medMm": 43.5,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 30.6,
+      "medMm": 45.5,
+      "joint": "hip_R",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1436M",
+    "name": "Left semitendinosus",
+    "side": "L",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 60,
+      "radiusMm": 20.8,
+      "medMm": 40.9,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 30,
+      "radiusMm": 27.6,
+      "medMm": 42.3,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 0,
+      "radiusMm": 30.6,
+      "medMm": 42.1,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 29.6,
+      "medMm": 44.1,
+      "joint": "hip_L",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1441",
+    "name": "Right vastus intermedius",
+    "side": "R",
+    "kind": "patella",
+    "points": [
+     {
+      "angleDeg": -5,
+      "radiusMm": 45.1,
+      "medMm": -10.5,
+      "joint": "hip_R",
+      "wrap": false
+     },
+     {
+      "angleDeg": 25,
+      "radiusMm": 45.1,
+      "medMm": -10.5,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 50,
+      "radiusMm": 45.1,
+      "medMm": -10.5,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 75,
+      "radiusMm": 45.1,
+      "medMm": -10.5,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 100,
+      "radiusMm": 45.1,
+      "medMm": -10.5,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 125,
+      "radiusMm": 45.1,
+      "medMm": -10.5,
+      "joint": "hip_R",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1441M",
+    "name": "Left vastus intermedius",
+    "side": "L",
+    "kind": "patella",
+    "points": [
+     {
+      "angleDeg": -5,
+      "radiusMm": 43.7,
+      "medMm": -11.4,
+      "joint": "hip_L",
+      "wrap": false
+     },
+     {
+      "angleDeg": 25,
+      "radiusMm": 43.7,
+      "medMm": -11.4,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 50,
+      "radiusMm": 43.7,
+      "medMm": -11.4,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 75,
+      "radiusMm": 43.7,
+      "medMm": -11.4,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 100,
+      "radiusMm": 43.7,
+      "medMm": -11.4,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 125,
+      "radiusMm": 43.7,
+      "medMm": -11.4,
+      "joint": "hip_L",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1442",
+    "name": "Right vastus lateralis",
+    "side": "R",
+    "kind": "patella",
+    "points": [
+     {
+      "angleDeg": -5,
+      "radiusMm": 50.3,
+      "medMm": -23.2,
+      "joint": "hip_R",
+      "wrap": false
+     },
+     {
+      "angleDeg": 25,
+      "radiusMm": 50.3,
+      "medMm": -23.2,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 50,
+      "radiusMm": 50.3,
+      "medMm": -23.2,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 75,
+      "radiusMm": 50.3,
+      "medMm": -23.2,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 100,
+      "radiusMm": 50.3,
+      "medMm": -23.2,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 125,
+      "radiusMm": 50.3,
+      "medMm": -23.2,
+      "joint": "hip_R",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1442M",
+    "name": "Left vastus lateralis",
+    "side": "L",
+    "kind": "patella",
+    "points": [
+     {
+      "angleDeg": -5,
+      "radiusMm": 50.4,
+      "medMm": -25.7,
+      "joint": "hip_L",
+      "wrap": false
+     },
+     {
+      "angleDeg": 25,
+      "radiusMm": 50.4,
+      "medMm": -25.7,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 50,
+      "radiusMm": 50.4,
+      "medMm": -25.7,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 75,
+      "radiusMm": 50.4,
+      "medMm": -25.7,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 100,
+      "radiusMm": 50.4,
+      "medMm": -25.7,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 125,
+      "radiusMm": 50.4,
+      "medMm": -25.7,
+      "joint": "hip_L",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1443",
+    "name": "Right vastus medialis",
+    "side": "R",
+    "kind": "patella",
+    "points": [
+     {
+      "angleDeg": -5,
+      "radiusMm": 38.3,
+      "medMm": -0.8,
+      "joint": "hip_R",
+      "wrap": false
+     },
+     {
+      "angleDeg": 25,
+      "radiusMm": 38.3,
+      "medMm": -0.8,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 50,
+      "radiusMm": 38.3,
+      "medMm": -0.8,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 75,
+      "radiusMm": 38.3,
+      "medMm": -0.8,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 100,
+      "radiusMm": 38.3,
+      "medMm": -0.8,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 125,
+      "radiusMm": 38.3,
+      "medMm": -0.8,
+      "joint": "hip_R",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1443M",
+    "name": "Left vastus medialis",
+    "side": "L",
+    "kind": "patella",
+    "points": [
+     {
+      "angleDeg": -5,
+      "radiusMm": 38,
+      "medMm": -2.7,
+      "joint": "hip_L",
+      "wrap": false
+     },
+     {
+      "angleDeg": 25,
+      "radiusMm": 38,
+      "medMm": -2.7,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 50,
+      "radiusMm": 38,
+      "medMm": -2.7,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 75,
+      "radiusMm": 38,
+      "medMm": -2.7,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 100,
+      "radiusMm": 38,
+      "medMm": -2.7,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 125,
+      "radiusMm": 38,
+      "medMm": -2.7,
+      "joint": "hip_L",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1444",
+    "name": "Short head of right biceps femoris",
+    "side": "R",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 60,
+      "radiusMm": 22.3,
+      "medMm": -33.6,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 30,
+      "radiusMm": 24.7,
+      "medMm": -35.2,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": 0,
+      "radiusMm": 26.8,
+      "medMm": -36,
+      "joint": "hip_R",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 26.8,
+      "medMm": -37.2,
+      "joint": "hip_R",
+      "wrap": true
+     }
+    ]
+   },
+   {
+    "part": "FJ1444M",
+    "name": "Short head of left biceps femoris",
+    "side": "L",
+    "kind": "condyle",
+    "points": [
+     {
+      "angleDeg": 60,
+      "radiusMm": 22.8,
+      "medMm": -38.7,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 30,
+      "radiusMm": 24.7,
+      "medMm": -37.3,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": 0,
+      "radiusMm": 26.9,
+      "medMm": -38.2,
+      "joint": "hip_L",
+      "wrap": true
+     },
+     {
+      "angleDeg": -30,
+      "radiusMm": 27,
+      "medMm": -38.9,
+      "joint": "hip_L",
+      "wrap": true
+     }
+    ]
    }
   ]
  },

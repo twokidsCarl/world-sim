@@ -85,6 +85,7 @@ if (import.meta.main) {
       ends: Object.fromEntries(['knowledge', 'knowledge+geometry', 'geometry', 'none'].map((k) => [k, build.attach.filter((a) => a.tissue === 'muscle' && a.ends === k).length])),
       knowledgeNotReached: build.attach.filter((a) => a.knowledgeMissed.length).map((a) => ({ part: a.part, name: a.name, missed: a.knowledgeMissed })),
       withoutLine: build.attach.filter((a) => a.tissue === 'muscle' && !a.line).map((a) => ({ part: a.part, name: a.name, why: a.why ?? '' })),
+      via: build.via,
     },
     calibration: build.calibration,
     externalSkin: build.external,

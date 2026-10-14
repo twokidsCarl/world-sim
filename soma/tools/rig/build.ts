@@ -12,6 +12,7 @@ import { Surface, mergeMeshes } from './geom.ts'
 import { type Body, hashInput, inputFile } from './io.ts'
 import { type BuiltJoint, type JointExt, type JointFile, type Override, type RomEntry, type Skeleton, blendRadius, buildJoints, expandJointDefs, toContract } from './joints.ts'
 import { BYTES_PER_VERTEX } from './pose.ts'
+import { type ViaReportRow, VIA_FILE, placeVias, readViaFile } from './via.ts'
 import { openedSkinPackageDir, skinPackageDir } from '../pipeline/skinPackageDir.ts'
 
 export const CURATED = join(import.meta.dirname, '..', '..', 'data', 'curated', 'rig')
@@ -40,6 +41,8 @@ export interface BuildResult {
   external: { dir: string; source: string; vertices: number; mapping: ExternalWeights['mapped'] }[]
   /** 整理好的输入文件哈希（含 data/curated/rig 下的定义）。 Hashes of every input, the curated definitions included. */
   inputs: Record<string, string>
+  /** 膝周肌肉的经过点放在了哪里（tools/rig/via.ts）。 Where the via points of the muscles round the knee were placed (tools/rig/via.ts). */
+  via: ViaReportRow[]
 }
 
 interface RomFile {
@@ -57,8 +60,8 @@ const CAUTIONS: { zh: string; en: string }[] = [
     en: 'Muscles only change length with the bones at their ends and are thickened or thinned to keep their volume; there is no bulge from active contraction and no distinction between belly and tendon (real tendons hardly change length).',
   },
   {
-    zh: '肌肉作用线是起点到止点的直线：绕过骨或关节的肌肉（股四头肌、三角肌、臀大肌等）在大角度时长度和体积修正都不准。',
-    en: 'A muscle’s line of action is the straight line from origin to insertion: for muscles that wrap around bone or a joint (quadriceps, deltoid, gluteus maximus …) both the length and the volume correction are wrong at large angles.',
+    zh: '肌肉作用线多数是起点到止点的直线：绕过骨或关节的肌肉（三角肌、臀大肌、髂腰肌等）在大角度时长度和体积修正都不准。膝周的肌肉（腘绳肌、股薄肌、缝匠肌、腓肠肌、经髌骨的股四头肌）有经过点，长度、力臂和肌肉活动按这条折线算，网格不随它变形（仍按蒙皮，所以深屈时腘绳肌等仍会贴近或穿进股骨髁）；经过点是按本模型的骨面放的近似（股骨髁后面的几个点，不是真正的缠绕曲面），膝关节又是定轴转动、没有股骨后滚，所以股二头肌等的力臂在屈膝中段偏大。',
+    en: 'Most lines of action are the straight line from origin to insertion: for muscles that wrap around bone or a joint (deltoid, gluteus maximus, iliopsoas …) both the length and the volume correction are wrong at large angles. The muscles round the knee (hamstrings, gracilis, sartorius, gastrocnemius, the quadriceps through the patella) have via points, and their lengths, moment arms and activity follow that polyline, but their meshes do not (they keep their skinning, so in deep flexion the hamstrings and others still hug or pass into the femoral condyles); the via points are an approximation placed on this model’s bone surfaces (a few points behind the femoral condyles, not a true wrapping surface), and the knee turns about a fixed axis without femoral rollback, so the moment arms of biceps femoris and others read high in mid-flexion.',
   },
   {
     zh: '所有关节轴都是固定的。真实的膝关节有滚动和滑动，颞下颌关节张口时下颌头前移，拇指腕掌关节两轴不相交，脊柱各节段的瞬时轴会移动——这些都没有建模。',
@@ -216,6 +219,11 @@ export function buildRig(body: Body, log: (m: string) => void = () => {}, opts: 
   if (external.length) cautions.splice(1, 0, EXTERNAL_SKIN_CAUTION)
   const rig: RigExt = { joints, bindings, muscles: res.muscles, shape: [], cautions }
   const allLines = [...res.muscles]
+  // 经过点在体积标定之前加上；体积标定按直线长度拟合（网格不随折线变形）/ via points are added before the volume calibration, which fits against the straight-line length (the mesh does not follow the polyline)
+  const placed = placeVias(rig, body, readViaFile())
+  rig.muscles = placed.muscles
+  cur.hashes['data/curated/rig/via.json#data'] = hashInput('data/curated/rig/via.json#data', VIA_FILE)
+  log(`via points: ${placed.report.length} lines, ${placed.report.reduce((n, r) => n + r.points.length, 0)} points`)
   const t2 = performance.now()
   const calibration = calibrateMuscles(rig, bin, body)
   log(`muscle lines: ${res.muscles.length} established, ${rig.muscles.length} kept after volume calibration in ${Math.round(performance.now() - t2)} ms`)
@@ -223,5 +231,6 @@ export function buildRig(body: Body, log: (m: string) => void = () => {}, opts: 
     rig, bin, built, skeleton, field, calibration, allLines, skinOpen: external.some((w) => w.byIndexFor), external: external.map((w) => ({ dir: w.dir, source: w.sourceName, vertices: w.vertexCount, mapping: w.mapped })), fieldStats: field.stats, bound: res.parts, attach: res.attach, byMethod: res.byMethod,
     notes: [...romNotes, ...res.notes, ...external.flatMap((w) => w.notes), ...built.flatMap((j) => j.warnings.map((w) => `${j.def.id}: ${w}`))],
     inputs: { ...body.inputs, ...cur.hashes, ...extHashes },
+    via: placed.report,
   }
 }

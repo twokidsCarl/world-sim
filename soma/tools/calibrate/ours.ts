@@ -34,18 +34,31 @@ const sha = (path: string): string => createHash('sha256').update(readFileSync(p
 
 const cache = new Map<BodyId, Promise<Ours>>()
 
+/**
+ * 绑定从哪里读：环境变量 SOMA_RIG_DIR 指向一个目录时读 <目录>/<body>/rig.json 和 rig.bin（例如 tools/rig/run.ts --out
+ * 构建到别处的绑定），其余数据仍取 public/anatomy/<body>/。
+ * Where the rig is read from: with the environment variable SOMA_RIG_DIR naming a directory, <dir>/<body>/rig.json and
+ * rig.bin are read (e.g. a rig built elsewhere with tools/rig/run.ts --out); everything else still comes from
+ * public/anatomy/<body>/.
+ */
+export const rigDir = (id: BodyId): string => (process.env.SOMA_RIG_DIR ? join(process.env.SOMA_RIG_DIR, id) : join(ROOT, 'public', 'anatomy', id))
+
 export function loadOurs(id: BodyId): Promise<Ours> {
   let p = cache.get(id)
   if (!p) {
     p = (async () => {
       const dir = join(ROOT, 'public', 'anatomy', id)
       const body = await readBody(dir)
-      const rig = JSON.parse(readFileSync(join(dir, 'rig.json'), 'utf8')) as Rig
-      const bin = new Uint8Array(readFileSync(join(dir, 'rig.bin')))
+      const rdir = rigDir(id)
+      const rig = JSON.parse(readFileSync(join(rdir, 'rig.json'), 'utf8')) as Rig
+      const bin = new Uint8Array(readFileSync(join(rdir, 'rig.bin')))
       const byName = new Map<string, Part[]>()
       for (const part of body.data.parts) byName.set(part.name, [...(byName.get(part.name) ?? []), part])
       const state: Record<string, string> = {}
-      for (const f of ['anatomy.json', 'rig.json', 'rig.bin', 'face.json', 'face.bin', 'muscular.glb', 'skeletal.glb', 'integumentary.glb']) if (existsSync(join(dir, f))) state[f] = sha(join(dir, f))
+      for (const f of ['anatomy.json', 'rig.json', 'rig.bin', 'face.json', 'face.bin', 'muscular.glb', 'skeletal.glb', 'integumentary.glb']) {
+        const at = f.startsWith('rig.') ? join(rdir, f) : join(dir, f)
+        if (existsSync(at)) state[f] = sha(at)
+      }
       return { id, body, rig, bin, byName, joint: new Map(rig.joints.map((j) => [j.id, j])), lineOf: new Map(rig.muscles.map((m) => [m.part, m])), state }
     })()
     cache.set(id, p)

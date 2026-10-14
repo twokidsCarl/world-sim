@@ -109,17 +109,6 @@
       }
     }
   },
-  "quadriceps": {
-    "_doc": {
-      "zh": "股四头肌经髌骨起作用。绑定里的直线不够：股直肌的直线从髂骨直接到胫骨，膝关节力臂符号反了；股肌的直线在屈膝时穿过股骨髁。这里把四个头的路径改成 起点 → 股骨上的一个经过点 → 髌骨上的点：经过点取髌骨点绕髌骨轴往近侧转 backDeg 度的位置（固定在股骨上）。屈膝时髌骨沿它的圆轨道离开经过点，这段弦长近似弧长，于是膝关节力臂 ≈ 髌骨轨道半径 × 髌骨/膝的传动比 × cos((Δ + backDeg) / 2)，Δ 是髌骨转过的角度。弦代替弧使屈膝 90° 时偏小约两成、135° 时偏小约四成。",
-      "en": "The quadriceps act through the patella. The rig's straight lines do not: its rectus femoris runs from ilium straight to tibia with the wrong sign of knee moment arm, and the vasti lines cut through the femoral condyles in flexion. Here the four heads get the path origin → a via point on the femur → the point on the patella: the via point is the patella point turned backDeg degrees proximally about the patellar axis (fixed to the femur). In flexion the patella leaves the via point along its circular track and the chord approximates the arc, giving a knee moment arm ≈ track radius × patella/knee ratio × cos((Δ + backDeg) / 2), Δ being the patella's rotation. Chord for arc reads about a fifth low at 90° of knee flexion and about two fifths low at 135°."
-    },
-    "match": "(vastus (medialis|lateralis|intermedius)|rectus femoris)",
-    "patellaJoint": "patella_{S}",
-    "femurJoint": "hip_{S}",
-    "backDeg": 5,
-    "assumption": true
-  },
   "retinacula": {
     "_doc": {
       "zh": "支持带 / 踝后滑车：长肌腱在踝和腕处被支持带或内、外踝约束，不会离开或穿过关节。这里给这些肌肉的路径加一个经过点：静止姿势下作用线上离该关节中心最近的点，固定在近端节段上。这样它们在该关节上的力臂大致保持静止姿势时的值，不会在大角度下变号。经过点的位置由我们的作用线几何决定，不是测量的滑车位置。",

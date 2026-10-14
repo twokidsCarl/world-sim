@@ -18,7 +18,7 @@ import { Surface, meshVolume } from './geom.ts'
 import type { Body } from './io.ts'
 import { type V3, dist, rad, sub, xfApply, xfInv, xfMul } from './math.ts'
 import { OsimModel } from './opensim.ts'
-import { type Pose, BYTES_PER_VERTEX, Poser, correctMuscleVolume, muscleLength } from './pose.ts'
+import { type Pose, BYTES_PER_VERTEX, Poser, correctMuscleVolume, muscleLength, straightLine } from './pose.ts'
 import { PoseBuilder, standardPostures } from './postures.ts'
 import { type RenderItem, type Rgb, render, sheet } from './render.ts'
 
@@ -319,7 +319,8 @@ export function validate(body: Body, build: BuildResult, outDir: string | null, 
       const mesh = body.meshes.get(m.part)
       const v0 = restVolume.get(m.part)
       if (!mesh || !v0 || v0 < 1e-7) continue
-      const L = muscleLength(m, poser.xfs, poser.jointIndex)
+      // 体积修正按直线长度（见 straightLine）/ the volume correction follows the straight-line length (see straightLine)
+      const L = muscleLength(straightLine(m), poser.xfs, poser.jointIndex)
       if (Math.abs(L.length / L.rest - 1) < 0.03) continue
       changed++
       const skinned = poser.part(m.part, mesh.positions, 'dqs', false)

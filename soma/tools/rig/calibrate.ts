@@ -23,7 +23,7 @@
 import type { Joint, Rig } from '../../src/anatomy/types.ts'
 import { meshVolume } from './geom.ts'
 import type { Body } from './io.ts'
-import { type MuscleLineExt, type Pose, Poser, muscleLength } from './pose.ts'
+import { type MuscleLineExt, type Pose, Poser, muscleLength, straightLine } from './pose.ts'
 
 export interface Calibration {
   part: string
@@ -61,7 +61,8 @@ export function calibrateMuscles(rig: Rig, bin: Uint8Array, body: Body): Calibra
             if (Math.abs(lim) < 0.05) continue
             const pose: Pose = { [id]: j.dofs.map((_, q) => (q === k ? lim * frac : 0)) }
             const poser = new Poser(rig, bin, pose)
-            const L = muscleLength(line, poser.xfs, poser.jointIndex)
+            // 直线长度：运行时的体积修正按直线算（tools/rig/pose.ts 的 straightLine）/ straight-line length: the run-time volume correction uses the straight line (straightLine in tools/rig/pose.ts)
+            const L = muscleLength(straightLine(line), poser.xfs, poser.jointIndex)
             const x = Math.log(L.length / L.rest)
             if (!(Math.abs(x) > 0.03) || !Number.isFinite(x)) continue
             const v = Math.abs(meshVolume(poser.part(line.part, mesh.positions, 'dqs', false), mesh.indices))

@@ -7,6 +7,10 @@
 // also needs myo_dump.py), and writes the comparison tables to data/curated/calibration/*.json. Parts whose reference is absent are
 // skipped and their existing tables are left alone.
 //
+// SOMA_RIG_DIR=<目录>：绑定改从 <目录>/<body>/rig.json、rig.bin 读（如 tools/rig/run.ts --out 构建到别处的），其余数据不变。
+// SOMA_RIG_DIR=<dir>: the rig is read from <dir>/<body>/rig.json and rig.bin instead (e.g. one built elsewhere with
+// tools/rig/run.ts --out); everything else is unchanged.
+//
 // 准备参照 / preparing the references:
 //   bun tools/calibrate/fetch.ts
 //   uv venv --python 3.12 data/raw/calibration/.venv && uv pip install --python data/raw/calibration/.venv/bin/python mujoco myo-sim numpy

@@ -280,15 +280,48 @@ export interface Joint {
 }
 
 /**
+ * 肌肉路径上的经过点：静止姿势下的位置（米，身体坐标系）和它随之运动的关节。
+ * A via point on a muscle's path: its rest position (metres, body frame) and the joint it moves with.
+ */
+export interface MuscleVia {
+  point: Vec3
+  joint: string
+  /**
+   * 缠绕条件（可选）。有它时这个点代表骨面（如股骨髁后面）上的一点，只在需要时才用：在垂直于 axis 的平面里，
+   * 路径在这一段的直线与“从 centre 经过这个点的射线”相交处若比这个点更靠近 centre（即直线会穿进骨里），路径改经这个点；
+   * 否则直线从骨外经过，这个点不起作用。几个缠绕点按压入最深者先加入，与列出的顺序无关。centre 和 axis 都是静止姿势下的值，
+   * 随 `joint` 运动。点在刚起作用时贴着直线，因此路径随姿势连续变化，不会像“屈膝超过某个角度才生效”那样跳变
+   * （见 tools/rig/musclepath.ts）。缺省 = 这个点总在路径上。
+   * Wrapping condition (optional). With it the point stands for a point on a bone surface (e.g. behind the femoral
+   * condyles) and is used only when needed: in the plane perpendicular to `axis`, when the path's straight line in
+   * that stretch meets the ray from `centre` through this point nearer to `centre` than the point (that is, the line
+   * would pass into the bone), the path goes through this point instead; otherwise the line passes outside the bone and
+   * the point does nothing. Several wrapping points are added deepest first, whatever order they are listed in.
+   * `centre` and `axis` are rest-pose values that move with `joint`. A point that has just come into use lies on the
+   * line, so the path changes continuously with the pose instead of jumping as an "only beyond X degrees of knee
+   * flexion" rule would (see tools/rig/musclepath.ts). Absent = the point is always on the path.
+   */
+  wrap?: { centre: Vec3; axis: Vec3 }
+}
+
+/**
  * A muscle's line of action, used to keep its volume when its length changes:
  * the runtime measures the current distance between the two ends and scales the
  * cross-section about the line by sqrt(restLength / length).
+ * 有经过点时，作用线是 起点 → 各经过点 → 止点 的折线：长度取折线长度，肌肉网格随折线变形（见 tools/rig/musclepath.ts）。
+ * With via points the line of action is the polyline origin → via points → insertion: its length is the length of
+ * the polyline, and the muscle mesh is deformed to follow it (see tools/rig/musclepath.ts).
  */
 export interface MuscleLine {
   part: string
   /** Rest-pose end points, metres, and the joints they move with. */
   origin: { point: Vec3; joint: string }
   insertion: { point: Vec3; joint: string }
+  /**
+   * 经过点，按从起点到止点的顺序；缺省或为空 = 直线（与没有这个字段之前完全相同）。
+   * Via points in order from origin to insertion; absent or empty = the straight line (exactly as before this field existed).
+   */
+  via?: MuscleVia[]
   /**
    * 横截面缩放 = (静止长度 / 当前长度)^(gain / 2)；缺省为 1。按肌肉标定。
    * Cross-section scale = (restLength / length)^(gain / 2); defaults to 1. Calibrated per muscle.
