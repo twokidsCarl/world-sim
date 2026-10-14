@@ -42,7 +42,9 @@ import {
   NORMAL,
   THIN_RADIUS,
   clipRay,
+  adjacentFocus,
   computeDisplay,
+  hideUnderLifelikeSkin,
   skinDrawnOpaque,
   computeExplode,
   sectionPlane,
@@ -1337,6 +1339,7 @@ export class Viewer {
         this.display,
       )
       this.hideScannedEyes(s)
+      this.hideUnderLookSkin(s)
       this.applyLumenDisplay(s, lumen)
       for (let i = 0; i < parts.length; i++) this.applyPart(i, parts[i]!, s)
       this.updateLumenLayer(s)
@@ -1730,6 +1733,17 @@ export class Viewer {
       if (sel[side]) continue
       for (const k of this.eyeParts[side]) this.display[k] = HIDDEN
     }
+  }
+
+  /** 写实外观显示时不画不透明皮肤下面的部件（规则见 display.ts 的 hideUnderLifelikeSkin）/ While the lifelike look shows, parts under the opaque skin are not drawn (the rule is hideUnderLifelikeSkin in display.ts). */
+  private hideUnderLookSkin(s: ViewState): void {
+    const i = this.mainSkinIndex()
+    if (!s.look || !this.lookSkin || !this.mainSkin || i < 0 || i === this.skinIndex || this.display[i] !== NORMAL || !skinDrawnOpaque(s, this.mainSkin)) return
+    hideUnderLifelikeSkin(this.graph, this.display, {
+      skin: this.mainSkin,
+      keep: [s.selection.set, s.adjacentMode ? adjacentFocus(this.graph, s.selection.set) : null, this.stimParts, s.isolated, this.throughOpenings(s), this.withHairCovers(this.hideWithOpaqueSkin(s))],
+      keepIndex: new Set([...this.eyeParts.L, ...this.eyeParts.R]),
+    })
   }
 
   /** 推进注视（看相机或固定角度）；转动时重画 / Advance the gaze (camera or fixed angles); redraw while it turns. */

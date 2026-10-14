@@ -196,3 +196,32 @@ export function tubeRadius(volume: number, area: number): number {
 /** 等效管半径小于这个值（米）的部件，拾取时带容差。 */
 /** Parts whose equivalent tube radius is below this (metres) get tolerant picking. */
 export const THIN_RADIUS = 0.0015
+
+/**
+ * 写实外观显示时，不透明皮肤下面的部件不画（只是显示状态，系统开关、结构树、搜索和选择都不变）。
+ * 大姿势下肌肉和皮下脂肪会从皮肤里穿出来（腋窝、胸、肩）：这是几何的缺陷，要在源头修；写实视图不该把它画出来，
+ * look=0 的解剖视图照旧画，便于诊断。皮肤本身和 `keep` 里的部件（选中的、刺激通路上的、隔离的、透过开口看到的、
+ * 毛发外壳等按原规则处理的）以及 `keepIndex` 里的部件（扫描的眼球，由眼的图层管）不受影响。返回藏起来的个数。
+ * While the lifelike look shows, parts under the opaque skin are not drawn (display state only: the system switches,
+ * tree, search and selection are unchanged). In large poses muscle and subcutaneous fat poke through the skin (axilla,
+ * chest, shoulder): a geometry defect to be fixed at its source; the lifelike view should not draw it, while the
+ * anatomical view (look=0) still does, for diagnosis. The skin itself, the parts in `keep` (selected, on the stimulus
+ * pathway, isolated, seen through the openings, and the hair shells, which keep their own rules) and those in
+ * `keepIndex` (the scanned eyeballs, which the eyes layer handles) are left alone. Returns how many were hidden.
+ */
+export function hideUnderLifelikeSkin(
+  graph: AnatomyGraph,
+  display: Uint8Array,
+  input: { skin: string; keep: readonly (ReadonlySet<string> | null | undefined)[]; keepIndex?: ReadonlySet<number> },
+): number {
+  let hidden = 0
+  const parts = graph.parts
+  for (let i = 0; i < parts.length; i++) {
+    if (display[i] === HIDDEN) continue
+    const id = parts[i]!.id
+    if (id === input.skin || input.keepIndex?.has(i) || input.keep.some((k) => k?.has(id))) continue
+    display[i] = HIDDEN
+    hidden++
+  }
+  return hidden
+}
