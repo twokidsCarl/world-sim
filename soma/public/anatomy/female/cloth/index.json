@@ -7,35 +7,42 @@
    "fabric": "cotton-twill",
    "vertices": 6966,
    "triangles": 12941,
-   "bytes": 402389
+   "bytes": 409493
   },
   "skirt": {
    "file": "skirt.json",
    "fabric": "cotton-twill",
    "vertices": 4401,
    "triangles": 8175,
-   "bytes": 254787
+   "bytes": 259327
   },
   "sports-bra": {
    "file": "sports-bra.json",
    "fabric": "poly-elastane",
    "vertices": 2225,
    "triangles": 3988,
-   "bytes": 128942
+   "bytes": 131307
   },
   "tee": {
    "file": "tee.json",
    "fabric": "cotton-jersey",
-   "vertices": 6941,
-   "triangles": 12942,
-   "bytes": 401123
+   "vertices": 7012,
+   "triangles": 13090,
+   "bytes": 412423
   },
   "tights": {
    "file": "tights.json",
    "fabric": "poly-elastane",
    "vertices": 6389,
    "triangles": 11776,
-   "bytes": 368945
+   "bytes": 375478
   }
+ },
+ "guard": {
+  "what": {
+   "zh": "外生殖器的皮肤（细小的突起，顶点碰撞拦不住它们从布的顶点之间钻出）",
+   "en": "the skin of the external genitalia (small protrusions that vertex collisions cannot stop from slipping out between cloth vertices)"
+  },
+  "vertices": []
  }
 }

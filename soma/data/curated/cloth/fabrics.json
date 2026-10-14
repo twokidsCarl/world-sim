@@ -5,8 +5,8 @@
   "en": "Fabric mechanics for the clothing solver (SI units). Every number names its source; 'derived' values are converted from literature values, 'assumed' ones are assumptions. Conversions: 1 gf·cm²/cm = 9.81×10⁻⁵ N·m (bending rigidity per width); 1 gf/(cm·deg) = 56.2 N/m (per radian of shear angle); for a KES tensile run to Fm = 500 gf/cm (490 N/m) the secant membrane stiffness ≈ 490 N/m ÷ EMT."
  },
  "xpbd": {
-  "zh": "求解器（src/cloth/solver.ts）里：拉伸 / 剪切约束的柔度 α = 1 / (k·A)，k 为膜刚度（N/m），A 为三角形的裁片面积（m²）；弯曲用 Bergou 等（2006）的等距弯曲模型，每条内边的刚度 3B / (A₀ + A₁)，B 为弯曲刚度（N·m），柔度为其倒数；XPBD 中再除以子步长的平方。质量 = 面密度 × 面积，三等分到三个顶点。厚度用作与皮肤保持的碰撞距离（不小于 2 mm）和渲染时的外移量。",
-  "en": "In the solver (src/cloth/solver.ts): stretch / shear constraints have compliance α = 1 / (k·A), k the membrane stiffness (N/m), A the triangle's pattern area (m²); bending uses the isometric model of Bergou et al. (2006), stiffness 3B / (A₀ + A₁) per interior edge with B the bending rigidity (N·m), compliance its inverse; XPBD then divides by the substep squared. Mass = areal density × area, split equally over the three corners. Thickness is the collision distance kept from the skin (at least 2 mm) and the outward offset when rendering."
+  "zh": "求解器（src/cloth/solver.ts）里：拉伸 / 剪切约束的柔度 α = 1 / (k·A)，k 为膜刚度（N/m），A 为三角形的裁片面积（m²）；弯曲用 Bergou 等（2006）的等距弯曲模型，每条内边的刚度 B / (A₀ + A₁)（这样均匀弯成圆筒时弯曲能等于板理论的 ½·B·κ²·A），B 为弯曲刚度（N·m），柔度为其倒数；XPBD 中再除以子步长的平方。质量 = 面密度 × 面积，三等分到三个顶点。厚度用作与皮肤保持的碰撞距离（不小于 2 mm）和渲染时的外移量。",
+  "en": "In the solver (src/cloth/solver.ts): stretch / shear constraints have compliance α = 1 / (k·A), k the membrane stiffness (N/m), A the triangle's pattern area (m²); bending uses the isometric model of Bergou et al. (2006), stiffness B / (A₀ + A₁) per interior edge (so a sheet bent evenly into a cylinder has the plate-theory energy ½·B·κ²·A) with B the bending rigidity (N·m), compliance its inverse; XPBD then divides by the substep squared. Mass = areal density × area, split equally over the three corners. Thickness is the collision distance kept from the skin (at least 2 mm) and the outward offset when rendering."
  },
  "fabrics": {
   "cotton-jersey": {
@@ -33,17 +33,17 @@
     "bending": { "value": "B 0.273 gf·cm²/cm × 9.81e-5", "kind": "derived", "ref": "soni2021" },
     "friction": { "value": "0.35", "kind": "assumed", "ref": "derler2012" }
    },
-   "drape": { "range": [0.6, 0.98], "ref": "ozkan2025", "note": { "zh": "Özkan 等测得 410–430 g/m² 弹力牛仔布 DC 89.8–94.2 %（TS 9663）；我们的布更轻、无弹性纱，下限假定为 60 %，上限取 Cusick 全范围的 98 %", "en": "Özkan et al. measured DC 89.8–94.2 % for 410–430 g/m² stretch denim (TS 9663); ours is lighter and has no elastane, so the lower bound is an assumed 60 % and the upper one Cusick's 98 %" } }
+   "drape": { "range": [0.45, 0.98], "ref": "ozkan2025", "note": { "zh": "Özkan 等测得 410–430 g/m² 弹力牛仔布 DC 89.8–94.2 %（TS 9663）；我们的布更轻、无弹性纱，没有找到同类斜纹的实测值，下限假定为 45 %（并要求比两种针织挺），上限取 Cusick 全范围的 98 %", "en": "Özkan et al. measured DC 89.8–94.2 % for 410–430 g/m² stretch denim (TS 9663); ours is lighter and has no elastane, and no measurement of a comparable twill was found, so the lower bound is an assumed 45 % (and it must be stiffer than both knits), the upper one Cusick's 98 %" } }
   },
   "poly-elastane": {
    "name": { "zh": "涤纶 / 氨纶针织（压缩运动服）", "en": "Polyester–elastane knit (compression sportswear)" },
-   "solver": { "density": 0.21, "stretchWarp": 250, "stretchWeft": 200, "shear": 22, "bending": 3e-6, "thickness": 0.00053, "friction": 0.5 },
+   "solver": { "density": 0.21, "stretchWarp": 250, "stretchWeft": 200, "shear": 22, "bending": 7.8e-6, "thickness": 0.00053, "friction": 0.5 },
    "sources": {
     "density": { "value": "209.6 g/m²", "kind": "table", "ref": "potocic2024", "note": { "zh": "78/22 涤纶 / 氨纶泳衣针织", "en": "a 78/22 polyester/elastane swimwear knit" } },
     "thickness": { "value": "0.527 mm", "kind": "table", "ref": "potocic2024" },
     "stretch": { "value": "secant to the elastic limit: wale 171–334 N/m, course 127–281 N/m", "kind": "derived", "ref": "jovanovic2022", "note": { "zh": "锦纶 / 氨纶添纱单面针织（不是涤纶）的条样拉伸，Table 5 换算", "en": "strip tests of plated polyamide–elastane single jersey (not polyester), converted from Table 5" } },
     "shear": { "value": "≈ 0.4 gf/cm·deg", "kind": "assumed", "note": { "zh": "没有找到可核实的 KES 剪切值", "en": "no verifiable KES shear value was found" } },
-    "bending": { "value": "≈ 0.03 gf·cm²/cm", "kind": "assumed", "note": { "zh": "没有找到可核实的 KES 弯曲值；取软针织的低端", "en": "no verifiable KES bending value was found; the low end of soft knits" } },
+    "bending": { "value": "≈ 0.08 gf·cm²/cm", "kind": "assumed", "note": { "zh": "没有找到可核实的 KES 弯曲值；取软针织 0.005–0.1 范围的上部（较厚的经编 / 纬编弹力布，比单面汗布稍挺）", "en": "no verifiable KES bending value was found; the upper part of the 0.005–0.1 range of soft knits (a heavier elastane knit, slightly stiffer than a single jersey)" } },
     "friction": { "value": "0.5", "kind": "assumed", "ref": "derler2012" }
    },
    "drape": { "range": [0.3, 0.98], "ref": "cusick1968", "note": { "zh": "没有找到这类面料的垂坠系数；用 Cusick 全范围，并要求比斜纹低", "en": "no drape coefficient for this class was found; Cusick's full range, and below the twill" } }

@@ -96,6 +96,25 @@ describe('cloth solver', () => {
     expect(Math.abs(sim - sag) / sag).toBeLessThan(0.04)
   })
 
+  it('gives a sheet bent into a cylinder the plate bending energy', () => {
+    // ½·B·κ²·A；有限的布片边缘没有弯曲模板，所以略低 / ½·B·κ²·A; a finite sheet has no stencils along its border, so slightly less
+    const B = 1e-5, R = 0.1
+    for (const along of ['u', 'v'] as const) {
+      const m = rectangle(0.1, 0.1, 0.005)
+      const n = m.uv.length / 2
+      const pos = new Float64Array(n * 3)
+      for (let i = 0; i < n; i++) {
+        const a = along === 'u' ? m.uv[i * 2]! : m.uv[i * 2 + 1]!, o = along === 'u' ? m.uv[i * 2 + 1]! : m.uv[i * 2]!
+        const X = R * Math.sin(a / R), Y = R * (1 - Math.cos(a / R))
+        pos.set(along === 'u' ? [X, Y, o] : [o, Y, X], i * 3)
+      }
+      const s = new ClothSolver({ positions: pos, uv: m.uv, triangles: m.tri, fabric: { density: 0.1, stretchWarp: 1, stretchWeft: 1, shear: 1, bending: B, thickness: 0.001, friction: 0 } })
+      const ratio = s.energy().bend / (0.5 * (B / (R * R)) * 0.01)
+      expect(ratio, along).toBeGreaterThan(0.85)
+      expect(ratio, along).toBeLessThan(1.02)
+    }
+  })
+
   it('droops a Peirce cantilever of twice the bending length by about 41.5°', () => {
     for (const id of ['cotton-twill', 'cotton-jersey']) {
       const f = FABRICS[id]!.solver
@@ -106,7 +125,8 @@ describe('cloth solver', () => {
       const s = new ClothSolver({ positions: flat(m.uv, 1), uv: m.uv, triangles: m.tri, fabric: f })
       const n = m.uv.length / 2
       for (let i = 0; i < n; i++) if (m.uv[i * 2]! <= clamp + 1e-9) s.pin(i)
-      settle(s, 240, 40, 6)
+      // 小步长要足够多，弯曲才收敛到给定的刚度 / enough small steps for the bending to converge to the given rigidity
+      settle(s, 300, 200, 6)
       // 夹口到自由端中点的弦与水平的夹角 / angle between the horizontal and the chord from the clamp edge to the tip
       let tipX = 0, tipY = 0, k = 0
       for (let i = 0; i < n; i++) {
@@ -116,8 +136,9 @@ describe('cloth solver', () => {
         k++
       }
       const angle = (Math.atan2(1 - tipY / k, tipX / k - clamp) * 180) / Math.PI
-      expect(angle, id).toBeGreaterThan(41.5 - 6)
-      expect(angle, id).toBeLessThan(41.5 + 6)
+      // ±10°：窄条的边缘没有弯曲模板，等效刚度低约两成 / ±10°: the strip's edges have no stencils, so the effective rigidity is about a fifth lower
+      expect(angle, id).toBeGreaterThan(41.5 - 10)
+      expect(angle, id).toBeLessThan(41.5 + 10)
     }
   })
 
@@ -164,7 +185,7 @@ describe('cloth solver', () => {
       const s = new ClothSolver({ positions: pos, uv: m.uv, triangles: m.tri, fabric: fab.solver })
       s.colliders.push(new DiscCollider(0, 0, 0.09, 0, 0.05, 0.002))
       s.collisionMargin = fab.solver.thickness
-      settle(s, 240, 20, 3)
+      settle(s, 240, 60, 3)
       // 投影面积：把三角形在 xz 平面上栅格化 / shadow area: rasterise the triangles in the xz plane
       const R = 0.16, cell = 0.001, N = Math.ceil((2 * R) / cell)
       const grid = new Uint8Array(N * N)

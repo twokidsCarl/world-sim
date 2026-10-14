@@ -41,13 +41,20 @@ BODY_DIR = os.path.join(SOMA, 'data', 'curated', 'cloth', 'bodies')
 #   scaling is done when tools/cloth/dress.ts meshes the panels (edges are discretised first, so arcs stay exact).
 TOP = {'meta.bottom': None, 'meta.wb': None}
 BOTTOM = {'meta.upper': None}
+# 领口：GarmentCode 的 CircleNeckHalf 在我们较斜的肩线上与肩缝夹成锐角，前后片缝起来在颈侧成一个尖；
+# 改用二次贝塞尔，控制点按前后片分别取（在两副人体上搜索，使领口在肩缝处和前后中线处都接近直角）
+# neckline: GarmentCode's CircleNeckHalf meets our steeper shoulder lines at an acute angle, and front and back sewn
+# together leave a point at the side of the neck; a quadratic Bézier instead, its control point chosen per front and
+# back (searched on both bodies so the neckline is near a right angle at the shoulder seam and at the centre lines)
+NECK = {'collar.f_collar': 'Bezier2NeckHalf', 'collar.b_collar': 'Bezier2NeckHalf',
+        'collar.f_bezier_x': 0.9, 'collar.f_bezier_y': 0.2, 'collar.f_flip_curve': False,
+        'collar.b_bezier_x': 0.7, 'collar.b_bezier_y': 0.25, 'collar.b_flip_curve': False}
 GARMENTS = {
     'tee': {
         'fabric': 'cotton-jersey',
         'design': {**TOP, 'meta.upper': 'Shirt', 'shirt.length': 1.45, 'shirt.width': 1.08, 'shirt.flare': 1.0,
                    'sleeve.sleeveless': False, 'sleeve.length': 0.32, 'sleeve.end_width': 1.0, 'sleeve.sleeve_angle': 10,
-                   'collar.f_collar': 'CircleNeckHalf', 'collar.b_collar': 'CircleNeckHalf', 'collar.width': 0.15,
-                   'collar.fc_depth': 0.4, 'collar.bc_depth': 0.05},
+                   **NECK, 'collar.width': 0.15, 'collar.fc_depth': 0.4, 'collar.bc_depth': 0.05},
     },
     'pants': {
         'fabric': 'cotton-twill',
@@ -64,8 +71,7 @@ GARMENTS = {
         'ease': 0.9, 'lengthScale': 0.98,
         'design': {**TOP, 'meta.upper': 'Shirt', 'shirt.length': 1.3, 'shirt.width': 1.0, 'shirt.flare': 0.95,
                    'sleeve.sleeveless': False, 'sleeve.length': 0.3, 'sleeve.end_width': 0.85, 'sleeve.sleeve_angle': 5,
-                   'collar.f_collar': 'CircleNeckHalf', 'collar.b_collar': 'CircleNeckHalf', 'collar.width': 0.0,
-                   'collar.fc_depth': 0.3, 'collar.bc_depth': 0.05},
+                   **NECK, 'collar.width': 0.0, 'collar.fc_depth': 0.3, 'collar.bc_depth': 0.05},
     },
     'sports-bra': {
         'fabric': 'poly-elastane',

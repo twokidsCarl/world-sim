@@ -105,6 +105,7 @@ import { fitEye, type EyeFit, type M3 } from '../look/eyesFit.ts'
 import { pupilTarget } from '../look/eyesLife.ts'
 import { HairLayer } from '../hair/layer.ts'
 import { ClothLayer } from '../cloth/layer.ts'
+import { ClothSim, type ClothStats } from '../cloth/client.ts'
 import type { LoadedCloth } from '../cloth/load.ts'
 import { FLY_MIN_FILL, FLY_MIN_RADIUS, FLY_SPEED, displacementOf, ensureLumenData, fillingOf, lumenCandidates, registerLumenGeometry, reportFly, segmentIds, showCanal, useLumen, type LumenData, type LumenState } from '../lumen/state.ts'
 
@@ -374,6 +375,9 @@ export class Viewer {
   private appliedSkinUv: LoadedSkinUv | null = null
   /** 穿着的衣服（静止预览，见 src/cloth/layer.ts）/ the garments worn (static preview, see src/cloth/layer.ts) */
   private clothLayers = new Map<LoadedCloth, ClothLayer | null>()
+  /** 衣服的运行时模拟（src/cloth/client.ts）；穿着且有绑定时才有 / the garments' runtime simulation (src/cloth/client.ts); only while worn with a rig */
+  private clothSim: ClothSim | null = null
+  private clothSimKey = ''
   private readonly skinLook = new SkinLook()
   private lookEnv!: LookEnvironment
   private lookWanted = true
@@ -780,6 +784,7 @@ export class Viewer {
   dispose(): void {
     this.disposed = true
     cancelAnimationFrame(this.raf)
+    this.clothSim?.dispose()
     this.dentPatch?.dispose()
     document.removeEventListener('visibilitychange', this.onVisibility)
     this.intersection?.disconnect()
@@ -859,6 +864,9 @@ export class Viewer {
     this.lookEyes = null
     this.eyeParts = { L: [], R: [], sclera: [] }
     this.clothLayers = new Map()
+    this.clothSim?.dispose()
+    this.clothSim = null
+    this.clothSimKey = ''
     this.painOverlay = null
     this.dispOverlay = null
     this.clearStim()
@@ -1803,15 +1811,51 @@ export class Viewer {
       this.addFollower(layer)
     }
     const skin = this.mainSkin ? this.graph.part(this.mainSkin) : undefined
-    const skinShown = !!skin && (s.systems[skin.system]?.visible ?? true) && s.peel <= 0 && !s.hidden.has(skin.id) && !s.isolated
+    // 刺激工具“点皮肤施加”待命时衣服让开，点击直接落在皮肤上 / while the stimulus tool waits to be applied on the skin the clothes step aside so a click lands on the skin
+    const armed = this.source === useApp.getState && useApp.getState().stimArmed
+    const skinShown = !!skin && (s.systems[skin.system]?.visible ?? true) && s.peel <= 0 && !s.hidden.has(skin.id) && !s.isolated && !armed
+    const shown: ClothLayer[] = []
     for (const [c, layer] of this.clothLayers) {
       if (!layer) continue
       const show = skinShown && s.wear.includes(c.data.garment) && s.clothes.includes(c)
+      if (show) shown.push(layer)
       if (layer.patch.mesh.visible !== show) {
         layer.patch.mesh.visible = show
         this.dirty = true
       }
     }
+    this.syncClothSim(shown, i)
+  }
+
+  /** 有衣服显示、又有绑定时起动模拟（worker），否则停掉 / Run the simulation (a worker) while garments show and there is a rig; stop it otherwise. */
+  private syncClothSim(shown: ClothLayer[], i: number): void {
+    const rig = this.appliedRig
+    if (!shown.length || !rig || !this.poseRt || !this.batches || this.source !== useApp.getState) {
+      if (this.clothSim) {
+        this.clothSim.dispose()
+        this.clothSim = null
+        this.clothSimKey = ''
+        this.dirty = true
+      }
+      return
+    }
+    const rest = this.batches.partBuffers(this.inst[i]!).position
+    if (!this.clothSim) {
+      const g = this.skinGeometry.get(i)!
+      const index = this.pouchTriangles ? Uint32Array.from([...g.index, ...this.pouchTriangles]) : g.index
+      this.clothSim = new ClothSim(rig, this.mainSkin!, rest, index, this.displayPose, this.poseScales, new URL('cloth/', new URL(this.baseUrl, location.href)).href)
+    }
+    const key = shown.map((l) => l.cloth.data.garment).join(',')
+    if (key !== this.clothSimKey) {
+      this.clothSimKey = key
+      for (const l of shown) l.onRest = (p) => this.clothSim?.setRest(Float32Array.from(p))
+      this.clothSim.setLayers(shown)
+    }
+  }
+
+  /** 衣服模拟的计时（验证用；没在模拟时为 null）/ Timing of the cloth simulation (verification; null when not simulating). */
+  clothStats(): ClothStats | null {
+    return this.clothSim ? { ...this.clothSim.stats } : null
   }
 
   /** 写实外观是否正在显示：要了写实、有数据、皮肤画成不透明（不是体表图）/ Whether the lifelike look is showing: wanted, with data, and the skin drawn opaque (not as a skin map). */
@@ -2282,6 +2326,7 @@ export class Viewer {
   /** Apply a pose for display: update the joint / muscle textures and switch shader branch between rest and posed. */
   private setDisplayPose(pose: Pose): void {
     this.displayPose = pose
+    this.clothSim?.pose(pose, this.poseScales)
     const rt = this.poseRt
     // 显示肌肉活动时，静止姿势也走蒙皮分支（站着不动小腿也在用力，肌腹要能变粗）
     // with muscle activity shown, the rest pose takes the skinning branch too (standing still loads the calf, whose belly must be able to thicken)
@@ -3813,6 +3858,7 @@ export class Viewer {
     const posing = this.stepPose(t) || facing || stimulating
     // 长发动力学（工作线程里算，新的位移到了才要求重画）/ long-hair dynamics (computed in a worker; a redraw is asked for only when a new displacement arrives)
     this.hair?.tickDynamics(t)
+    if (this.clothSim?.frame()) this.dirty = true
     if (this.stimEval) this.placeStimPath()
     if (this.gizmoJoint) this.updateGizmo()
 

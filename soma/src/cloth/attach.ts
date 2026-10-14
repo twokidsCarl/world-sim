@@ -63,7 +63,13 @@ export class SkinAttachment {
  * Multi-source Dijkstra: each vertex's geodesic distance to the nearest anchor (over mesh edges, stitched pairs at
  * distance 0) and which anchor that is.
  */
-export function geodesicToAnchors(n: number, triangles: ArrayLike<number>, uv: ArrayLike<number>, stitches: ArrayLike<number>, anchors: ArrayLike<number>): { dist: Float64Array; anchor: Int32Array } {
+export function geodesicToAnchors(n: number, triangles: ArrayLike<number>, uv: ArrayLike<number>, stitches: ArrayLike<number>, anchors: ArrayLike<number>, dim: 2 | 3 = 2): { dist: Float64Array; anchor: Int32Array } {
+  // dim = 3 时 uv 是三维位置（焊好缝线的网格没有统一的裁片坐标）/ with dim = 3, `uv` holds 3-D positions (a mesh with welded seams has no single set of pattern coordinates)
+  const len = (a: number, b: number): number => {
+    let s = 0
+    for (let k = 0; k < dim; k++) s += (uv[a * dim + k]! - uv[b * dim + k]!) ** 2
+    return Math.sqrt(s)
+  }
   const adj: number[][] = Array.from({ length: n }, () => [])
   const w: number[][] = Array.from({ length: n }, () => [])
   const link = (a: number, b: number, d: number): void => {
@@ -75,8 +81,7 @@ export function geodesicToAnchors(n: number, triangles: ArrayLike<number>, uv: A
   for (let t = 0; t < triangles.length; t += 3) {
     for (let k = 0; k < 3; k++) {
       const a = triangles[t + k]!, b = triangles[t + ((k + 1) % 3)]!
-      if (a < b) link(a, b, Math.hypot(uv[a * 2]! - uv[b * 2]!, uv[a * 2 + 1]! - uv[b * 2 + 1]!))
-      else link(a, b, Math.hypot(uv[a * 2]! - uv[b * 2]!, uv[a * 2 + 1]! - uv[b * 2 + 1]!))
+      link(a, b, len(a, b))
     }
   }
   for (let s = 0; s < stitches.length; s += 2) link(stitches[s]!, stitches[s + 1]!, 0)

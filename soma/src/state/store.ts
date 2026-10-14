@@ -895,6 +895,8 @@ export const useApp = create<AppState>()((set, get) => ({
   setWear: (ids) => {
     set({ wear: ids })
     void loadWorn(get, set)
+    // 衣服的模拟要用绑定（摆皮肤）/ the cloth simulation needs the rig (to pose the skin)
+    if (ids.length) void get().ensureRig()
   },
   rejectFace: (message) => set({ face: null, faceStatus: 'error', faceMessage: message }),
   setStimSettings: (patch) =>

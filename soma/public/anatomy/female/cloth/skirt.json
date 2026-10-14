@@ -112,6 +112,12 @@
    "count": 4401,
    "type": "u8",
    "itemSize": 1
+  },
+  "attach": {
+   "offset": 252464,
+   "count": 4401,
+   "type": "u8",
+   "itemSize": 1
   }
  },
  "checks": {
@@ -122,16 +128,18 @@
   "maxPenetrationMm": 0,
   "p99PenetrationMm": 0,
   "verticesInsideOver1mm": 0,
+  "skinPokeMaxMm": 0,
+  "skinPokeOver1mm": 0,
   "maxStitchGapMm": 0,
   "strain": {
-   "weftMeanPct": 0.9,
-   "warpMeanPct": 0.2,
-   "weftP95Pct": 4.6,
-   "warpP95Pct": 1.5,
-   "weftMaxPct": 86.9,
-   "warpMaxPct": 30.6
+   "weftMeanPct": 1,
+   "warpMeanPct": 0.3,
+   "weftP95Pct": 4.8,
+   "warpP95Pct": 1.7,
+   "weftMaxPct": 88.5,
+   "warpMaxPct": 36.2
   },
-  "bytes": 254787
+  "bytes": 259327
  },
  "source": {
   "pattern": "data/curated/cloth/patterns/female-skirt.json",

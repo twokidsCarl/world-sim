@@ -12,10 +12,13 @@
 //     course, v = warp / wale, from the pattern coordinates). Three constraints |f_u| − 1, |f_v| − 1
 //     and f_u·f_v, energy ½·k·A·C², k the membrane stiffness (N/m), compliance α = 1 / (k·A).
 //   · 弯曲：等距弯曲模型（Bergou 等 2006，“A Quadratic Bending Model for Inextensible Surfaces”）。
-//     每条内边一个四点模板，h = Σ K_i x_i 是离散平均曲率向量，能量 ½·(3B / (A₀ + A₁))·|h|²，
+//     每条内边一个四点模板，h = Σ K_i x_i 是离散平均曲率向量，能量 ½·(B / (A₀ + A₁))·|h|²（Bergou 的 3/(A₀ + A₁)
+//     对应的是另一种平均曲率的约定：按它算，均匀弯成圆筒的布片弯曲能是板理论 ½·B·κ²·A 的 2.8 倍，见 tests/cloth-solver.test.ts），
 //     B 是弯曲刚度（N·m）；静止形状是平的裁片。h 对位置是线性的，三个分量共用一个分母。
 //     Bending: the isometric bending model (Bergou et al. 2006). One four-point stencil per interior
-//     edge, h = Σ K_i x_i the discrete mean-curvature vector, energy ½·(3B / (A₀ + A₁))·|h|², B the
+//     edge, h = Σ K_i x_i the discrete mean-curvature vector, energy ½·(B / (A₀ + A₁))·|h|² (Bergou's 3/(A₀ + A₁)
+//     belongs to another convention for mean curvature: with it a sheet bent evenly into a cylinder had 2.8 times the
+//     plate-theory energy ½·B·κ²·A, see tests/cloth-solver.test.ts), B the
 //     bending rigidity (N·m); the rest shape is the flat panel. h is linear in the positions, so its
 //     three components share one denominator.
 //   · 缝合：成对顶点的距离约束，目标长度可以逐步收到 0（“缝起来”）。
@@ -26,6 +29,11 @@
 //     Collisions: external colliders (see collider.ts) and cloth self-collision (see selfcollide.ts).
 
 import { SelfCollision } from './selfcollide.ts'
+
+/** 三维长度（比 Math.hypot 快得多，热循环里用）/ A 3-D length (much faster than Math.hypot; used in hot loops). */
+function len3(x: number, y: number, z: number): number {
+  return Math.sqrt(x * x + y * y + z * z)
+}
 
 /** 求解器用的面料力学参数（国际单位制）/ The fabric mechanics the solver uses (SI units). */
 export interface FabricMechanics {
@@ -55,6 +63,14 @@ export interface ClothSetup {
   panel?: ArrayLike<number>
   /** 缝合顶点对 / Stitched vertex pairs, flat. */
   stitches?: ArrayLike<number>
+  /**
+   * 每个三角形角的裁片坐标（三角形数 × 3 × 2）；给了就不用 uv。缝线两边焊成一个顶点后，这个顶点在两片里的裁片坐标不同，
+   * 只能按角给。
+   * Pattern coordinates per triangle corner (triangles × 3 × 2); when given, `uv` is not used. Once the two sides of a
+   * seam are welded into one vertex, that vertex has different pattern coordinates in its two panels, so they can only
+   * be given per corner.
+   */
+  cornerUv?: ArrayLike<number>
   fabric: FabricMechanics
 }
 
@@ -115,7 +131,7 @@ export class ClothSolver {
   // 弯曲模板 / bending stencils
   readonly hinge: Uint32Array
   private readonly hingeK: Float64Array
-  /** 每个模板的 (A₀ + A₁) / 3 / (A₀ + A₁) / 3 of each stencil. */
+  /** 每个模板的 A₀ + A₁ / A₀ + A₁ of each stencil. */
   private readonly hingeArea: Float64Array
 
   // 缝合 / stitches
@@ -164,11 +180,14 @@ export class ClothSolver {
     this.triArea = new Float64Array(nt)
     this.mass = new Float64Array(n)
     const uv = this.uv
+    const cu = setup.cornerUv ?? null
+    // 三角形 t 第 k 个角的裁片坐标 / pattern coordinates of corner k of triangle t
+    const cuv = (t: number, k: number, c: 0 | 1): number => (cu ? cu[(t * 3 + k) * 2 + c]! : uv[this.tri[t * 3 + k]! * 2 + c]!)
     for (let t = 0; t < nt; t++) {
       const i0 = this.tri[t * 3]!, i1 = this.tri[t * 3 + 1]!, i2 = this.tri[t * 3 + 2]!
-      const u0 = uv[i0 * 2]!, v0 = uv[i0 * 2 + 1]!
-      const du1 = uv[i1 * 2]! - u0, dv1 = uv[i1 * 2 + 1]! - v0
-      const du2 = uv[i2 * 2]! - u0, dv2 = uv[i2 * 2 + 1]! - v0
+      const u0 = cuv(t, 0, 0), v0 = cuv(t, 0, 1)
+      const du1 = cuv(t, 1, 0) - u0, dv1 = cuv(t, 1, 1) - v0
+      const du2 = cuv(t, 2, 0) - u0, dv2 = cuv(t, 2, 1) - v0
       // Dm = [[du1 du2],[dv1 dv2]]，F = Ds · Dm⁻¹ / F = Ds · Dm⁻¹
       const det = du1 * dv2 - du2 * dv1
       const inv = 1 / det
@@ -213,18 +232,23 @@ export class ClothSolver {
           if (v !== a && v !== b) d = v
         }
         if (d < 0) continue
-        // 模板 (x0, x1) 为公共边，x2、x3 为对顶点；余切按裁片坐标（静止为平面）
-        // stencil: (x0, x1) the shared edge, x2 and x3 the opposite vertices; cotangents from the pattern (flat at rest)
-        const p = (i: number): [number, number] => [uv[i * 2]!, uv[i * 2 + 1]!]
-        const [x0, y0] = p(a), [x1, y1] = p(b), [x2, y2] = p(c), [x3, y3] = p(d)
+        // 模板 (x0, x1) 为公共边，x2、x3 为对顶点；余切按各自三角形的裁片坐标（静止为平面；焊起来的缝两边各用各的）
+        // stencil: (x0, x1) the shared edge, x2 and x3 the opposite vertices; cotangents from each triangle's own pattern
+        // coordinates (flat at rest; across a welded seam each side uses its own)
+        const p = (tt: number, v: number): [number, number] => {
+          for (let q = 0; q < 3; q++) if (this.tri[tt * 3 + q] === v) return [cuv(tt, q, 0), cuv(tt, q, 1)]
+          return [0, 0]
+        }
+        const [x0, y0] = p(t, a), [x1, y1] = p(t, b), [x2, y2] = p(t, c)
+        const [z0, w0] = p(t2, a), [z1, w1] = p(t2, b), [x3, y3] = p(t2, d)
         const c01 = cot2(x1 - x0, y1 - y0, x2 - x0, y2 - y0)
-        const c02 = cot2(x1 - x0, y1 - y0, x3 - x0, y3 - y0)
+        const c02 = cot2(z1 - z0, w1 - w0, x3 - z0, y3 - w0)
         const c03 = cot2(x0 - x1, y0 - y1, x2 - x1, y2 - y1)
-        const c04 = cot2(x0 - x1, y0 - y1, x3 - x1, y3 - y1)
+        const c04 = cot2(z0 - z1, w0 - w1, x3 - z1, y3 - w1)
         hinges.push(a, b, c, d)
         ks.push(c03 + c04, c01 + c02, -c01 - c03, -c02 - c04)
-        const A0 = Math.abs(area2(x0, y0, x1, y1, x2, y2)), A1 = Math.abs(area2(x0, y0, x1, y1, x3, y3))
-        areas.push((A0 + A1) / 3)
+        const A0 = Math.abs(area2(x0, y0, x1, y1, x2, y2)), A1 = Math.abs(area2(z0, w0, z1, w1, x3, y3))
+        areas.push(A0 + A1)
       }
     }
     this.hinge = Uint32Array.from(hinges)
@@ -294,7 +318,7 @@ export class ClothSolver {
         v[k] = (x[k]! - prev[k]!) * ih * keep
         v[k + 1] = (x[k + 1]! - prev[k + 1]!) * ih * keep
         v[k + 2] = (x[k + 2]! - prev[k + 2]!) * ih * keep
-        const sp = Math.hypot(v[k]!, v[k + 1]!, v[k + 2]!)
+        const sp = len3(v[k]!, v[k + 1]!, v[k + 2]!)
         if (sp > vmax) {
           const c = vmax / sp
           v[k] = v[k]! * c
@@ -335,7 +359,7 @@ export class ClothSolver {
         let useTwo = false
         if (pass < 2) {
           const f = pass === 0 ? fu : fv
-          const L = Math.hypot(f[0]!, f[1]!, f[2]!)
+          const L = len3(f[0]!, f[1]!, f[2]!)
           if (L < 1e-12) continue
           C = L - 1
           dx = f[0]! / L
@@ -413,7 +437,7 @@ export class ClothSolver {
         hz += K * x[i * 3 + 2]!
         denom += w[i]! * K * K
       }
-      // 刚度 3B / (A₀ + A₁) = B / hingeArea；柔度取倒数 / stiffness 3B / (A₀ + A₁) = B / hingeArea; compliance is its inverse
+      // 刚度 B / (A₀ + A₁) = B / hingeArea；柔度取倒数 / stiffness B / (A₀ + A₁) = B / hingeArea; compliance is its inverse
       const alpha = hingeArea[e]! / (B * h2)
       denom += alpha
       if (denom <= 0) continue
@@ -440,7 +464,7 @@ export class ClothSolver {
       const ws = wa + wb
       if (ws === 0) continue
       const dx = x[a * 3]! - x[b * 3]!, dy = x[a * 3 + 1]! - x[b * 3 + 1]!, dz = x[a * 3 + 2]! - x[b * 3 + 2]!
-      const L = Math.hypot(dx, dy, dz)
+      const L = len3(dx, dy, dz)
       if (L <= L0 || L < 1e-12) continue
       const dl = -(L - L0) / (ws + alpha)
       const nx = dx / L, ny = dy / L, nz = dz / L
@@ -459,7 +483,7 @@ export class ClothSolver {
       const i = tetherV[t]!, a = tetherA[t]!
       if (w[i] === 0) continue
       const dx = x[i * 3]! - x[a * 3]!, dy = x[i * 3 + 1]! - x[a * 3 + 1]!, dz = x[i * 3 + 2]! - x[a * 3 + 2]!
-      const L = Math.hypot(dx, dy, dz)
+      const L = len3(dx, dy, dz)
       const max = tetherL[t]!
       if (L <= max) continue
       const s = (L - max) / L
@@ -501,7 +525,7 @@ export class ClothSolver {
           fv[d] = fv[d]! + triB[t * 3 + q]! * x[p + d]!
         }
       }
-      const cu = Math.hypot(fu[0]!, fu[1]!, fu[2]!) - 1, cv = Math.hypot(fv[0]!, fv[1]!, fv[2]!) - 1
+      const cu = len3(fu[0]!, fu[1]!, fu[2]!) - 1, cv = len3(fv[0]!, fv[1]!, fv[2]!) - 1
       const cs = fu[0]! * fv[0]! + fu[1]! * fv[1]! + fu[2]! * fv[2]!
       stretch += 0.5 * triArea[t]! * (f.stretchWeft * cu * cu + f.stretchWarp * cv * cv + f.shear * cs * cs)
     }
@@ -534,8 +558,8 @@ export class ClothSolver {
         vy += b * x[p + 1]!
         vz += b * x[p + 2]!
       }
-      weft[t] = Math.hypot(ux, uy, uz) - 1
-      warp[t] = Math.hypot(vx, vy, vz) - 1
+      weft[t] = len3(ux, uy, uz) - 1
+      warp[t] = len3(vx, vy, vz) - 1
     }
     return { weft, warp }
   }
@@ -546,7 +570,7 @@ export class ClothSolver {
     const { x, stitches } = this
     for (let s = 0; s < stitches.length; s += 2) {
       const a = stitches[s]! * 3, b = stitches[s + 1]! * 3
-      m = Math.max(m, Math.hypot(x[a]! - x[b]!, x[a + 1]! - x[b + 1]!, x[a + 2]! - x[b + 2]!))
+      m = Math.max(m, len3(x[a]! - x[b]!, x[a + 1]! - x[b + 1]!, x[a + 2]! - x[b + 2]!))
     }
     return m
   }
