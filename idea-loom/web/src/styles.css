@@ -282,6 +282,7 @@ a.button.inline { display: inline-block; }
 .session { display: grid; gap: 10px; min-width: 0; }
 .session-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .session-status.waiting { border-color: var(--accent); color: var(--accent); }
+.session-status.done { border-color: var(--good); color: var(--good); }
 /* 会话在等你回答：每一页左下角的小气泡，点了去那个会话。 / A session waits for your answer: a small bubble at the bottom left of every page that leads to it. */
 .waiting-bubbles { position: fixed; left: calc(var(--nav-w) + 20px); bottom: 20px; z-index: 30; display: grid; gap: 8px; max-width: min(380px, calc(100vw - var(--nav-w) - 100px)); }
 .waiting-bubble { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border: 1px solid var(--accent); border-radius: 12px; background: var(--panel); color: var(--ink); text-decoration: none; box-shadow: 0 4px 14px rgba(40, 30, 10, 0.18); }
