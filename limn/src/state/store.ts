@@ -475,7 +475,9 @@ function respike(entry: CatalogEntry, model: Molecule, assembly: string, notes: 
   // a bowl of a deeper shade lies behind the spikes (see groundShell): between spikes their own deep tone shows, not the environment's ground
   const own = coloring.override.find((c) => c) ?? [0.6, 0.15, 330]
   const ground = groundShell(`${entry.id}:spike-ground`, centre, template.distance + 55, [own[0] - 0.28, own[1] * 0.8, own[2]], spec.source)
-  return [ground, { spec, mol: sub, coloring, align: null, keepBack: true }]
+  // 刺稀的时候（HIV 只有二十来个）空处比刺多，这层底色会读成一圈色带，不加
+  // where spikes are sparse (HIV has a score or so) there is more gap than spike and the ground would read as a band of colour, so none is laid
+  return count >= 40 ? [ground, { spec, mol: sub, coloring, align: null, keepBack: true }] : [{ spec, mol: sub, coloring, align: null, keepBack: true }]
 }
 
 /**
