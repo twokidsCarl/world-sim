@@ -125,6 +125,8 @@ export interface FaceReport {
   openings: null | { lidClearance: { eye: Side; lid: string; atHalfMm: number; atFullMm: number }[]; rimVertices: number; pouchVertices: number }
   mouth: null | { widthMm: number; foldPasses: Record<string, number>; sealResidualMm: number | null; dentalResidualMm: number | null; incisalEdge: number[] | null; lipParts: string[]; tongue: string | null }
   symmetry: { muscle: string; countL: number; countR: number; meanMmL: number; meanMmR: number; mirroredMeanDiffMm: number }[]
+  /** 视位的下颌比例是否按这副身体自己的切牙下降量换算过（见 visemeJawForBody）/ whether the visemes' jaw fractions were converted with this body's own incisor drop (see visemeJawForBody) */
+  visemeJaw: VisemeJawReport
 }
 
 const smooth = (t: number): number => {
@@ -243,6 +245,58 @@ function nearestOnPolyline(p: V3, pl: V3[]): { a: number; b: number; ka: number;
 
 /** 深层的唇部件：名为 Lip，或拆开后的 Upper lip / Lower lip（不含肌肉、牙）。 The deep lip parts: named Lip or, once split, Upper lip / Lower lip (muscles and teeth excluded). */
 export const isLipPart = (p: Pick<Part, 'name' | 'tissue'>): boolean => p.tissue !== 'muscle' && p.tissue !== 'tooth' && p.tissue !== 'bone' && /^((upper|lower|superior|inferior) )?lips?$|^lips?,? \(?(upper|lower|superior|inferior)/i.test(p.name.trim())
+
+export interface VisemeJawReport {
+  rule: string
+  recordedDropMm: Record<string, number> | null
+  ownDropMm: Record<string, number> | null
+  converted: boolean
+  ownMmPerJawFraction: number | null
+}
+
+/**
+ * 视位的下颌比例（visemes.json 的 jaw）是按 calibration.geometry 里记下的那副几何标定的：jaw = 目标毫米数 / mmPerJawFraction。
+ * 这副身体的切牙下降量（用骨架实算，比例 0.05 和 0.1 处）与记下的相差都在 0.05 mm 以内时原样使用；否则（几何变了，例如女性换了新头）
+ * 所有视位的 jaw 都乘以 mmPerJawFraction / 自己的每比例毫米数（比例 0.1 处），使切缘的下降量仍是表里的毫米数，视位之间的次序和相等关系不变。
+ * 夸张风格（clear）按下颌上限的比例规定（如开口的 a 是上限的一半），不换算；只在它小于换算后的正常值时提到正常值，夸张的不比正常的小。
+ * The visemes' jaw fractions (jaw in visemes.json) were calibrated on the geometry recorded under calibration.geometry: jaw = target
+ * millimetres / mmPerJawFraction. When this body's incisor drop (computed with the rig at fractions 0.05 and 0.1) is within 0.05 mm of
+ * the recorded one at both, they are used as they are; otherwise (the geometry has changed, e.g. the female's new head) they are
+ * converted with the body's own millimetres: every jaw is multiplied by mmPerJawFraction / the body's own mm per fraction (at 0.1),
+ * so the drop at the incisal edge is still the millimetres of the table and the order and equalities among the visemes are kept. The
+ * exaggerated style (clear) is set as a fraction of the jaw's limit (the open a at half of it) and is not converted; only where it
+ * falls below the converted normal value is it raised to that, so the exaggerated is never smaller than the normal.
+ */
+function visemeJawForBody(body: Body, rig: Rig, rigBin: Uint8Array | null | undefined, curated: Curated, jawMax: number): { visemes: NonNullable<Curated['visemes']>['visemes']; report: VisemeJawReport } {
+  const list = curated.visemes?.visemes ?? []
+  const cal = (curated.visemes as { calibration?: { mmPerJawFraction?: number; geometry?: Record<string, { incisorDropMmAtFraction?: Record<string, number> }> } } | undefined)?.calibration
+  const rule = 'kept when the rig-computed incisor drop at jaw fractions 0.05 and 0.1 is within 0.05 mm of calibration.geometry; otherwise every jaw is multiplied by mmPerJawFraction / own mm per fraction (at 0.1); clear kept, raised to the normal value where below it'
+  const none: VisemeJawReport = { rule, recordedDropMm: null, ownDropMm: null, converted: false, ownMmPerJawFraction: null }
+  const recorded = cal?.geometry?.[body.data.body]?.incisorDropMmAtFraction
+  const jawJ = rig.joints.find((j) => j.id === curated.muscles.jaw.joint)
+  const lower = body.data.parts.filter((p) => p.tissue === 'tooth' && /lower central.*incisor/i.test(p.name) && body.meshes.has(p.id))
+  if (!cal?.mmPerJawFraction || !recorded || recorded['0.05'] === undefined || recorded['0.1'] === undefined || !rigBin || !jawJ || lower.length === 0) return { visemes: list, report: none }
+  // 下切牙切缘：下中切牙上最高的顶点（与 tests/face-mouth.test.ts 相同）/ the lower incisal edge: the highest vertex of the lower central incisors (as in tests/face-mouth.test.ts)
+  let edge = { part: '', v: -1, y: -Infinity }
+  for (const p of lower) {
+    const m = body.meshes.get(p.id)!.positions
+    for (let i = 0; i < m.length; i += 3) if (m[i + 1]! > edge.y) edge = { part: p.id, v: i / 3, y: m[i + 1]! }
+  }
+  const dof = curated.muscles.jaw.dof
+  const drop = (f: number): number => (edge.y - new Poser(rig, rigBin, { [jawJ.id]: Array.from({ length: dof + 1 }, (_, k) => (k === dof ? f * jawMax : 0)) }).part(edge.part, body.meshes.get(edge.part)!.positions, 'dqs', false)[edge.v * 3 + 1]!) / MM
+  const own = { '0.05': +drop(0.05).toFixed(2), '0.1': +drop(0.1).toFixed(2) }
+  const same = Math.abs(own['0.05'] - recorded['0.05']) <= 0.05 && Math.abs(own['0.1'] - recorded['0.1']) <= 0.05
+  const perFraction = drop(0.1) / 0.1
+  const report: VisemeJawReport = { rule, recordedDropMm: { '0.05': recorded['0.05'], '0.1': recorded['0.1'] }, ownDropMm: own, converted: !same, ownMmPerJawFraction: +perFraction.toFixed(2) }
+  if (same) return { visemes: list, report }
+  const ratio = cal.mmPerJawFraction / perFraction
+  const scale = (x: number): number => +(x * ratio).toFixed(4)
+  const visemes = list.map((v) => {
+    const jaw = scale(v.jaw ?? 0)
+    return { ...v, jaw, ...(v.clear ? { clear: { ...v.clear, jaw: Math.max(v.clear.jaw ?? 0, jaw) } } : {}) }
+  })
+  return { visemes, report }
+}
 
 export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: string) => void, opts: { openings?: FaceOpenings | null; rigBin?: Uint8Array | null } = {}): { face: FaceData; bin: Uint8Array; report: FaceReport } {
   const parts = body.data.parts
@@ -390,7 +444,12 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     // 睑裂：从前方向眼球投射线，没有先碰到眼睑（眼轮匝肌、睑板）的地方就是开着的
     // the fissure: rays cast at the globe from the front; where no lid (orbicularis oculi, tarsal plate) is hit first, the eye is open
     const sgn = e.side === 'L' ? 1 : -1
-    const lidParts = parts.filter((p) => body.meshes.has(p.id) && (/orbicularis oculi/i.test(p.name) || /tarsal plate/i.test(p.name)) && (p.centroid[0] - midX) * sgn > 0)
+    // 上睑提肌（及其腱膜）也算眼睑的一层：眼轮匝肌的睑部和眶部是两块相贴的网格，接缝处有极窄的缝，
+    // 射线偶尔从缝里穿过、碰到眼球，睑裂就被误量到上睑上方很远处；缝后面正是上睑提肌。
+    // the levator palpebrae superioris (and its aponeurosis) counts as a layer of the lid as well: the palpebral and orbital parts of
+    // orbicularis oculi are two abutting meshes with a hairline gap at their seam, and a ray now and then slips through it to the
+    // globe, putting the fissure far above the upper lid; the levator lies right behind that seam.
+    const lidParts = parts.filter((p) => body.meshes.has(p.id) && (/orbicularis oculi/i.test(p.name) || /tarsal plate/i.test(p.name) || /levator palpebrae/i.test(p.name)) && (p.centroid[0] - midX) * sgn > 0)
     let rep: FaceReport['eyes'][number] = { side: e.side, rings: null, fissureMm: null, skinFissureMm: null }
     if (e.inner && e.outer && e.inner !== e.outer) rep.rings = { inner: e.inner.id, outer: e.outer.id, innerName: e.inner.name, outerName: e.outer.name, namesAgreeWithSize: e.sizeAgrees }
     if (lidParts.length) {
@@ -993,6 +1052,39 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     const ownT = upper ? tU : tL
     const D: V3[] = []
     let minHalf = Infinity, minFull = Infinity
+    const lift = (target: V3): V3 => {
+      const d = norm(sub(target, G))
+      const rho = Math.max(len(sub(target, G)), rGlobe(d) + gap)
+      return add(G, mul(d, rho))
+    }
+    /**
+     * 半闭时的弦中点不得进入眼球表面：不够就把目标再向外抬；`lifted` 表示这一步确实抬了。
+     * The chord midpoint at half closure must stay outside the globe surface: the target is lifted further if it does not;
+     * `lifted` says whether this step did lift it.
+     */
+    const clearChords = (M0: V3, from: V3[]): { M: V3; lifted: boolean } => {
+      let M = M0, lifted = false
+      for (let it = 0; it < 4; it++) {
+        let lack = 0
+        for (const p of from) {
+          const mid: V3 = [(p[0] + M[0]) / 2, (p[1] + M[1]) / 2, (p[2] + M[2]) / 2]
+          lack = Math.max(lack, rGlobe(norm(sub(mid, G))) + gap - len(sub(mid, G)))
+        }
+        if (lack <= 0) break
+        lifted = true
+        M = add(M, mul(norm(sub(M, G)), 2 * lack))
+      }
+      return { M, lifted }
+    }
+    /** 一侧眼睑在 t 处原来的闭合目标（含越线量）/ the former closing target of one lid at t (overlap included). */
+    const ownTarget = (t: number, isUpper: boolean, p: V3): { M: V3; lifted: boolean } => {
+      const lo = at(Lo, tL, t), up = at(U, tU, t)
+      let M: V3 = [lo[0] + (up[0] - lo[0]) * cf, lo[1] + (up[1] - lo[1]) * cf, lo[2] + (up[2] - lo[2]) * cf]
+      // 上下睑各越过闭合线一点（overlapMm 的一小部分），使缘确实合拢 / each lid goes a little past the line (a fraction of overlapMm) so that the margins really meet
+      const dirUL = norm(sub(lo, up))
+      M = add(M, mul(dirUL, (isUpper ? 1 : -1) * Math.min(0.25 * MM, (lidCfg.overlapMm ?? 0) * MM)))
+      return clearChords(lift(M), [p])
+    }
     own.forEach((v, i) => {
       const p = P3(v)
       if (i === 0 || i === own.length - 1) {
@@ -1002,26 +1094,25 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
       }
       const t = ownT[i]!
       const lo = at(Lo, tL, t), up = at(U, tU, t)
-      let M: V3 = [lo[0] + (up[0] - lo[0]) * cf, lo[1] + (up[1] - lo[1]) * cf, lo[2] + (up[2] - lo[2]) * cf]
-      // 上下睑各越过闭合线一点（overlapMm 的一小部分），使缘确实合拢 / each lid goes a little past the line (a fraction of overlapMm) so that the margins really meet
       const dirUL = norm(sub(lo, up))
-      M = add(M, mul(dirUL, (upper ? 1 : -1) * Math.min(0.25 * MM, (lidCfg.overlapMm ?? 0) * MM)))
-      // 上睑上提（AU5）：睑缘离开下睑方向上移 raise，中间最多、两眦为 0 / upper-lid raise (AU5): the margin moves away from the lower lid by `raise`, most in the middle and nothing at the canthi
-      if (raise > 0) M = add(p, mul(dirUL, -raise * 4 * t * (1 - t)))
-      const lift = (target: V3): V3 => {
-        const d = norm(sub(target, G))
-        const rho = Math.max(len(sub(target, G)), rGlobe(d) + gap)
-        return add(G, mul(d, rho))
-      }
-      M = lift(M)
-      // 半闭时的弦中点不得进入眼球表面：不够就把目标再向外抬 / the chord midpoint at half closure must stay outside the globe surface: lift the target further if it does not
-      for (let it = 0; it < 4; it++) {
-        const mid: V3 = [(p[0] + M[0]) / 2, (p[1] + M[1]) / 2, (p[2] + M[2]) / 2]
-        const dm = norm(sub(mid, G))
-        const lack = rGlobe(dm) + gap - len(sub(mid, G))
-        if (lack <= 0) break
-        const d = norm(sub(M, G))
-        M = add(M, mul(d, 2 * lack))
+      let M: V3
+      if (raise > 0) {
+        // 上睑上提（AU5）：睑缘离开下睑方向上移 raise，中间最多、两眦为 0 / upper-lid raise (AU5): the margin moves away from the lower lid by `raise`, most in the middle and nothing at the canthi
+        M = clearChords(lift(add(p, mul(dirUL, -raise * 4 * t * (1 - t)))), [p]).M
+      } else {
+        const mine = ownTarget(t, upper, p)
+        const theirs = ownTarget(t, !upper, upper ? lo : up)
+        M = mine.M
+        if (mine.lifted || theirs.lifted) {
+          // 为让开角膜而把目标向外抬时，上睑抬得多、下睑抬得少，两缘在深度上会差开几毫米、合不拢。
+          // 这时两睑走到同一个会合点：闭合线上的点先推到眼球表面之外，再抬到两条弦（上睑缘、下睑缘到它）的中点都在眼球表面之外。
+          // When the target is lifted outwards to clear the cornea, the upper lid is lifted much more than the lower, and the margins
+          // end millimetres apart in depth and do not meet. Then both lids go to one shared meeting point: the point of the closure
+          // line, pushed out of the globe surface and then lifted until the midpoints of both chords (from the upper and from the
+          // lower margin to it) lie outside the globe surface.
+          const C: V3 = [lo[0] + (up[0] - lo[0]) * cf, lo[1] + (up[1] - lo[1]) * cf, lo[2] + (up[2] - lo[2]) * cf]
+          M = clearChords(lift(C), [up, lo]).M
+        }
       }
       const mid: V3 = [(p[0] + M[0]) / 2, (p[1] + M[1]) / 2, (p[2] + M[2]) / 2]
       minHalf = Math.min(minHalf, len(sub(mid, G)) - rGlobe(norm(sub(mid, G))))
@@ -2410,6 +2501,7 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
   // —— AU、疼痛映射 / AUs and the pain mapping ——
   const jawJoint = rig.joints.find((j) => j.id === curated.muscles.jaw.joint)
   const jawMax = jawJoint?.dofs[curated.muscles.jaw.dof]?.max ?? 0
+  const visemeJaw = visemeJawForBody(body, rig, opts.rigBin, curated, jawMax)
   const aus: FaceAU[] = curated.aus.aus.map((a) => {
     const ch: Record<string, number> = {}
     const missing = [...(a.missing ?? [])]
@@ -2498,7 +2590,7 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     channels,
     aus,
     ...(curated.emotions ? { expressions: curated.emotions.emotions } : {}),
-    ...(curated.visemes ? { visemes: { timing: curated.visemes.timing, features: curated.visemes.features, visemes: curated.visemes.visemes } } : {}),
+    ...(curated.visemes ? { visemes: { timing: curated.visemes.timing, features: curated.visemes.features, visemes: visemeJaw.visemes } } : {}),
     pain: { pspi: { terms: curated.pain.pspi.terms, binary: curated.pain.pspi.binary, max: curated.pain.pspi.max, basis: curated.pain.pspi.basis }, keyframes: curated.pain.keyframes, mapping: curated.pain.mapping, timing: curated.pain.timing },
     jaw: { joint: curated.muscles.jaw.joint, dof: curated.muscles.jaw.dof, max: jawMax, closers: jawRe(curated.muscles.jaw.closers), openers: jawRe(curated.muscles.jaw.openers) },
     bounds: { channel: +(Math.ceil(Math.max(maxChannel, ...channels.map((c) => c.excursion)) / MM * 10) / 10 * MM).toFixed(4), total: +(Math.ceil(maxTotal / MM * 10) / 10 * MM).toFixed(4) },
@@ -2511,6 +2603,7 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     cautions,
   }
   const rep: FaceReport = {
+    visemeJaw: visemeJaw.report,
     body: bodyId,
     skin: { part: skinPart.id, vertices: skinN, headVertices, faceVertices: faceStats.vertices, faceMeanEdgeMm: faceStats.meanEdgeMm, perRegion },
     muscles: report,

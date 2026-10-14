@@ -4,7 +4,7 @@
 // 读入 / reads
 //   public/anatomy/<body>/                  当前的人体与 rig.json、rig.bin / the body as built, with rig.json and rig.bin
 //   data/curated/bodyshape/rig-shape.json   体型模型（控制量、各肢段与围度的指数）/ the shape model (controls, exponents of segments and girths)
-//   data/raw/bodyshape/out/<body>-skin/     skin.obj、shape-fat.f32、shape-limit.f32 / the source surface and its shape fields
+//   皮肤包（目录见 tools/pipeline/skinPackageDir.ts） skin.obj、shape-fat.f32、shape-limit.f32 / the skin package (directory from tools/pipeline/skinPackageDir.ts): the source surface and its shape fields
 //   data/curated/rig/shape.json             因子如何落到关节上 / how the factors land on the joints
 // 写出 / writes
 //   public/anatomy/<body>/shape.json、shape.bin   运行时数据（契约见 src/shape/types.ts）/ runtime data (contract in src/shape/types.ts)
@@ -22,6 +22,7 @@ import { type V3, xfApply } from './math.ts'
 import { type Scales, Poser, jointFrames } from './pose.ts'
 import { type RenderItem, type Rgb, render, sheet } from './render.ts'
 import { Shaper, bmiUnits, factorValues } from './shape.ts'
+import { skinPackageDir } from '../pipeline/skinPackageDir.ts'
 
 const ROOT = join(import.meta.dirname, '..', '..')
 const sha = (path: string): string => createHash('sha256').update(new Uint8Array(readFileSync(path))).digest('hex').slice(0, 16)
@@ -65,8 +66,10 @@ export async function buildShape(bodyId: 'male' | 'female', renders: boolean, lo
   const model = (JSON.parse(readFileSync(join(ROOT, 'data/curated/bodyshape/rig-shape.json'), 'utf8')) as { sexes: Record<string, RigShapeSex> }).sexes[bodyId === 'male' ? 'M' : 'F']!
   // 有下标对照、且有开口后的皮肤包时，体型场按下标从开口后的包里取（不找最近点：上下唇缘的顶点位置重合）
   // with the index sidecar and an opened package, the shape fields are taken from it by index (no closest point: the upper and lower lip margins coincide in position)
-  const byIndex = !!body.skinSource && existsSync(join(ROOT, `data/raw/bodyshape/out/${bodyId}-skin-open`, 'shape-fat.f32'))
-  const pkgRel = `data/raw/bodyshape/out/${bodyId}-skin${byIndex ? '-open' : ''}`
+  // 包的目录与构建装入的是同一个（见 tools/pipeline/skinPackageDir.ts） / the package directory is the one the build installs from (see tools/pipeline/skinPackageDir.ts)
+  const pkgBase = skinPackageDir(bodyId === 'female' ? 'female' : 'male')
+  const byIndex = !!body.skinSource && existsSync(join(ROOT, `${pkgBase}-open`, 'shape-fat.f32'))
+  const pkgRel = `${pkgBase}${byIndex ? '-open' : ''}`
   const pkg = join(ROOT, pkgRel)
   const inputs: Record<string, string> = { 'rig.json': sha(join(dir, 'rig.json')), 'rig.bin': sha(join(dir, 'rig.bin')), ...body.inputs }
   for (const f of ['data/curated/rig/shape.json#data', 'data/curated/bodyshape/rig-shape.json#data', `${pkgRel}/skin.obj`, `${pkgRel}/shape-fat.f32`, `${pkgRel}/shape-limit.f32`, `${pkgRel}/manifest.json#package`]) inputs[f] = hashInput(f, join(ROOT, inputFile(f)))

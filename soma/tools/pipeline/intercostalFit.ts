@@ -15,7 +15,11 @@
 //   · 层次：神经在腹内斜肌与腹横肌之间前行，到腹直肌鞘穿入，支配腹直肌，以前皮支终（Gray 1918 第 945 页）。
 //     所以位移之后沿水平的径向把每个点落到：有腹直肌处在腹直肌的后面，否则有腹横肌处在腹横肌的外表面（即它与腹内斜肌之间）；
 //     最后 perforate 这一段从腹直肌后面过渡到前面（前皮支）。两块肌都碰不到的点保持位移后的位置。
-// 中心线改好之后由调用方重建管状网格。第 5、6 肋间神经一直在自己的肋间隙里走到胸骨旁，没有打开过给出其终点高度的出处，不动。
+// 第 6 肋间神经（2026-10-14 加入）：它在自己的肋间隙里走到胸骨旁，前端原先落在第 7 的前端旁边（剑突尖以下），
+// 所以把前端提到她的剑胸结合（胸骨体与剑突相接处，按她自己的胸骨和剑突的几何求出）的高度。依据：ISNCSCI 的 T6 关键感觉点
+// 在剑突的高度（LEVEL_SOURCES 第 3 条所在的同一页）；取剑胸结合、即剑突的上端，是本项目的选择。它不在腹壁里，
+// 所以不按腹直肌、腹横肌落位，只做同样的位移，再像第 7、8 那样从肋软骨里往深面退出。报告里单列（sixth），不进 rows。
+// 中心线改好之后由调用方重建管状网格。第 1–5 肋间神经一直在自己的肋间隙里走到胸骨旁，没有打开过给出其终点高度的出处，不动。
 //
 // Female: the stretch of intercostal nerves 7–11 (the thoraco-abdominal nerves) beyond the costal margin, in
 // the abdominal wall, re-placed by her own surface landmarks.
@@ -43,8 +47,16 @@
 //     abdominis (between it and the internal oblique) where there is transversus; over the last `perforate`
 //     the nerve passes from behind the rectus to its front (the anterior cutaneous branch). A point that
 //     meets neither muscle stays where the displacement put it.
-// The caller rebuilds the tube from the changed centreline. Intercostal nerves 5 and 6 run in their own
-// spaces to the side of the sternum; no source giving a level for their ends was opened, so they stay.
+// The 6th intercostal nerve (added 2026-10-14) runs in its own space to the side of the sternum; its end
+// used to lie next to that of the 7th (below the tip of the xiphoid), so it is brought up to the level of her
+// xiphisternal joint (where the body of the sternum meets the xiphoid process, found from her own sternum and
+// xiphoid geometry). Basis: the ISNCSCI T6 key sensory point lies at the level of the xiphoid process (the
+// page of the third entry of LEVEL_SOURCES); taking the joint, the upper end of the xiphoid, is this
+// project's choice. It is not in the abdominal wall, so it is not seated against rectus or transversus: it
+// takes the same displacement and is then moved deep out of the costal cartilages as the 7th and 8th are. The
+// report lists it apart (sixth), not in rows.
+// The caller rebuilds the tube from the changed centreline. Intercostal nerves 1-5 run in their own spaces to
+// the side of the sternum; no source giving a level for their ends was opened, so they stay.
 
 import { measure, type Mesh } from './geometry.ts'
 import { anteriorSuperiorIliacSpine, pubicTubercle } from './groin.ts'
@@ -54,7 +66,7 @@ import { simplifyPolyline, type Polyline } from './tube.ts'
 export const LEVEL_SOURCES = [
   { claim: 'The 7th intercostal nerve ends at the xiphoid process of the sternum; the 10th intercostal nerve terminates at the navel.', name: "Wikipedia “Intercostal nerves”, which incorporates public-domain text from p. 945 of Gray's Anatomy, 20th ed. (1918); opened 2026-10-13", url: 'https://en.wikipedia.org/wiki/Intercostal_nerves' },
   { claim: 'The 7th–11th nerves pass between the obliquus internus and transversus abdominis to the sheath of the rectus abdominis, which they perforate; they supply the rectus and end as the anterior cutaneous branches of the abdomen.', name: "Wikipedia “Thoraco-abdominal nerves” (text of Gray's Anatomy, 20th ed., 1918); opened 2026-10-13", url: 'https://en.wikipedia.org/wiki/Thoraco-abdominal_nerves' },
-  { claim: 'T12 key sensory point: intersection of the midclavicular line and the midpoint of the inguinal ligament (T10: midclavicular line at the horizontal level of the umbilicus).', name: 'Wikipedia “Dermatome (anatomy)”, list attributed to the ISNCSCI key sensory points (American Spinal Injury Association); opened 2026-10-13', url: 'https://en.wikipedia.org/wiki/Dermatome_(anatomy)' },
+  { claim: 'T12 key sensory point: intersection of the midclavicular line and the midpoint of the inguinal ligament (T10: midclavicular line at the horizontal level of the umbilicus; T6: midclavicular line at the horizontal level of the xiphoid process).', name: 'Wikipedia “Dermatome (anatomy)”, list attributed to the ISNCSCI key sensory points (American Spinal Injury Association); opened 2026-10-13', url: 'https://en.wikipedia.org/wiki/Dermatome_(anatomy)' },
 ] as const
 
 export interface IntercostalFitOptions {
@@ -118,11 +130,13 @@ export interface IntercostalFitReport {
   options?: IntercostalFitOptions
   sources?: typeof LEVEL_SOURCES
   /** 所用的标志（米） / the landmarks used (m) */
-  landmarks?: { midlineX: number; xiphoidTipY: number; navelY: number; navelFrom: string; asisY: number; pubicTubercleY: number; inguinalMidY: number }
+  landmarks?: { midlineX: number; xiphoidTipY: number; xiphisternalJointY?: number; xiphisternalJointFrom?: string; navelY: number; navelFrom: string; asisY: number; pubicTubercleY: number; inguinalMidY: number }
   /** 各神经前端的目标高度（米）和它的依据 / target height of each nerve's end (m) and what it rests on */
   levels?: { nerve: number; y: number; basis: string }[]
   notRefitted?: string
   rows?: IntercostalFitRow[]
+  /** 第 6 肋间神经：前端提到剑胸结合的高度（见文件头） / the 6th intercostal nerve: its end brought up to the level of the xiphisternal joint (see the head of the file) */
+  sixth?: IntercostalFitRow[]
 }
 
 function resample(line: Polyline, step: number): Polyline {
@@ -167,6 +181,20 @@ export function refitIntercostalNerves(parts: IntercostalFitPart[], navel: { y: 
   const xs = measure(xiphoid.mesh)
   const xMid = xs.centroid[0]
   const tipY = xs.bbox[1]
+  // 剑胸结合：剑突表面上离胸骨体表面不到 3 mm 的点的高度中位数（两骨相接处）；找不到就取胸骨体最低点与剑突最高点的中点
+  // the xiphisternal joint: the median height of the points of the xiphoid's surface within 3 mm of the surface of the body of the sternum (where the two bones meet); failing that, midway between the lowest point of the body and the highest of the xiphoid
+  const body = byName.get('Body of sternum')
+  let xsJoint = { y: NaN, from: 'no body of sternum' }
+  if (body) {
+    const bodyIx = new PointIndex(thinPoints(surfacePoints(body.mesh, 0.001), 0.001), 0.006)
+    const xp = thinPoints(surfacePoints(xiphoid.mesh, 0.001), 0.001)
+    const ys: number[] = []
+    for (let i = 0; i < xp.length; i += 3) if (bodyIx.distance(xp[i]!, xp[i + 1]!, xp[i + 2]!, 0.003) <= 0.003) ys.push(xp[i + 1]!)
+    ys.sort((a, b) => a - b)
+    xsJoint = ys.length >= 5
+      ? { y: ys[ys.length >> 1]!, from: `median height of the ${ys.length} surface points of the xiphoid process within 3 mm of the body of the sternum` }
+      : { y: (measure(body.mesh).bbox[1] + xs.bbox[4]) / 2, from: 'midway between the lowest point of the body of the sternum and the highest point of the xiphoid process (the two surfaces do not come within 3 mm)' }
+  }
   const asisY = (anteriorSuperiorIliacSpine(hips[0].mesh)[1] + anteriorSuperiorIliacSpine(hips[1].mesh)[1]) / 2
   // 骨盆自己的正中面（两髋骨内缘的中点）：与剑突的正中线可以差几毫米 / the pelvis' own median plane (midway between the inner edges of the hip bones): it can be a few millimetres off the xiphoid's midline
   const xPelvis = (measure(hips[0].mesh).bbox[0] + measure(hips[1].mesh).bbox[3]) / 2
@@ -175,6 +203,7 @@ export function refitIntercostalNerves(parts: IntercostalFitPart[], navel: { y: 
   const y7 = tipY - opts.belowXiphoid
   const y10 = navel.y
   const levels = [
+    ...(Number.isFinite(xsJoint.y) ? [{ nerve: 6, y: xsJoint.y, basis: 'the xiphisternal joint of her own sternum (ISNCSCI: the T6 key point lies at the level of the xiphoid process; the joint, its upper end, is this project\'s choice)' }] : []),
     { nerve: 7, y: y7, basis: `${opts.belowXiphoid * 1000} mm below the lowest point of the xiphoid process (Gray 1918: ends at the xiphoid process)` },
     { nerve: 8, y: y7 + (y10 - y7) / 3, basis: 'one third of the way from the 7th to the 10th (interpolated, no source)' },
     { nerve: 9, y: y7 + (2 * (y10 - y7)) / 3, basis: 'two thirds of the way from the 7th to the 10th (interpolated, no source)' },
@@ -188,6 +217,7 @@ export function refitIntercostalNerves(parts: IntercostalFitPart[], navel: { y: 
   const inHard = (x: number, y: number, z: number): boolean => hard.some((b) => x >= b.box[0] && x <= b.box[3] && y >= b.box[1] && y <= b.box[4] && z >= b.box[2] && z <= b.box[5] && (b.tester ??= new InsideTester(b.mesh, 48)).contains(x, y, z))
   const r1 = (v: number) => Math.round(v * 1e4) / 10
   const rows: IntercostalFitRow[] = []
+  const sixth: IntercostalFitRow[] = []
   for (const [S, sd, sgn] of [['Left', 'L', 1], ['Right', 'R', -1]] as const) {
     const muscle = (n: string) => {
       const p = byName.get(`${S} ${n}`)
@@ -195,6 +225,9 @@ export function refitIntercostalNerves(parts: IntercostalFitPart[], navel: { y: 
     }
     const M = { rectus: muscle('rectus abdominis'), transversus: muscle('transversus abdominis'), internalOblique: muscle('internal oblique'), externalOblique: muscle('external oblique') }
     for (const lv of levels) {
+      // 第 6 肋间神经不在腹壁里：不按腹壁肌落位，报告单列 / the 6th is not in the abdominal wall: not seated against its muscles, reported apart
+      const thoracic = lv.nerve === 6
+      const rows_ = thoracic ? sixth : rows
       const part = byName.get(`${S} ${ORD[lv.nerve - 1]} intercostal nerve`)
       const ribs = [byName.get(`${S} ${ORD[lv.nerve - 1]} rib`), byName.get(`${S} ${ORD[lv.nerve]} rib`)].filter((p): p is IntercostalFitPart => !!p && p.tissue === 'bone')
       if (!part?.centrelines?.length) continue
@@ -224,7 +257,7 @@ export function refitIntercostalNerves(parts: IntercostalFitPart[], navel: { y: 
         return { ...base, changed: false, reason, endYMm: { before: r1(E[1]!), target: r1(lv.y), after: r1(E[1]!) }, endMm: { before: E.map(r1), after: E.map(r1) }, againstMm: { xiphoidTip: { before: a.xiphoidTip, after: a.xiphoidTip }, navel: { before: a.navel, after: a.navel }, pubicTubercle: { before: a.pubicTubercle, after: a.pubicTubercle } } }
       }
       if (ribs.length < 2) {
-        rows.push(same('a rib of its space is missing'))
+        rows_.push(same('a rib of its space is missing'))
         continue
       }
       const ribIx = new PointIndex(thinPoints(Float32Array.from(ribs.flatMap((r) => [...surfacePoints(r.mesh, 0.002)])), 0.002), 0.008)
@@ -232,7 +265,7 @@ export function refitIntercostalNerves(parts: IntercostalFitPart[], navel: { y: 
       for (let i = 0; i < n; i++) if (ribIx.distance(P[3 * i]!, P[3 * i + 1]!, P[3 * i + 2]!, opts.pivotReach) <= opts.pivotReach) pivot = i
       const stretch = pivot >= 0 ? lengthOf(P, pivot) : 0
       if (pivot < 0 || stretch < opts.minStretch) {
-        rows.push(same('no stretch beyond the bony thorax'))
+        rows_.push(same('no stretch beyond the bony thorax'))
         continue
       }
       const off = Math.min(opts.endOffset[1], Math.max(opts.endOffset[0], sgn * (E[0]! - xMid)))
@@ -258,6 +291,11 @@ export function refitIntercostalNerves(parts: IntercostalFitPart[], navel: { y: 
       }
       const newLen = lengthOf(Q, pivot)
       for (let i = pivot + 1; i < n; i++) {
+        if (thoracic) {
+          dr[i] = 0
+          seated.free++
+          continue
+        }
         const [cx, cz, r0] = dir(i)
         const y = Q[3 * i + 1]!
         const rho = fine.radius[i]! + opts.clearance
@@ -345,7 +383,7 @@ export function refitIntercostalNerves(parts: IntercostalFitPart[], navel: { y: 
       const F = [Q[3 * n - 3]!, Q[3 * n - 2]!, Q[3 * n - 1]!]
       const b = against(E[1]!)
       const a = against(F[1]!)
-      rows.push({
+      rows_.push({
         ...base, changed: true, endYMm: { before: r1(E[1]!), target: r1(lv.y), after: r1(F[1]!) }, endMm: { before: E.map(r1), after: F.map(r1) },
         againstMm: { xiphoidTip: { before: b.xiphoidTip, after: a.xiphoidTip }, navel: { before: b.navel, after: a.navel }, pubicTubercle: { before: b.pubicTubercle, after: a.pubicTubercle } },
         pivotMm: [P[3 * pivot]!, P[3 * pivot + 1]!, P[3 * pivot + 2]!].map(r1), refittedLengthMm: { before: r1(stretch), after: r1(lengthOf(Q, pivot)) },
@@ -356,11 +394,12 @@ export function refitIntercostalNerves(parts: IntercostalFitPart[], navel: { y: 
   return {
     changed,
     report: {
-      applied: rows.some((r) => r.changed), options: opts, sources: LEVEL_SOURCES,
-      landmarks: { midlineX: Math.round(xMid * 1e4) / 1e4, xiphoidTipY: Math.round(tipY * 1e4) / 1e4, navelY: Math.round(y10 * 1e4) / 1e4, navelFrom: navel.from, asisY: Math.round(asisY * 1e4) / 1e4, pubicTubercleY: Math.round(tubY * 1e4) / 1e4, inguinalMidY: Math.round(y12 * 1e4) / 1e4 },
+      applied: rows.some((r) => r.changed) || sixth.some((r) => r.changed), options: opts, sources: LEVEL_SOURCES,
+      landmarks: { midlineX: Math.round(xMid * 1e4) / 1e4, xiphoidTipY: Math.round(tipY * 1e4) / 1e4, ...(Number.isFinite(xsJoint.y) ? { xiphisternalJointY: Math.round(xsJoint.y * 1e4) / 1e4 } : {}), xiphisternalJointFrom: xsJoint.from, navelY: Math.round(y10 * 1e4) / 1e4, navelFrom: navel.from, asisY: Math.round(asisY * 1e4) / 1e4, pubicTubercleY: Math.round(tubY * 1e4) / 1e4, inguinalMidY: Math.round(y12 * 1e4) / 1e4 },
       levels: levels.map((l) => ({ nerve: l.nerve, y: Math.round(l.y * 1e4) / 1e4, basis: l.basis })),
-      notRefitted: 'intercostal nerves 1–6 (they run in their own intercostal spaces to the side of the sternum; no source giving a level for their ends was opened); there is no subcostal nerve in the model; no nerve has a separate lateral cutaneous branch in the centreline data (each is one line), so there was none to preserve or to lose',
+      notRefitted: 'intercostal nerves 1–5 (they run in their own intercostal spaces to the side of the sternum; no source giving a level for their ends was opened); there is no subcostal nerve in the model; no nerve has a separate lateral cutaneous branch in the centreline data (each is one line), so there was none to preserve or to lose',
       rows,
+      sixth,
     },
   }
 }

@@ -28,6 +28,13 @@ def main():
     F, jn = mhrlib.faces(lod), mhrlib.joint_names(lod)
     Vm, P, _ = mhrlib.run(st['identity'], st['mp'], lod, True)
     V = Vm + st['offsets']
+    # 关节位置以包里的 joints.json 为准（reissue_head.py 的包沿用原包的姿势参数，头的关节只在 joints.json 里是新头的）；没有该文件时用模型算出的
+    # joint positions are those of the package's joints.json (a package of reissue_head.py keeps the pose parameters of its source and only joints.json has the head joints of the new head); the model's when the file is absent
+    jf = os.path.join(d, 'joints.json')
+    if os.path.exists(jf):
+        jj = json.load(open(jf))
+        if jj.get('names') == list(jn):
+            P = np.array(jj['positions'], float)
     fb = Body(name)
     skip = ES.excluded_face_parts(fb)
     rep, lines = {'eyes': {}, 'cover': {}}, [f'{name}: face checks on {os.path.basename(d)}']

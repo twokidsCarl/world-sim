@@ -12,6 +12,7 @@ import { Surface, mergeMeshes } from './geom.ts'
 import { type Body, hashInput, inputFile } from './io.ts'
 import { type BuiltJoint, type JointExt, type JointFile, type Override, type RomEntry, type Skeleton, blendRadius, buildJoints, expandJointDefs, toContract } from './joints.ts'
 import { BYTES_PER_VERTEX } from './pose.ts'
+import { openedSkinPackageDir, skinPackageDir } from '../pipeline/skinPackageDir.ts'
 
 export const CURATED = join(import.meta.dirname, '..', '..', 'data', 'curated', 'rig')
 
@@ -102,6 +103,20 @@ const EXTERNAL_SKIN_CAUTION = {
   en: 'The skin uses MHR’s own skinning weights (except on the fingers) with this rig’s joints: chest skin follows the vertebrae, not the ribs, so in deep inspiration ribs and rectus abdominis come through it; toe skin follows the metatarsophalangeal joints only; beyond about 120° of shoulder flexion and in a deep squat the skin of the axilla and groin is still stretched markedly, and deep parts such as latissimus dorsi and deltoid come through the skin locally (by up to about 3–5 cm).',
 }
 
+/**
+ * 外部蒙皮权重的目录取装入的那个皮肤包（tools/pipeline/skinPackageDir.ts），不取 bindings.json 里写定的目录：
+ * 那里女性的目录还是旧头的包，按下标取到的权重与新头的顶点对不上（2026-10-14 发现：口角处有下唇顶点挂在颅骨上）。
+ * 男性的包目录两边相同，结果不变。bindings.json 的哈希照旧记入输入。
+ * The directories of the external skin weights are those of the installed skin package (tools/pipeline/skinPackageDir.ts), not
+ * the ones written into bindings.json: for the female those still named the old head's package, and weights taken by index did
+ * not match the new head's vertices (found 2026-10-14: lower-lip vertices at the mouth corners hung on the skull). For the male
+ * both name the same directory, so nothing changes. The hash of bindings.json is still recorded as an input.
+ */
+export function withInstalledSkinPackages(rules: BindRules): BindRules {
+  const ext = (rules.externalWeights ?? []).map((e) => (e.body === 'male' || e.body === 'female' ? { ...e, dir: skinPackageDir(e.body), ...(e.openDir ? { openDir: openedSkinPackageDir(e.body) } : {}) } : e))
+  return { ...rules, externalWeights: ext }
+}
+
 export function loadCurated(bodyId: string): { defs: ReturnType<typeof expandJointDefs>; rom: Record<string, RomEntry>; rules: BindRules; overrides: Record<string, Override>; hashes: Record<string, string> } {
   const hashes: Record<string, string> = {}
   const read = <T>(name: string): T => {
@@ -111,7 +126,7 @@ export function loadCurated(bodyId: string): { defs: ReturnType<typeof expandJoi
   }
   const jf = read<JointFile>('joints.json')
   const rf = read<RomFile>('rom.json')
-  const rules = read<BindRules>('bindings.json')
+  const rules = withInstalledSkinPackages(read<BindRules>('bindings.json'))
   const ov = read<Record<string, Record<string, Override>>>('overrides.json')
   const rom: Record<string, RomEntry> = {}
   for (const [k, e] of Object.entries(rf.entries)) {

@@ -188,26 +188,8 @@ export function loadSkinPackage(dir: string): SkinPackage | null {
   }
 }
 
-/**
- * 皮肤包目录（相对项目根）：缺省是各构建线写定的那个；设了环境变量 SOMA_MALE_SKIN_PACKAGE / SOMA_FEMALE_SKIN_PACKAGE
- * 就改用它指的目录（皮肤包重新发布到另一个目录时用）。开口后的包仍按约定取 `<目录>-open`。
- * 只接受项目根之下的相对路径：报告里记的就是这个相对目录，绝对路径不能进报告。
- * The skin package directory (relative to the project root): by default the one each build line names; the
- * environment variables SOMA_MALE_SKIN_PACKAGE / SOMA_FEMALE_SKIN_PACKAGE select another (for a package re-issued
- * into a directory of its own). The opened package is still `<directory>-open` by convention.
- * Only a relative path below the project root is accepted: that relative directory is what the report records,
- * and an absolute path must not get into the report.
- */
-export function skinPackageDirFor(body: 'male' | 'female', fallback: string): string {
-  const name = body === 'male' ? 'SOMA_MALE_SKIN_PACKAGE' : 'SOMA_FEMALE_SKIN_PACKAGE'
-  const given = process.env[name]
-  if (given === undefined || given === '') return fallback
-  const dir = given.replace(/\/+$/, '')
-  if (dir === '' || dir.startsWith('/') || /^[A-Za-z]:/.test(dir) || dir.includes('\\') || dir.split('/').some((part) => part === '..' || part === '.' || part === '')) {
-    throw new Error(`${name} must be a directory relative to the project root, without "." or ".." parts; got "${given}"`)
-  }
-  return dir
-}
+// 皮肤包目录的解析在 skinPackageDir.ts（没有依赖，下游工具也用） / resolving the skin package directory lives in skinPackageDir.ts (no dependencies; the downstream tools use it too)
+export { DEFAULT_SKIN_PACKAGE_DIR, openedSkinPackageDir, skinPackageDir, skinPackageDirFor } from './skinPackageDir.ts'
 
 /**
  * 内部结构的指纹：全部骨的名称和包围盒（毫米取整）的 SHA-1 前 16 位。骨架一变（姿势、比例），

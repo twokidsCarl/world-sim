@@ -57,6 +57,14 @@ export interface AppendageOptions {
   facing: number
   /** 离皮肤超过此距离的顶点不动（米） / vertices further than this from the skin are left alone (m) */
   maxDistance: number
+  /**
+   * 可选：头发（Hair of head）壳的外面至少在皮肤外这么远（米）。不给时不做（男性的构建不用它）。
+   * 换了更高的头皮之后，壳原来的厚度在边缘一带不够，外面落进皮肤里，皮肤从头发里露出来成了“洞”。
+   * Optional: the outer face of the hair-of-head shell lies at least this far outside the skin (m). Left out, nothing is done
+   * (the male build does not use it). On a taller scalp the shell's original thickness falls short near its edges, the outer
+   * face sinks into the skin and the skin shows through the hair as holes.
+   */
+  hairCover?: number
 }
 
 export const APPENDAGE_DEFAULTS: AppendageOptions = {
@@ -100,6 +108,8 @@ export interface AppendageRow {
   /** 离皮肤太远而没有动的顶点数 / vertices left alone for being too far from the skin */
   verticesOutOfReach: number
   components: number
+  /** 头发外面的覆盖（只在给了 hairCover 时有） / cover of the hair's outer face (only with hairCover given) */
+  outerCover?: { vertices: number; pushedVertices: number; maxPushMm: number; coverMm: number }
 }
 
 export interface AppendageResult {
@@ -467,6 +477,55 @@ export function conformAppendages(skin: Mesh, parts: AppendagePart[], opts: Appe
         for (let k = 0; k < 3; k++) cur[3 * i + k] = cur[3 * i + k]! + fix[3 * j + k]!
       })
     }
+    // 头发的外面不进皮肤：外面（顶点法向朝外）的顶点离皮肤不足 hairCover 的，沿皮肤外法向推到 hairCover；推的量在外面的邻域（R/2）
+    // 内取高斯平均后再与自己的取大，所以平滑而且每个顶点都够。两遍（推过之后重新量）。内面和边缘不动，发际线的轮廓因此不变。
+    // the outer face of the hair stays out of the skin: outer-face vertices (normal facing out) closer than hairCover to the skin
+    // are pushed along the skin's outward normal to hairCover; the push is a Gaussian mean over the outer face within R/2, then
+    // the larger of that and the vertex's own, so it is smooth and every vertex gets enough. Two passes (measured again after
+    // pushing). Inner face and rim stay, so the outline of the hairline does not change.
+    let covered: { vertices: number; pushedVertices: number; maxPushMm: number; coverMm: number } | undefined
+    const hairCover = opts.hairCover
+    if (kind === 'shell' && hairCover !== undefined && /^hair of head$/i.test(part.name)) {
+      covered = { vertices: 0, pushedVertices: 0, maxPushMm: 0, coverMm: hairCover * 1000 }
+      const pushed = new Uint8Array(nv)
+      // 内面（锚点）留在皮肤下 embed 处 / the inner face (the anchors) stays at embed under the skin
+      const isInner = new Uint8Array(nv)
+      for (const i of anchor) isInner[i] = 1
+      for (let pass = 0; pass < 2; pass++) {
+        const a = against(cur)
+        const n = computeNormals({ positions: cur, indices: part.mesh.indices })
+        const outer: number[] = []
+        for (let i = 0; i < nv; i++) {
+          if (Number.isNaN(a.s[i]!) || isInner[i]) continue
+          const dot = (n[3 * i]! * a.n[3 * i]! + n[3 * i + 1]! * a.n[3 * i + 1]! + n[3 * i + 2]! * a.n[3 * i + 2]!) * partSign
+          if (dot > opts.facing) outer.push(i)
+        }
+        if (pass === 0) covered.vertices = outer.length
+        const need = outer.map((i) => Math.max(0, hairCover - a.s[i]!))
+        const index = new PointIndex(pick(cur, outer), opts.radius.shell / 2)
+        const sigma2 = (opts.radius.shell / 4) ** 2
+        const step = outer.map((i, j) => {
+          const k = index.nearest(cur[3 * i]!, cur[3 * i + 1]!, cur[3 * i + 2]!, K, I, D, opts.radius.shell / 2)
+          let w = 0
+          let u = 0
+          for (let q = 0; q < k; q++) {
+            const g = Math.exp(-D[q]! / (2 * sigma2))
+            w += g
+            u += g * need[I[q]!]!
+          }
+          return Math.max(need[j]!, w ? u / w : 0)
+        })
+        outer.forEach((i, j) => {
+          const d = step[j]!
+          if (d <= 0) return
+          pushed[i] = 1
+          covered!.maxPushMm = Math.max(covered!.maxPushMm, d * 1000)
+          for (let k = 0; k < 3; k++) cur[3 * i + k] = cur[3 * i + k]! + d * a.n[3 * i + k]!
+        })
+      }
+      covered.pushedVertices = pushed.reduce((x, y) => x + y, 0)
+      covered.maxPushMm = Math.round(covered.maxPushMm * 100) / 100
+    }
     const mesh: Mesh = { positions: cur, indices: part.mesh.indices }
     const disp: number[] = []
     for (let i = 0; i < nv; i++) disp.push(Math.hypot(cur[3 * i]! - src[3 * i]!, cur[3 * i + 1]! - src[3 * i + 1]!, cur[3 * i + 2]! - src[3 * i + 2]!) * 1000)
@@ -479,6 +538,7 @@ export function conformAppendages(skin: Mesh, parts: AppendagePart[], opts: Appe
       volumeMl: [r2(Math.abs(measure(part.mesh).signedVolume) * 1e6), r2(Math.abs(measure(mesh).signedVolume) * 1e6)],
       displacementMm: { median: r2(disp[nv >> 1] ?? 0), max: r2(disp[nv - 1] ?? 0) },
       verticesOutOfReach: outOfReach, components: comp.count,
+      ...(covered ? { outerCover: covered } : {}),
     })
     if ((disp[nv - 1] ?? 0) > 0.001) moved.set(part.id, mesh)
   }

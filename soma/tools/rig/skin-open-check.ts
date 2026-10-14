@@ -16,6 +16,7 @@ import { existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Rig } from '../../src/anatomy/types.ts'
 import { type BindRules, quantise, weld, weldByIndex } from './bind.ts'
+import { withInstalledSkinPackages } from './build.ts'
 import { loadExternalWeights, readObj } from './external.ts'
 import { type V3, xfApply } from './math.ts'
 import { BYTES_PER_VERTEX, jointFrames, skin } from './pose.ts'
@@ -37,7 +38,8 @@ export interface OpenSkinCheck {
 
 export function checkOpenSkin(bodyId: 'male' | 'female', renderDir: string | null = null): OpenSkinCheck | null {
   const dir = join(ROOT, 'public', 'anatomy', bodyId)
-  const rules = JSON.parse(readFileSync(join(ROOT, 'data/curated/rig/bindings.json'), 'utf8')) as BindRules
+  // 包目录与 rig 构建取的相同（装入的皮肤包）/ the package directory is the one the rig build takes (the installed skin package)
+  const rules = withInstalledSkinPackages(JSON.parse(readFileSync(join(ROOT, 'data/curated/rig/bindings.json'), 'utf8')) as BindRules)
   const cfg = (rules.externalWeights ?? []).find((e) => e.body === bodyId)
   if (!cfg?.openDir || !existsSync(join(ROOT, cfg.openDir, 'weights.bin')) || !existsSync(join(dir, 'rig.json'))) return null
   const pkg = join(ROOT, cfg.openDir)

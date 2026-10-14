@@ -2,10 +2,10 @@
 // The real eye and mouth openings of the skin: the lid-margin and lip-margin vertex loops, which sheet each vertex near a
 // cut lies on, and the construction aids (lid rims, oral pouch).
 //
-// 来源是皮肤包的清单（data/raw/bodyshape/out/<body>-skin-open/manifest.json，不在仓库里），下标经
+// 来源是皮肤包的清单（开口后的包的 manifest.json，目录见 tools/pipeline/skinPackageDir.ts，不在仓库里），下标经
 // public/anatomy/<body>/skin-source.u32 换成发布的皮肤的顶点下标——只按下标对应，绝不按位置（上下唇缘的顶点成对重合）。
 // 换好的结果写到 public/anatomy/<body>/face/openings.json；皮肤包不在时就读这份文件，所以干净的检出里也能重建。
-// The source is the skin package manifest (data/raw/bodyshape/out/<body>-skin-open/manifest.json, not in the repository);
+// The source is the skin package manifest (manifest.json of the opened package, directory from tools/pipeline/skinPackageDir.ts, not in the repository);
 // its indices are converted to vertex indices of the shipped skin through public/anatomy/<body>/skin-source.u32 — by index
 // only, never by position (upper and lower lip-margin vertices coincide in pairs). The converted result is written to
 // public/anatomy/<body>/face/openings.json; without the package that file is read instead, so a clean checkout can rebuild.
@@ -14,6 +14,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { FaceOpenings } from '../../src/face/types.ts'
+import { openedSkinPackageDir } from '../pipeline/skinPackageDir.ts'
 
 const sha = (b: Uint8Array): string => createHash('sha256').update(b).digest('hex').slice(0, 16)
 
@@ -34,7 +35,8 @@ interface Manifest {
 export function loadOpenings(root: string, bodyDir: string, bodyId: string, skinPart: string, vertexCount: number): { openings: FaceOpenings; fromPackage: boolean } | null {
   const published = join(bodyDir, 'face', 'openings.json')
   const sidecarPath = join(bodyDir, 'skin-source.u32')
-  const manifestPath = join(root, 'data', 'raw', 'bodyshape', 'out', `${bodyId}-skin-open`, 'manifest.json')
+  // 开口后的包：与构建装入的是同一个目录（见 tools/pipeline/skinPackageDir.ts） / the opened package: the directory the build installs from (see tools/pipeline/skinPackageDir.ts)
+  const manifestPath = join(root, openedSkinPackageDir(bodyId === 'female' ? 'female' : 'male'), 'manifest.json')
   if (existsSync(sidecarPath) && existsSync(manifestPath)) {
     const sidecarBytes = new Uint8Array(readFileSync(sidecarPath))
     const src = new Uint32Array(sidecarBytes.buffer.slice(sidecarBytes.byteOffset, sidecarBytes.byteOffset + sidecarBytes.byteLength))

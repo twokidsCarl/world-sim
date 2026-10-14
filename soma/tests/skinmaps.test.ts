@@ -87,28 +87,21 @@ const KNOWN: Record<BodyId, Known> = {
     // 脐（两侧均为 T10）：脐取皮肤作者记录的脐心（高度 0.887，随 pipeline-report.json 发布），
     //   她的第 10 肋间神经的前端重新安放后正止于此。原先这里读作 T8，是体表标志取错了（取到腰部的宽凹陷，高度 0.945），
     //   不是神经的问题；标志改正后不再有例外。
-    // 剑突（左 T5，右 T7；仍不通过）：她的第 5、6、7 肋间神经前端的高度为 1.133、1.084、1.081（右侧 1.131、1.082、1.081）。
-    //   第 7 神经重新安放到剑突尖（1.091）以下 1 cm，而没有重新安放的第 6 神经的前端也在同一高度，两者只差 1–3 mm，
-    //   都在剑突（骨骼在 1.091–1.113）下方；第 5 神经在剑突上方 2 cm。剑突前方的皮肤于是由 T5 和“T6 或 T7”平分：
-    //   左侧 T5 占 52.5%、T6 占 47.5%；右侧 T7 占 54.3%、T5 占 45.7%，T6 一点没有。
-    //   这是神经模型的问题（第 6、7 神经前端重合，已上报），规则没有去迁就。
+    // 剑突（2026-10-14 起两侧均为 T6，通过）：新头的构建里她的第 6 肋间神经前端重新安放（intercostalFit.ts），剑突前方的皮肤两侧都全归 T6
+    //   （份额 1.0）。此前读作左 T5、右 T7，是因为第 6、7 神经前端重合；这一条例外已去掉。
     // Umbilicus (T10 on both sides): the umbilicus is the navel centre recorded by the skin's author
     //   (height 0.887, shipped in pipeline-report.json), and the anterior end of her re-laid 10th
     //   intercostal nerve stops there. It used to read T8 because the landmark was wrong (the broad
     //   waist hollow at height 0.945 was taken for it), not because of the nerves; with the landmark
     //   corrected there is no exception left.
-    // Xiphoid (T5 on the left, T7 on the right; still failing): the anterior ends of her 5th, 6th and
-    //   7th intercostal nerves lie at heights 1.133, 1.084 and 1.081 (right: 1.131, 1.082, 1.081). The
-    //   7th was re-laid to end 1 cm below the tip of the xiphoid (1.091), and the 6th, which was not
-    //   re-laid, ends at the same height, 1-3 mm away; both are below the xiphoid (the bone spans
-    //   1.091-1.113) and the 5th is 2 cm above it. The skin over the xiphoid is therefore shared
-    //   between T5 and whichever of T6 and T7 gets there: T5 52.5% and T6 47.5% on the left, T7 54.3%
-    //   and T5 45.7% on the right, where T6 has none. This is a fault of the nerve model (the ends of
-    //   the 6th and 7th coincide; reported); the rules were not bent to hide it.
-    failedChecks: [XIPHOID, INGUINAL],
+    // Xiphoid (T6 on both sides since 2026-10-14, passing): in the build with the new head the anterior end of her 6th
+    //   intercostal nerve was re-laid (intercostalFit.ts), and the skin in front of the xiphoid now goes wholly to T6 on
+    //   both sides (share 1.0). It used to read T5 on the left and T7 on the right because the ends of the 6th and 7th
+    //   coincided; that exception is removed.
+    failedChecks: [INGUINAL],
     umbilicus: ['T10', 'T10'],
-    xiphoid: ['T5', 'T7'],
-    xiphoidSides: [],
+    xiphoid: ['T6', 'T6'],
+    xiphoidSides: ['L', 'R'],
     // S3：她的皮肤上会阴是两股之间一片光滑隆起的表面（没有做出外阴），S4–5 的肛周圆盘和臀裂把它整个占住，
     // S3 的会阴部分与臀部部分因此不相连。
     // L3（右）：右臀上部的网格较粗，L2 与 L3 的种子线被迫经过同一个顶点，L3 在脊柱旁的起始段（28 cm²）与其余部分断开。
@@ -124,7 +117,15 @@ const KNOWN: Record<BodyId, Known> = {
     // The thoracic and abdominal bands follow her warped intercostal nerves, which are not quite symmetric.
     // C4：皮肤重新简化后（47,362 → 47,108 顶点）左 220.7、右 277.2 cm²（比值 0.796）；原因未查明，移植片不在这一带（2026-10-13 记录）。
     // C4: after the skin was re-simplified (47,362 → 47,108 vertices) left 220.7, right 277.2 cm² (ratio 0.796); cause not established, the grafts are nowhere near (recorded 2026-10-13).
-    asymmetricDermatomes: /^(C4|T([3-9]|10))$/,
+    // T11（2026-10-14 记录）：装入新头的女性上左 248.4、右 186.6 cm²（比值 1.331）。皮肤包颈以下与上一版逐顶点相同、神经未变；
+    // 她的第 11 肋间神经（变形后重新安放）左侧比右侧向外多伸 8 mm（包围盒外缘 122 对 114 mm），躯干皮肤简化后本来就左疏右密
+    // （这一带 962 对 1,077 个顶点，上一版 939 对 1,037），T11 每侧只有 70–80 个顶点，边界按顶点取整。
+    // T11 (recorded 2026-10-14): on the female with the new head, left 248.4, right 186.6 cm² (ratio 1.331). Below the neck the skin
+    // package is vertex for vertex the previous one and the nerves are unchanged; her 11th intercostal nerve (warped, re-laid) reaches 8 mm
+    // further lateral on the left (outer bbox edge 122 vs 114 mm), and the simplified trunk skin was already sparser on the left
+    // (962 vs 1,077 vertices in this band; previously 939 vs 1,037), with only 70-80 vertices per side in T11, whose boundary is
+    // taken vertex by vertex.
+    asymmetricDermatomes: /^(C4|T([3-9]|10|11))$/,
     // 髂腹下神经外侧皮支：她的这条神经（变形后）越过髂嵴处和臀外侧处各有一段贴近皮肤，中间隔着臀上皮神经的分布区。
     // Lateral branch of iliohypogastric: her (warped) nerve comes close to the skin where it crosses
     // the iliac crest and again on the lateral buttock, with the superior clunial territory between.

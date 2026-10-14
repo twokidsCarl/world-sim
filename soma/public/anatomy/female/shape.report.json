@@ -2,48 +2,48 @@
  "schema": 1,
  "body": "female",
  "inputs": {
-  "rig.json": "3874dd8c714f20b8",
-  "rig.bin": "889e4795c6c6c7b3",
-  "anatomy.json#parts": "53e740ccd416be54",
-  "integumentary.glb": "45abc03c558d449d",
-  "muscular.glb": "738e6ee9f780ef4e",
-  "skeletal.glb": "c95cf6ab90593748",
-  "cardiovascular.glb": "82d4158e31b415fd",
-  "nervous.glb": "b722aa6e2a676fac",
-  "respiratory.glb": "22a6ce41a7ac973d",
-  "digestive.glb": "ea6ec78d20a5c601",
-  "urinary.glb": "bd233154d429471d",
-  "reproductive.glb": "b4fda7b4a8aada29",
-  "endocrine.glb": "8b7735cc9dc029e4",
-  "lymphatic.glb": "a864d72ce80d7d57",
-  "nerves.json": "9f382a9eb23da3ed",
+  "rig.json": "9e5604e85cee009a",
+  "rig.bin": "8489fc454f40883b",
+  "anatomy.json#parts": "8366f56fe86e0f19",
+  "integumentary.glb": "b85a6c377ac0e884",
+  "muscular.glb": "7f920ec10363dcb4",
+  "skeletal.glb": "368e1ca0d548b2e8",
+  "cardiovascular.glb": "e5133fed6ecb8281",
+  "nervous.glb": "272d2390234b1018",
+  "respiratory.glb": "f5bee89e0a8876a6",
+  "digestive.glb": "7b800d4b6be0788a",
+  "urinary.glb": "d48227986d144711",
+  "reproductive.glb": "cf5977d88f195980",
+  "endocrine.glb": "0a119fb81c936395",
+  "lymphatic.glb": "32ffb933a62efa64",
+  "nerves.json": "9e750978148c6a33",
   "../knowledge/relations.json#attachments": "f05cb6f5e8ea5879",
   "data/raw/z-anatomy/out/import/attachments.json": "3dca935a4c1a054d",
-  "skin-source.u32": "62a7c256a986435b",
+  "skin-source.u32": "8f85a713d640d269",
   "data/curated/rig/shape.json#data": "c0e24566226a4854",
   "data/curated/bodyshape/rig-shape.json#data": "e145fc8d255cc3cd",
-  "data/raw/bodyshape/out/female-skin-open/skin.obj": "d945b8e4b2195739",
-  "data/raw/bodyshape/out/female-skin-open/shape-fat.f32": "8fbda12fa963bc27",
-  "data/raw/bodyshape/out/female-skin-open/shape-limit.f32": "f828aca2e56a0e5d",
-  "data/raw/bodyshape/out/female-skin-open/manifest.json#package": "9960b2c875581f16"
+  "data/raw/bodyshape/out/female-skin-head-v3-open/skin.obj": "6c523ecaff6a4371",
+  "data/raw/bodyshape/out/female-skin-head-v3-open/shape-fat.f32": "ad767976dabadf8e",
+  "data/raw/bodyshape/out/female-skin-head-v3-open/shape-limit.f32": "767af1f02beec729",
+  "data/raw/bodyshape/out/female-skin-head-v3-open/manifest.json#package": "dcd4f8a7517850d2"
  },
- "binBytes": 1982180,
+ "binBytes": 2117952,
  "notes": [],
  "skin": {
   "part": "SOMA_skin",
-  "vertices": 47108,
+  "vertices": 51300,
   "farthestFromSourceMm": 0
  },
  "followers": {
-  "parts": 449,
-  "vertices": 115151
+  "parts": 485,
+  "vertices": 123097
  },
  "calibration": [
   {
    "factor": "headNeck",
    "from": "C7",
    "to": "skull",
-   "restMm": 126.7,
+   "restMm": 126,
    "gain": 1,
    "checkErrorPct": 0
   },
@@ -124,141 +124,141 @@
   {
    "control": "stature −2 SD",
    "factor": "headNeck",
-   "expected": 0.9534,
-   "measured": 0.9534,
+   "expected": 0.9532,
+   "measured": 0.9532,
    "errorPct": 0
   },
   {
    "control": "stature −2 SD",
    "factor": "trunk",
-   "expected": 0.9298,
-   "measured": 0.9298,
+   "expected": 0.9295,
+   "measured": 0.9295,
    "errorPct": 0
   },
   {
    "control": "stature −2 SD",
    "factor": "thigh",
+   "expected": 0.9177,
+   "measured": 0.9177,
+   "errorPct": 0
+  },
+  {
+   "control": "stature −2 SD",
+   "factor": "shank",
+   "expected": 0.9106,
+   "measured": 0.9106,
+   "errorPct": 0
+  },
+  {
+   "control": "stature −2 SD",
+   "factor": "foot",
+   "expected": 0.9315,
+   "measured": 0.9307,
+   "errorPct": -0.08
+  },
+  {
+   "control": "stature −2 SD",
+   "factor": "upperArm",
    "expected": 0.918,
    "measured": 0.918,
    "errorPct": 0
   },
   {
    "control": "stature −2 SD",
-   "factor": "shank",
-   "expected": 0.911,
-   "measured": 0.911,
-   "errorPct": 0
-  },
-  {
-   "control": "stature −2 SD",
-   "factor": "foot",
-   "expected": 0.9318,
-   "measured": 0.931,
-   "errorPct": -0.08
-  },
-  {
-   "control": "stature −2 SD",
-   "factor": "upperArm",
-   "expected": 0.9183,
-   "measured": 0.9183,
-   "errorPct": 0
-  },
-  {
-   "control": "stature −2 SD",
    "factor": "forearm",
-   "expected": 0.9203,
-   "measured": 0.92,
+   "expected": 0.92,
+   "measured": 0.9197,
    "errorPct": -0.04
   },
   {
    "control": "stature −2 SD",
    "factor": "hand",
-   "expected": 0.9341,
-   "measured": 0.9341,
+   "expected": 0.9338,
+   "measured": 0.9338,
    "errorPct": 0
   },
   {
    "control": "stature −2 SD",
    "factor": "shoulderWidth",
-   "expected": 0.9477,
-   "measured": 0.9443,
-   "errorPct": -0.35
+   "expected": 0.9475,
+   "measured": 0.9441,
+   "errorPct": -0.36
   },
   {
    "control": "stature −2 SD",
    "factor": "pelvisWidth",
-   "expected": 0.9443,
-   "measured": 0.9443,
+   "expected": 0.9441,
+   "measured": 0.9441,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "headNeck",
-   "expected": 1.0453,
-   "measured": 1.0453,
+   "expected": 1.0455,
+   "measured": 1.0455,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "trunk",
-   "expected": 1.0699,
-   "measured": 1.0699,
+   "expected": 1.0702,
+   "measured": 1.0702,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "thigh",
-   "expected": 1.0826,
-   "measured": 1.0826,
+   "expected": 1.083,
+   "measured": 1.083,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "shank",
-   "expected": 1.0904,
-   "measured": 1.0904,
+   "expected": 1.0908,
+   "measured": 1.0908,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "foot",
-   "expected": 1.0678,
-   "measured": 1.0686,
+   "expected": 1.0681,
+   "measured": 1.0689,
    "errorPct": 0.07
   },
   {
    "control": "stature +2 SD",
    "factor": "upperArm",
-   "expected": 1.0823,
-   "measured": 1.0823,
+   "expected": 1.0827,
+   "measured": 1.0827,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "forearm",
-   "expected": 1.0801,
-   "measured": 1.0804,
+   "expected": 1.0805,
+   "measured": 1.0808,
    "errorPct": 0.03
   },
   {
    "control": "stature +2 SD",
    "factor": "hand",
-   "expected": 1.0653,
-   "measured": 1.0653,
+   "expected": 1.0656,
+   "measured": 1.0656,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "shoulderWidth",
-   "expected": 1.0511,
-   "measured": 1.0544,
+   "expected": 1.0514,
+   "measured": 1.0546,
    "errorPct": 0.31
   },
   {
    "control": "stature +2 SD",
    "factor": "pelvisWidth",
-   "expected": 1.0546,
-   "measured": 1.0546,
+   "expected": 1.0549,
+   "measured": 1.0549,
    "errorPct": 0
   },
   {
@@ -546,65 +546,65 @@
   {
    "label": "default",
    "controls": {},
-   "skinHeightM": 1.6143,
+   "skinHeightM": 1.6074,
    "deep": {
-    "sampled": 152342,
+    "sampled": 152344,
     "outsidePct": 0.7,
     "over2mmPct": 0.5,
-    "worstMm": 27.3,
+    "worstMm": 28.6,
     "worstPart": "Left genioglossus",
     "depthP5Mm": 3.7,
-    "depthP50Mm": 33.9
+    "depthP50Mm": 33.3
    },
    "fat": {
-    "sampled": 3022,
-    "outsidePct": 0.3,
+    "sampled": 3060,
+    "outsidePct": 0.4,
     "over2mmPct": 0.1,
-    "worstMm": 3.3
+    "worstMm": 2.6
    }
   },
   {
    "label": "stature −2 SD",
    "controls": {
-    "stature": 1.4954999999999998
+    "stature": 1.4886
    },
-   "skinHeightM": 1.4952,
+   "skinHeightM": 1.488,
    "deep": {
-    "sampled": 152342,
+    "sampled": 152344,
     "outsidePct": 0.8,
     "over2mmPct": 0.5,
-    "worstMm": 26,
+    "worstMm": 27.3,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 3.4,
-    "depthP50Mm": 31.4
+    "depthP5Mm": 3.5,
+    "depthP50Mm": 30.8
    },
    "fat": {
-    "sampled": 3022,
-    "outsidePct": 5.4,
+    "sampled": 3060,
+    "outsidePct": 5.5,
     "over2mmPct": 2.9,
-    "worstMm": 9.8
+    "worstMm": 9.1
    }
   },
   {
    "label": "stature +2 SD",
    "controls": {
-    "stature": 1.7355
+    "stature": 1.7286000000000001
    },
-   "skinHeightM": 1.7337,
+   "skinHeightM": 1.7269,
    "deep": {
-    "sampled": 152342,
+    "sampled": 152344,
     "outsidePct": 0.7,
     "over2mmPct": 0.5,
-    "worstMm": 28.5,
+    "worstMm": 29.9,
     "worstPart": "Left genioglossus",
     "depthP5Mm": 3.9,
-    "depthP50Mm": 36.1
+    "depthP50Mm": 35.6
    },
    "fat": {
-    "sampled": 3022,
-    "outsidePct": 0.4,
+    "sampled": 3060,
+    "outsidePct": 0.6,
     "over2mmPct": 0.1,
-    "worstMm": 3.5
+    "worstMm": 6.3
    }
   },
   {
@@ -612,21 +612,21 @@
    "controls": {
     "bmi": 18.5
    },
-   "skinHeightM": 1.6141,
+   "skinHeightM": 1.6072,
    "deep": {
-    "sampled": 152342,
-    "outsidePct": 4.4,
-    "over2mmPct": 2.9,
-    "worstMm": 27.3,
+    "sampled": 152344,
+    "outsidePct": 4.3,
+    "over2mmPct": 2.8,
+    "worstMm": 28.6,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 0.6,
-    "depthP50Mm": 22.5
+    "depthP5Mm": 0.7,
+    "depthP50Mm": 21.9
    },
    "fat": {
-    "sampled": 3022,
-    "outsidePct": 21.6,
-    "over2mmPct": 11.5,
-    "worstMm": 13.8
+    "sampled": 3060,
+    "outsidePct": 20.6,
+    "over2mmPct": 10.2,
+    "worstMm": 13.9
    }
   },
   {
@@ -634,21 +634,21 @@
    "controls": {
     "bmi": 21.6
    },
-   "skinHeightM": 1.6142,
+   "skinHeightM": 1.6073,
    "deep": {
-    "sampled": 152342,
-    "outsidePct": 0.7,
+    "sampled": 152344,
+    "outsidePct": 0.8,
     "over2mmPct": 0.5,
-    "worstMm": 27.3,
+    "worstMm": 28.6,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 3.4,
-    "depthP50Mm": 29.5
+    "depthP5Mm": 3.5,
+    "depthP50Mm": 28.9
    },
    "fat": {
-    "sampled": 3022,
-    "outsidePct": 2.8,
+    "sampled": 3060,
+    "outsidePct": 2.6,
     "over2mmPct": 0.1,
-    "worstMm": 3.3
+    "worstMm": 2.8
    }
   },
   {
@@ -656,21 +656,21 @@
    "controls": {
     "bmi": 25
    },
-   "skinHeightM": 1.6144,
+   "skinHeightM": 1.6074,
    "deep": {
-    "sampled": 152342,
+    "sampled": 152344,
     "outsidePct": 0.7,
     "over2mmPct": 0.5,
-    "worstMm": 27.3,
+    "worstMm": 28.6,
     "worstPart": "Left genioglossus",
     "depthP5Mm": 3.8,
-    "depthP50Mm": 36.4
+    "depthP50Mm": 35.9
    },
    "fat": {
-    "sampled": 3022,
-    "outsidePct": 0.3,
+    "sampled": 3060,
+    "outsidePct": 0.4,
     "over2mmPct": 0.1,
-    "worstMm": 3.3
+    "worstMm": 2.3
    }
   },
   {
@@ -678,21 +678,21 @@
    "controls": {
     "bmi": 30
    },
-   "skinHeightM": 1.6145,
+   "skinHeightM": 1.6076,
    "deep": {
-    "sampled": 152342,
+    "sampled": 152344,
     "outsidePct": 0.7,
     "over2mmPct": 0.5,
-    "worstMm": 27.3,
+    "worstMm": 28.6,
     "worstPart": "Left genioglossus",
     "depthP5Mm": 3.9,
-    "depthP50Mm": 45.6
+    "depthP50Mm": 45.3
    },
    "fat": {
-    "sampled": 3022,
-    "outsidePct": 0.3,
+    "sampled": 3060,
+    "outsidePct": 0.4,
     "over2mmPct": 0.1,
-    "worstMm": 3.3
+    "worstMm": 2.2
    }
   },
   {
@@ -700,21 +700,21 @@
    "controls": {
     "legLength": -1.5
    },
-   "skinHeightM": 1.6151,
+   "skinHeightM": 1.6081,
    "deep": {
-    "sampled": 152342,
+    "sampled": 152344,
     "outsidePct": 0.7,
     "over2mmPct": 0.5,
-    "worstMm": 27.6,
+    "worstMm": 29,
     "worstPart": "Left genioglossus",
     "depthP5Mm": 3.7,
-    "depthP50Mm": 34
+    "depthP50Mm": 33.4
    },
    "fat": {
-    "sampled": 3022,
-    "outsidePct": 0.3,
+    "sampled": 3060,
+    "outsidePct": 0.4,
     "over2mmPct": 0.1,
-    "worstMm": 3.4
+    "worstMm": 2.2
    }
   },
   {
@@ -722,21 +722,21 @@
    "controls": {
     "legLength": 1.5
    },
-   "skinHeightM": 1.6141,
+   "skinHeightM": 1.6075,
    "deep": {
-    "sampled": 152342,
+    "sampled": 152344,
     "outsidePct": 0.7,
     "over2mmPct": 0.5,
-    "worstMm": 25.7,
+    "worstMm": 26.9,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 3.7,
-    "depthP50Mm": 33.3
+    "depthP5Mm": 3.6,
+    "depthP50Mm": 32.8
    },
    "fat": {
-    "sampled": 3022,
+    "sampled": 3060,
     "outsidePct": 4.1,
     "over2mmPct": 1.6,
-    "worstMm": 7
+    "worstMm": 6.5
    }
   },
   {
@@ -744,21 +744,21 @@
    "controls": {
     "centralBuild": -1.5
    },
-   "skinHeightM": 1.6142,
+   "skinHeightM": 1.6072,
    "deep": {
-    "sampled": 152342,
-    "outsidePct": 0.7,
+    "sampled": 152344,
+    "outsidePct": 0.8,
     "over2mmPct": 0.5,
-    "worstMm": 27.5,
+    "worstMm": 28.8,
     "worstPart": "Left genioglossus",
     "depthP5Mm": 3.7,
-    "depthP50Mm": 33.5
+    "depthP50Mm": 33
    },
    "fat": {
-    "sampled": 3022,
-    "outsidePct": 4.7,
-    "over2mmPct": 2.3,
-    "worstMm": 8.9
+    "sampled": 3060,
+    "outsidePct": 4.4,
+    "over2mmPct": 2.4,
+    "worstMm": 7.7
    }
   },
   {
@@ -766,21 +766,21 @@
    "controls": {
     "centralBuild": 1.5
    },
-   "skinHeightM": 1.6145,
+   "skinHeightM": 1.6076,
    "deep": {
-    "sampled": 152342,
+    "sampled": 152344,
     "outsidePct": 0.7,
     "over2mmPct": 0.5,
-    "worstMm": 27.1,
+    "worstMm": 28.5,
     "worstPart": "Left genioglossus",
     "depthP5Mm": 3.7,
-    "depthP50Mm": 34
+    "depthP50Mm": 33.4
    },
    "fat": {
-    "sampled": 3022,
-    "outsidePct": 1.8,
-    "over2mmPct": 0.3,
-    "worstMm": 3.3
+    "sampled": 3060,
+    "outsidePct": 2.1,
+    "over2mmPct": 0.4,
+    "worstMm": 3.9
    }
   }
  ],
@@ -788,52 +788,52 @@
   {
    "bmi": 23.5,
    "over2mmPct": 0.5,
-   "worstMm": 27.3
+   "worstMm": 28.6
   },
   {
    "bmi": 23,
    "over2mmPct": 0.5,
-   "worstMm": 27.3
+   "worstMm": 28.6
   },
   {
    "bmi": 22.5,
    "over2mmPct": 0.5,
-   "worstMm": 27.3
+   "worstMm": 28.6
   },
   {
    "bmi": 22,
    "over2mmPct": 0.5,
-   "worstMm": 27.3
+   "worstMm": 28.6
   },
   {
    "bmi": 21.5,
    "over2mmPct": 0.5,
-   "worstMm": 27.3
+   "worstMm": 28.6
   },
   {
    "bmi": 21,
    "over2mmPct": 0.5,
-   "worstMm": 27.3
+   "worstMm": 28.6
   },
   {
    "bmi": 20.5,
    "over2mmPct": 0.6,
-   "worstMm": 27.3
+   "worstMm": 28.6
   },
   {
    "bmi": 20,
    "over2mmPct": 0.9,
-   "worstMm": 27.3
+   "worstMm": 28.6
   },
   {
    "bmi": 19.5,
-   "over2mmPct": 1.3,
-   "worstMm": 27.3
+   "over2mmPct": 1.2,
+   "worstMm": 28.6
   },
   {
    "bmi": 19,
-   "over2mmPct": 2,
-   "worstMm": 27.3
+   "over2mmPct": 1.9,
+   "worstMm": 28.6
   }
  ],
  "validBmi": {
