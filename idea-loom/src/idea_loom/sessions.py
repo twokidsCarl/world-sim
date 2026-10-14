@@ -102,6 +102,17 @@ class SessionError(ValueError):
     """这一步做不了，原因写给人看。 / The step cannot be taken; the message is for a person."""
 
 
+class Subagent(BaseModel):
+    """会话列表上的一个子 Agent：派它的那次工具调用、它在做什么、在跑还是回来了。
+
+    A subagent as listed under its session: the tool call that launched it, what it does, and whether it is running or back.
+    """
+
+    id: str
+    label: str
+    state: Literal["running", "done", "failed", "stopped"]  # stopped：进程没了，它没做完 / the process is gone and it did not finish
+
+
 class Meta(BaseModel):
     id: str
     title: str
@@ -124,6 +135,7 @@ class Meta(BaseModel):
     live: bool = False  # 会话进程在不在；不在的话下一条消息会把它接上 / whether the session process is up; if not, the next message resumes it
     stale: bool = False  # 进程用的是不是旧代码；是的话它闲下来会自己换成新的 / whether the process runs old code; if so it replaces itself once idle
     pid: Optional[int] = None  # 会话进程的进程号 / the session process's pid
+    agents: list[Subagent] = Field(default_factory=list)  # 只在列表里给：这一轮派的和还在跑的子 Agent / listing only: the subagents of this turn and those still running
 
 
 class _Live:
@@ -192,7 +204,7 @@ def _dir(session_id: str) -> Path:
 
 def _save(meta: Meta) -> Meta:
     meta.updated_at = time.time()
-    store.write_json(_dir(meta.id) / "meta.json", meta.model_dump(exclude={"live", "stale", "pid"}))
+    store.write_json(_dir(meta.id) / "meta.json", meta.model_dump(exclude={"live", "stale", "pid", "agents"}))
     return meta
 
 
@@ -235,10 +247,59 @@ def listing() -> list[Meta]:
     out = []
     for d in root().iterdir():
         try:
-            out.append(get(d.name))
+            meta = get(d.name)
         except (SessionError, ValueError):
             continue
+        # 进程不在了，没回来的子 Agent 也就停在那里了。 / With the process gone, a subagent that never came back stopped there.
+        meta.agents = [a if meta.live or a.state != "running" else a.model_copy(update={"state": "stopped"}) for a in subagents(d.name)]
+        out.append(meta)
     return sorted(out, key=lambda m: m.updated_at, reverse=True)
+
+
+AGENT_TOOLS = ("Agent", "Task")
+SHOWN_AGENTS = 6
+_agents_seen: dict[str, tuple[tuple[int, int], list[Subagent]]] = {}
+
+
+def subagents(session_id: str) -> list[Subagent]:
+    """一个会话的子 Agent，给左边的列表用：最近一次你说话之后派的，加上更早派的、还没回来的；最多六个，
+    在跑的优先，按派出去的先后排。要读整个事件文件，所以按文件的大小和修改时间记住结果，没变就不再读。
+
+    A session's subagents for the list on the left: those launched since you last spoke, plus earlier ones not back
+    yet; six at most, running ones first, in launch order. It reads the whole event file, so the result is kept by
+    the file's size and modification time and the file is not read again until it changes.
+    """
+    path = _dir(session_id) / "events.jsonl"
+    try:
+        stat = path.stat()
+    except OSError:
+        return []
+    stamp = (stat.st_mtime_ns, stat.st_size)
+    seen = _agents_seen.get(session_id)
+    if seen and seen[0] == stamp:
+        return seen[1]
+    found: dict[str, dict[str, Any]] = {}
+    spoke = 0
+    for e in store.read_lines(path)[0]:
+        kind, seq, ref = e.get("type"), int(e.get("seq", 0)), str(e.get("tool_use_id") if e.get("type") == "task" else e.get("id"))
+        if kind == "user":
+            spoke = seq
+        elif kind == "tool" and e.get("name") in AGENT_TOOLS:
+            tool_input = e.get("input") if isinstance(e.get("input"), dict) else {}
+            found[ref] = {"seq": seq, "label": str(tool_input.get("description") or e.get("label") or ""), "state": "running", "task": False}
+        elif kind == "tool_result" and ref in found and not found[ref]["task"]:
+            found[ref]["state"] = "failed" if e.get("error") else "done"
+        elif kind == "task" and ref in found:
+            # 有任务消息就以它为准：在后台跑的，派出去的那一步马上就"返回"了。 / Task messages win: for background work the launching step "returns" at once.
+            found[ref]["task"] = True
+            found[ref]["state"] = "running" if e.get("state") != "done" else "done" if e.get("status") == "completed" else "failed"
+    rows = [(k, a) for k, a in found.items() if a["state"] == "running" or a["seq"] > spoke]
+    back = [k for k, a in rows if a["state"] != "running"]
+    room = max(0, SHOWN_AGENTS - (len(rows) - len(back)))
+    keep = set(back[len(back) - room:]) if room else set()
+    out = [Subagent(id=k, label=a["label"], state=a["state"]) for k, a in rows if a["state"] == "running" or k in keep]
+    _agents_seen[session_id] = (stamp, out)
+    return out
 
 
 def events(session_id: str, after: int = 0) -> list[dict[str, Any]]:

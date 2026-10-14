@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { type SessionList, api } from '../api'
+import { type SessionList, type Subagent, api } from '../api'
 import { useDraft } from '../sessions/drafts'
 import { SESSION_SHOWS, type SessionShow, inShow, loadShow, saveShow, shownStatus, tally } from '../sessions/filter'
 import { askToNotify, notifyState } from '../sessions/notify'
@@ -62,6 +62,7 @@ export function SessionsPage() {
     }
   }
   const label: Record<string, string> = { idle: t('等你说话', 'idle'), running: t('在干活', 'working'), waiting: t('等你回答', 'needs you'), closed: t('已结束', 'closed'), error: t('出错了', 'failed') }
+  const agentState: Record<Subagent['state'], string> = { running: t('在跑', 'running'), done: t('回来了', 'back'), failed: t('失败了', 'failed'), stopped: t('没做完', 'stopped') }
   const showName: Record<SessionShow, string> = { open: t('没结束的', 'Unfinished'), closed: t('已结束', 'Finished'), all: t('全部', 'All') }
   const sessions = list?.sessions ?? []
   const counts = tally(sessions)
@@ -128,6 +129,20 @@ export function SessionsPage() {
                     {s.waiting_for && ` · ${s.waiting_for}`}
                   </span>
                 </button>
+                {/* 它的子 Agent：谁在跑、谁回来了；点一下打开会话，翻到派它的那一步。 / Its subagents: who runs, who is back; a click opens the session at the step that launched it. */}
+                {s.status !== 'closed' && (s.agents ?? []).length > 0 && (
+                  <ul className="plain-list session-agents" aria-label={t('子 Agent', 'Subagents')}>
+                    {s.agents!.map((a) => (
+                      <li key={a.id}>
+                        <button className={`session-agent ${a.state}`} title={`${a.label} · ${agentState[a.state]}`} onClick={() => navigate(`/sessions/${s.id}#step-${a.id}`)}>
+                          <span aria-hidden="true" className={a.state === 'running' ? 'spin' : undefined}>{{ running: '◌', done: '✓', failed: '×', stopped: '–' }[a.state]}</span>
+                          <span className="session-agent-label">{a.label}</span>
+                          <span className="muted">{agentState[a.state]}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </li>
             ))}
           </ul>

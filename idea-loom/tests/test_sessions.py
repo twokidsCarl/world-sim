@@ -595,3 +595,47 @@ def test_a_resumed_process_that_carries_on_the_total_is_not_counted_twice(fake):
         await sessions.close(meta.id)
 
     asyncio.run(main())
+
+
+def test_the_list_shows_each_sessions_subagents_running_and_back(seeded, monkeypatch):
+    """左边的列表在每个会话下面列出它的子 Agent：这一轮派的和还没回来的，在跑还是回来了。
+
+    The list on the left shows each session's subagents under it: those of this turn and those not back yet, running or back.
+    """
+    import fcntl
+
+    from idea_loom import store
+
+    monkeypatch.setattr(sessions, "SHOWN_AGENTS", 3)
+    now = time.time()
+    sessions._save(sessions.Meta(id="s-1", title="查东西", status="running", created_at=now, updated_at=now))
+    agent = lambda seq, ag, what, bg=False: {"seq": seq, "type": "tool", "id": ag, "name": "Agent", "label": f"派了一个子 Agent：{what}", "input": {"description": what, "run_in_background": bg}}
+    rows = [
+        {"seq": 1, "type": "user", "text": "第一句"},
+        agent(2, "old", "上一轮的，已经回来"), {"seq": 3, "type": "tool_result", "id": "old", "error": False, "text": "好了"},
+        agent(4, "bg", "上一轮派的，还在后台跑", True), {"seq": 5, "type": "task", "task_id": "t", "tool_use_id": "bg", "state": "started"},
+        {"seq": 6, "type": "tool_result", "id": "bg", "error": False, "text": "Async agent launched"},   # 后台的：马上返回不算回来 / background: the instant return is not coming back
+        {"seq": 7, "type": "user", "text": "第二句"},
+        agent(8, "a", "这一轮的，回来了"), {"seq": 9, "type": "tool_result", "id": "a", "error": False, "text": "好了"},
+        agent(10, "b", "这一轮的，失败了"), {"seq": 11, "type": "tool_result", "id": "b", "error": True, "text": "坏了"},
+        agent(12, "c", "这一轮的，在跑"),
+        {"seq": 13, "type": "tool", "id": "x", "name": "Bash", "label": "在跑 ls", "input": {}, "parent": "c"},
+    ]
+    store.append(sessions._dir("s-1") / "events.jsonl", rows)
+    # 进程在：在跑的就是在跑。最多三个，在跑的优先，回来的里面留最近的。 / Process up: running is running. Three at most, running first, the latest of those back.
+    lock = (sessions._dir("s-1") / "runner.lock").open("a")
+    fcntl.flock(lock, fcntl.LOCK_EX)
+    try:
+        listed = {m.id: m for m in sessions.listing()}["s-1"]
+        assert [(a.id, a.label, a.state) for a in listed.agents] == [("bg", "上一轮派的，还在后台跑", "running"), ("b", "这一轮的，失败了", "failed"), ("c", "这一轮的，在跑", "running")]
+    finally:
+        fcntl.flock(lock, fcntl.LOCK_UN)
+        lock.close()
+    # 后台的那个做完了；进程没了，没回来的算停下。 / The background one finished; with the process gone, the one not back counts as stopped.
+    store.append(sessions._dir("s-1") / "events.jsonl", [{"seq": 14, "type": "task", "task_id": "t", "tool_use_id": "bg", "state": "done", "status": "completed"}])
+    listed = {m.id: m for m in sessions.listing()}["s-1"]
+    assert [(a.id, a.state) for a in listed.agents] == [("a", "done"), ("b", "failed"), ("c", "stopped")]
+    # 列表里的子 Agent 不写进 meta.json。 / The listed subagents are not written to meta.json.
+    assert "agents" not in store.read_json(sessions._dir("s-1") / "meta.json", {})
+    client = TestClient(app, client=("127.0.0.1", 5000))
+    assert [a["id"] for a in client.get("/api/sessions").json()["sessions"][0]["agents"]] == ["a", "b", "c"]
