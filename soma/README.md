@@ -10,7 +10,7 @@
 
 ## 现在能做什么
 
-- 男女两个体型。男性 3,333 个独立部件：骨、肌肉、血管段、器官、神经、韧带、淋巴结、皮下脂肪，按系统分组；女性 3,373 个（见下文，精度低得多）。
+- 男女两个体型。男性 3,352 个独立部件：骨、肌肉、血管段、器官、神经、韧带、淋巴结、皮下脂肪，按系统分组；女性 3,373 个（见下文，精度低得多）。
 - 按系统显示或隐藏、调透明度；从皮肤到骨骼逐层剥离。
 - 点选部件，查看中/英/拉丁名、FMA 编号、所属层级、相邻结构。
 - 肌肉的起点、止点、神经支配、血供等关系，每条带出处，可点击跳转；神经列出它支配的结构，可一次全选。
@@ -239,6 +239,7 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 - 没有的神经：膈神经、颈丛、肋下神经、内脏神经、自主神经丛、喉神经。
 - 没有壁胸膜、淋巴管、黄韧带、颅内脑膜；心包只是心脏的外包络；降结肠包含乙状结肠；脊髓是程序化生成的表面，止于 L2/L3。
 - 皮下脂肪是从皮肤内壁和深层结构之间推导出来的，厚度按 3 mm 量化。
+- 男性现在有空腔器官的“腔”（19 个部件，id 为 `LUMEN_…`）：消化道从口到肛门连成一条，另有膀胱、输尿管、输精管和精囊的腔。它们**不是扫描出来的**，是由器官外表面向内缩一个文献（或假设）的壁厚推出来的；旁边的 `lumen-filling.bin` 给出每个顶点随充盈度的位移。构造的部分：从唇到牙的一段、腭帆（一张构造的薄片，数据里没有软腭）、从直肠下端到皮肤的肛管末段。已知的局限：小肠的腔只占可用空间的约 55–59%，因为源数据里的肠段互相重叠；咽腔在食管上方约 20 mm 处就止住了；胃静止时的形状是假设；男性名为“Urethra”的部件有 12 mm 一段穿在阴茎海绵体的部件里。姿势下腔取壁上最近点的权重随壁运动，壁的权重变化急的地方个别顶点仍会出壁几毫米。女性还没有这些腔。
 - 男性皮肤是拼成的，逐片标在数据里（选中皮肤可见）：按他的内部结构拟合的参数化体表（Meta MHR，Apache-2.0），不是他本人的皮肤；他自己扫描皮肤上的阴茎和阴囊皮肤，连同阴囊颈部和会阴缝（移植片；它与拟合体表之间的过渡面是构造的，阴囊后方的会阴顶是几块大平面）；CC0 写实人体网格的脚趾（不是他的脚，第 3–5 趾被拉长约 1.3–1.5 倍；第 2–5 趾近趾尖处有一圈浅台阶）；眼和口是剪开的真实开口，睑缘内沿和口腔袋是为此构造的，不是解剖。脐和乳头是从他的扫描皮肤转过来的浅浮雕，网格太粗，几乎看不出。腋窝从肱骨约 45% 处以下是打开的，其上手臂与腋襞本来相贴，皮肤在腋襞处有 15–27 cm² 互相遮挡并有小台阶。头显得又宽又高；眼球的颜色是示意性的。大幅度姿势下（肩外展 90°、前屈 160°、深蹲）皮肤仍有明显拉伸和皱缩。皮肤包不在仓库里，由 `tools/bodyshape/` 和 `tools/skinopen/` 的脚本生成到 `data/raw/bodyshape/out/`。
 - 体表图的边界有 1–3 厘米的锯齿。体表图是构造出来的教学用图，皮节因人而异，已发表的图互相矛盾。
 - 表情和口形：情绪原型的强度和视位的数值是假设；没有眼球转动和单侧动作；舌只有四个示意姿势；下颌张到最大开口的一半以上时口角处仍有小的折叠（全开时约 35 mm²）；姿势面板或反射张开下颌时，界面还没有把这个角度传给口形（双唇音闭不严）；由音频得到的口形是近似的，唇齿音检测不出来，也没有在真人语音上系统地验证过。眉毛是贴到皮肤上的薄壳（内表面在皮肤下 0.5 毫米），头发仍是一个半透明的壳。
@@ -273,7 +274,7 @@ The long-term goal is a simulated patient for surgical training: anatomy that is
 
 ## What it does
 
-- Two bodies. Male: 3,333 separate parts — bones, muscles, vessel segments, organs, nerves, ligaments, lymph nodes, subcutaneous fat — grouped by system. Female: 3,373 (far less accurate; see below).
+- Two bodies. Male: 3,352 separate parts — bones, muscles, vessel segments, organs, nerves, ligaments, lymph nodes, subcutaneous fat — grouped by system. Female: 3,373 (far less accurate; see below).
 - Show, hide and fade systems; peel layers from skin to skeleton.
 - Select a part to see its Chinese / English / Latin names, FMA id, place in the hierarchies and adjacent structures.
 - Origin, insertion, innervation, blood supply and other relations, each with its source, clickable; a nerve lists what it supplies and can select all of it at once.
@@ -502,6 +503,7 @@ The full list is in each body's `cautions`. The main ones:
 - Missing nerves: phrenic, cervical plexus, subcostal, splanchnic, autonomic plexuses, laryngeal.
 - No parietal pleura, lymphatic vessels, ligamenta flava or cranial meninges; the pericardium is only an envelope of the heart; the descending colon includes the sigmoid; the spinal cord is a procedurally generated surface ending at L2/L3.
 - Subcutaneous fat is derived from the space between the skin's inner wall and the deep structures; thickness is quantised to 3 mm.
+- The male body now has the lumina of its hollow organs (19 parts with `LUMEN_…` ids): one continuous alimentary lumen from mouth to anus, and the lumina of bladder, ureters, deferent ducts and seminal vesicles. They are **not scanned**: each is derived from the organ's outer surface moved inward by a wall thickness from the literature (or an assumed one); `lumen-filling.bin` beside them holds a per-vertex displacement with filling. Construction: the stretch from the lips to the teeth, the velum (a constructed sheet; the data has no soft palate) and the tail of the anal canal from the lower end of the rectum to the skin. Known limits: the small-bowel lumen holds only about 55–59% of the available space, because the source's bowel pieces overlap; the pharyngeal cavity stops about 20 mm above the oesophagus; the resting shape of the stomach is an assumption; the male part named "Urethra" runs inside the corpus cavernosum part for 12 mm. In a pose a lumen follows its wall by taking the weights at the closest wall point; where the wall's own weights change sharply a few vertices still leave it by some millimetres. The female body does not have lumina yet.
 - The male skin is assembled from pieces, each recorded in the data (select the skin to see them): a parametric body surface (Meta MHR, Apache-2.0) fitted to his internals, not his own skin; the penile and scrotal skin of his own scanned skin, with the neck of the scrotum and the perineal raphe (a graft; the blend surface between it and the fitted surface is constructed, and behind the scrotum the roof of the perineum is a few large flat facets); toes from a CC0 realistic body mesh (not his feet; toes 3–5 stretched about 1.3–1.5×; a shallow ring step near the tips of toes 2–5); eyes and mouth are real openings cut into the surface, with lid rims and an oral pouch constructed for them, which are not anatomy. Navel and nipples are low reliefs carried over from his scanned skin and barely visible at this mesh density. The axilla is open from about 45% of the humerus down; above that arm and axillary folds lie together, and 15–27 cm² of skin is covered at the folds, with small steps. The head looks broad and high; eye colours are illustrative. In large poses (90° abduction, 160° flexion, deep squat) the skin still stretches and crumples visibly. The skin package is not in the repository; scripts in `tools/bodyshape/` and `tools/skinopen/` write it to `data/raw/bodyshape/out/`.
 - Skin map boundaries are jagged at 1–3 cm. The skin maps are constructed teaching maps; dermatomes vary between people and published maps disagree.
 - Expression and mouth shapes: the intensities of the emotion prototypes and the viseme numbers are assumptions; there is no eye rotation and no one-sided action; the tongue has four schematic poses only; beyond half of the widest jaw opening small folds remain at the mouth corners (about 35 mm² at full opening); when the pose panel or a reflex opens the jaw the interface does not yet pass that angle to the mouth shapes (a bilabial then does not close fully); mouth shapes from audio are approximate, labiodentals are not detected, and nothing has been validated systematically on real speech. The eyebrows are a thin shell fitted onto the skin (its inner face 0.5 mm below the surface), and the hair is still a see-through shell.

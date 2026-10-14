@@ -1,10 +1,10 @@
-// 腔这一步，打包成两副人体的构建都能调用的一个函数（现在还没有接进去）。
+// 腔这一步，打包成两副人体的构建都能调用的一个函数（男性的构建 run.ts 已经接上，SOMA_LUMEN=0 关闭；女性的还没有）。
 // 输入：构建手里的部件（id、名称、FMA、系统、组织、包围盒、网格）。输出：新的腔部件（tissue 为 space，provenance 为 curated，
 // composition 把“由外表面和文献壁厚推出”“以真实部件为界”“构造”分开）、退役的 id、报告的一节、要提醒用户的话，
 // 以及按 GLB 顶点次序排好的充盈位移场。纯函数在 lumen.ts，装配在 lumenBuild.ts，口和咽在 lumenHead.ts。
 // 不写任何文件；FMA 号都在管线所用的 FMA 表里查过，查不到的部件不给（报告里说明）。
 //
-// The lumen stage, packaged as one function both builds can call (not wired in yet).
+// The lumen stage, packaged as one function both builds can call (wired into the male build, run.ts, with SOMA_LUMEN=0 to switch it off; not yet into the female build).
 // Input: the parts a build holds (id, name, FMA, system, tissue, bounds, mesh). Output: the new lumen
 // parts (tissue `space`, provenance `curated`, with a `composition` that separates "derived from the
 // outer surface and a literature wall thickness", "bounded by real parts" and "construction"), the
@@ -129,18 +129,28 @@ export function lumenCautions(body: 'male' | 'female', report: Record<string, un
   const head = ['oral', 'pharynx'].map(g)
   const real = Math.round(head.reduce((s, x) => s + (x?.surfaceAreaCm2?.boundedByRealParts ?? 0), 0)), made = Math.round(head.reduce((s, x) => s + (x?.surfaceAreaCm2?.construction ?? 0), 0))
   const pct = Math.round(canal.constructedShare * 100)
+  void before
+  void after
+  const un = (report.union as { groups?: { pieces: number; lumenFullCm3: number; unionErodedByOneWallCm3: number }[] } | undefined)?.groups ?? []
+  const siPieces = un.reduce((s, x) => s + x.pieces, 0) || 54
+  const sharePct = Math.round((100 * un.reduce((s, x) => s + x.lumenFullCm3, 0)) / Math.max(1, un.reduce((s, x) => s + x.unionErodedByOneWallCm3, 0)))
+  const headRep = report.head as { cavity?: { clearanceMm?: number }; velum?: { built?: boolean } } | undefined
+  const cavClear = headRep?.cavity?.clearanceMm ?? 0.4
+  const velumBuilt = !!headRep?.velum?.built
+  const course = ((report.urethra as { courseFromBladderEnd?: { fromMm: number; toMm: number; inside: string }[] } | undefined)?.courseFromBladderEnd ?? []).filter((c) => c.toMm > c.fromMm)
+  const gap = course.find((c) => c.inside === 'none of them'), cav = course.find((c) => c.inside === 'corpus cavernosum')
   const out: { zh: string; en: string }[] = [
     {
       zh: `空腔器官的“腔”不是扫描出来的：是把器官外表面向内缩一个壁厚得到的，壁厚取自文献或是假设值（见壁厚表）。器官之间的衔接、穿过器官两端封盖的部分是构造的，中心线上约 ${pct}% 在任何壁之外。壁本身没有改动。`,
       en: `The lumina of the hollow organs are not scanned: each is the organ's outer surface moved inward by a wall thickness taken from the literature or assumed (see the wall table). The joins between organs and the stretches through an organ's end caps are constructed; about ${pct}% of the centreline lies outside any wall. The walls themselves are unchanged.`,
     },
     {
-      zh: `小肠在数据里是 54 片互相重叠的短段（相邻两片重叠深度的中位数 ${overlaps.consecutive.medianDepthMm} mm，另有 ${overlaps.nonConsecutive.pairs} 对不相邻的片也重叠）。腔在重叠处各让一半，在急弯内侧收窄，所以空肠和回肠的腔比单纯内缩小约 ${Math.round((100 * (before - after)) / Math.max(1, before))}%，口径沿途忽粗忽细，不代表真实的肠腔。`,
-      en: `The small intestine is 54 short pieces that overlap each other in the data (median overlap of neighbours ${overlaps.consecutive.medianDepthMm} mm; ${overlaps.nonConsecutive.pairs} pairs that are not neighbours overlap too). Lumina give way to each other there and narrow on the inside of sharp bends, so the jejunal and ileal lumina are about ${Math.round((100 * (before - after)) / Math.max(1, before))}% smaller than a plain inward offset and vary in calibre along the way; this is not the true bowel lumen.`,
+      zh: `小肠在数据里是 ${siPieces} 片互相重叠的短段（相邻两片重叠深度的中位数 ${overlaps.consecutive.medianDepthMm} mm）。腔按这些片的并集来推，接头处不再收窄；但多数接头折回 130° 以上，两段并排处壁已融在一起，腔在那里各让一半、在急弯内侧收窄，所以空肠和回肠的腔只占“并集内缩一个壁厚”的约 ${sharePct}%，路径也比真实的肠管短。`,
+      en: `The small intestine is ${siPieces} short overlapping pieces in the data (median overlap of neighbours ${overlaps.consecutive.medianDepthMm} mm). The lumen is derived from the union of the pieces and no longer narrows at the junctions; but most junctions fold back by 130° or more and where two limbs lie side by side their walls are merged, so the lumina each give half there and narrow on the inside of sharp bends: jejunal and ileal lumina hold about ${sharePct}% of the union eroded by one wall, and the path is shorter than a real bowel.`,
     },
     {
-      zh: `口腔和咽的腔以这副人体里的舌、腭骨、牙、咽缩肌、椎前肌、会厌和喉软骨为界（约 ${real} cm²）；没有部件可依的方向是构造的（约 ${made} cm²），包括通鼻腔和喉口的地方。这里没有软腭和黏膜的部件；喉口只标了位置，没有气道的腔。`,
-      en: `The cavities of mouth and pharynx are bounded by this body's tongue, palatal bones, teeth, constrictors, prevertebral muscles, epiglottis and laryngeal cartilages (about ${real} cm²); directions with no part to meet are constructed (about ${made} cm²), among them the openings to the nose and the larynx. There is no soft-palate or mucosa part; the laryngeal inlet is only marked, with no airway lumen.`,
+      zh: `口腔和咽的腔是这副人体里舌、腭骨、牙、咽缩肌、椎前肌、会厌和喉软骨之间剩下的空间（约 ${real} cm² 贴着真实部件，离部件留 ${cavClear} mm）；没有部件可依的边界是构造的（约 ${made} cm²），包括${velumBuilt ? '构造的腭帆、' : ''}通鼻腔处和喉口。这里没有软腭和黏膜的部件；窄于约 6 mm 的缝分辨不出；喉口只标了位置，没有气道的腔。`,
+      en: `The cavities of mouth and pharynx are the space left between this body's tongue, palatal bones, teeth, constrictors, prevertebral muscles, epiglottis and laryngeal cartilages (about ${real} cm² against real parts, kept ${cavClear} mm clear of them); boundaries with no part to follow are constructed (about ${made} cm²), among them ${velumBuilt ? 'a constructed velum, ' : ''}the way to the nose and the laryngeal inlet. There is no soft-palate or mucosa part; gaps narrower than about 6 mm are not resolved; the laryngeal inlet is only marked, with no airway lumen.`,
     },
     {
       zh: '充盈度从 0 到 1：0 是表里的塌陷口径，1 是不动的壁所能容下的最大。壁不随充盈变形，所以塌陷的腔外面是按扫描大小画的壁。食管和胃静止时塌陷有出处；其余器官的静止状态、各段的塌陷口径和括约肌的收窄都是假设。',
@@ -148,12 +158,12 @@ export function lumenCautions(body: 'male' | 'female', report: Record<string, un
     },
   ]
   if (body === 'male') out.push({
-    zh: '男性没有另建尿道的腔：名为“Urethra”的部件本身只有 1.6–2.1 mm 粗，是腔的位置而不是壁。它在前列腺和尿道海绵体之间有约 6 mm 不在任何部件里，其后约 12 mm 落在阴茎海绵体的部件里。',
-    en: 'No urethral lumen is built for the male: the part named "Urethra" is itself only 1.6–2.1 mm thick and marks the lumen, not the wall. Between prostate and corpus spongiosum about 6 mm of it lies in no part, and the next 12 mm or so lie inside the corpus cavernosum part.',
+    zh: `男性没有另建尿道的腔：名为“Urethra”的部件本身只有 1.6–2.1 mm 粗，是腔的位置而不是壁，原样当作静止时的尿道腔。源数据的问题：从膀胱端量起，它在 ${gap ? `${gap.fromMm}–${gap.toMm}` : '?'} mm 一段不在任何部件里，${cav ? `${cav.fromMm}–${cav.toMm}` : '?'} mm 一段落在阴茎海绵体的部件里而不是尿道海绵体里。扫描的部件没有挪动。`,
+    en: `No urethral lumen is built for the male: the part named "Urethra" is itself only 1.6–2.1 mm thick and marks the lumen, not the wall; it is kept as the urethral lumen at rest. A fault of the source: measured from the bladder end it lies in no part from ${gap ? `${gap.fromMm} to ${gap.toMm}` : '?'} mm and inside the corpus cavernosum part, not the spongiosum, from ${cav ? `${cav.fromMm} to ${cav.toMm}` : '?'} mm. No scanned part was moved.`,
   })
   else out.push({
-    zh: `女性的直肠腔、宫腔、宫颈管和阴道腔是标本自己的腔面（后三者由原来合在一起的一个部件按中心线分成），没有充盈位移。尿道没有腔部件：黏膜下层上段约 18 mm 有一个孔，下段是实心的。${parts.some((p) => /ureter/.test(p.id)) ? '' : '她的输尿管太细且经过形变，推不出不出壁的腔，所以没有。'}`,
-    en: `The female's rectal lumen, uterine cavity, cervical canal and vaginal lumen are the specimen's own lumen surfaces (the last three split along the centreline from one combined part) and carry no filling displacement. There is no urethral lumen part: the upper 18 mm or so of the submucous layer has a bore, the lower stretch is solid. ${parts.some((p) => /ureter/.test(p.id)) ? '' : 'Her ureters are too thin and warped for a lumen that stays inside the wall, so none is given.'}`,
+    zh: `女性的直肠腔、宫腔、宫颈管和阴道腔是标本自己的腔面（后三者由原来合在一起的一个部件按中心线分成），没有充盈位移。尿道没有腔部件：黏膜下层上段约 18 mm 有一个孔，下段是实心的。${parts.some((p) => /ureter/.test(p.id)) ? '她的输尿管和输卵管壁薄且经过形变，有几站壁里放不下腔，那里腔沿中心线以一条缝通过，标为构造。' : ''}`,
+    en: `The female's rectal lumen, uterine cavity, cervical canal and vaginal lumen are the specimen's own lumen surfaces (the last three split along the centreline from one combined part) and carry no filling displacement. There is no urethral lumen part: the upper 18 mm or so of the submucous layer has a bore, the lower stretch is solid. ${parts.some((p) => /ureter/.test(p.id)) ? 'Her ureters and uterine tubes are thin and warped: at a few stations the wall leaves no room, and there the lumen passes along the centreline as a slit, labelled construction.' : ''}`,
   })
   return out
 }

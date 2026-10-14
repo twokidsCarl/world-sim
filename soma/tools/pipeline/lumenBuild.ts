@@ -22,6 +22,7 @@ import { signedVolume, topology } from './meshRepair.ts'
 import { SolidTester } from './nerveCourse.ts'
 import { loadFmaNames } from './zanatomy.ts'
 import { headGuides } from './lumenHead.ts'
+import { buildCavity, type CavityResult } from './lumenCavity.ts'
 import {
   arcBridge, arcLengths, relaxKinks, teardropBridge, axisCount, axisEnds, axisLength, axisPoint, capRings, curvatureRadius, distanceToMesh, limitByPlanes, offsetInward, orderChain, orientChain,
   rayNearest, resamplePolyline, reverseAxis, ringCalibre, ringPlaneCrossings, ringsToMesh, ringVolume, sampleRings, selfIntersections, separateRings, shellAxis, sphincterNarrowing, transportFrames, vec, type Axis, type V3,
@@ -319,6 +320,7 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
     if (!testers.has(id)) testers.set(id, new SolidTester(meshByPart.get(id)!))
     return testers.get(id)!
   }
+  const insideIds = (ids: string[], q: ArrayLike<number>): boolean => ids.some((id) => solid(id).contains(q[0]!, q[1]!, q[2]!))
   // 每一段的轴和两端截掉的长度 / the axis of every piece and what is cut off at either end
   const BEND_MIN = 0.006
   let loops = 0
@@ -529,6 +531,211 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
     kind.length = grp.length = partOf.length = stretchOf.length = runOf.length = 0
     kind.push(...k2); grp.push(...g2); partOf.push(...p2); stretchOf.push(...s2); runOf.push(...r2)
   }
+  // 并集：相邻的壁部件在接头处互相埋进对方 6–11 mm（见 sourceWallOverlaps），所以把一串相邻的部件当成一根管，
+  // 它的壁是这些部件的并集。一站可以用哪些部件：它所在的部件（桥上的站：两头的部件），再加上接头点 20 mm 之内的那个邻居。
+  // 侧面进入的囊（食管→胃、回肠→升结肠）和标本自己的腔不并。
+  // The union: neighbouring wall parts are buried 6–11 mm in each other at their junctions (see
+  // sourceWallOverlaps), so a chain of neighbours is treated as one tube whose wall is the union of the
+  // parts. The parts a station may use: its own (for a bridge station, the two at its ends) plus the
+  // neighbour whose junction point lies within 20 mm. A sac entered from the side (oesophagus → stomach,
+  // ileum → ascending colon) and the specimen's own lumina are not united.
+  const itemIndex = new Map(items.map((it, i) => [it.part, i]))
+  const chained = (j: number): boolean => j > 0 && j < items.length && groups[items[j]!.group]!.mode === 'derive' && groups[items[j - 1]!.group]!.mode === 'derive' && !ax[j]!.side
+  const junctionPoint = items.map((it, j) => (j > 0 ? vec.mul(vec.add(axisEnds(items[j - 1]!.axis)[1], axisEnds(it.axis)[0]), 0.5) : ([0, 0, 0] as V3)))
+  /** 接头区：以接头点为心的球，半径取两段平均外半径中较大者的 1.3 倍（不小于 8 mm）。邻居只在这个球里算并集的一部分。 / the junction zone: a ball about the junction point with 1.3 × the larger mean outer radius of the two pieces (at least 8 mm). A neighbour counts as part of the union only inside this ball. */
+  const meanOuter = items.map((it) => {
+    const r = Array.from(it.axis.radius).slice(1, -1)
+    return r.reduce((s2, x) => s2 + x, 0) / Math.max(1, r.length)
+  })
+  const zoneR = items.map((_, j) => (j > 0 ? Math.max(0.008, 1.3 * Math.max(meanOuter[j - 1]!, meanOuter[j]!)) : 0))
+  interface Union { ids: string[]; own: string[]; zone: Map<string, { c: V3; r: number }> }
+  const unionOf = (i: number, at: ArrayLike<number>): Union | null => {
+    const s = stretches[stretchOf[i]!]!
+    let base: (number | undefined)[]
+    if (partOf[i]) base = [itemIndex.get(partOf[i]!)]
+    else if (s.kind === 'bridge' && !s.into && s.between?.length === 2) base = s.between.map((id) => (id ? itemIndex.get(id) : undefined))
+    else return null
+    if (base.some((b) => b === undefined || groups[items[b]!.group]!.mode !== 'derive')) return null
+    let own = base as number[]
+    if (own.length === 2) {
+      // 桥上的站：它在哪一头的部件里就归哪一头；两头都在或都不在，两头都算 / a bridge station belongs to the end part it lies in; in both or in neither, to both
+      const inn = own.filter((b) => solid(items[b]!.part).contains(at[0]!, at[1]!, at[2]!))
+      if (inn.length === 1) own = inn
+    }
+    const zone = new Map<string, { c: V3; r: number }>()
+    for (const b of own) for (const [j, other] of [[b, b - 1], [b + 1, b + 1]] as const) if (chained(j) && !own.includes(other)) zone.set(items[other]!.part, { c: junctionPoint[j]!, r: zoneR[j]! })
+    const ownIds = own.map((k) => items[k]!.part)
+    return { ids: [...ownIds, ...zone.keys()], own: ownIds, zone }
+  }
+  const inUnion = (u: Union, q: ArrayLike<number>): boolean => u.ids.some((id) => {
+    const z = u.zone.get(id)
+    return (!z || vec.dist(q, z.c) < z.r) && solid(id).contains(q[0]!, q[1]!, q[2]!)
+  })
+  /**
+   * 射线离开并集的距离：从并集内的一点出发，射线离开一个部件时若还在另一个部件里就继续走（内部的端盖不算壁）；
+   * 在邻居里只走到接头区的边上为止（发夹处邻居并排躺着，不能横穿它）。
+   * 返回离开处的距离（起点不在并集里为 0）、那里的夹角余弦、穿过了几个部件。
+   * Where a ray leaves the union: starting inside it, a ray that leaves one part while still inside
+   * another goes on (an internal end dome is not wall); inside a neighbour it goes no farther than the
+   * edge of the junction zone (at a hairpin the neighbour lies alongside and must not be run across).
+   * Returns the distance of the exit (0 when the start is not in the union), the cosine there and how
+   * many parts were crossed.
+   */
+  const unionExit = (u: Union, o: ArrayLike<number>, d: ArrayLike<number>, maxT: number): { distance: number; cos: number; parts: number } => {
+    let t = 0, cos = 1, crossed = 0
+    for (let iter = 0; iter < 8 && t < maxT; iter++) {
+      const q = vec.add(o, vec.mul(d, t + 2e-5))
+      let best = -1, bc = 1
+      for (const id of u.ids) {
+        const z = u.zone.get(id)
+        if (z && vec.dist(q, z.c) >= z.r) continue
+        if (!solid(id).contains(q[0], q[1], q[2])) continue
+        const h = rayNearest(meshByPart.get(id)!, q, d)
+        if (!Number.isFinite(h.distance)) continue
+        let reach = t + 2e-5 + h.distance, c = h.cos
+        if (z) {
+          // 射线离开接头区球面的距离 / where the ray leaves the ball of the junction zone
+          const m = vec.sub(o, z.c), bq = vec.dot(m, d), cq = vec.dot(m, m) - z.r * z.r
+          const out = -bq + Math.sqrt(Math.max(0, bq * bq - cq))
+          if (out < reach) (reach = out), (c = 1)
+        }
+        if (reach > best) (best = reach), (bc = c)
+      }
+      if (best <= t + 1e-6) break
+      ;(t = best), (cos = bc), crossed++
+    }
+    return { distance: Math.min(t, maxT), cos, parts: crossed }
+  }
+  // 沿并集的中轴走：小肠各站和所有接头处的站，在横截面里向 8 个方向量到并集外表面的距离，把站挪到对弦中点的平均处，
+  // 做四遍，每遍最多挪 2 mm；会让转角超过 45° 的挪动不做。站只在并集里面挪，挪出去的不挪。这样接头处的路径不再抄近路，也不贴着一侧的壁。
+  // Following the medial axis of the union: every small-bowel station and every station at a junction
+  // measures the distance to the union's outer surface in 8 directions of its cross-section and moves
+  // to the mean of the chord midpoints, four rounds of at most 2 mm each; a move that would sharpen a turn beyond 45° is refused. A station only
+  // moves inside the union. The path through a junction then neither cuts the corner nor hugs one wall.
+  let stationsRecentred = 0, stationsEased = 0
+  {
+    const n = centre.length / 3
+    const small = new Set(['duodenum', 'jejunum', 'ileum'])
+    const moved = new Uint8Array(n)
+    // 一站挪动后，它和左右两邻三处转角中最大的若超过 45° 且比原来大，就不挪：否则卡在两片夹角里的站不动，两邻被拉走，折角越来越尖。
+    // 逐站就地更新（高斯–赛德尔），这样这条限制是严格的。
+    // A move is refused when it would leave the largest turn among the station and its two neighbours
+    // above 45° and larger than before: otherwise a station stuck in the notch between two pieces stays while its
+    // neighbours are pulled away and the corner sharpens. Stations are updated in place (Gauss–Seidel),
+    // so the guard is exact.
+    const turnAt = (k: number, at?: V3, which?: number): number => {
+      if (k < 1 || k > n - 2 || runOf[k - 1] !== runOf[k] || runOf[k + 1] !== runOf[k]) return 0
+      const g = (j: number): V3 => (at && j === which ? at : P3(centre, j))
+      const a2 = vec.unit(vec.sub(g(k), g(k - 1))), b2 = vec.unit(vec.sub(g(k + 1), g(k)))
+      return Math.acos(Math.max(-1, Math.min(1, vec.dot(a2, b2))))
+    }
+    const MAX_TURN = Math.PI / 4
+    const sharpens = (i: number, q: V3): boolean => {
+      const before = Math.max(turnAt(i - 1), turnAt(i), turnAt(i + 1)), after = Math.max(turnAt(i - 1, q, i), turnAt(i, q, i), turnAt(i + 1, q, i))
+      return after > MAX_TURN && after > before + 1e-9
+    }
+    for (let round = 0; round < 4; round++) {
+      for (let i = 1; i < n - 1; i++) {
+        if (runOf[i - 1] !== runOf[i] || runOf[i + 1] !== runOf[i]) continue
+        const o = P3(centre, i)
+        const ids = unionOf(i, o)
+        if (!ids || !small.has(groups[grp[i]!]!.key)) continue
+        if (!inUnion(ids, o)) continue
+        const t = vec.unit(vec.sub(P3(centre, i + 1), P3(centre, i - 1)))
+        const u = vec.unit(vec.cross(t, Math.abs(t[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0])), v = vec.cross(t, u)
+        // 八条弦；急弯处横截面会顺着肠管切过去，那样的长弦不用：只用两头都不超过最短射线三倍的弦
+        // eight chords; at a sharp turn the cross-section cuts along the bowel, and such long chords are not used: only chords whose two halves are both within three times the shortest ray
+        const hp: number[] = [], hm: number[] = [], ds: V3[] = []
+        for (let k = 0; k < 8; k++) {
+          const a = (Math.PI * k) / 8
+          const d = vec.add(vec.mul(u, Math.cos(a)), vec.mul(v, Math.sin(a)))
+          ds.push(d)
+          hp.push(unionExit(ids, o, d, 0.03).distance)
+          hm.push(unionExit(ids, o, vec.mul(d, -1), 0.03).distance)
+        }
+        const lim = 3 * Math.max(0.003, Math.min(...hp, ...hm))
+        let shift: V3 = [0, 0, 0], used = 0
+        for (let k = 0; k < 8; k++) if (hp[k]! < lim && hm[k]! < lim) (shift = vec.add(shift, vec.mul(ds[k]!, hp[k]! - hm[k]!))), used++
+        if (used < 3) continue
+        shift = vec.mul(shift, 1 / used)
+        if (vec.len(shift) > 0.002) shift = vec.mul(shift, 0.002 / vec.len(shift))
+        const q = vec.add(o, shift)
+        if (!inUnion(ids, q)) continue
+        if (sharpens(i, q)) continue
+        centre[3 * i] = q[0]; centre[3 * i + 1] = q[1]; centre[3 * i + 2] = q[2]
+        moved[i] = 1
+      }
+    }
+    // 再把小肠的路径放顺：每站向两邻的中点靠（拉普拉斯），只要挪过去仍在并集里、离并集外表面不少于壁厚加 1.5 mm（或不比原来更近）。
+    // 腔面是从各站向并集外表面量出来的，站不必在正中；路径越顺，弯内侧被平面限制削掉的越少。代价是路径在弯处靠内、变短。
+    // Then the small-bowel path is eased: every station moves toward the midpoint of its neighbours
+    // (Laplacian) as long as it stays in the union and no closer to the union's outer surface than the
+    // wall plus 1.5 mm (or no closer than it was). The lumen surface is measured from each station out
+    // to the union's surface, so a station need not be central; the smoother the path, the less the
+    // plane limit takes off the inside of bends. The price: the path runs on the inside of bends and is shorter.
+    // 遍数和余量按器官：小肠 40 遍、壁厚加 1.5 mm；胃 80 遍、加 8 mm（它的水平集骨架在胃底拐一个弯，弯内侧被平面限制削出一道沟）；
+    // 结肠和直肠 30 遍、加 4 mm。
+    // Passes and margin by organ: small bowel 40 passes and wall + 1.5 mm; stomach 80 and + 8 mm (its
+    // level-set skeleton turns a corner in the fundus and the plane limit cut a groove on the inside of
+    // that turn); colon and rectum 30 and + 4 mm.
+    const easeOf = (key: string): [number, number] => (small.has(key) ? [40, SMALL_MARGIN] : key === 'stomach' ? [80, 0.008] : ['ascending', 'transverse', 'descending', 'rectum'].includes(key) ? [30, 0.004] : [0, 0])
+    const EASE = 80
+    const SMALL_MARGIN = 0.003
+    const clearance = (ids: Union, q: V3, t: V3): number => {
+      const u = vec.unit(vec.cross(t, Math.abs(t[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0])), v = vec.cross(t, u)
+      let m = Infinity
+      for (let k = 0; k < 12; k++) {
+        const a2 = (Math.PI * k) / 6
+        m = Math.min(m, unionExit(ids, q, vec.add(vec.mul(u, Math.cos(a2)), vec.mul(v, Math.sin(a2))), 0.03).distance)
+      }
+      return m
+    }
+    for (let pass = 0; pass < EASE; pass++) {
+      for (let i = 1; i < n - 1; i++) {
+        const [passes, margin] = easeOf(groups[grp[i]!]!.key)
+        if (runOf[i - 1] !== runOf[i] || runOf[i + 1] !== runOf[i] || pass >= passes) continue
+        const o = P3(centre, i)
+        const q: V3 = [0, 1, 2].map((c) => 0.5 * centre[3 * i + c]! + 0.25 * (centre[3 * i - 3 + c]! + centre[3 * i + 3 + c]!)) as V3
+        const ids = unionOf(i, q)
+        if (!ids) continue
+        // 在并集外的站（构造的那几站）可以随便挪；在并集里的不许挪出去 / a station outside the union (construction) moves freely; one inside may not leave it
+        // 例外：这一站本身是个超过 45° 的折角时，许它挪出并集（卡在两片夹角里的站只有这样才放得顺；挪出去的那几站记为构造）
+        // The exception: a station that is itself a corner of more than 45° may leave the union (a station stuck in the notch between two pieces can be eased in no other way; stations that leave are recorded as construction)
+        const corner = turnAt(i) > MAX_TURN
+        const inQ = inUnion(ids, q)
+        if (!inQ && !corner && inUnion(ids, o)) continue
+        if (sharpens(i, q)) continue
+        if (inQ && !corner) {
+          const t = vec.unit(vec.sub(P3(centre, i + 1), P3(centre, i - 1)))
+          const need = tables[grp[i]!]!.wall + margin
+          const cq = clearance(ids, q, t)
+          if (cq < need && cq < clearance(ids, o, t)) continue
+        }
+        centre[3 * i] = q[0]; centre[3 * i + 1] = q[1]; centre[3 * i + 2] = q[2]
+        stationsEased++
+      }
+    }
+    stationsRecentred = moved.reduce((s2, x) => s2 + x, 0)
+    // 挪动之后挤在一起的站去掉（同上） / stations crowded together by the move are dropped (as above)
+    const keep: number[] = []
+    let last = -1
+    for (let i = 0; i < n; i++) {
+      const startOfRun = i === 0 || runOf[i - 1] !== runOf[i], endOfRun = i === n - 1 || runOf[i + 1] !== runOf[i]
+      if (!startOfRun && !endOfRun && vec.dist(P3(centre, i), P3(centre, last)) < 0.0012) {
+        stationsDropped++
+        continue
+      }
+      keep.push(i)
+      last = i
+    }
+    const c2 = keep.flatMap((k) => P3(centre, k))
+    const pick = <T>(arr: T[]): T[] => keep.map((k) => arr[k]!)
+    const k2 = pick(kind), g2 = pick(grp), p2 = pick(partOf), s2 = pick(stretchOf), r2 = pick(runOf)
+    centre.length = 0
+    centre.push(...c2)
+    kind.length = grp.length = partOf.length = stretchOf.length = runOf.length = 0
+    kind.push(...k2); grp.push(...g2); partOf.push(...p2); stretchOf.push(...s2); runOf.push(...r2)
+  }
   // 两段中心线几乎相交的地方（源数据里两片肠管叠在一起）：把两处各自推开，直到相距 2.5 mm，左右各两站跟着挪一半、四分之一。
   // 否则两条缝一样细的腔也会互相穿过。
   // Where two stretches of centreline all but cross (two pieces of bowel lying on top of each other in the
@@ -598,6 +805,10 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
   const inner = new Float64Array(N * SIDES).fill(NaN)
   const collapsedStation = new Uint8Array(N)
   let guideInsideBound = 0
+  /** 每站用的并集部件；0 不是并集站，1 只用了自己的部件，2 跨过了接头 / the union parts of each station; 0 not a union station, 1 used its own part only, 2 reached across a junction */
+  const unionIds: (Union | undefined)[] = new Array(N)
+  const unionStation = new Uint8Array(N)
+  let raysCappedInUnion = 0
   for (let i = 0; i < N; i++) {
     const o = P3(C, i)
     if (kind[i] === KIND.guide) {
@@ -625,6 +836,35 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
         const lim = 2 * Math.min(inner[i * SIDES + ((k + 1) % SIDES)]!, inner[i * SIDES + ((k + SIDES - 1) % SIDES)]!) + 0.001
         if (inner[i * SIDES + k]! > lim) (inner[i * SIDES + k] = lim), (origin[i * SIDES + k] = 1)
       }
+      continue
+    }
+    const ids = kind[i] === KIND.real ? null : unionOf(i, o)
+    if (ids) {
+      // 并集里的一站：射线量到并集的外表面；穿过了邻居的射线不超过这一圈中位数的 1.3 倍（发夹处邻居并排躺着，射线会横穿它）
+      // a station of the union: rays measure to the union's outer surface; a ray that crossed a neighbour may not exceed 1.3 × the median of its ring (at a hairpin the neighbour lies alongside and the ray would run across it)
+      unionIds[i] = ids
+      if (!inUnion(ids, o)) {
+        kind[i] = KIND.bridge
+        continue
+      }
+      const t = tables[grp[i]!]!
+      const crossed = new Uint8Array(SIDES)
+      let through = 1
+      for (let k = 0; k < SIDES; k++) {
+        const h = unionExit(ids, o, P3(dir, i * SIDES + k), t.distended / 2 + t.wall + 0.03)
+        outer[i * SIDES + k] = h.distance
+        cosA[i * SIDES + k] = h.cos
+        crossed[k] = h.parts
+        through = Math.max(through, h.parts)
+      }
+      const med = median(Array.from(outer.subarray(i * SIDES, (i + 1) * SIDES)))
+      for (let k = 0; k < SIDES; k++) if (crossed[k]! > 1 && outer[i * SIDES + k]! > 1.3 * med) (outer[i * SIDES + k] = 1.3 * med), (cosA[i * SIDES + k] = 1), raysCappedInUnion++
+      const res = offsetInward(outer.subarray(i * SIDES, (i + 1) * SIDES), cosA.subarray(i * SIDES, (i + 1) * SIDES), 1, SIDES, { wall: t.wall, slit: 0.0005 })
+      inner.set(res.inner, i * SIDES)
+      collapsedStation[i] = res.collapsed[0]!
+      origin.fill(0, i * SIDES, (i + 1) * SIDES)
+      unionStation[i] = kind[i] !== KIND.derived || through > 1 ? 2 : 1
+      kind[i] = KIND.derived
       continue
     }
     if (kind[i] !== KIND.derived && kind[i] !== KIND.real) continue
@@ -669,11 +909,24 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
       let hold = false
       while (j < rb && !valid(j)) (hold = hold || !!stretches[stretchOf[j]!]!.hold), j++
       const a = i - 1, b = j
+      let taper: number | null = null
+      {
+        const into = stretches[stretchOf[j - 1]!]!.into
+        const it = into ? items[itemIndex.get(into)!]! : null
+        if (it && groups[it.group]!.mode === 'real' && a >= ra) {
+          const rr = Array.from(it.axis.radius).slice(1, 6).filter((x) => x > 0)
+          if (rr.length) taper = Math.max(SLIT, median(rr) - MARGIN)
+        }
+      }
       for (let q = i; q < j; q++) for (let k = 0; k < SIDES; k++) {
         const va = a >= ra ? inner[a * SIDES + k]! : NaN, vb = b < rb ? inner[b * SIDES + k]! : NaN
         let r: number
         if (a < ra) r = b < rb ? vb : 0.002
-        else if (b >= rb || hold) r = va
+        else if (taper !== null) {
+          // 通向标本自己的腔的桥：从上游那一圈平滑地收到那条腔入口处的平均半径（圆） / a bridge into the specimen's own lumen: eased from the upstream ring to a circle of that lumen's mean radius at its entry
+          const u = Math.min(1, (S[q]! - S[a]!) / Math.max(1e-9, S[j - 1]! - S[a]!))
+          r = va + (taper - va) * (u * u * (3 - 2 * u))
+        } else if (b >= rb || hold) r = va
         else r = va + ((vb - va) * (S[q]! - S[a]!)) / Math.max(1e-9, S[b]! - S[a]!)
         inner[q * SIDES + k] = r
       }
@@ -705,6 +958,21 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
       }
     }
     if (hit) clampedToWall++
+  }
+  // 并集站的半径沿弧长平滑：每条射线取自己与左右两邻的 1-2-1 平均，但不超过自己原来的值（原来的值是壁所允许的最大），两遍。
+  // 这样没有锯齿，而并集真的变窄的地方仍然窄。
+  // Radii of union stations are smoothed along arc length: every ray takes the 1-2-1 mean of itself and
+  // its two neighbours but never more than its own value (which is the most the wall allows); two
+  // passes. No sawtooth is left, and where the union really narrows the lumen stays narrow.
+  for (let pass = 0; pass < 2; pass++) for (const [ra, rb] of runs) {
+    const prev = inner.slice(ra * SIDES, rb * SIDES)
+    for (let i = ra + 1; i < rb - 1; i++) {
+      if (!unionStation[i] || !unionStation[i - 1] || !unionStation[i + 1]) continue
+      for (let k = 0; k < SIDES; k++) {
+        const m = 0.5 * prev[(i - ra) * SIDES + k]! + 0.25 * (prev[(i - 1 - ra) * SIDES + k]! + prev[(i + 1 - ra) * SIDES + k]!)
+        if (m < inner[i * SIDES + k]!) inner[i * SIDES + k] = m
+      }
+    }
   }
   // 口径不超过表里的充盈口径 / calibre no larger than the tabled distended calibre
   {
@@ -786,16 +1054,32 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
       if (shrink > 0) overlapRows.push({ station: i, group: groups[grp[i]!]!.key, part: partOf[i] ?? null, other: other.part, otherStation: null, shrinkMm: mm(shrink) })
     }
   }
+  const afterBend = inner.slice()
   const SEPTUM = 0.001
   const sepRes = separateRings(inner, C, dir, SIDES, { covered: (i, j) => kind[i] === KIND.real || kind[j] === KIND.real || (j >= covLo[i]! && j <= covHi[i]!), sep: SEPTUM, floor: SLIT })
   for (let i = 0; i < N; i++) if (sepRes.gave[i]! > 1e-6) overlapRows.push({ station: i, group: groups[grp[i]!]!.key, part: partOf[i] ?? null, other: partOf[sepRes.partner[i]!] ?? null, otherStation: sepRes.partner[i]!, shrinkMm: mm(sepRes.gave[i]!) })
 
+  // 并集站的每个顶点都要在并集里：不在的沿射线退回（平滑和接头区的边会留下个别这样的点）
+  // every vertex of a union station must lie in the union: one that does not is pulled back along its ray (smoothing and the edge of a junction zone leave a few)
+  let unionVerticesPulledBack = 0
+  for (let i = 0; i < N; i++) {
+    const un = unionIds[i]
+    if (!un || kind[i] !== KIND.derived) continue
+    for (let k = 0; k < SIDES; k++) {
+      let rho = inner[i * SIDES + k]!
+      let tries = 0
+      while (rho > SLIT && tries++ < 10 && !inUnion(un, vec.add(P3(C, i), vec.mul(P3(dir, i * SIDES + k), rho)))) rho *= 0.7
+      if (rho < inner[i * SIDES + k]!) (inner[i * SIDES + k] = Math.max(SLIT, rho)), unionVerticesPulledBack++
+    }
+  }
+  const afterSeparation = inner.slice()
   // 8. 充盈：inner 是充盈到头（f = 1）的面——由静止不动的壁决定，再大就出壁了；f = 0 时每一站按比例缩到表里的塌陷口径
   //    （本来就更窄的不动）。存下来的几何是 f = 静止充盈度 时的面。
   // 8. Filling: `inner` is the fully filled surface (f = 1) — set by the wall, which does not move, so
   //    nothing larger fits; at f = 0 every station is scaled to the tabled collapsed calibre (a station
   //    already narrower is left). The stored geometry is the surface at f = the resting filling.
   const r1 = inner
+  const stomachRest = { shape: (walls.segments.stomach as unknown as { rest: { shape?: { kind?: string; halfThicknessMm?: number } } }).rest.shape?.kind ?? 'tube', halfThickness: ((walls.segments.stomach as unknown as { rest: { shape?: { halfThicknessMm?: number } } }).rest.shape?.halfThicknessMm ?? 3) / 1000 }
   const r0 = new Float64Array(N * SIDES)
   const restOf = groups.map((g) => restFilling(walls, g.seg))
   const fill0 = (): void => {
@@ -804,6 +1088,48 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
       const lo = tables[grp[i]!]!.collapsed
       const f = cal[i]! > lo ? lo / cal[i]! : 1
       for (let k = 0; k < SIDES; k++) r0[i * SIDES + k] = Math.min(r1[i * SIDES + k]!, Math.max(SLIT, r1[i * SIDES + k]! * f))
+    }
+    // 胃：塌陷时不是轴上的一根细管，而是贴着小弯的一条扁缝。每站一个椭圆：长轴从轴指向小弯（贲门—幽门连线那一侧），
+    // 伸到离小弯侧腔面 10% 处；短轴垂直于它和轴（大致前后向），半厚 3 mm；面积取表里塌陷口径的圆面积。形状是假设（见 walls.json）。
+    // Stomach: collapsed it is not a thin tube on the axis but a flat slit along the lesser curvature.
+    // One ellipse per station: the long axis points from the axis to the lesser curvature (the side of
+    // the line cardia–pylorus) and reaches to within 10% of the lumen surface there; the short axis is
+    // normal to it and to the axis (roughly antero-posterior), 3 mm half-thickness; the area is that of
+    // a circle of the tabled collapsed calibre. The shape is an assumption (see walls.json).
+    const [sa, sb] = groupRange('stomach')
+    if (sa > 0 && sb > sa && stomachRest.shape === 'slit') {
+      const cardia = P3(C, sa - 1), pylorus = P3(C, sb)
+      const B = stomachRest.halfThickness, area = Math.PI * (tables[grp[sa]!]!.collapsed / 2) ** 2
+      for (let i = sa; i <= sb; i++) {
+        const o = P3(C, i)
+        const t = vec.unit(vec.cross(P3(dir, i * SIDES), P3(dir, i * SIDES + (SIDES >> 2))))
+        const seg = vec.sub(pylorus, cardia)
+        const u = Math.max(0, Math.min(1, vec.dot(vec.sub(o, cardia), seg) / vec.dot(seg, seg)))
+        let e = vec.sub(vec.add(cardia, vec.mul(seg, u)), o)
+        e = vec.sub(e, vec.mul(t, vec.dot(e, t)))
+        if (vec.len(e) < 1e-4) continue
+        e = vec.unit(e)
+        const w = vec.cross(t, e)
+        // 小弯方向和反方向上的满腔半径（取最近的射线） / the full radius toward the lesser curvature and away from it (nearest ray)
+        let kp = 0, km = 0
+        for (let k = 0; k < SIDES; k++) {
+          const c = vec.dot(P3(dir, i * SIDES + k), e)
+          if (c > vec.dot(P3(dir, i * SIDES + kp), e)) kp = k
+          if (c < vec.dot(P3(dir, i * SIDES + km), e)) km = k
+        }
+        const ap = 0.9 * r1[i * SIDES + kp]!
+        const am = Math.min(0.9 * r1[i * SIDES + km]!, Math.max(2 * B, (2 * area) / (Math.PI * B) - ap))
+        if (!(ap > 2 * B)) continue
+        const A = (ap + am) / 2, c0 = (ap - am) / 2
+        for (let k = 0; k < SIDES; k++) {
+          const d = P3(dir, i * SIDES + k)
+          const cx = vec.dot(d, e), cy = vec.dot(d, w)
+          // ((r·cx − c0)/A)² + (r·cy/B)² = 1 的正根 / the positive root
+          const qa = (cx * cx) / (A * A) + (cy * cy) / (B * B), qb = (-2 * cx * c0) / (A * A), qc = (c0 * c0) / (A * A) - 1
+          const r = (-qb + Math.sqrt(Math.max(0, qb * qb - 4 * qa * qc))) / (2 * qa)
+          r0[i * SIDES + k] = Math.min(r1[i * SIDES + k]!, Math.max(SLIT, r))
+        }
+      }
     }
   }
   fill0()
@@ -815,12 +1141,36 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
     }
     return out
   }
+  // 口腔和咽：体素等值面（见 lumenCavity.ts）。下界是食管第一站上方 2 mm 的平面，前界是唇后 4 mm 的冠状面；
+  // 腭帆是构造的面（厚 5 mm，假设值）；喉口只标出来。做不出来时退回到沿引导线的圈。
+  // Mouth and pharynx: a voxel isosurface (see lumenCavity.ts). Its lower limit is a plane 2 mm above the
+  // first oesophageal station and its front limit the coronal plane 4 mm behind the lips; the velum is a
+  // constructed sheet (5 mm thick, an assumption); the laryngeal inlet is only marked. When it cannot be
+  // built the rings along the guide lines are used instead.
+  const firstCanal = grp.findIndex((g) => g >= 2)
+  let cavity: CavityResult | null = null
+  if (firstCanal > 1 && process.env.SOMA_LUMEN_CAVITY !== '0') {
+    const t0 = vec.unit(vec.cross(P3(dir, firstCanal * SIDES), P3(dir, firstCanal * SIDES + (SIDES >> 2))))
+    const seen = new Set<string>()
+    const bounds = [...(stretches[0]!.bounds ?? []), ...(stretches[1]!.bounds ?? [])].filter((b) => (seen.has(b.id) ? false : (seen.add(b.id), true)))
+    cavity = buildCavity({
+      guides: [{ key: 'oral', pts: stretches[0]!.pts, maxR: 0.03 }, { key: 'pharynx', pts: stretches[1]!.pts, maxR: 0.022 }],
+      bounds, h: 0.002, clearance: MARGIN,
+      planes: [{ name: 'oesophageal inlet', p: vec.sub(P3(C, firstCanal), vec.mul(t0, 0.002)), n: t0 }, { name: 'oral fissure (meets the oral pouch of the opened skin)', p: head.oral[0]!, n: [0, 0, 1] }],
+      sheets: head.velum ? [{ name: 'velum', mesh: head.velum, half: 0.0025 }] : [],
+      marks: head.laryngealInlet ? [{ name: 'laryngeal inlet', p: head.laryngealInlet, r: 0.008 }] : [],
+    })
+  }
   /** 整条管在给定半径下的网格，以及每个三角形所在的站（真实的腔那几站不出面；标本自己的腔原样加进来） / the whole canal as one mesh at given radii with the station of every triangle (no surface for stations of a real lumen; the specimen's own lumen is added as it is) */
   const canalMesh = (rad: Float64Array): { mesh: Mesh; station: Int32Array } => {
     const meshes: Mesh[] = []
     const st: number[] = []
-    for (const [a, b] of runs) {
+    for (const run of runs) {
+      let a = run[0]
+      const b = run[1]
       if (kind[a] === KIND.real || b - a < 2) continue
+      // 有体素腔时，口腔和咽的那几站不出圈 / with the voxel cavity the stations of mouth and pharynx carry no rings
+      if (cavity && a === 0) a = firstCanal
       let m = ringsToMesh(C.subarray(3 * a, 3 * b), dir.subarray(3 * a * SIDES, 3 * b * SIDES), rad.subarray(a * SIDES, b * SIDES), b - a, SIDES)
       for (let t = 0; t < m.indices.length / 3; t++) st.push(a + Math.floor(t / (2 * SIDES)))
       if (stretches[stretchOf[a]!]!.blind) {
@@ -828,6 +1178,10 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
         for (let k = 0; k < SIDES; k++) st.push(a)
       }
       meshes.push(m)
+    }
+    if (cavity) {
+      meshes.push(cavity.whole)
+      for (let t = 0; t < cavity.whole.indices.length / 3; t++) st.push(-1)
     }
     for (const it of items) if (groups[it.group]!.mode === 'real') {
       meshes.push(it.mesh)
@@ -947,6 +1301,7 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
       if (count(0)) composition.push({ what: { zh: `由 ${g.parts.length} 个壁部件的外表面内缩 ${mm(t.wall)} mm 得到（文献壁厚，不是扫描）`, en: `outer surface of ${g.parts.length} wall part(s) offset inward by ${mm(t.wall)} mm (literature wall thickness, not scanned)` }, provenance: 'curated', source: 'soma (derived)', vertices: count(0) })
       if (count(2)) composition.push({ what: { zh: '以这副人体里周围的真实部件的表面为界（射线打到的最近的面）', en: 'bounded by the surfaces of the real parts around it in this body (the nearest surface each ray meets)' }, provenance: 'curated', source: 'soma (derived)', vertices: count(2) })
       if (count(1)) composition.push({ what: { zh: '构造：器官之间的桥接、穿过器官端盖的几站、没有壁可依的部分', en: 'construction: bridges between organs, stations through an organ’s end caps, stretches with no wall to follow' }, provenance: 'construction', source: null, vertices: count(1) })
+      const volBend = volOf(afterBend, a, b), volSep = volOf(afterSeparation, a, b)
       const volBase = volOf(innerBase, a, b), vol1 = volOf(r1, a, b), volR = volOf(rRest, a, b), vol0 = volOf(r0, a, b)
       const cm3 = (v: number): number => Math.round(v * 1e7) / 10
       // 各种来历的面积 / surface area by origin
@@ -960,7 +1315,7 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
       const overl = overlapRows.filter((r) => r.station >= a && r.station <= b)
       Object.assign(row, {
         triangles: mesh.indices.length / 3, vertices: nv, blindEndClosed: blind,
-        volumeCm3: { beforeOverlapAndBendRules: cm3(volBase), full: cm3(vol1), rest: cm3(volR), empty: cm3(vol0), lossShare: volBase > 0 ? Math.round((1000 * (volBase - vol1)) / volBase) / 1000 : 0 },
+        volumeCm3: { beforeOverlapAndBendRules: cm3(volBase), afterBendRule: cm3(volBend), afterGiveWay: cm3(volSep), full: cm3(vol1), rest: cm3(volR), empty: cm3(vol0), lossShare: volBase > 0 ? Math.round((1000 * (volBase - vol1)) / volBase) / 1000 : 0 },
         calibreMm: { full: { mean: mm(meanOf(cal1)), min: mm(Math.min(...cal1)), max: mm(Math.max(...cal1)) }, rest: { mean: mm(meanOf(calR)) }, empty: { mean: mm(meanOf(cal0)) }, tabled: [mm(t.collapsed), mm(t.distended)] },
         surfaceAreaCm2: { derived: Math.round(areaBy[0]! * 1e5) / 10, boundedByRealParts: Math.round(areaBy[2]! * 1e5) / 10, construction: Math.round(areaBy[1]! * 1e5) / 10 },
         collapsedStations: Array.from({ length: b - a + 1 }, (_, q) => collapsedStation[a + q]!).reduce((s, x) => s + x, 0),
@@ -976,6 +1331,27 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
     groupRows.push(row)
   }
 
+  // 口腔和咽换成体素腔的面 / mouth and pharynx are replaced by the surfaces of the voxel cavity
+  if (cavity) for (const cp of cavity.parts) {
+    const gi = groups.findIndex((g) => g.key === cp.key)
+    const k = parts.findIndex((q) => q.id === groups[gi]!.lumenId)
+    const row = groupRows.find((r) => r.group === cp.key)
+    if (k < 0 || !row || cp.mesh.indices.length < 12) continue
+    const nv = cp.mesh.positions.length / 3
+    const real = cp.origin.reduce((s2, x) => s2 + (x === 2 ? 1 : 0), 0)
+    const composition: PartPiece[] = []
+    if (real) composition.push({ what: { zh: '以这副人体里周围的真实部件的表面为界（体素等值面，离部件表面留有余量）', en: 'bounded by the surfaces of the real parts around it in this body (voxel isosurface with a clearance to the parts)' }, provenance: 'curated', source: 'soma (derived)', vertices: real })
+    if (nv - real) composition.push({ what: { zh: '构造：没有部件可依的边界（可及范围、口裂和食管入口的截面、构造的腭帆、喉口和通鼻腔处）', en: 'construction: boundaries with no part to follow (the reach limit, the cut planes at the oral fissure and the oesophageal inlet, the constructed velum, the laryngeal inlet and the way to the nose)' }, provenance: 'construction', source: null, vertices: nv - real })
+    let aReal = 0, aMade = 0
+    for (let t = 0; t < cp.mesh.indices.length; t += 3) {
+      const ia = cp.mesh.indices[t]!, ib = cp.mesh.indices[t + 1]!, ic = cp.mesh.indices[t + 2]!
+      const ar = 0.5 * vec.len(vec.cross(vec.sub(P3(cp.mesh.positions, ib), P3(cp.mesh.positions, ia)), vec.sub(P3(cp.mesh.positions, ic), P3(cp.mesh.positions, ia))))
+      if (cp.origin[ia] === 2 && cp.origin[ib] === 2 && cp.origin[ic] === 2) aReal += ar
+      else aMade += ar
+    }
+    Object.assign(row, { surface: 'voxel isosurface (lumenCavity.ts); the ring figures of this row describe the guide line only', triangles: cp.mesh.indices.length / 3, vertices: nv, cavityVolumeCm3: Math.round(cp.volumeCm3 * 10) / 10, surfaceAreaCm2: { derived: 0, boundedByRealParts: Math.round(aReal * 1e5) / 10, construction: Math.round(aMade * 1e5) / 10 }, composition: composition.map((c) => ({ provenance: c.provenance, vertices: c.vertices })) })
+    parts[k] = { ...parts[k]!, mesh: cp.mesh, centres: cp.centres, composition, volumeCm3: cp.volumeCm3, filling: { rest: parts[k]!.filling.rest, displacement: new Float32Array(nv * 3) }, constructed: Uint8Array.from(cp.origin, (x) => (x === 1 ? 1 : 0)), origin: cp.origin }
+  }
   // 11. 检查 / checks
   const meanR = new Float64Array(N)
   for (let i = 0; i < N; i++) {
@@ -991,14 +1367,18 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
   const outsideRows: Record<string, unknown>[] = []
   for (let i = 0; i < N; i++) {
     if (kind[i] !== KIND.derived) continue
-    const id = partOf[i]!
-    const mesh = meshByPart.get(id)!
+    const un = unionIds[i]
+    const ids = un ? un.ids : [partOf[i]!]
+    const id = ids.join('+')
     for (let k = 0; k < SIDES; k++) {
       const v = vec.add(P3(C, i), vec.mul(P3(dir, i * SIDES + k), r1[i * SIDES + k]!))
-      if (solid(id).contains(v[0], v[1], v[2])) insideN++
+      if (un ? inUnion(un, v) : insideIds(ids, v)) insideN++
       else (outsideN++, outsideRows.push({ station: i, part: id, atMm: mm3(v) }))
       if (k % 2 === 0) {
-        const d = distanceToMesh(mesh, v)
+        // 到并集外表面的距离：只有一个部件时是到它表面的最近距离；跨接头时内部的端盖不算，取沿射线到并集外表面的距离乘夹角余弦
+        // clearance to the union's outer surface: the nearest distance to the surface for a single part; across a junction internal end domes do not count, so the distance along the ray to the union's exit times the cosine there
+        const ux = un && ids.length > 1 ? unionExit(un, v, P3(dir, i * SIDES + k), 0.05) : null
+        const d = ux ? ux.distance * Math.max(0.5, ux.cos) : distanceToMesh(meshByPart.get(ids[0]!)!, v)
         minClear = Math.min(minClear, d)
         clearRatio.push(d / tables[grp[i]!]!.wall)
       }
@@ -1035,6 +1415,70 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
     interpolatedThroughCapsMm: Math.round(siRows.reduce((s, r) => s + (r.interpolatedThroughCapsMm as number), 0)),
     published: { textbookLivingMm: 3050, intraoperativeTreitzToValveMm: { mean: 5060, sd: 1050, range: [2850, 8450] }, sources: ['openstax_23_5', 'teitelbaum2013'] },
   }
+  // 并集的账：小肠各片并集内缩一个壁厚的体积（2 mm 体素，六个方向各退一个壁厚都还在并集里才算），腔占它的多少；
+  // 接头附近（弧长 ±10 mm）和片中段的平均半径及其变异系数；跨接头由并集推出的长度。
+  // The union's accounts: the volume of the union of the small-bowel pieces eroded by one wall (2 mm
+  // voxels; a voxel counts when one wall thickness away in each of six directions is still in the
+  // union) and the share of it the lumen holds; mean radius and its coefficient of variation near
+  // junctions (±10 mm of arc) against mid-piece; the length derived from the union across junctions.
+  {
+    const rFull = new Float64Array(N)
+    for (let i = 0; i < N; i++) {
+      let q = 0
+      for (let k = 0; k < SIDES; k++) q += r1[i * SIDES + k]!
+      rFull[i] = q / SIDES
+    }
+    const rows: Record<string, unknown>[] = []
+    for (const key of ['jejunum', 'ileum']) {
+      const gi = groups.findIndex((g) => g.key === key)
+      const its = items.map((it, j) => ({ it, j })).filter((x) => x.it.group === gi)
+      // 体素法的上限 / the voxel bound
+      const h = 0.002, wall = tables[gi]!.wall
+      const lo = [0, 1, 2].map((q) => Math.min(...its.map((x) => x.it.inventoryBox[q]!))), hi = [0, 1, 2].map((q) => Math.max(...its.map((x) => x.it.inventoryBox[q + 3]!)))
+      const inAny = (x: number, y: number, z: number): boolean => its.some(({ it }) => {
+        const b = it.inventoryBox
+        return x >= b[0]! && x <= b[3]! && y >= b[1]! && y <= b[4]! && z >= b[2]! && z <= b[5]! && solid(it.part).contains(x, y, z)
+      })
+      let uni = 0, ero = 0
+      for (let x = lo[0]!; x < hi[0]!; x += h) for (let y = lo[1]!; y < hi[1]!; y += h) for (let z = lo[2]!; z < hi[2]!; z += h) {
+        if (!inAny(x, y, z)) continue
+        uni++
+        if (inAny(x + wall, y, z) && inAny(x - wall, y, z) && inAny(x, y + wall, z) && inAny(x, y - wall, z) && inAny(x, y, z + wall) && inAny(x, y, z - wall)) ero++
+      }
+      const [a, b] = groupRange(key)
+      const near = new Uint8Array(N)
+      let junctions = 0
+      for (const { j } of its) {
+        if (!chained(j)) continue
+        junctions++
+        let k = a
+        for (let i = a; i <= b; i++) if (vec.dist(P3(C, i), junctionPoint[j]!) < vec.dist(P3(C, k), junctionPoint[j]!)) k = i
+        for (let i = a; i <= b; i++) if (runOf[i] === runOf[k] && Math.abs(S[i]! - S[k]!) <= 0.01) near[i] = 1
+      }
+      const stat = (sel: (i: number) => boolean): { stations: number; meanRadiusMm: number; cv: number } => {
+        const v: number[] = []
+        for (let i = a; i <= b; i++) if (sel(i)) v.push(rFull[i]!)
+        const m = v.reduce((q, x) => q + x, 0) / Math.max(1, v.length)
+        const sd = Math.sqrt(v.reduce((q, x) => q + (x - m) * (x - m), 0) / Math.max(1, v.length))
+        return { stations: v.length, meanRadiusMm: mm(m), cv: Math.round((1000 * sd) / Math.max(1e-9, m)) / 1000 }
+      }
+      let across = 0, constructed = 0
+      for (let i = a; i <= b; i++) (unionStation[i] === 2 ? (across += stepLen(i)) : 0), (kind[i] === KIND.bridge ? (constructed += stepLen(i)) : 0)
+      const full = volOf(r1, a, b) * 1e6
+      rows.push({
+        group: key, pieces: its.length, junctions, sumOfPieceVolumesCm3: Math.round(its.reduce((q, x) => q + signedVolume(x.it.mesh), 0) * 1e7) / 10, unionCm3: Math.round(uni * h * h * h * 1e7) / 10, unionErodedByOneWallCm3: Math.round(ero * h * h * h * 1e7) / 10,
+        lumenFullCm3: Math.round(full * 10) / 10, shareOfBound: Math.round((1000 * full) / Math.max(1e-9, ero * h * h * h * 1e6)) / 1000,
+        radiusWithin10mmOfJunctions: stat((i) => near[i] === 1), radiusMidPiece: stat((i) => near[i] === 0),
+        derivedAcrossJunctionsMm: mm(across), constructedMm: mm(constructed), sumOfPieceAxesMm: mm(its.reduce((q, x) => q + axisLength(x.it.axis), 0)), pathMm: mm(S[b]! - S[a]!),
+      })
+    }
+    report.union = {
+      rule: 'a chain of neighbouring wall parts is one tube whose wall is their union: a ray that leaves one part inside its neighbour goes on (within the junction zone, a ball of 1.3 × the larger mean outer radius about the junction point); radius = distance to the union surface minus the tabled wall, 1-2-1 smoothed along arc length and never above the unsmoothed value. Stations inside the union are derived; only stations outside every wall are construction.',
+      path: 'small-bowel stations were moved to the mean of chord midpoints of the union cross-section (4 rounds, 2 mm each) and then eased by 40 constrained Laplacian passes; the eased path runs on the inside of bends and is shorter than the sum of the piece axes, which counts every buried end dome twice',
+      stationsRecentred, stationMovesInEasing: stationsEased, unionVerticesPulledBack, raysCappedAt1p3Median: raysCappedInUnion, stationsDerivedAcrossJunctions: Array.from(unionStation).filter((x) => x === 2).length, groups: rows,
+      whyBelowTheBound: 'the bound counts every merged blob in full. Most junctions of the source fold back by 130–168° with the two limbs closer together than one bowel diameter, so their walls merge; a tube of rings cannot fill both limbs and the tip of the fold, the plane limit trims the inside of each bend and two limbs side by side each give half of their overlap.',
+    }
+  }
   report.inventory = items.map((it) => ({ group: groups[it.group]!.key, ...it.inventory }))
   report.gaps = gapRows
   report.sphincters = sph
@@ -1043,7 +1487,7 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
     // 喉口离消化道中心线最近的一站 / the canal station nearest the laryngeal inlet
     let k = -1
     if (head.laryngealInlet) for (let i = 0; i < N; i++) if (k < 0 || vec.dist(P3(C, i), head.laryngealInlet) < vec.dist(P3(C, k), head.laryngealInlet)) k = i
-    report.head = { ...head.report, laryngealInlet: head.laryngealInlet ? { atMm: mm3(head.laryngealInlet), method: 'midway between the highest point of the epiglottis and the mean of the highest points of the arytenoid cartilages', nearestCanalStation: k, canalGroupThere: groups[grp[k]!]!.key, distanceToCentrelineMm: mm(vec.dist(P3(C, k), head.laryngealInlet)), note: 'a branch point only: no airway lumen is built here' } : null }
+    report.head = { ...head.report, cavity: cavity ? cavity.report : { built: false }, laryngealInlet: head.laryngealInlet ? { atMm: mm3(head.laryngealInlet), method: 'midway between the highest point of the epiglottis and the mean of the highest points of the arytenoid cartilages', nearestCanalStation: k, canalGroupThere: groups[grp[k]!]!.key, distanceToCentrelineMm: mm(vec.dist(P3(C, k), head.laryngealInlet)), note: 'a branch point only: no airway lumen is built here' } : null }
   }
   report.overlapShrink = {
     rule: 'where a ring point of one station lies inside the disc of another station that the bend rule does not cover, both rings give half of the overlap depth plus half of a 1 mm septum (separateRings); a ray also stops 0.4 mm outside a real lumen of the specimen. Scanned walls are not moved.',
@@ -1081,10 +1525,14 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
     if (res.mesh) {
       const nv = res.mesh.positions.length / 3
       const t = segmentTable(walls, seg)
+      const made = (res.constructed ?? new Uint8Array(0)).reduce((s2, x) => s2 + x, 0)
       parts.push({
         id: lumenId, name, fma, group: seg, system: system as 'urinary' | 'reproductive', mesh: res.mesh, centres: res.centres!, volumeCm3: res.volume! * 1e6, provenance: 'curated', walls: [part.id],
-        composition: [{ what: { zh: `由 ${part.id} 的外表面内缩 ${mm(t.wall)} mm 得到（文献或假设的壁厚，不是扫描）`, en: `outer surface of ${part.id} offset inward by ${mm(t.wall)} mm (literature or assumed wall thickness, not scanned)` }, provenance: 'curated', source: 'soma (derived)', vertices: nv }],
-        filling: { rest: rest.filling, displacement: res.displacement! }, constructed: new Uint8Array(nv), origin: new Uint8Array(nv), restState: rest,
+        composition: [
+          { what: { zh: `由 ${part.id} 的外表面内缩 ${mm(t.wall)} mm 得到（文献或假设的壁厚，不是扫描）`, en: `outer surface of ${part.id} offset inward by ${mm(t.wall)} mm (literature or assumed wall thickness, not scanned)` }, provenance: 'curated' as const, source: 'soma (derived)', vertices: nv - made },
+          ...(made ? [{ what: { zh: '构造：壁太薄或形变过、放不下腔的几站，沿中心线以缝的宽度通过', en: 'construction: stations where the thin or warped wall leaves no room, passed along the centreline at slit width' }, provenance: 'construction' as const, source: null, vertices: made }] : []),
+        ],
+        filling: { rest: rest.filling, displacement: res.displacement! }, constructed: res.constructed ?? new Uint8Array(nv), origin: Uint8Array.from(res.constructed ?? new Uint8Array(nv)), restState: rest,
       })
       context.push({ id: part.id, mesh, role: 'wall' })
     }
@@ -1105,8 +1553,13 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
     if (partById.has(UTEROVAGINAL_ID)) report.uterovaginal = await splitUterovaginal(await meshOf(UTEROVAGINAL_ID), parts, context)
   }
   report.organs = organs
-  // 所有的腔放在一起再查一遍自交（包括标本自己的腔） / every lumen together checked once more for intersections (the specimen's own lumina included)
-  {
+  // 所有的腔放在一起再查一遍自交（包括标本自己的腔）。两个不同的腔相交时（源数据里两个器官互相穿过），撤掉其中一个：
+  // 有“壁里放不下”的站的那个先撤，否则撤后列出的那个；撤掉的写进 organs 一栏。
+  // every lumen together checked once more for intersections (the specimen's own lumina included). When
+  // two different lumina intersect (two organs passing through each other in the source) one of them is
+  // withdrawn: the one with stations where the wall leaves no room first, otherwise the one listed
+  // later; what is withdrawn is recorded under organs.
+  for (let round = 0; ; round++) {
     const list: { id: string; mesh: Mesh }[] = [...parts.map((q) => ({ id: q.id, mesh: q.mesh })), ...context.filter((c) => c.role === 'real').map((c) => ({ id: c.id, mesh: c.mesh }))]
     const merged = mergeParts(list.map((q) => q.mesh))
     const owner: string[] = []
@@ -1114,11 +1567,27 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
     const pairs: number[] = []
     const count = selfIntersections(merged, 1e9, pairs)
     const by: Record<string, number> = {}
+    let drop: string | null = null, other = ''
     for (let q = 0; q < pairs.length; q += 2) {
-      const key = [owner[pairs[q]!]!, owner[pairs[q + 1]!]!].sort().join(' × ')
+      const pa = owner[pairs[q]!]!, pb = owner[pairs[q + 1]!]!
+      const key = [pa, pb].sort().join(' × ')
       by[key] = (by[key] ?? 0) + 1
+      if (pa === pb || drop) continue
+      const row = (id: string): Record<string, unknown> | undefined => organs.find((o) => o.lumen === id && o.result === 'lumen modelled')
+      const weak = (id: string): number => ((row(id)?.stationsWhereTheWallLeavesNoRoom as { count?: number } | undefined)?.count ?? 0)
+      const cands = [pa, pb].filter((id) => !!row(id))
+      if (!cands.length) continue
+      drop = cands.length === 2 && weak(cands[0]!) > weak(cands[1]!) ? cands[0]! : cands[cands.length - 1]!
+      other = drop === pa ? pb : pa
+    }
+    if (drop && round < 6) {
+      const row = organs.find((o) => o.lumen === drop)!
+      Object.assign(row, { result: 'no lumen modelled', reason: `its lumen would intersect ${other} (the two organs pass through each other in this body)` })
+      parts.splice(parts.findIndex((q) => q.id === drop), 1)
+      continue
     }
     report.allLumina = { state: 'as stored (resting filling)', parts: list.length, triangles: merged.indices.length / 3, intersectingTrianglePairs: count, byPartPair: by }
+    break
   }
   // 源数据的发现：消化道各壁部件互相重叠（一个部件的顶点落在另一个部件里，取最深的一个到对方表面的距离）
   // a finding about the source: the wall parts of the canal overlap each other (vertices of one part inside another; the depth is the largest distance of such a vertex from the other surface)
@@ -1173,6 +1642,8 @@ export interface OrganLumen {
   /** 充盈位移：位置(f) = 存下来的位置 + (f − rest)·D / filling displacement: position(f) = stored + (f − rest)·D */
   displacement?: Float32Array
   volume?: number
+  /** 每个顶点：1 = 壁里放不下、沿中心线构造的 / per vertex: 1 = constructed along the centreline where the wall leaves no room */
+  constructed?: Uint8Array
   report: Record<string, unknown>
 }
 
@@ -1294,23 +1765,35 @@ export function organLumen(mesh: Mesh, t: SegmentTable, mode: 'sac' | 'duct', re
   const cal = ringCalibre(r1, n, sides)
   const calRest = ringCalibre(at(rest), n, sides)
   let inside = 0, minClear = Infinity
+  // 壁太薄、形变过的地方（中心线那一站本身就在壁外，或缩到缝了顶点还在壁外）：腔沿中心线走，口径取缝的宽度，
+  // 这几站记下来并标为构造，而不是整个器官都不给腔
+  // Where the wall is too thin or warped (the centreline station itself lies outside it, or a vertex is
+  // still outside after shrinking to a slit) the lumen follows the centreline at the width of a slit;
+  // those stations are recorded and labelled construction instead of refusing the whole organ
+  const noRoom = new Uint8Array(n)
   for (let v = 0; v < n * sides; v++) {
     const q = P3(fullMesh.positions, v)
     if (tester.contains(q[0], q[1], q[2])) inside++
+    else noRoom[Math.floor(v / sides)] = 1
     minClear = Math.min(minClear, distanceToMesh(mesh, q))
   }
+  const noRoomRows: { station: number; atMm: number[]; calibreMm: number }[] = []
+  for (let i = 0; i < n; i++) if (noRoom[i]) noRoomRows.push({ station: i, atMm: mm3(P3(centre, i)), calibreMm: mm(ringCalibre(r1.subarray(i * sides, (i + 1) * sides), 1, sides)[0]!) })
   const vols = [0, 0.25, 0.5, 0.75, 1].map((f) => ringVolume(centre, rings.dir, at(f), n, sides))
   const volume = ringVolume(centre, rings.dir, at(rest), n, sides)
   const mean = (x: ArrayLike<number>): number => Array.from(x).reduce((a, b) => a + b, 0) / x.length
   const checks = { selfIntersectionsAtFullRestEmpty: selfX, repairRounds: rounds, insideWallAtFull: { vertices: n * sides, inside, smallestClearanceMm: mm(minClear) }, stationsMovedBackIntoWall: centresMoved, stationsWithCentreOutsideWall: centresOutside, verticesPulledBackIntoWall: pulled, collapsedStations: off.collapsedStations, stations: n }
   // 推出的面没通过检查（还有自交，或有顶点不在壁内）就不给腔，只报数
   // a derived surface that fails its checks (still self-intersecting, or a vertex outside the wall) is not offered; only the numbers are reported
-  if (selfX > 0 || inside < n * sides) return { mesh: null, report: { ...base, result: 'no lumen modelled', reason: 'the derived surface failed its checks', ...checks } }
+  if (selfX > 0) return { mesh: null, report: { ...base, result: 'no lumen modelled', reason: 'the derived surface still intersects itself', ...checks } }
+  const constructed = new Uint8Array(nv)
+  for (let v = 0; v < nv; v++) constructed[v] = v < n * sides ? noRoom[Math.floor(v / sides)]! : 0
   return {
-    mesh: closed, centres, displacement, volume,
+    mesh: closed, centres, displacement, volume, constructed,
     report: {
       ...base, result: 'lumen modelled', triangles: closed.indices.length / 3, volumeCm3: { rest: Math.round(volume * 1e8) / 100, atF: vols.map((v) => Math.round(v * 1e8) / 100), monotone: vols.every((v, q) => q === 0 || v >= vols[q - 1]! - 1e-12) }, wallVolumeCm3: Math.round((signedVolume(mesh) - vols[4]!) * 1e8) / 100,
-      calibreMm: { full: { mean: mm(mean(cal)), min: mm(Math.min(...cal)), max: mm(Math.max(...cal)) }, rest: { mean: mm(mean(calRest)) } }, restFilling: rest, stationsCappedAtDistendedCalibre: capped, stationsLimitedAtBends: limited, ...checks,
+      calibreMm: { full: { mean: mm(mean(cal)), min: mm(Math.min(...cal)), max: mm(Math.max(...cal)) }, rest: { mean: mm(mean(calRest)) } }, restFilling: rest,
+      stationsWhereTheWallLeavesNoRoom: { count: noRoomRows.length, of: n, note: 'the lumen follows the centreline there at slit width and those stations are labelled construction', list: noRoomRows }, stationsCappedAtDistendedCalibre: capped, stationsLimitedAtBends: limited, ...checks,
     },
   }
 }

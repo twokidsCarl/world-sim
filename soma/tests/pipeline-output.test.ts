@@ -86,7 +86,8 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     expect(byId.size).toBe(data.parts.length)
     for (const p of data.parts) {
       // FJ…_upper / FJ…_lower：切开的唇的两半（lipSplit.ts） / FJ…_upper and FJ…_lower: the two halves of the split lip (lipSplit.ts)
-      expect(p.id).toMatch(/^(FJ\d+M?(_upper|_lower)?|R3_FMA\d+|ZA[0-9A-F]{8}|SOMA_[a-z_]+(_[LR])?)$/)
+      // LUMEN_…：空腔器官的腔部件（lumenStage.ts） / LUMEN_…: the lumen parts of the hollow organs (lumenStage.ts)
+      expect(p.id).toMatch(/^(FJ\d+M?(_upper|_lower)?|R3_FMA\d+|ZA[0-9A-F]{8}|SOMA_[a-z_]+(_[LR])?|LUMEN_[A-Za-z_]+)$/)
       // FMA id，或者对 FMA 中没有对应类的结构使用合成的 ZAC_… 概念 id
       // FMA ids, or a synthetic ZAC_… concept id for structures FMA has no class for
       expect(p.fma, p.id).toMatch(/^(FMA\d+(_[LR])?|ZAC_[a-z0-9_]+(_[LR])?)$/)
@@ -269,7 +270,12 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
   it('stays within the triangle budget', () => {
     const total = data.parts.reduce((s, p) => s + p.triangles, 0)
     expect(total).toBeGreaterThan(800_000)
-    expect(total).toBeLessThan(2_400_000)
+    // 2026-10-14：上限由 2,400,000 提到 2,500,000。装入 19 个腔部件后总数为 2,433,755，其中腔占 77,244：腔的网格不过简化器，
+    // 因为充盈位移场按顶点给出，塌陷处两壁只相距零点几毫米。
+    // 2026-10-14: the bound goes from 2,400,000 to 2,500,000. With the 19 lumen parts installed the total is 2,433,755,
+    // of which the lumina are 77,244: lumen meshes skip the simplifier, because the filling displacement field is
+    // per vertex and the two walls of a collapsed lumen lie a few tenths of a millimetre apart.
+    expect(total).toBeLessThan(2_500_000)
   })
 
   it.skipIf(!skinInstalled)('keeps the face of the installed skin at source resolution, in one watertight part', async () => {

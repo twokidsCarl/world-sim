@@ -13,6 +13,11 @@
 //               segment where it crosses each joint (see pathRows in bindAttach)
 //   centreline  神经：在中心线上取权重并沿线平滑，再按最近的中心线段传给管壁顶点
 //               nerves: weights on the centreline, smoothed along it, then handed to tube vertices by their nearest centreline segment
+//   wall        空腔器官的腔（id 为 LUMEN_… 的部件，见 tools/pipeline/lumenStage.ts）：每个顶点取壁的表面上离它最近一点的权重，
+//               腔就随它的壁运动，不会在某个姿势下跑到器官外面（见 lumenWallIds 和 bindAll 末尾的那一遍）
+//               the lumina of the hollow organs (parts with a LUMEN_… id, see tools/pipeline/lumenStage.ts): every vertex takes the weights
+//               at the closest point of the wall's surface, so a lumen moves with its wall and cannot leave its organ in a pose
+//               (see lumenWallIds and the last pass of bindAll)
 
 import type { MuscleLine, NervePath, Part, Vec3 } from '../../src/anatomy/types.ts'
 import type { ExternalRule, ExternalWeights } from './external.ts'
@@ -535,6 +540,47 @@ const PASS_FACTOR = 1.5
 const RAMP_MIN = 0.015
 const RAMP_MAX = 0.06
 const PATH_SLICES = 24
+
+/** 腔部件：腔这一步（tools/pipeline/lumenStage.ts）给出的部件，id 以 LUMEN_ 开头（女性的带 W_ 前缀）。 A lumen part: one made by the lumen stage (tools/pipeline/lumenStage.ts); its id starts with LUMEN_ (with the W_ prefix on the female body). */
+export const isLumenPart = (p: Pick<Part, 'id'>): boolean => /^(W_)?LUMEN_/.test(p.id)
+
+/** 没有同名壁部件的腔（口腔、咽、肛管）以相邻的这些组织为壁。 A lumen with no wall part of its own name (mouth, pharynx, anal canal) takes its neighbours of these tissues as its wall. */
+const LUMEN_NEIGHBOUR_TISSUES = new Set<string>(['muscle', 'tendon', 'bone', 'tooth', 'cartilage', 'organ', 'gland'])
+
+/**
+ * 腔的壁是哪些部件。按英文名匹配：“Lumen of X”“Cavity of X”的壁是名为 X 或“… part of X”的非腔部件
+ * （小肠在数据里是许多名为“Proximal part of jejunum”之类的短段）。没有这样的部件时（Oral cavity proper、Cavity of pharynx、
+ * Lumen of anal canal），取它的相邻部件中属于肌、腱、骨、牙、软骨、器官、腺的那些。
+ * 返回所有腔的壁合在一起的集合：权重只由顶点的位置决定，相邻两个腔部件共用的那一圈顶点于是得到相同的权重，整条管在姿势下不会裂开。
+ * Which parts are the walls of the lumina. Matched by English name: the wall of "Lumen of X" or "Cavity of X" is
+ * every non-lumen part named X or "… part of X" (the small intestine is many short pieces named "Proximal part of
+ * jejunum" and the like). Where there is none (Oral cavity proper, Cavity of pharynx, Lumen of anal canal) the
+ * lumen's adjacent parts that are muscle, tendon, bone, tooth, cartilage, organ or gland are taken.
+ * The result is the walls of ALL lumina pooled: the weights then depend on a vertex's position only, so the ring of
+ * vertices two neighbouring lumen parts share gets the same weights and the canal does not come apart in a pose.
+ */
+export function lumenWallIds(parts: readonly Pick<Part, 'id' | 'name' | 'tissue' | 'adjacent'>[]): { pool: string[]; byLumen: Map<string, { walls: string[]; how: 'name' | 'neighbours' | 'none' }> } {
+  const byId = new Map(parts.map((p) => [p.id, p]))
+  const real = parts.filter((p) => !isLumenPart(p) && p.tissue !== 'space')
+  const pool = new Set<string>()
+  const byLumen = new Map<string, { walls: string[]; how: 'name' | 'neighbours' | 'none' }>()
+  for (const l of parts) {
+    if (!isLumenPart(l)) continue
+    const organ = /^(?:lumen|cavity) of (.+)$/i.exec(l.name)?.[1]?.toLowerCase()
+    let walls = organ ? real.filter((p) => p.name.toLowerCase() === organ || p.name.toLowerCase().endsWith(` part of ${organ}`)).map((p) => p.id) : []
+    let how: 'name' | 'neighbours' | 'none' = 'name'
+    if (!walls.length) {
+      walls = l.adjacent.filter((id) => {
+        const q = byId.get(id)
+        return !!q && !isLumenPart(q) && LUMEN_NEIGHBOUR_TISSUES.has(q.tissue)
+      })
+      how = walls.length ? 'neighbours' : 'none'
+    }
+    byLumen.set(l.id, { walls, how })
+    for (const id of walls) pool.add(id)
+  }
+  return { pool: [...pool].sort(), byLumen }
+}
 
 export function bindAll(ctx: BindContext): BindResult {
   const { body, joints, field } = ctx
@@ -1307,6 +1353,9 @@ export function bindAll(ctx: BindContext): BindResult {
   // 第一遍：刚性骨、距离场、中心线。第二遍：需要引用它们的附着类部件。
   // First pass: rigid bones, field and centreline parts. Second pass: attached parts, which refer to them.
   const later: [Part, Policy][] = []
+  // 第三遍：腔部件，权重取自已经绑好的壁（见 lumenWallIds） / third pass: lumen parts, whose weights are taken from their walls once those are bound (see lumenWallIds)
+  const lumina: Part[] = []
+  const lumenWalls = lumenWallIds(body.data.parts)
   let done = 0
   for (const p of body.data.parts) {
     if (!body.meshes.has(p.id)) continue
@@ -1434,6 +1483,11 @@ export function bindAll(ctx: BindContext): BindResult {
       if (++done % 400 === 0) ctx.log?.(`bound ${done} field parts`)
       continue
     }
+    // 腔部件留到最后：它的权重取自壁，壁要先绑好 / lumen parts wait until the end: their weights come from their walls, which must be bound first
+    if (lumenWalls.pool.length && isLumenPart(p)) {
+      lumina.push(p)
+      continue
+    }
     const pol = policyOf(p)
     if (pol.method === 'attach') {
       later.push([p, pol])
@@ -1447,6 +1501,56 @@ export function bindAll(ctx: BindContext): BindResult {
   for (const [p, pol] of later) {
     bindAttach(p, pol)
     if (++done % 400 === 0) ctx.log?.(`bound ${done} parts`)
+  }
+
+  // 腔随壁：每个腔顶点在所有壁的表面上找最近的一点，取那个三角形三个顶点的权重按重心坐标混合。不再平滑：权重是位置的连续函数。
+  // 壁是刚性部件（骨、牙）时就是它的那个关节。一个壁也没有绑上时（不应发生）退回距离场。
+  // Lumina follow their walls: every lumen vertex finds the closest point on the surfaces of all walls and takes the
+  // weights of that triangle's three vertices, mixed by the barycentric coordinates. No smoothing afterwards: the
+  // weights are a continuous function of position. A rigid wall (bone, tooth) gives its one joint. Should no wall be
+  // bound at all (not expected), the part falls back to the distance field.
+  if (lumina.length) {
+    const walls = lumenWalls.pool.filter((id) => results.has(id) && body.meshes.has(id)).map((id) => ({ id, s: surf(id), r: results.get(id)! }))
+    let far = 0, farPart = ''
+    for (const p of lumina) {
+      if (!walls.length) {
+        bindField(p, policyOf(p))
+        notes.push(`${p.id} "${p.name}": no wall part is bound; bound by the distance field`)
+        continue
+      }
+      const raw = body.meshes.get(p.id)!
+      const mesh = weld(raw.positions, raw.indices)
+      const rows: Map<number, number>[] = []
+      for (let i = 0; i < mesh.n; i++) {
+        const q: V3 = [mesh.pos[i * 3]!, mesh.pos[i * 3 + 1]!, mesh.pos[i * 3 + 2]!]
+        let best = Infinity, at = -1
+        for (let k = 0; k < walls.length; k++) {
+          const d = walls[k]!.s.distance(q[0], q[1], q[2], best)
+          if (d < best) (best = d), (at = k)
+        }
+        const row = new Map<number, number>()
+        const wall = walls[at]!
+        if (wall.r.joint !== undefined) row.set(wall.r.joint, 1)
+        else {
+          const f = wall.s.closestFace(q)!
+          for (let c = 0; c < 3; c++) {
+            const v = f.verts[c]!, b = Math.max(0, f.bary[c]!)
+            for (let k = 0; k < 4; k++) {
+              const w = wall.r.w![v * 4 + k]!
+              if (w) row.set(wall.r.idx![v * 4 + k]!, (row.get(wall.r.idx![v * 4 + k]!) ?? 0) + (b * w) / 255)
+            }
+          }
+          // 重心坐标退化时取最近的那个顶点 / with degenerate barycentric coordinates, the nearest of the three vertices
+          if (!row.size) for (let k = 0; k < 4; k++) if (wall.r.w![f.verts[0] * 4 + k]) row.set(wall.r.idx![f.verts[0] * 4 + k]!, wall.r.w![f.verts[0] * 4 + k]! / 255)
+        }
+        if (best > far) (far = best), (farPart = p.id)
+        rows.push(row)
+      }
+      finish(p, 'wall', mesh, densify(rows), raw.positions.length / 3)
+      if (++done % 400 === 0) ctx.log?.(`bound ${done} parts`)
+    }
+    const named = [...lumenWalls.byLumen.values()].filter((x) => x.how === 'name').length, nb = [...lumenWalls.byLumen.values()].filter((x) => x.how === 'neighbours').length
+    notes.push(`${lumina.length} lumen parts follow their walls (weights at the closest point of ${walls.length} wall parts; ${named} lumina matched to wall parts by name, ${nb} to neighbouring parts; farthest lumen vertex from a wall surface ${(far * 1000).toFixed(1)} mm, in ${farPart})`)
   }
 
   const byMethod: BindResult['byMethod'] = {}

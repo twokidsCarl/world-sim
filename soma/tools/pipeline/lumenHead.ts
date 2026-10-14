@@ -54,6 +54,8 @@ export interface HeadGuides {
   pharynxBounds: { id: string; mesh: Mesh }[]
   /** 喉口：会厌上缘与杓状软骨顶之间的中点；气道从这里分出去（本任务不建气道的腔） / the laryngeal inlet: midway between the upper edge of the epiglottis and the tops of the arytenoid cartilages; the airway branches off here (no airway lumen is built in this task) */
   laryngealInlet: V3 | null
+  /** 构造的腭帆：硬腭后缘到悬雍垂肌下端的一张扇形面（这副人体没有软腭部件） / the constructed velum: a fan from the posterior edge of the hard palate to the lower end of the uvular muscle (this body has no soft-palate part) */
+  velum: Mesh | null
   report: Record<string, unknown>
 }
 
@@ -173,14 +175,58 @@ export async function headGuides(parts: Part[], meshOf: (id: string) => Promise<
       inlet = [(top[0] + a[0]) / 2, (top[1] + a[1]) / 2, (top[2] + a[2]) / 2]
     }
   }
+  // 腭帆（构造）：腭骨水平板的后缘（中线两侧各 16 mm，每 4 mm 取最靠后的顶点）连到悬雍垂肌最低的顶点；
+  // 两侧再各连到腭帆提肌最低的顶点（它进入软腭的地方）。厚度在体素那一步给（假设值）。
+  // The velum (construction): the posterior edge of the horizontal plates of the palatine bones (16 mm
+  // either side of the midline, the hindmost vertex every 4 mm) joined to the lowest vertex of the
+  // uvular muscle; on either side also to the lowest vertex of the levator veli palatini (where it
+  // enters the soft palate). Its thickness is given at the voxel step (an assumption).
+  let velum: Mesh | null = null
+  const velumReport: Record<string, unknown> = { built: false }
+  {
+    const pal = (found.hardPalate ?? []).filter((id) => /palatine/i.test(parts.find((p) => p.id === id)!.name)).map((id) => meshes.get(id)!.positions)
+    const uv = (found.softPalateMuscles ?? []).filter((id) => /uvular/i.test(parts.find((p) => p.id === id)!.name)).map((id) => meshes.get(id)!.positions)
+    const lev = (found.softPalateMuscles ?? []).filter((id) => /levator/i.test(parts.find((p) => p.id === id)!.name)).map((id) => meshes.get(id)!.positions)
+    const lowest = (ps: Float32Array[]): V3 | null => {
+      let t: V3 | null = null
+      for (const p of ps) for (let i = 0; i < p.length; i += 3) if (!t || p[i + 1]! < t[1]) t = [p[i]!, p[i + 1]!, p[i + 2]!]
+      return t
+    }
+    const palLow = lowest(pal), tip = lowest(uv)
+    if (palLow && tip) {
+      const edge: V3[] = []
+      for (let b = -4; b < 4; b++) {
+        let best: V3 | null = null
+        for (const p of pal) for (let i = 0; i < p.length; i += 3) {
+          const dx = p[i]! - midX
+          if (dx < b * 0.004 || dx >= (b + 1) * 0.004 || p[i + 1]! > palLow[1] + 0.005) continue
+          if (!best || p[i + 2]! < best[2]) best = [p[i]!, p[i + 1]!, p[i + 2]!]
+        }
+        if (best) edge.push(best)
+      }
+      const row: V3[] = [...edge]
+      const levLow = lev.map((p) => lowest([p])).filter((q): q is V3 => !!q).sort((a, b) => a[0] - b[0])
+      if (levLow.length === 2) (row.unshift(levLow[0]!), row.push(levLow[1]!))
+      if (row.length >= 3) {
+        const positions: number[] = [...tip]
+        const indices: number[] = []
+        row.forEach((q) => positions.push(...q))
+        for (let i = 0; i + 1 < row.length; i++) indices.push(0, i + 1, i + 2)
+        velum = { positions: Float32Array.from(positions), indices: Uint32Array.from(indices) }
+        const r1 = (v: number): number => Math.round(v * 1e4) / 10
+        Object.assign(velumReport, { built: true, construction: true, hardPalateEdgePoints: edge.length, levatorPoints: levLow.length, uvulaTipMm: tip.map(r1), triangles: indices.length / 3, note: 'no soft-palate part exists in this body; the sheet is constructed and labelled so' })
+      }
+    }
+  }
   const ids = (keys: string[]): { id: string; mesh: Mesh }[] => [...new Set(keys.flatMap((k) => found[k] ?? []))].map((id) => ({ id, mesh: meshes.get(id)! }))
   return {
-    oral, pharynx, oralBounds: ids(ORAL), pharynxBounds: ids(PHARYNX), laryngealInlet: inlet,
+    oral, pharynx, oralBounds: ids(ORAL), pharynxBounds: ids(PHARYNX), laryngealInlet: inlet, velum,
     report: {
       partsFound: Object.fromEntries(Object.entries(found).map(([k, v]) => [k, v.length > 6 ? `${v.length} parts` : v])),
       notFound: Object.entries(found).filter(([, v]) => !v.length).map(([k]) => k),
       absentFromBothBodiesByName: ['soft palate (only muscles: uvular, levator and tensor veli palatini, palatopharyngeus)', 'hard palate as a part of its own (maxillae and palatine bones stand for it)', 'mucosa of mouth and pharynx', 'palatoglossus', 'cheek mucosa'],
       midlineXMm: Math.round(midX * 1e4) / 10,
+      velum: velumReport,
       oral: { centrelinePoints: oral.length, stationsWithTongueBelowAndPalateAbove: bounded, of: nz + 1, tongueToPalateAlongMidline: gapRows },
       pharynx: { centrelinePoints: pharynx.length, walls: wallRows },
     },

@@ -487,4 +487,9 @@ export const CARTILAGE_PELVIC_FLOOR_TERMS: Record<string, string> = {
   // so these are literal descriptive names
   'uterine and vaginal lumen': '子宫腔和阴道腔', 'raphe of urethral sphincter': '尿道括约肌缝',
   'urethral sphincter proper': '尿道括约肌固有部',
+  // ---- 腔部件（tools/pipeline/lumenStage.ts）：其余的腔名由“A of B”规则拼出（食管腔、胃腔、膀胱腔 …），只有这一条要整词给出，
+  // 否则“X proper”规则会拼成“口腔固有部”；解剖学教材的用语是“固有口腔”。
+  // ---- lumen parts (tools/pipeline/lumenStage.ts): the other lumen names come out of the "A of B" rule (食管腔, 胃腔, 膀胱腔 …);
+  // only this one needs a whole-term entry, as the "X proper" rule would give 口腔固有部 where anatomy textbooks say 固有口腔.
+  'oral cavity proper': '固有口腔',
 }
