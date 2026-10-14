@@ -31,6 +31,12 @@ export interface BodyData {
   browShell: Mesh
   /** 睑缘链：内眦 → 外眦，发布皮肤的顶点下标 / lid-margin chains, medial → lateral, as shipped skin vertex indices */
   lids: { upperL: number[]; lowerL: number[]; upperR: number[]; lowerR: number[] }
+  /** 唇缘链（右口角 → 左口角）/ lip-margin chains (right mouth corner → left) */
+  lips: { upper: number[]; lower: number[] }
+  /** 阴毛外壳（发布的）/ the pubic hair shell (as shipped) */
+  pubicShell: Mesh
+  /** 盂肱关节中心（左、右，rig.json）/ glenohumeral joint centres (left, right, from rig.json) */
+  shoulders: [number, number, number][]
   /** 睑缘内卷（睑缘往眼球里卷的那几圈顶点）/ the lid rims (the rings of vertices rolling into the eye) */
   lidRims: number[]
   points: Record<string, number>
@@ -101,7 +107,9 @@ export async function loadBody(body: 'male' | 'female'): Promise<BodyData> {
   const display = JSON.parse(readFileSync(join(bodyDir, 'display.json'), 'utf8')) as { skin: { part: string } }
   const pre = body === 'female' ? 'W_' : ''
   const skinId = display.skin.part
-  const parts = await readParts(bodyDir, [skinId, `${pre}FJ2813`, `${pre}FJ2812`])
+  const parts = await readParts(bodyDir, [skinId, `${pre}FJ2813`, `${pre}FJ2812`, `${pre}FJ2815`])
+  const rig = JSON.parse(readFileSync(join(bodyDir, 'rig.json'), 'utf8')) as { joints: { id: string; center: [number, number, number] }[] }
+  const gh = (id: string): [number, number, number] => rig.joints.find((j) => j.id === id)!.center
   const skin = parts.get(skinId)!
   const uvMeta = JSON.parse(readFileSync(join(bodyDir, 'look', 'skin-uv.json'), 'utf8')) as SkinUvData
   const uvBin = new Uint8Array(readFileSync(join(bodyDir, 'look', 'skin-uv.bin')))
@@ -128,6 +136,9 @@ export async function loadBody(body: 'male' | 'female'): Promise<BodyData> {
     uv,
     hairShell: parts.get(`${pre}FJ2813`)!,
     browShell: parts.get(`${pre}FJ2812`)!,
+    lips: { upper: open.margins.upperLip!, lower: open.margins.lowerLip! },
+    pubicShell: parts.get(`${pre}FJ2815`)!,
+    shoulders: [gh('gh_L'), gh('gh_R')],
     lids: { upperL: open.margins.upperLidL!, lowerL: open.margins.lowerLidL!, upperR: open.margins.upperLidR!, lowerR: open.margins.lowerLidR! },
     lidRims: open.lidRims.flatMap((r) => r.vertices),
     points: open.points,

@@ -19,7 +19,8 @@ import { packStrands } from './strandData.ts'
 import { ATLAS_SIZE, Atlas, type CardKind, DEPTH_RANGE, TILES, renderTile, tileRect } from './atlas.ts'
 import { type Card, type CardOptions, makeCards } from './cards.ts'
 import { browGroom, lashGroom, type Lash } from './face.ts'
-import { type HeadFrame, earDistance, fromHead, headFrame, toHead, azimuth } from './frame.ts'
+import { axillaRegions, beardGroom, beardRegion, type BeardRegion, type BodyRegion, curlyGroom, pubicRegion } from './body.ts'
+import { type HeadFrame, earDistance, fromHead, fromHeadDir, headFrame, toHead, azimuth } from './frame.ts'
 import { styleCoverage } from './coverage.ts'
 import { Surface, type V3, dot, len, sub } from './geom.ts'
 import { GUIDES_PER_CM2, scalpGroom } from './groom.ts'
@@ -56,9 +57,21 @@ const SPECS: Record<HairPieceId, LodSpec[]> = {
     { clusters: 0, perCard: 3, segments: 4, minWidth: 0.0007, maxWidth: 0.002, tipWidth: 0.7, orient: 'spread', clearance: 0.0002, maxDistance: 1.5 },
     { clusters: 0, perCard: 6, segments: 2, minWidth: 0.0012, maxWidth: 0.004, tipWidth: 0.7, orient: 'spread', clearance: 0.0002, maxDistance: Infinity },
   ],
+  beard: [
+    { clusters: 0.22, segments: 3, minWidth: 0.0012, maxWidth: 0.004, tipWidth: 0.6, orient: 'skin', clearance: 0.0002, maxDistance: 1.5 },
+    { clusters: 0.08, segments: 2, minWidth: 0.002, maxWidth: 0.007, tipWidth: 0.6, orient: 'skin', clearance: 0.0003, maxDistance: Infinity },
+  ],
+  pubic: [
+    { clusters: 0.3, segments: 5, minWidth: 0.003, maxWidth: 0.009, tipWidth: 0.8, orient: 'skin', clearance: 0.0004, maxDistance: 1.5 },
+    { clusters: 0.12, segments: 3, minWidth: 0.005, maxWidth: 0.014, tipWidth: 0.8, orient: 'skin', clearance: 0.0005, maxDistance: Infinity },
+  ],
+  axilla: [
+    { clusters: 0.3, segments: 5, minWidth: 0.003, maxWidth: 0.009, tipWidth: 0.8, orient: 'skin', clearance: 0.0006, maxDistance: 1.5, dropInside: true },
+    { clusters: 0.12, segments: 3, minWidth: 0.005, maxWidth: 0.014, tipWidth: 0.8, orient: 'skin', clearance: 0.0008, maxDistance: Infinity, dropInside: true },
+  ],
 }
 
-const KIND: Record<HairPieceId, CardKind> = { short: 'short', long: 'long', brows: 'brow', lashes: 'lash' }
+const KIND: Record<HairPieceId, CardKind> = { short: 'short', long: 'long', brows: 'brow', lashes: 'lash', beard: 'beard', pubic: 'body', axilla: 'body' }
 
 /** 睫毛按（链、排）分组、沿睑缘排序，每 n 根一张 / lashes grouped by (chain, row), ordered along the margin, n per card */
 function lashGroups(lashes: Lash[], n: number): number[][] {
@@ -123,6 +136,48 @@ const arcLength = (pts: V3[]): number => pts.slice(1).reduce((a, p, i) => a + le
 const pct = (xs: number[], q: number): number => [...xs].sort((a, b) => a - b)[Math.min(xs.length - 1, Math.floor(xs.length * q))]!
 const r3 = (v: number): number => Math.round(v * 1000) / 1000
 
+const at3 = (p: Float32Array, i: number): V3 => [p[i * 3]!, p[i * 3 + 1]!, p[i * 3 + 2]!]
+const cross3 = (a: V3, c: V3): V3 => [a[1] * c[2] - a[2] * c[1], a[2] * c[0] - a[0] * c[2], a[0] * c[1] - a[1] * c[0]]
+
+/** 胡须各区（上唇、颏、颊、颈）的根密度（每平方厘米）：区内的根数 / 区的面积 / beard root density per region (upper lip, chin, cheek, neck) per cm²: roots in the region / its area */
+function beardRegionDensity(b: BodyData, region: BeardRegion, hairs: Strand[]): Record<string, number> {
+  const area: Record<string, number> = {}, count: Record<string, number> = {}
+  for (const [a, c, d] of region.triangles) {
+    const pa = at3(b.skin.positions, a), pc = at3(b.skin.positions, c), pd = at3(b.skin.positions, d)
+    const k = region.label([(pa[0] + pc[0] + pd[0]) / 3, (pa[1] + pc[1] + pd[1]) / 3, (pa[2] + pc[2] + pd[2]) / 3])
+    if (k) area[k] = (area[k] ?? 0) + len(cross3(sub(pc, pa), sub(pd, pa))) / 2
+  }
+  for (const h of hairs) {
+    const k = region.label(h.root.p)
+    if (k) count[k] = (count[k] ?? 0) + 1
+  }
+  return Object.fromEntries(Object.keys(area).map((k) => [`density_${k}`, Math.round((count[k] ?? 0) / (area[k]! * 1e4))]))
+}
+
+/** 区内部（密度到满值 95% 的地方）的根密度（每平方厘米）：边上的渐变带不算 / root density in the regions' interior (where the density reaches 95 % of full), per cm²: the ramp at the border is left out */
+function interiorDensity(b: BodyData, regions: BodyRegion[], hairs: Strand[]): number {
+  let area = 0, n = 0
+  const full = (p: V3): boolean => regions.some((r) => r.density(p) >= 0.95 * peak(r))
+  const peaks = new Map<BodyRegion, number>()
+  function peak(r: BodyRegion): number {
+    let m = peaks.get(r)
+    if (m === undefined) {
+      m = 0
+      for (const [a] of r.triangles) m = Math.max(m, r.density(at3(b.skin.positions, a)))
+      peaks.set(r, m)
+    }
+    return m
+  }
+  for (const r of regions) {
+    for (const [a, c, d] of r.triangles) {
+      const pa = at3(b.skin.positions, a), pc = at3(b.skin.positions, c), pd = at3(b.skin.positions, d)
+      if (full([(pa[0] + pc[0] + pd[0]) / 3, (pa[1] + pc[1] + pd[1]) / 3, (pa[2] + pc[2] + pd[2]) / 3])) area += len(cross3(sub(pc, pa), sub(pd, pa))) / 2
+    }
+  }
+  for (const h of hairs) if (full(h.root.p)) n++
+  return area > 0 ? Math.round(n / (area * 1e4)) : 0
+}
+
 /** 头皮上几个区域的毛囊密度（每平方厘米）：半径 1 厘米的圆片内计数 / follicle density in a few scalp regions (per cm²): a count within a 1 cm disc */
 function regionDensity(f: HeadFrame, surface: Surface, pts: V3[]): Record<string, number> {
   const probe = (dir: V3): V3 | null => {
@@ -170,8 +225,8 @@ async function buildBody(body: 'male' | 'female', P: Params): Promise<void> {
   const regions = regionDensity(f, surface, fol.follicles.map((x) => x.p))
   console.log(`${body}: ${fol.follicles.length} follicles in ${fol.units.length} units, scalp ${(scalpArea * 1e4).toFixed(0)} cm², regions ${JSON.stringify(regions)}`)
 
-  const grooms: Record<HairPieceId, Strand[]> = { short: [], long: [], brows: [], lashes: [] }
-  const extra: Record<HairPieceId, Record<string, number>> = { short: {}, long: {}, brows: {}, lashes: {} }
+  const grooms: Record<HairPieceId, Strand[]> = { short: [], long: [], brows: [], lashes: [], beard: [], pubic: [], axilla: [] }
+  const extra: Record<HairPieceId, Record<string, number>> = { short: {}, long: {}, brows: {}, lashes: {}, beard: {}, pubic: {}, axilla: {} }
   for (const style of ['short', 'long'] as const) {
     const g = scalpGroom(b, f, surface, scalp, style, P, seed + (style === 'long' ? 100 : 0))
     grooms[style] = g.guides
@@ -189,6 +244,25 @@ async function buildBody(body: 'male' | 'female', P: Params): Promise<void> {
     upperLengthMm: r3(pct(lashes.filter((l) => l.upper).map((l) => arcLength(l.pts) * 1000), 0.5)),
     lowerLengthMm: r3(pct(lashes.filter((l) => !l.upper).map((l) => arcLength(l.pts) * 1000), 0.5)),
   }
+  // 胡须（只有男性）、阴毛、腋毛 / beard (male only), pubic and axillary hair
+  const beard = body === 'male' ? beardRegion(b, f, scalp, P) : null
+  if (beard) {
+    grooms.beard = beardGroom(b, f, surface, beard, P.beardLength.short, P, seed + 400)
+    let area = 0
+    for (const [a, c, d] of beard.triangles) {
+      const pa = at3(b.skin.positions, a), pc = at3(b.skin.positions, c), pd = at3(b.skin.positions, d)
+      const cen: V3 = [(pa[0] + pc[0] + pd[0]) / 3, (pa[1] + pc[1] + pd[1]) / 3, (pa[2] + pc[2] + pd[2]) / 3]
+      if (beard.density(cen) > 0) area += len(cross3(sub(pc, pa), sub(pd, pa))) / 2
+    }
+    extra.beard = { hairs: grooms.beard.length, areaCm2: Math.round(area * 1e4), ...beardRegionDensity(b, beard, grooms.beard) }
+  }
+  const pubicRegion_ = pubicRegion(b, P)
+  grooms.pubic = curlyGroom(b, surface, pubicRegion_, P.pubicLength.value, P.pubicCurlRadius.value, [0, -1, 0], seed + 500)
+  extra.pubic = { hairs: grooms.pubic.length, areaCm2: Math.round(pubicRegion_.area * 1e4), densityPerCm2: interiorDensity(b, [pubicRegion_], grooms.pubic) }
+  const axRegions = axillaRegions(b, surface, P)
+  grooms.axilla = axRegions.flatMap((r, i) => curlyGroom(b, surface, r, P.axillaryLength.value, 8, [0, -1, 0], seed + 600 + i))
+  const axArea = axRegions.reduce((a, r) => a + r.area, 0)
+  extra.axilla = { hairs: grooms.axilla.length, areaCm2PerSide: r3((axArea * 1e4) / 2), densityPerCm2: interiorDensity(b, axRegions, grooms.axilla) }
   const follicleTotal = fol.follicles.length
   for (const id of ['short', 'long'] as const) {
     extra[id] = {
@@ -204,7 +278,7 @@ async function buildBody(body: 'male' | 'female', P: Params): Promise<void> {
   mkdirSync(outDir, { recursive: true })
   const atlas = new Atlas()
   const pieces: HairPiece[] = []
-  for (const id of ['short', 'long', 'brows', 'lashes'] as HairPieceId[]) {
+  for (const id of ['short', 'long', 'brows', 'lashes', ...(beard ? ['beard'] : []), 'pubic', 'axilla'] as HairPieceId[]) {
     const strands = grooms[id]
     const kind = KIND[id]
     const lods: HairLod[] = []
@@ -226,17 +300,17 @@ async function buildBody(body: 'male' | 'female', P: Params): Promise<void> {
     const pool = lod0.filter((c) => c.members.length >= (id === 'lashes' ? 2 : 3))
     // 睫毛在贴图里画粗 1.8 倍：真实直径远小于一个像素，按真值画会几乎看不见（本项目的显示补偿，不是测量值）
     // lashes are drawn 1.8 times thicker in the atlas: the real diameter is far below a pixel and would all but vanish (this project's display compensation, not a measurement)
-    const diameter = (id === 'brows' ? P.browDiameter.value : id === 'lashes' ? P.lashDiameter.value * 1.8 : P.fibreDiameter.value) / 1e6
+    const diameter = (id === 'brows' ? P.browDiameter.value : id === 'lashes' ? P.lashDiameter.value * 1.8 : id === 'beard' || id === 'pubic' || id === 'axilla' ? P.beardDiameter.value : P.fibreDiameter.value) / 1e6
     for (let t = 0; t < tiles.count; t++) {
       const card = pool[Math.floor(((t + 0.5) / tiles.count) * pool.length)] ?? lod0[t % lod0.length]!
       const w = card.width.reduce((a, x) => a + x, 0) / card.width.length
       // 插值的根数：让单层覆盖率约 0.7（−ln(1−0.7) × 宽 / 直径）/ interpolated strands: about 0.7 single-layer coverage (−ln(1−0.7) × width / diameter)
-      const count = id === 'lashes' ? 0 : id === 'brows' ? 6 : Math.round(1.2 * (w / diameter))
+      const count = id === 'lashes' || id === 'pubic' || id === 'axilla' ? 0 : id === 'brows' || id === 'beard' ? 6 : Math.round(1.2 * (w / diameter))
       renderTile(atlas, tileRect(kind, t), card, strands, {
         kind,
         diameter,
         count,
-        spread: id === 'brows' ? 0.0003 : 0.0024,
+        spread: id === 'brows' || id === 'beard' ? 0.0003 : 0.0024,
         clump: id === 'brows' ? 0.2 : id === 'long' ? 0.75 : 0.55,
         wander: id === 'long' ? 0.0012 : id === 'short' ? 0.0006 : 0.0001,
         seed: seed * 31 + t,
@@ -308,6 +382,18 @@ async function buildBody(body: 'male' | 'female', P: Params): Promise<void> {
   new Uint32Array(scalpBin.buffer, 0, scalpVerts.length).set(scalpVerts)
   scalpVerts.forEach((v, i) => (scalpBin[scalpVerts.length * 4 + i] = scalpDist.get(v)! & 255))
   writeFileSync(join(outDir, 'scalp.bin'), scalpBin)
+  // 胡茬遮罩：胡须区三角形用到的顶点和相对密度 / the stubble mask: vertices of the beard triangles and their relative density
+  let beardMask: { file: string; vertices: number } | undefined
+  if (beard) {
+    const vs = new Set<number>()
+    for (const tri of beard.triangles) if (tri.some((v) => beard.weight(at3(b.skin.positions, v)) > 0)) for (const v of tri) vs.add(v)
+    const list = [...vs].sort((x, y) => x - y)
+    const mb = new Uint8Array(list.length * 5)
+    new Uint32Array(mb.buffer, 0, list.length).set(list)
+    list.forEach((v, i) => (mb[list.length * 4 + i] = Math.round(Math.min(1, beard.weight(at3(b.skin.positions, v)) * 1.6) * 255)))
+    writeFileSync(join(outDir, 'beard.bin'), mb)
+    beardMask = { file: 'beard.bin', vertices: list.length }
+  }
   const pngA = encodePng(a, ATLAS_SIZE, ATLAS_SIZE, 4), pngB = encodePng(bImg, ATLAS_SIZE, ATLAS_SIZE, 1)
   writeFileSync(join(outDir, 'atlas-a.png'), pngA)
   writeFileSync(join(outDir, 'atlas-b.png'), pngB)
@@ -320,9 +406,10 @@ async function buildBody(body: 'male' | 'female', P: Params): Promise<void> {
     offsetUnit: OFFSET_UNIT,
     atlas: { a: 'atlas-a.png', b: 'atlas-b.png', size: ATLAS_SIZE, depthRange: DEPTH_RANGE },
     defaultStyle: body === 'male' ? 'short' : 'long',
-    hides: [`${pre}FJ2813`, `${pre}FJ2812`],
+    hides: [`${pre}FJ2813`, `${pre}FJ2812`, `${pre}FJ2815`],
     pieces,
     scalp: { file: 'scalp.bin', vertices: scalpVerts.length },
+    ...(beardMask ? { beard: beardMask } : {}),
     coverage,
     inputs: { 'integumentary.glb': sha(glb), 'hair.json (curated)': sha(new Uint8Array(readFileSync(join(ROOT, 'data', 'curated', 'hair', 'hair.json')))) },
     source: {

@@ -11,13 +11,16 @@
    "long": 0.004,
    "short": 0.003,
    "brow": 0.0004,
-   "lash": 0.0004
+   "lash": 0.0004,
+   "beard": 0.0005,
+   "body": 0.003
   }
  },
  "defaultStyle": "short",
  "hides": [
   "FJ2813",
-  "FJ2812"
+  "FJ2812",
+  "FJ2815"
  ],
  "pieces": [
   {
@@ -177,11 +180,102 @@
     "upperLengthMm": 7.491,
     "lowerLengthMm": 5.566
    }
+  },
+  {
+   "id": "beard",
+   "file": "beard.cards.bin",
+   "bytes": 776956,
+   "lods": [
+    {
+     "cards": 4727,
+     "segments": 3,
+     "maxDistance": 1.5,
+     "offset": 0
+    },
+    {
+     "cards": 1719,
+     "segments": 2,
+     "maxDistance": 1000,
+     "offset": 605056
+    }
+   ],
+   "stats": {
+    "strands": 21486,
+    "lengthMmP10": 6.472,
+    "lengthMmP50": 7.986,
+    "lengthMmP90": 9.523,
+    "hairs": 21486,
+    "areaCm2": 385,
+    "density_chin": 67,
+    "density_moustache": 85,
+    "density_neck": 22,
+    "density_cheek": 47
+   }
+  },
+  {
+   "id": "pubic",
+   "file": "pubic.cards.bin",
+   "bytes": 250304,
+   "lods": [
+    {
+     "cards": 1064,
+     "segments": 5,
+     "maxDistance": 1.5,
+     "offset": 0
+    },
+    {
+     "cards": 426,
+     "segments": 3,
+     "maxDistance": 1000,
+     "offset": 195776
+    }
+   ],
+   "stats": {
+    "strands": 3547,
+    "lengthMmP10": 19.903,
+    "lengthMmP50": 24.597,
+    "lengthMmP90": 29.797,
+    "hairs": 3547,
+    "areaCm2": 113,
+    "densityPerCm2": 36
+   }
+  },
+  {
+   "id": "axilla",
+   "file": "axilla.cards.bin",
+   "bytes": 99024,
+   "lods": [
+    {
+     "cards": 422,
+     "segments": 5,
+     "maxDistance": 1.5,
+     "offset": 0
+    },
+    {
+     "cards": 167,
+     "segments": 3,
+     "maxDistance": 1000,
+     "offset": 77648
+    }
+   ],
+   "stats": {
+    "strands": 1439,
+    "lengthMmP10": 8.312,
+    "lengthMmP50": 17.795,
+    "lengthMmP90": 22.279,
+    "hairs": 1439,
+    "areaCm2PerSide": 32.229,
+    "densityPerCm2": 24
+   }
   }
  ],
  "scalp": {
   "file": "scalp.bin",
   "vertices": 1738
+ },
+ "beard": {
+  "file": "beard.bin",
+  "vertices": 4807
  },
  "coverage": {
   "short": {
@@ -207,7 +301,7 @@
  },
  "inputs": {
   "integumentary.glb": "13ec5fdbb9708dcb",
-  "hair.json (curated)": "12241d3570a4cf1c"
+  "hair.json (curated)": "34221dfef1b004b4"
  },
  "source": {
   "zh": "程序化生成（tools/hair/build.ts）：发际线、密度、纤维直径、睫毛和眉毛的根数与长度取自 data/curated/hair/hair.json 所列文献（标明了哪些是假设）；发片和贴图集由本项目自己的发丝画成，随项目数据以 CC BY-SA 4.0 发布。",

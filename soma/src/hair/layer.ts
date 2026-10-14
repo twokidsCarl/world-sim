@@ -9,20 +9,23 @@
 // patch of skin).
 
 import { BufferAttribute, BufferGeometry, type DataTexture, Group, LinearFilter, LinearMipmapLinearFilter, LOD, Mesh, NoColorSpace, Texture, Vector3, type MeshLambertNodeMaterial, type MeshStandardNodeMaterial } from 'three/webgpu'
-import type { HairData, HairPieceId, HairStrandsInfo, HairStyle } from '../look/types.ts'
+import type { BeardStyle, HairData, HairPieceId, HairStrandsInfo, HairStyle } from '../look/types.ts'
 import { positionNodeFor, type SkinningData, type SkinningMode } from '../viewer/skinning.ts'
 import { type DecodedLod, decodeLod, dominantVertex, placeVertices } from './cards.ts'
 import type { HairColour } from './colour.ts'
-import { loadAtlasImage, loadHairData, loadPiece, loadScalp, loadStrandFile } from './load.ts'
+import { loadAtlasImage, loadHairData, loadMask, loadPiece, loadScalp, loadStrandFile } from './load.ts'
 import { HairDynamics } from './dynamicsHost.ts'
 import { Fn, attribute as tslAttribute, positionGeometry, positionLocal } from 'three/tsl'
 import { buildStrands, type DecodedGuides, decodeGuides, makeStrandMaterial, placeRoots, rootTexture, type StrandGeometry } from './strands.ts'
-import { HairLook, makeHairMaterial, makeScalpTintMaterial, type HairMaterialOptions } from './material.ts'
+import { HairLook, makeHairMaterial, makeScalpTintMaterial, makeStubbleMaterial, type HairMaterialOptions } from './material.ts'
 import { SkinPatch } from '../viewer/skinPatch.ts'
 import type { SkinGeometry } from '../viewer/skinLayer.ts'
 
-type MaterialKind = 'short' | 'long' | 'brow' | 'lash'
-const KIND_OF: Record<HairPieceId, MaterialKind> = { short: 'short', long: 'long', brows: 'brow', lashes: 'lash' }
+type MaterialKind = 'short' | 'long' | 'brow' | 'lash' | 'beard' | 'body'
+const KIND_OF: Record<HairPieceId, MaterialKind> = { short: 'short', long: 'long', brows: 'brow', lashes: 'lash', beard: 'beard', pubic: 'body', axilla: 'body' }
+/** 盖住阴毛、腋窝的衣服：盖住时不画那里的毛（游戏的做法，免得从紧身裤里扎出来）/ garments covering the pubic area and the axillae: hair there is not drawn under them (as games do, so none pokes through tights) */
+const PUBIC_COVER = ['pants', 'tights', 'skirt']
+const AXILLA_COVER = ['tee', 'compression-top']
 /** 材质参数（都是假设，按观感定）/ material parameters (all assumed, set by eye) */
 const MATERIAL: Record<MaterialKind, HairMaterialOptions> = {
   // 根端淡入按发片长度的比例：短发约 5 毫米，长发约 6 毫米 / the root fade is a fraction of the card length: about 5 mm for short hair, 6 mm for long
@@ -30,6 +33,8 @@ const MATERIAL: Record<MaterialKind, HairMaterialOptions> = {
   long: { roughness: 0.48, scatter: 0.8, rootShadow: 0.4, pigment: 1, rootFade: 0.015, tipFade: 0.6, layerShadow: 0.3 },
   brow: { roughness: 0.4, scatter: 0.6, rootShadow: 0.2, pigment: 1.2, rootFade: 0, tipFade: 0, layerShadow: 0 },
   lash: { roughness: 0.35, scatter: 0.5, rootShadow: 0, pigment: 1.6, rootFade: 0, tipFade: 0, layerShadow: 0 },
+  beard: { roughness: 0.45, scatter: 0.6, rootShadow: 0.15, pigment: 1.1, rootFade: 0, tipFade: 0.3, layerShadow: 0 },
+  body: { roughness: 0.5, scatter: 0.6, rootShadow: 0.3, pigment: 1.15, rootFade: 0, tipFade: 0.4, layerShadow: 0 },
 }
 
 interface Piece {
@@ -46,6 +51,10 @@ export interface HairSettings {
   /** null = 这副人体的默认 / null = this body's default */
   style: HairStyle | null
   colour: HairColour
+  /** 胡须（只有有胡须数据的人体）/ facial hair (only bodies with beard data) */
+  beard: BeardStyle
+  /** 穿着的衣服 / the garments worn */
+  wear: readonly string[]
 }
 
 export class HairLayer {
@@ -71,7 +80,7 @@ export class HairLayer {
   private skinNormal: ArrayLike<number> | null = null
   private influence: { index: Uint16Array; weight: Uint8Array } | null = null
   private mode: SkinningMode = 'off'
-  private settings: HairSettings = { show: false, style: null, colour: 'darkbrown' }
+  private settings: HairSettings = { show: false, style: null, colour: 'darkbrown', beard: 'none', wear: [] }
   private failed = false
   private disposed = false
 
@@ -104,6 +113,7 @@ export class HairLayer {
       setInfluences: (index, weight) => {
         this.influence = { index, weight }
         this.tint?.patch.setInfluences(index, weight)
+        this.stubble?.patch.setInfluences(index, weight)
         for (const piece of this.pieces.values()) {
           for (const l of piece.levels) this.influence_(l)
           if (piece.strands) this.strandInfluence(piece.strands)
@@ -140,6 +150,9 @@ export class HairLayer {
     const style = this.style()
     if (hairShell && style && (style === 'none' || this.pieces.has(style))) out.push(hairShell)
     if (browShell && this.pieces.has('brows')) out.push(browShell)
+    // 阴毛外壳：毛发到了就藏（被衣服盖住时也藏，免得外壳从紧身裤里露出来）/ the pubic shell: hidden once the hair has arrived (also under clothes, so the shell does not show through tights)
+    const pubicShell = this.data.hides[2]
+    if (pubicShell && this.pieces.has('pubic')) out.push(pubicShell)
     return out
   }
 
@@ -167,9 +180,10 @@ export class HairLayer {
 
   setSkinning(mode: SkinningMode): void {
     this.mode = mode
-    if (this.tint) {
-      this.tint.material.positionNode = positionNodeFor(this.skinning, mode, false) as typeof this.tint.material.positionNode
-      this.tint.material.needsUpdate = true
+    for (const o of [this.tint, this.stubble]) {
+      if (!o) continue
+      o.material.positionNode = positionNodeFor(this.skinning, mode, false) as typeof o.material.positionNode
+      o.material.needsUpdate = true
     }
     this.refreshPositionNodes()
   }
@@ -283,14 +297,17 @@ export class HairLayer {
   }
 
   private wanted(): HairPieceId[] {
-    const out: HairPieceId[] = ['brows', 'lashes']
+    const out: HairPieceId[] = ['brows', 'lashes', 'pubic', 'axilla']
     const style = this.style()
     if (style && style !== 'none') out.unshift(style)
+    if (this.settings.beard === 'short' && this.data?.pieces.some((p) => p.id === 'beard')) out.push('beard')
     return out
   }
 
   private updateVisibility(): void {
     const want = new Set(this.wanted())
+    if (this.settings.wear.some((g) => PUBIC_COVER.includes(g))) want.delete('pubic')
+    if (this.settings.wear.some((g) => AXILLA_COVER.includes(g))) want.delete('axilla')
     let changed = this.group.visible !== this.settings.show
     this.group.visible = this.settings.show
     for (const p of this.pieces.values()) {
@@ -305,6 +322,12 @@ export class HairLayer {
     const tintOn = !!style && style !== 'none' && this.pieces.has(style)
     if (this.tint && this.tint.patch.mesh.visible !== tintOn) {
       this.tint.patch.mesh.visible = tintOn
+      changed = true
+    }
+    // 胡茬：选了胡茬或短须就画（短须下面也要有发根的颜色）/ stubble: drawn for stubble or the short beard (the short beard needs the root colour beneath too)
+    const stubbleOn = this.settings.beard !== 'none'
+    if (this.stubble && this.stubble.patch.mesh.visible !== stubbleOn) {
+      this.stubble.patch.mesh.visible = stubbleOn
       changed = true
     }
     if (changed) this.onChange()
@@ -323,7 +346,7 @@ export class HairLayer {
       this.atlasLoad ??= this.loadAtlas(this.data)
       await this.atlasLoad
       if (!this.atlas || this.disposed) return
-      await Promise.all([...this.wanted().map((id) => this.ensurePiece(id)), this.ensureTint()])
+      await Promise.all([...this.wanted().map((id) => this.ensurePiece(id)), this.ensureTint(), this.settings.beard !== 'none' ? this.ensureStubble() : Promise.resolve()])
       this.updateVisibility()
     } catch (e) {
       // 毛发是附加的：坏了就照旧用外壳 / the hair is an extra: when broken the shells stay
@@ -383,6 +406,32 @@ export class HairLayer {
   }
 
   private tintPos: Float32Array | null = null
+  /** 胡茬（只有男性）：跟着皮肤的一块覆盖网格 / stubble (male only): an overlay patch following the skin */
+  private stubble: { patch: SkinPatch; material: MeshLambertNodeMaterial } | null = null
+  private stubbleLoad: Promise<void> | null = null
+
+  private ensureStubble(): Promise<void> {
+    this.stubbleLoad ??= (async () => {
+      const info = this.data?.beard
+      if (!info) return
+      const mask = await loadMask(this.base, info.file, info.vertices)
+      if (!mask || this.disposed) return
+      const material = makeStubbleMaterial(this.look)
+      material.positionNode = positionNodeFor(this.skinning, this.mode, false) as typeof material.positionNode
+      const patch = new SkinPatch(this.skin, mask.vertices, material)
+      const w = new Float32Array(this.skinVertexCount)
+      mask.vertices.forEach((v, i) => (w[v] = mask.value[i]! / 255))
+      patch.setAttribute('aStubble', w, 1)
+      if (this.influence) patch.setInfluences(this.influence.index, this.influence.weight)
+      patch.mesh.name = 'hair-stubble'
+      patch.mesh.renderOrder = 1
+      this.stubble = { patch, material }
+      this.placeTint()
+      this.group.add(patch.mesh)
+      this.updateVisibility()
+    })()
+    return this.stubbleLoad
+  }
 
   /**
    * 头皮底色放在皮肤外 0.25 毫米：只靠多边形偏移时，它和写实皮肤层的深度比较在一些角度下会输（分缝里露出皮肤）。
@@ -390,11 +439,12 @@ export class HairLayer {
    * loses at some angles (skin shows in the part).
    */
   private placeTint(): void {
-    if (!this.tint || !this.skinPos || !this.skinNormal) return
+    if ((!this.tint && !this.stubble) || !this.skinPos || !this.skinNormal) return
     const p = this.skinPos, n = this.skinNormal
     if (!this.tintPos || this.tintPos.length !== p.length) this.tintPos = new Float32Array(p.length)
     for (let i = 0; i < p.length; i++) this.tintPos[i] = p[i]! + n[i]! * 0.00025
-    this.tint.patch.setPositions(this.tintPos, n)
+    this.tint?.patch.setPositions(this.tintPos, n)
+    this.stubble?.patch.setPositions(this.tintPos, n)
   }
 
   private async ensurePiece(id: HairPieceId): Promise<void> {
@@ -540,6 +590,8 @@ export class HairLayer {
     }
     for (const m of this.materials.values()) m.dispose()
     this.tint?.patch.dispose()
+    this.stubble?.patch.dispose()
+    this.stubble?.material.dispose()
     this.dyn?.host.dispose()
     this.tint?.material.dispose()
     this.atlas?.a.dispose()

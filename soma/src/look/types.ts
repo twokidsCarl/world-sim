@@ -101,7 +101,9 @@ export type GazeSetting = 'camera' | { yaw: number; pitch: number }
 /** 头发造型 / scalp hair styles */
 export type HairStyle = 'none' | 'short' | 'long'
 /** 发片的种类 / kinds of hair piece */
-export type HairPieceId = 'short' | 'long' | 'brows' | 'lashes'
+export type HairPieceId = 'short' | 'long' | 'brows' | 'lashes' | 'beard' | 'pubic' | 'axilla'
+/** 胡须 / facial hair */
+export type BeardStyle = 'none' | 'stubble' | 'short'
 
 /**
  * 一个细节层次（LOD）的发片，在发片 .bin 里从 `offset` 起，依次（每段补齐到 4 字节）：
@@ -189,6 +191,11 @@ export interface HairData {
    * scalp, clamped to ±127). Triangles are the skin triangles whose three vertices are all listed.
    */
   scalp: { file: string; vertices: number }
+  /**
+   * 胡茬遮罩（只有男性）：u32 皮肤顶点[vertices]（升序），u8 胡须相对密度[vertices]（0–255）。
+   * The stubble mask (male only): u32 skin vertices[vertices] (ascending), u8 relative beard density[vertices] (0–255).
+   */
+  beard?: { file: string; vertices: number }
   /** 遮盖率检查（tools/hair/coverage.ts）：每种发型、每个视角被遮住的头皮点比例 / the coverage check (tools/hair/coverage.ts): per style and view, the share of scalp points covered */
   coverage: Record<string, Record<string, number>>
   inputs: Record<string, string>

@@ -35,6 +35,16 @@ export async function loadStrandFile(base: string, file: string): Promise<Uint8A
   return res.ok ? new Uint8Array(await res.arrayBuffer()) : null
 }
 
+/** 遮罩文件：u32 顶点 + u8 值 / a mask file: u32 vertices + u8 values */
+export async function loadMask(base: string, file: string, n: number): Promise<{ vertices: Uint32Array; value: Uint8Array } | null> {
+  const res = await fetch(`${base}${file}`)
+  if (!res.ok) return null
+  const bin = new Uint8Array(await res.arrayBuffer())
+  if (bin.byteLength !== n * 5) throw new Error(`${file} has ${bin.byteLength} bytes, hair.json implies ${n * 5}`)
+  const copy = bin.slice()
+  return { vertices: new Uint32Array(copy.buffer, 0, n), value: new Uint8Array(copy.buffer, n * 4, n) }
+}
+
 /** 头皮底色的数据：顶点和离头皮边界的带符号距离（毫米）/ the scalp tint data: vertices and signed distance from the scalp border (mm) */
 export async function loadScalp(base: string, data: HairData): Promise<{ vertices: Uint32Array; distance: Int8Array } | null> {
   const res = await fetch(`${base}${data.scalp.file}`)

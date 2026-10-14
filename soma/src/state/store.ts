@@ -14,7 +14,7 @@ import { fetchJson } from '../anatomy/load.ts'
 import { loadDetail, type LoadedDetail } from '../pain/detail.ts'
 import { type LoadedSkinUv, loadSkinUv } from '../look/load.ts'
 import { DEFAULT_IRIS, type GazeSetting, type IrisName } from '../look/types.ts'
-import type { HairStyle } from '../look/types.ts'
+import type { BeardStyle, HairStyle } from '../look/types.ts'
 import { DEFAULT_HAIR_COLOUR, type HairColour } from '../hair/colour.ts'
 import type { GarmentId } from '../cloth/garments.ts'
 import { type LoadedCloth, loadCloth } from '../cloth/load.ts'
@@ -259,6 +259,8 @@ export interface AppState {
   hairStyle: HairStyle | null
   /** 写实模式的发色 / The lifelike hair colour. */
   hairColor: HairColour
+  /** 写实模式的胡须（只有男性有数据；缺省没有）/ The lifelike facial hair (only the male has data; none by default). */
+  beard: BeardStyle
   /** 穿着的衣服（缺省不穿）/ The garments worn (none by default). */
   wear: GarmentId[]
   /** 已加载的衣服数据（这副人体的）/ Loaded garment data (for this body). */
@@ -329,6 +331,7 @@ export interface AppState {
   setBlink(on: boolean): void
   setHairStyle(style: HairStyle | null): void
   setHairColor(colour: HairColour): void
+  setBeard(beard: BeardStyle): void
   /** 换衣服：按需加载这副人体的衣服数据 / Change clothes: loads this body's garment data on demand. */
   setWear(ids: GarmentId[]): void
   ensureSkinReport(): void
@@ -537,6 +540,7 @@ export const useApp = create<AppState>()((set, get) => ({
   blink: true,
   hairStyle: null,
   hairColor: DEFAULT_HAIR_COLOUR,
+  beard: 'none',
   wear: [],
   clothes: [],
   rig: null,
@@ -882,6 +886,7 @@ export const useApp = create<AppState>()((set, get) => ({
   setBlink: (blink) => set({ blink }),
   setHairStyle: (hairStyle) => set({ hairStyle }),
   setHairColor: (hairColor) => set({ hairColor }),
+  setBeard: (beard) => set({ beard }),
   setWear: (ids) => {
     set({ wear: ids })
     void loadWorn(get, set)

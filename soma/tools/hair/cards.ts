@@ -37,6 +37,8 @@ export interface CardOptions {
   clearance: number
   /** 中心线平滑的遍数 / passes of centre-line smoothing */
   smooth?: number
+  /** 推出后仍有顶点在皮肤里（皮肤自身相交的皱襞，如腋窝）的发片不要 / drop cards with a vertex still inside the skin after the push (folds where the skin meets itself, such as the axilla) */
+  dropInside?: boolean
   /** 按顺序分组（睫毛），不用 k 均值 / group in order (lashes) instead of k-means */
   sequential?: number[][]
 }
@@ -186,6 +188,10 @@ export function makeCards(b: BodyData, f: HeadFrame, surface: Surface, strands: 
         verts.push(p)
       }
     }
+    if (o.dropInside && verts.some((p) => {
+      const q = surface.closest(p, 0.01)
+      return !!q && q.distance <= 0.01 && dot(sub(p, q.point), q.smoothNormal) < -0.0003
+    })) continue
     const layer = ms.reduce((a, s) => a + s.layer, 0) / ms.length
     cards.push({ centre, side, width, verts, root, layer, members, tile: 0 })
   }
