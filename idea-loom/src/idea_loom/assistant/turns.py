@@ -35,6 +35,7 @@ TOOLS = ["mcp__loom__loom_get", "mcp__loom__record_wish", "mcp__loom__propose_id
 TURN_LIMIT_SECONDS = 600
 MAX_WISHES_PER_TURN = 3
 MAX_CONTENT = 24_000
+MAX_PICKED = 60  # 一问最多列这么多个点选的元素 / at most this many picked elements are listed per question
 TERMINAL = ("done", "stopped", "failed")
 
 
@@ -42,6 +43,15 @@ class PageElement(BaseModel):
     ref: str
     role: str = ""
     name: str = ""
+
+
+class PickedElement(PageElement):
+    """他在页面上点选的一个元素：编号以 p 开头，带它所在的标题和它自己那一段提纲。
+    An element he picked on the page: its number starts with p; it carries the heading it sits under and its own stretch of outline.
+    """
+
+    where: str = ""
+    text: str = ""
 
 
 class PageSnapshot(BaseModel):
@@ -53,6 +63,7 @@ class PageSnapshot(BaseModel):
     content: str = ""
     elements: list[PageElement] = Field(default_factory=list)
     truncated: bool = False
+    picked: list[PickedElement] = Field(default_factory=list)
 
 
 MAX_IMAGES = 4
@@ -270,6 +281,11 @@ def question_text(conversation_id: str, turn: int, request: TurnRequest, images:
         parts += ["", f"## 前面几问附过的图，这次又附上了 {len(again)} 张",
                   "、".join(f"第 {n} 张：第 {i['turn']} 问附的" + (f"（{i['name']}）" if i["name"] else "") for n, i in again),
                   "它们也在这条消息的后面" + ("，排在这次附的图之后" if request.images else "") + "。他接着说前面的图时，就看这几张。"]
+    if page.picked:
+        parts += ["", f"## 他在页面上点选的元素（{len(page.picked)} 个）", "问题里的【p…】指的就是它们；下面页面提纲里同一个编号标的也是它们。"]
+        for p in page.picked[:MAX_PICKED]:
+            head = f"- {p.ref}：{p.role}" + (f"「{p.name}」" if p.name else "") + (f"，在「{p.where}」这一块" if p.where else "")
+            parts += [head] + [f"  {line}" for line in p.text.splitlines()[:40]]
     parts += ["", f"## 他现在在看的页面：{page.title or '（没有标题）'}", f"地址：{page.url}"]
     if page.lead:
         parts.append(f"页面的导语：{page.lead}")

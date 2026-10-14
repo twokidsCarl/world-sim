@@ -221,6 +221,25 @@ def test_images_go_to_the_model_and_are_kept_as_files(tmp_path, monkeypatch, see
     assert [d.name for d in turns._turn_dirs(cid)] == ["1"]          # 图不对时不留空回合 / a bad image leaves no empty turn
 
 
+def test_picked_elements_are_listed_and_can_be_pointed_at(tmp_path, monkeypatch, seeded):
+    fc.install_stream(tmp_path, monkeypatch, [{"type": "sleep", "seconds": 20}])
+    page = {**PAGE, "content": "# 1.2 沙堆\n正文… [e1]\n- 一粒一粒往下落 [p3]",
+            "elements": [*PAGE["elements"], {"ref": "p3", "role": "li", "name": "一粒一粒往下落"}],
+            "picked": [{"ref": "p3", "role": "li", "name": "一粒一粒往下落", "where": "1.2 沙堆", "text": "- 一粒一粒往下落 [p3]"}]}
+    cid = turns.new_conversation()
+    request = turns.TurnRequest(question="【p3 列表项「一粒一粒往下落」】 这句是什么意思？", page=page)
+    text = turns.question_text(cid, 1, request)
+    assert "## 他在页面上点选的元素（1 个）" in text and "- p3：li「一粒一粒往下落」，在「1.2 沙堆」这一块" in text and "  - 一粒一粒往下落 [p3]" in text
+    assert text.index("点选的元素") < text.index("他现在在看的页面")
+    assert "点选" not in turns.question_text(cid, 1, turns.TurnRequest(question="x", page=PAGE))   # 没点选就没有这一节 / no section without picks
+    assert "## 他点选的元素" in turns.system_prompt()                                                # 提示词讲了点选的引用 / the prompt explains picked references
+    turn = turns.start(cid, request)
+    token = turns._by_conversation[cid].token
+    assert turns.tool_point_at(token, {"points": [{"ref": "p3", "note": "这一句"}]}) == "已在页面上圈出 1 处。"
+    turns.stop(cid)
+    wait_done(cid, turn)
+
+
 def _png(tag: bytes) -> str:
     import base64
 
