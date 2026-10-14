@@ -120,6 +120,7 @@ export function snapshot(s: AppState): UrlState {
   if (s.skinOpaque) out.skin = true
   if (!s.look) out.look = false
   if (s.tone !== null) out.tone = s.tone
+  if (s.sss) out.sss = true
   // 接触来自软组织物理的钝压由 phys= 记录（见 src/softbody/client.ts），不再写 stim= / a pressure whose contact came from the soft-tissue physics is recorded by phys= (see src/softbody/client.ts), not stim=
   if (s.stim && !s.stim.contact) out.stim = { settings: s.stim.settings, site: s.stim.siteRef }
   if (s.iris !== 'brown') out.iris = s.iris
@@ -207,6 +208,7 @@ export async function restoreFromUrl(state: UrlState): Promise<string[]> {
   if (state.skin) app.setSkinOpaque(true)
   if (state.look === false) app.setLook(false)
   if (state.tone !== undefined) app.setTone(state.tone)
+  if (state.sss) app.setSss(true)
   if (state.iris) app.setIris(state.iris)
   if (state.gaze) app.setGaze(state.gaze)
   if (state.blink === false) app.setBlink(false)

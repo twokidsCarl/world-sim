@@ -250,6 +250,8 @@ export interface AppState {
   look: boolean
   /** 写实皮肤的色调 0–100（黑色素，见 src/look/skinMaterial.ts）；null = 数据的缺省值 / Lifelike skin tone 0–100 (melanin, see src/look/skinMaterial.ts); null = the data's default. */
   tone: number | null
+  /** 写实皮肤用屏幕空间次表面散射（只在 WebGPU 上有效；缺省关：近景之外几乎看不出，却要多几块全屏缓冲）/ Screen-space subsurface scattering on the lifelike skin (effective on WebGPU only; off by default: hardly visible beyond close-ups, yet it costs several full-screen buffers). */
+  sss: boolean
   /** 写实的眼：虹膜颜色和注视（见 src/look/eyes.ts）/ The lifelike eyes: iris colour and gaze (see src/look/eyes.ts). */
   iris: IrisName
   gaze: GazeSetting
@@ -326,6 +328,7 @@ export interface AppState {
   ensureSkinUv(): Promise<LoadedSkinUv | null>
   setLook(on: boolean): void
   setTone(tone: number | null): void
+  setSss(on: boolean): void
   setIris(iris: IrisName): void
   setGaze(gaze: GazeSetting): void
   setBlink(on: boolean): void
@@ -535,6 +538,7 @@ export const useApp = create<AppState>()((set, get) => ({
   skinOpaque: false,
   look: true,
   tone: null,
+  sss: false,
   iris: DEFAULT_IRIS,
   gaze: 'camera',
   blink: true,
@@ -880,6 +884,7 @@ export const useApp = create<AppState>()((set, get) => ({
     return pendingSkinUv
   },
   setLook: (look) => set({ look }),
+  setSss: (sss) => set({ sss }),
   setTone: (tone) => set({ tone: tone === null ? null : Math.min(100, Math.max(0, Math.round(tone))) }),
   setIris: (iris) => set({ iris }),
   setGaze: (gaze) => set({ gaze }),
