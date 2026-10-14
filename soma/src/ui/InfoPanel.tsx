@@ -76,7 +76,7 @@ function SelectionInfo({ graph }: { graph: AnatomyGraph }) {
           <dd>{graph.hasKnowledge ? `名称 ${Object.keys(graph.names).length} · 关系 ${graph.relations.length}` : '未加载'}</dd>
         </dl>
         <ul className="tips">
-          <li>拖动旋转 · 右键 / 双指拖动平移 · 滚轮 / 双指捏合缩放</li>
+          <li>拖动旋转 · 右键拖动、Shift + 拖动或双指滑动平移 · 滚轮 / 双指捏合缩放 <span className="en">drag to rotate · right-drag, Shift + drag or two-finger swipe to pan · wheel or pinch to zoom</span></li>
           <li>双击结构聚焦；Ctrl / ⌘ + 点击可多选；Esc 取消选择</li>
           <li>半透明的结构（如皮肤）不拦截点击，可从结构树或搜索中选取</li>
         </ul>
