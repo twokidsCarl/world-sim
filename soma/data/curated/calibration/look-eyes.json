@@ -1,0 +1,442 @@
+{
+ "schema": 1,
+ "id": "look-eyes",
+ "title": {
+  "zh": "写实的眼：拟合与构造的尺寸、睑裂随注视 vs 文献",
+  "en": "Lifelike eyes: fitted and constructed sizes, and the fissure with gaze, vs the literature"
+ },
+ "method": {
+  "zh": "与加载时相同的计算（src/look/eyesFit.ts）：对每个人体扫描的巩膜做球面拟合；睑裂在注视 0°、±20°、−30° 时的高度用表情数据和睑随注视的通道（src/face/driver.ts）在发布的皮肤上算出，取最靠近瞳孔竖线的上下睑缘顶点之差，再与 0° 时相比。",
+  "en": "The same computation as at load time (src/look/eyesFit.ts): a sphere fitted to each body's scanned sclera; the fissure height at 0°, ±20° and −30° gaze computed on the shipped skin with the expression data and the lid-follows-gaze channels (src/face/driver.ts), as the difference of the upper and lower lid-margin vertices nearest the pupil's vertical line, divided by the value at 0°."
+ },
+ "tolerance": {
+  "zh": "见每行：眼球半径到文献范围的边上、构造半径 ±1 mm、睑裂比值 ±0.06、角膜尺寸 1 SD。",
+  "en": "Per row: the eyeball radius up to the edges of the published range, the constructed radius ±1 mm, fissure ratios ±0.06, corneal sizes 1 SD."
+ },
+ "references": [
+  {
+   "id": "bekerman2014",
+   "name": "Bekerman I, Gottlieb P, Vaiman M 2014, Variations in eyeball diameters of the healthy adults. J Ophthalmol 2014:503645",
+   "version": "PMC4238270; CT of 250 adults: transverse diameter mean 24.2 mm, range about 21–27 mm",
+   "url": "https://doi.org/10.1155/2014/503645",
+   "licence": "CC BY",
+   "clause": "Licence field of the Europe PMC record (\"cc by\"). Only the mean and range of the transverse diameter are used.",
+   "opened": "2026-10-15"
+  },
+  {
+   "id": "mastropietro2009",
+   "name": "Mastropietro DA, Alves MR, Velasco e Cruz AA 2009, Upper and lower eyelid position in different degrees of downgaze and upgaze. Arq Bras Oftalmol 72(6):771–775",
+   "version": "10 normal subjects, −30° to +30°; means given in the text",
+   "url": "https://doi.org/10.1590/S0004-27492009000600006",
+   "licence": "Not checked; no open licence is assumed",
+   "clause": "No licence grant is relied on. Only the means given in the text are cited as facts.",
+   "opened": "2026-10-15"
+  },
+  {
+   "id": "legrand",
+   "name": "Le Grand's full theoretical eye, as given in Atchison DA, Smith G, Optics of the Human Eye (2000)",
+   "version": "anterior corneal radius 7.8 mm",
+   "url": "https://doi.org/10.1016/B978-0-7506-3775-6.X5001-9",
+   "licence": "Not checked; no open licence is assumed",
+   "clause": "No licence grant is relied on. A textbook value cited as a fact.",
+   "opened": "2026-10-15"
+  },
+  {
+   "id": "rufer2005",
+   "name": "Rüfer F, Schröder A, Erb C 2005, White-to-white corneal diameter: normal values in healthy humans obtained with the Orbscan II topography system. Cornea 24(3):259–261",
+   "version": "11.71 ± 0.42 mm",
+   "url": "https://doi.org/10.1097/01.ico.0000148312.01805.53",
+   "licence": "Not checked; no open licence is assumed",
+   "clause": "No licence grant is relied on. Only the mean and SD are cited as facts.",
+   "opened": "2026-10-15"
+  }
+ ],
+ "ourState": {
+  "male": {
+   "anatomy.json": "53411643e427",
+   "nervous.glb": "ac75dc5662c8",
+   "integumentary.glb": "13ec5fdbb970",
+   "face.json": "5481f9f46433",
+   "face.bin": "5bae4424d792",
+   "face/openings.json": "fa6db2f60418"
+  },
+  "female": {
+   "anatomy.json": "7bb6bb8270aa",
+   "nervous.glb": "272d2390234b",
+   "integumentary.glb": "b85a6c377ac0",
+   "face.json": "b1786874c62d",
+   "face.bin": "e92fe3bdbe91",
+   "face/openings.json": "819691f735e9"
+  }
+ },
+ "notes": [
+  {
+   "zh": "这只眼是为显示构造的（来源\"构造物\"）；角膜尺寸等几行按定义与文献相等，列出来只是为了说明来源。",
+   "en": "This eye is built for display (provenance \"construction\"); the corneal rows equal the literature by definition and are listed only to show where the values come from."
+  }
+ ],
+ "summary": {
+  "rows": 22,
+  "within": 20,
+  "outside": 2,
+  "notComparable": 0
+ },
+ "rows": [
+  {
+   "body": "male",
+   "side": "L",
+   "item": "scanned eyeball radius (sphere fit to the sclera)",
+   "ours": 12.62,
+   "ref": 12.1,
+   "refLow": 10.5,
+   "refHigh": 13.5,
+   "diff": 0.52,
+   "tolerance": 1.4,
+   "unit": "mm",
+   "source": "bekerman2014",
+   "verdict": "within",
+   "note": {
+    "zh": "参照：横径平均 24.2 mm、范围约 21–27 mm 的一半；容差到范围边上",
+    "en": "reference: half the transverse diameter, mean 24.2 mm and range about 21–27 mm; the tolerance reaches the range edges"
+   }
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "item": "constructed eye radius",
+   "ours": 12.62,
+   "ref": 12.1,
+   "diff": 0.52,
+   "tolerance": 1,
+   "unit": "mm",
+   "source": "bekerman2014",
+   "verdict": "within",
+   "note": {
+    "zh": "构造的眼用拟合半径，限在平均值 ±1 mm 内（构造约束）",
+    "en": "the constructed eye uses the fitted radius, held within ±1 mm of the mean (a construction constraint)"
+   }
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "item": "palpebral fissure at -20° gaze / at 0°",
+   "ours": 0.785,
+   "ref": 0.806,
+   "diff": -0.021,
+   "tolerance": 0.06,
+   "unit": "ratio",
+   "source": "mastropietro2009",
+   "verdict": "within",
+   "note": {
+    "zh": "参照：睑裂 10.8 mm → −20° 时 8.7 mm、−30° 时 7.8 mm（文中均值）；容差 0.06 是本表所定",
+    "en": "reference: fissure 10.8 mm → 8.7 mm at −20° and 7.8 mm at −30° (means in the text); the 0.06 tolerance is set by this table"
+   }
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "item": "palpebral fissure at -30° gaze / at 0°",
+   "ours": 0.694,
+   "ref": 0.722,
+   "diff": -0.028,
+   "tolerance": 0.06,
+   "unit": "ratio",
+   "source": "mastropietro2009",
+   "verdict": "within",
+   "note": {
+    "zh": "参照：睑裂 10.8 mm → −20° 时 8.7 mm、−30° 时 7.8 mm（文中均值）；容差 0.06 是本表所定",
+    "en": "reference: fissure 10.8 mm → 8.7 mm at −20° and 7.8 mm at −30° (means in the text); the 0.06 tolerance is set by this table"
+   }
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "item": "palpebral fissure at +20° gaze / at 0°",
+   "ours": 1.102,
+   "ref": 1.087,
+   "diff": 0.015,
+   "tolerance": 0.06,
+   "unit": "ratio",
+   "source": "mastropietro2009",
+   "verdict": "within",
+   "note": {
+    "zh": "参照由文中 MRD1、MRD2 的均值相加得到",
+    "en": "reference: the sum of the MRD1 and MRD2 means given in the text"
+   }
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "item": "scanned eyeball radius (sphere fit to the sclera)",
+   "ours": 12.59,
+   "ref": 12.1,
+   "refLow": 10.5,
+   "refHigh": 13.5,
+   "diff": 0.49,
+   "tolerance": 1.4,
+   "unit": "mm",
+   "source": "bekerman2014",
+   "verdict": "within",
+   "note": {
+    "zh": "参照：横径平均 24.2 mm、范围约 21–27 mm 的一半；容差到范围边上",
+    "en": "reference: half the transverse diameter, mean 24.2 mm and range about 21–27 mm; the tolerance reaches the range edges"
+   }
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "item": "constructed eye radius",
+   "ours": 12.59,
+   "ref": 12.1,
+   "diff": 0.49,
+   "tolerance": 1,
+   "unit": "mm",
+   "source": "bekerman2014",
+   "verdict": "within",
+   "note": {
+    "zh": "构造的眼用拟合半径，限在平均值 ±1 mm 内（构造约束）",
+    "en": "the constructed eye uses the fitted radius, held within ±1 mm of the mean (a construction constraint)"
+   }
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "item": "palpebral fissure at -20° gaze / at 0°",
+   "ours": 0.784,
+   "ref": 0.806,
+   "diff": -0.021,
+   "tolerance": 0.06,
+   "unit": "ratio",
+   "source": "mastropietro2009",
+   "verdict": "within",
+   "note": {
+    "zh": "参照：睑裂 10.8 mm → −20° 时 8.7 mm、−30° 时 7.8 mm（文中均值）；容差 0.06 是本表所定",
+    "en": "reference: fissure 10.8 mm → 8.7 mm at −20° and 7.8 mm at −30° (means in the text); the 0.06 tolerance is set by this table"
+   }
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "item": "palpebral fissure at -30° gaze / at 0°",
+   "ours": 0.693,
+   "ref": 0.722,
+   "diff": -0.029,
+   "tolerance": 0.06,
+   "unit": "ratio",
+   "source": "mastropietro2009",
+   "verdict": "within",
+   "note": {
+    "zh": "参照：睑裂 10.8 mm → −20° 时 8.7 mm、−30° 时 7.8 mm（文中均值）；容差 0.06 是本表所定",
+    "en": "reference: fissure 10.8 mm → 8.7 mm at −20° and 7.8 mm at −30° (means in the text); the 0.06 tolerance is set by this table"
+   }
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "item": "palpebral fissure at +20° gaze / at 0°",
+   "ours": 1.102,
+   "ref": 1.087,
+   "diff": 0.015,
+   "tolerance": 0.06,
+   "unit": "ratio",
+   "source": "mastropietro2009",
+   "verdict": "within",
+   "note": {
+    "zh": "参照由文中 MRD1、MRD2 的均值相加得到",
+    "en": "reference: the sum of the MRD1 and MRD2 means given in the text"
+   }
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "item": "scanned eyeball radius (sphere fit to the sclera)",
+   "ours": 12.39,
+   "ref": 12.1,
+   "refLow": 10.5,
+   "refHigh": 13.5,
+   "diff": 0.29,
+   "tolerance": 1.4,
+   "unit": "mm",
+   "source": "bekerman2014",
+   "verdict": "within",
+   "note": {
+    "zh": "参照：横径平均 24.2 mm、范围约 21–27 mm 的一半；容差到范围边上",
+    "en": "reference: half the transverse diameter, mean 24.2 mm and range about 21–27 mm; the tolerance reaches the range edges"
+   }
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "item": "constructed eye radius",
+   "ours": 12.39,
+   "ref": 12.1,
+   "diff": 0.29,
+   "tolerance": 1,
+   "unit": "mm",
+   "source": "bekerman2014",
+   "verdict": "within",
+   "note": {
+    "zh": "构造的眼用拟合半径，限在平均值 ±1 mm 内（构造约束）",
+    "en": "the constructed eye uses the fitted radius, held within ±1 mm of the mean (a construction constraint)"
+   }
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "item": "palpebral fissure at -20° gaze / at 0°",
+   "ours": 0.787,
+   "ref": 0.806,
+   "diff": -0.018,
+   "tolerance": 0.06,
+   "unit": "ratio",
+   "source": "mastropietro2009",
+   "verdict": "within",
+   "note": {
+    "zh": "参照：睑裂 10.8 mm → −20° 时 8.7 mm、−30° 时 7.8 mm（文中均值）；容差 0.06 是本表所定",
+    "en": "reference: fissure 10.8 mm → 8.7 mm at −20° and 7.8 mm at −30° (means in the text); the 0.06 tolerance is set by this table"
+   }
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "item": "palpebral fissure at -30° gaze / at 0°",
+   "ours": 0.603,
+   "ref": 0.722,
+   "diff": -0.119,
+   "tolerance": 0.06,
+   "unit": "ratio",
+   "source": "mastropietro2009",
+   "verdict": "outside",
+   "note": {
+    "zh": "参照：睑裂 10.8 mm → −20° 时 8.7 mm、−30° 时 7.8 mm（文中均值）；容差 0.06 是本表所定",
+    "en": "reference: fissure 10.8 mm → 8.7 mm at −20° and 7.8 mm at −30° (means in the text); the 0.06 tolerance is set by this table"
+   }
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "item": "palpebral fissure at +20° gaze / at 0°",
+   "ours": 1.143,
+   "ref": 1.087,
+   "diff": 0.056,
+   "tolerance": 0.06,
+   "unit": "ratio",
+   "source": "mastropietro2009",
+   "verdict": "within",
+   "note": {
+    "zh": "参照由文中 MRD1、MRD2 的均值相加得到",
+    "en": "reference: the sum of the MRD1 and MRD2 means given in the text"
+   }
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "item": "scanned eyeball radius (sphere fit to the sclera)",
+   "ours": 12.03,
+   "ref": 12.1,
+   "refLow": 10.5,
+   "refHigh": 13.5,
+   "diff": -0.07,
+   "tolerance": 1.4,
+   "unit": "mm",
+   "source": "bekerman2014",
+   "verdict": "within",
+   "note": {
+    "zh": "参照：横径平均 24.2 mm、范围约 21–27 mm 的一半；容差到范围边上",
+    "en": "reference: half the transverse diameter, mean 24.2 mm and range about 21–27 mm; the tolerance reaches the range edges"
+   }
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "item": "constructed eye radius",
+   "ours": 12.03,
+   "ref": 12.1,
+   "diff": -0.07,
+   "tolerance": 1,
+   "unit": "mm",
+   "source": "bekerman2014",
+   "verdict": "within",
+   "note": {
+    "zh": "构造的眼用拟合半径，限在平均值 ±1 mm 内（构造约束）",
+    "en": "the constructed eye uses the fitted radius, held within ±1 mm of the mean (a construction constraint)"
+   }
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "item": "palpebral fissure at -20° gaze / at 0°",
+   "ours": 0.787,
+   "ref": 0.806,
+   "diff": -0.018,
+   "tolerance": 0.06,
+   "unit": "ratio",
+   "source": "mastropietro2009",
+   "verdict": "within",
+   "note": {
+    "zh": "参照：睑裂 10.8 mm → −20° 时 8.7 mm、−30° 时 7.8 mm（文中均值）；容差 0.06 是本表所定",
+    "en": "reference: fissure 10.8 mm → 8.7 mm at −20° and 7.8 mm at −30° (means in the text); the 0.06 tolerance is set by this table"
+   }
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "item": "palpebral fissure at -30° gaze / at 0°",
+   "ours": 0.627,
+   "ref": 0.722,
+   "diff": -0.095,
+   "tolerance": 0.06,
+   "unit": "ratio",
+   "source": "mastropietro2009",
+   "verdict": "outside",
+   "note": {
+    "zh": "参照：睑裂 10.8 mm → −20° 时 8.7 mm、−30° 时 7.8 mm（文中均值）；容差 0.06 是本表所定",
+    "en": "reference: fissure 10.8 mm → 8.7 mm at −20° and 7.8 mm at −30° (means in the text); the 0.06 tolerance is set by this table"
+   }
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "item": "palpebral fissure at +20° gaze / at 0°",
+   "ours": 1.127,
+   "ref": 1.087,
+   "diff": 0.04,
+   "tolerance": 0.06,
+   "unit": "ratio",
+   "source": "mastropietro2009",
+   "verdict": "within",
+   "note": {
+    "zh": "参照由文中 MRD1、MRD2 的均值相加得到",
+    "en": "reference: the sum of the MRD1 and MRD2 means given in the text"
+   }
+  },
+  {
+   "item": "anterior corneal radius",
+   "ours": 7.8,
+   "ref": 7.8,
+   "diff": 0,
+   "tolerance": 0.1,
+   "unit": "mm",
+   "source": "legrand",
+   "verdict": "within",
+   "note": {
+    "zh": "构造值直接取自理论眼，按定义相等",
+    "en": "the constructed value is taken from the theoretical eye, equal by definition"
+   }
+  },
+  {
+   "item": "corneal diameter (white to white)",
+   "ours": 11.71,
+   "ref": 11.71,
+   "diff": 0,
+   "tolerance": 0.42,
+   "unit": "mm",
+   "source": "rufer2005",
+   "verdict": "within",
+   "note": {
+    "zh": "构造值取自文献均值；容差 1 SD",
+    "en": "the constructed value is the published mean; tolerance 1 SD"
+   }
+  }
+ ]
+}

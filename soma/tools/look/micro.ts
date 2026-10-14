@@ -111,6 +111,8 @@ export interface MicroLayers {
   pores: Float32Array
   body: Float32Array
   ridges: Float32Array
+  /** 面部毛孔：个数（每块 TILE_MM²）和各自的面积（mm²），标定对照表用 / facial pores: their count (per TILE_MM² tile) and each area (mm²), for the calibration tables */
+  facePores: { count: number; tileCm2: number; areasMm2: number[] }
 }
 
 export function buildMicro(size = MICRO_SIZE, seed = SEED): MicroLayers {
@@ -126,8 +128,10 @@ export function buildMicro(size = MICRO_SIZE, seed = SEED): MicroLayers {
   const area = (TILE_MM / 10) ** 2 // cm²
   const facePts = scatter(rand, Math.round(40 * area), 0.7 * mm)
   const pores = at(torusNoise(rand, 10, 24, 1)).map((v) => v * 0.06)
+  const areasMm2: number[] = []
   addPits(pores, size, facePts.map(([x, y]) => {
     const a = Math.min(0.3, Math.max(0.025, lognormal(rand, 0.08, 0.5))) // mm²
+    areasMm2.push(a)
     return { x, y, r: Math.sqrt(a / Math.PI) * mm, depth: 0.7 + 0.3 * rand() }
   }))
   // ── 身体：细毛孔 + 交叉皮沟 / body: fine pores + crossing furrows ──
@@ -159,7 +163,7 @@ export function buildMicro(size = MICRO_SIZE, seed = SEED): MicroLayers {
   const ring = TILE_MM / 0.45
   const band = torusNoise(rand, ring - 1.2, ring + 1.2, 0, { angle: 0.3, spread: 0.45 })
   const ridges = at((x, y) => Math.tanh(1.6 * band(x, y)))
-  return { size, pores, body, ridges }
+  return { size, pores, body, ridges, facePores: { count: facePts.length, tileCm2: area, areasMm2 } }
 }
 
 /** 三层合成 RGB8：128 + 127·h / pack the three layers into RGB8: 128 + 127·h */

@@ -1,0 +1,257 @@
+{
+ "schema": 1,
+ "id": "skin-detail",
+ "title": {
+  "zh": "写实皮肤的细节：毛孔、表皮厚度、粗糙度 vs 文献",
+  "en": "Lifelike skin detail: pores, epidermis thickness, roughness vs the literature"
+ },
+ "method": {
+  "zh": "毛孔的密度和面积由生成微细起伏贴图的程序（tools/look/micro.ts，种子固定）直接给出：一块代表 1 cm² 的皮肤。表皮厚度是颜色模型用的值（data/curated/look/skin-colour.json）。粗糙度：部位贴图里的值乘全局倍数 1.4、主瓣再乘 0.75，three 的 GGX α = r²；文献给的是 Torrance–Sparrow 模型的 Beckmann m，这里按 α ≈ m 比较。",
+  "en": "Pore density and area come straight from the program that generates the micro-relief tile (tools/look/micro.ts, fixed seed): one tile stands for 1 cm² of skin. The epidermis thickness is the colour model's value (data/curated/look/skin-colour.json). Roughness: the region map's value times the global factor 1.4, and the main lobe times 0.75 again; three's GGX α = r². The literature gives the Beckmann m of a Torrance–Sparrow model, compared here as α ≈ m."
+ },
+ "tolerance": {
+  "zh": "文献给的是范围时，落在范围内记 within；给的是均值和标准差时，差在 1 SD 内记 within。没有可比测量的项记 not comparable。",
+  "en": "Where the literature gives a range, inside it counts as within; where it gives a mean and SD, a difference within 1 SD counts as within. Items without a comparable measurement are not comparable."
+ },
+ "references": [
+  {
+   "id": "flament2015",
+   "name": "Flament F et al. 2015, Facial skin pores: a multiethnic study. Clin Cosmet Investig Dermatol 8:85–93",
+   "version": "PMC4337418; cheeks of 2,585 women, Dermascore, detection threshold 250 µm: density about 10–80 /cm², mean area 0.03–0.22 mm²",
+   "url": "https://doi.org/10.2147/CCID.S74401",
+   "licence": "CC BY-NC",
+   "clause": "Licence field of the Europe PMC record (\"cc by-nc\"). Only the ranges of density and mean area are cited as numbers.",
+   "opened": "2026-10-15"
+  },
+  {
+   "id": "sandby2003",
+   "name": "Sandby-Møller J, Poulsen T, Wulf HC 2003, Epidermal thickness at different body sites: relationship to age, gender, pigmentation, blood content, skin type and smoking habits. Acta Derm Venereol 83:410–413",
+   "version": "abstract: viable epidermis of the dorsal forearm 56.6 (11.5) µm, stratum corneum 18.3 (4.9) µm, 71 volunteers",
+   "url": "https://doi.org/10.1080/00015550310015419",
+   "licence": "Not checked; no open licence is assumed",
+   "clause": "No licence grant is relied on. Two numbers of the abstract are cited as facts; the full text was not opened.",
+   "opened": "2026-10-15"
+  },
+  {
+   "id": "weyrich2006",
+   "name": "Weyrich T et al. 2006, Analysis of human faces using a measurement-based skin reflectance model. ACM Trans Graph 25(3):1013–1024",
+   "version": "authors' copy (cseweb.ucsd.edu/~henrik/papers/skin-analysis/); Fig. 15: Torrance–Sparrow parameters per face region, 149 subjects",
+   "url": "https://cseweb.ucsd.edu/~henrik/papers/skin-analysis/",
+   "licence": "© ACM; no open licence",
+   "clause": "No licence grant; only the range of the roughness axis in Fig. 15 is read and cited as a fact.",
+   "opened": "2026-10-15"
+  }
+ ],
+ "ourState": {
+  "all": {
+   "tools/look/micro.ts": "344ed3c6eeba",
+   "data/curated/look/skin-colour.json": "c3aa5252cf44"
+  }
+ },
+ "notes": [
+  {
+   "zh": "毛孔按 10 mm 见方的一块统计；同一块贴图在面部和身体上平铺，所以整张脸的毛孔数随面积成比例。",
+   "en": "Pores are counted on one 10 mm square tile; the same tile is repeated over the face and body, so the number of pores on a whole face scales with its area."
+  }
+ ],
+ "summary": {
+  "rows": 12,
+  "within": 6,
+  "outside": 1,
+  "notComparable": 5
+ },
+ "rows": [
+  {
+   "item": "facial pore density",
+   "quantity": "pores per cm² in the micro-relief tile",
+   "ours": 40,
+   "ref": 45,
+   "refLow": 10,
+   "refHigh": 80,
+   "diff": -5,
+   "tolerance": 35,
+   "unit": "/cm²",
+   "source": "flament2015",
+   "verdict": "within",
+   "note": {
+    "zh": "参照是 2,585 名女性颊部的范围（中点 ± 半宽）",
+    "en": "the reference is the range over the cheeks of 2,585 women (midpoint ± half-width)"
+   }
+  },
+  {
+   "item": "facial pore mean area",
+   "quantity": "mean area of the tile's facial pores",
+   "ours": 0.09,
+   "ref": 0.125,
+   "refLow": 0.03,
+   "refHigh": 0.22,
+   "diff": -0.035,
+   "tolerance": 0.095,
+   "unit": "mm²",
+   "source": "flament2015",
+   "verdict": "within"
+  },
+  {
+   "item": "body fine-pore density",
+   "quantity": "follicular openings per cm² in the tile",
+   "ours": 120,
+   "unit": "/cm²",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "假设，没有找到测量值",
+    "en": "assumed; no measurement found"
+   }
+  },
+  {
+   "item": "ridge period",
+   "quantity": "period of the epidermal ridges (palms, soles, finger pads)",
+   "ours": 0.45,
+   "unit": "mm",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "假设（成人嵴宽的量级）；没有核对过的出处",
+    "en": "assumed (the order of adult ridge breadth); no checked source"
+   }
+  },
+  {
+   "item": "epidermis thickness (skin model)",
+   "quantity": "melanin-bearing epidermis of the colour model",
+   "ours": 57,
+   "ref": 56.6,
+   "diff": 0.4,
+   "tolerance": 11.5,
+   "unit": "µm",
+   "source": "sandby2003",
+   "verdict": "within",
+   "note": {
+    "zh": "前臂背侧的活表皮（不含角质层）56.6 ± 11.5 µm；容差 1 SD",
+    "en": "viable epidermis of the dorsal forearm (stratum corneum excluded) 56.6 ± 11.5 µm; tolerance 1 SD"
+   }
+  },
+  {
+   "item": "vermilion effective epidermis",
+   "quantity": "inverted from the vermilion colour",
+   "ours": 39.2,
+   "unit": "µm",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "由颜色反推的等效值，不是组织学厚度；没有可比的测量",
+    "en": "an effective value inverted from colour, not a histological thickness; no comparable measurement"
+   }
+  },
+  {
+   "region": "forehead",
+   "name": {
+    "zh": "额头",
+    "en": "forehead"
+   },
+   "quantity": "main specular lobe, GGX α (85 % of the specular)",
+   "ours": 0.223,
+   "ref": 0.26,
+   "refLow": 0.18,
+   "refHigh": 0.34,
+   "diff": -0.037,
+   "tolerance": 0.08,
+   "unit": "α",
+   "source": "weyrich2006",
+   "verdict": "within",
+   "note": {
+    "zh": "参照是图 15 里各面部区域 Beckmann m 平均值所在的范围（从坐标轴读出，取 α ≈ m）；第二瓣 α 约为主瓣的 3 倍，占 15 %",
+    "en": "the reference is the range of the per-region means of the Beckmann m in Fig. 15 (read from its axis; α ≈ m taken); the second lobe has about 3× the α and 15 % of the weight"
+   }
+  },
+  {
+   "region": "cheek",
+   "name": {
+    "zh": "颊部",
+    "en": "cheek"
+   },
+   "quantity": "main specular lobe, GGX α (85 % of the specular)",
+   "ours": 0.223,
+   "ref": 0.26,
+   "refLow": 0.18,
+   "refHigh": 0.34,
+   "diff": -0.037,
+   "tolerance": 0.08,
+   "unit": "α",
+   "source": "weyrich2006",
+   "verdict": "within",
+   "note": {
+    "zh": "参照是图 15 里各面部区域 Beckmann m 平均值所在的范围（从坐标轴读出，取 α ≈ m）；第二瓣 α 约为主瓣的 3 倍，占 15 %",
+    "en": "the reference is the range of the per-region means of the Beckmann m in Fig. 15 (read from its axis; α ≈ m taken); the second lobe has about 3× the α and 15 % of the weight"
+   }
+  },
+  {
+   "region": "nose",
+   "name": {
+    "zh": "鼻",
+    "en": "nose"
+   },
+   "quantity": "main specular lobe, GGX α (85 % of the specular)",
+   "ours": 0.194,
+   "ref": 0.26,
+   "refLow": 0.18,
+   "refHigh": 0.34,
+   "diff": -0.066,
+   "tolerance": 0.08,
+   "unit": "α",
+   "source": "weyrich2006",
+   "verdict": "within",
+   "note": {
+    "zh": "参照是图 15 里各面部区域 Beckmann m 平均值所在的范围（从坐标轴读出，取 α ≈ m）；第二瓣 α 约为主瓣的 3 倍，占 15 %",
+    "en": "the reference is the range of the per-region means of the Beckmann m in Fig. 15 (read from its axis; α ≈ m taken); the second lobe has about 3× the α and 15 % of the weight"
+   }
+  },
+  {
+   "region": "lips",
+   "name": {
+    "zh": "唇红",
+    "en": "vermilion"
+   },
+   "quantity": "main specular lobe, GGX α (85 % of the specular)",
+   "ours": 0.135,
+   "ref": 0.26,
+   "refLow": 0.18,
+   "refHigh": 0.34,
+   "diff": -0.125,
+   "tolerance": 0.08,
+   "unit": "α",
+   "source": "weyrich2006",
+   "verdict": "outside",
+   "note": {
+    "zh": "唇红比文献的面部范围更光（假设的 0.35）；Weyrich 等指出唇红区的参数变化很大，但图里没有给出唇的范围",
+    "en": "the vermilion is glossier than the published facial range (the assumed 0.35); Weyrich et al. note that lip parameters vary widely, but the figure gives no range for the lips"
+   }
+  },
+  {
+   "region": "body",
+   "name": {
+    "zh": "身体（缺省）",
+    "en": "body (default)"
+   },
+   "quantity": "main specular lobe, GGX α",
+   "ours": 0.276,
+   "unit": "α",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "Weyrich 等只测了面部；身体的值是假设",
+    "en": "Weyrich et al. measured faces only; the body value is assumed"
+   }
+  },
+  {
+   "region": "palmsSoles",
+   "name": {
+    "zh": "手掌、足底",
+    "en": "palms and soles"
+   },
+   "quantity": "main specular lobe, GGX α",
+   "ours": 0.397,
+   "unit": "α",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "Weyrich 等只测了面部；身体的值是假设",
+    "en": "Weyrich et al. measured faces only; the body value is assumed"
+   }
+  }
+ ]
+}

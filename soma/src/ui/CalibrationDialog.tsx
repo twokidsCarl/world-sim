@@ -15,8 +15,8 @@ import { Icon } from './Icon.tsx'
 
 const loaders = import.meta.glob<{ default: CalibrationTable }>('../../data/curated/calibration/*.json')
 
-/** 表的排列顺序：先骨架和关节，再肌肉，再器官和面部，量具自检放最后 / Order of the tables: skeleton and joints, muscles, organs and face, with the instrument check last. */
-const ORDER = ['segments', 'rom', 'arm-bones', 'muscle-attachments-myo', 'muscle-curves-opensim', 'muscle-curves-myo', 'organ-volumes', 'face-displacement', 'face-coverage', 'instrument-check']
+/** 表的排列顺序：先骨架和关节，再肌肉，再器官和面部，再写实外观，量具自检放最后 / Order of the tables: skeleton and joints, muscles, organs and face, the lifelike look, with the instrument check last. */
+const ORDER = ['segments', 'rom', 'arm-bones', 'muscle-attachments-myo', 'muscle-curves-opensim', 'muscle-curves-myo', 'organ-volumes', 'face-displacement', 'face-coverage', 'skin-colour', 'skin-detail', 'look-hair', 'look-eyes', 'instrument-check']
 
 const BODY_LABEL: Record<string, string> = { male: '男 M', female: '女 F' }
 const VERDICT: Record<string, { zh: string; cls: string }> = {

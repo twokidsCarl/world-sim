@@ -121,7 +121,11 @@ function fallbackTexture(slot: Slot): DataTexture {
 
 /** 几个写实皮肤材质共用的可调参数和贴图 / Tunable parameters and maps shared by every lifelike skin material. */
 export class SkinLook {
-  /** 粗糙度的比例：0.5 = 按部位贴图；缺省 0.7（整体乘 1.4：三的粗糙度 r 对应 GGX α = r²，Weyrich 等 2006 测得面部的 Torrance–Sparrow 粗糙度约 0.3–0.5，按 α 折算后粗糙度在 0.55–0.7）/ roughness scale: 0.5 = as the region map says; default 0.7 (×1.4 overall: three maps roughness r to GGX α = r², and Weyrich et al. 2006 measured facial Torrance–Sparrow roughness of about 0.3–0.5, which as α gives roughness 0.55–0.7) */
+  /** 粗糙度的比例：0.5 = 按部位贴图；缺省 0.7（整体乘 1.4）。three 的粗糙度 r 对应 GGX α = r²；Weyrich 等 2006 图 15 的各面部区域
+   * Beckmann 粗糙度 m 平均约 0.18–0.34（从图的坐标轴读出，鼻最小）。取 α ≈ m，主瓣（×0.75）落在这个范围里。
+   * roughness scale: 0.5 = as the region map says; default 0.7 (×1.4 overall). three maps roughness r to GGX α = r²; the
+   * per-region means of the Beckmann roughness m in Fig. 15 of Weyrich et al. 2006 lie at about 0.18–0.34 (read from the
+   * figure's axis; the nose lowest). Taking α ≈ m, the main lobe (×0.75) falls in that range. */
   readonly roughness = uniform(0.7)
   /** 透光强度 / transmission strength */
   readonly scatterStrength = uniform(1.6)
