@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Idea } from '../src/contract'
 import { detectLang, label, pick, plural, tr } from '../src/i18n'
 import { NO_FILTERS, matches } from '../src/state/derive'
-import { compact, duration, usageLine } from '../src/ui/viz'
+import { compact, duration, sumTokens, usageLine } from '../src/ui/viz'
 
 describe('i18n helpers', () => {
   it('tr chooses by language', () => {
@@ -58,6 +58,11 @@ describe('number and duration formats', () => {
     expect(usageLine(tokens, 'en')).toBe('in 12.3k · out 4.1k · cache 210k')
     expect(usageLine(tokens, 'zh')).toBe('输入 1.2 万 · 输出 4,100 · 缓存 21 万')
     expect([usageLine({}, 'en'), usageLine(null, 'zh')]).toEqual(['', ''])
+  })
+  it('adds the own tokens of idea-loom and those of Claude Code into one total', () => {
+    const own = { input: 1, output: 2, cache_read: 3, cache_write: 4, messages: 5 }
+    const cc = { input: 10, output: 20, cache_read: 30, cache_write: 40, messages: 50 }
+    expect(sumTokens(own, cc)).toEqual({ input: 11, output: 22, cache_read: 33, cache_write: 44, messages: 55 })
   })
 })
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { type ProjectStats, type Session, type Stats, api } from '../api'
+import { type ProjectStats, type Session, type Stats, type Tokens, api } from '../api'
 import type { State, ThreadId } from '../contract'
 import { pick, plural } from '../i18n'
 import { formatTime } from '../state/derive'
@@ -8,7 +8,7 @@ import { useLang, useT } from '../state/store'
 import { Empty, Page, Section, Tabs, useTab } from '../ui/Page'
 import { IdeaLink } from '../ui/bits'
 import { recent } from '../ui/tabs'
-import { Bar, Legend, Tile, compact, duration, heat, seriesClass } from '../ui/viz'
+import { Bar, Legend, Tile, compact, duration, heat, seriesClass, sumTokens } from '../ui/viz'
 
 const THREADS: ThreadId[] = ['A', 'B', 'C', 'D', 'E']
 // 总览卡固定在上面，下面分四个 tab；第一个是默认。 / The overview cards stay on top, four tabs below; the first is the default.
@@ -182,17 +182,8 @@ export function StatsPage({ state }: { state: State }) {
       )}
 
       {tab === 'calls' && (
-      <Section title={t('idea-loom 自己调用模型', 'Model calls by idea-loom itself')} note={t('生成、细化、翻译、小助手这些', 'Generate, refine, translate, the assistant and so on')}>
-        {stats.own.calls === 0 ? (
-          <Empty>{t('还没有调用过。', 'No calls yet.')}</Empty>
-        ) : (
-          <p>
-            {t('一共 ', '')}<span className="num">{stats.own.calls}</span>{t(' 次，输出 ', stats.own.calls === 1 ? ' call, ' : ' calls, ')}
-            <span className="num">{compact(stats.own.output_tokens, lang)}</span>{t(' token，按接口价折算约', ' output tokens, about')}{' '}
-            <span className="num">{t('', '$')}{stats.own.cost_usd.toFixed(2)}</span>{t(' 美元。', ' at API prices.')}
-            <span className="muted small"> {Object.entries(stats.own.by_purpose).map(([k, v]) => `${PURPOSE[k] ? t(...PURPOSE[k]) : k} ${t(`${v} 次`, `× ${v}`)}`).join(' · ')}</span>
-          </p>
-        )}
+      <Section title={t('模型调用', 'Model calls')} note={t('idea-loom 自己的调用（生成、细化、翻译、小助手、作业这些）和这个仓库里 Claude Code 的会话，按 token 算', "idea-loom's own calls (generate, refine, translate, the assistant, jobs and so on) and Claude Code's sessions in this repository, in tokens")}>
+        <Calls stats={stats} />
       </Section>
       )}
       <p className="muted small">{t(`算于 ${formatTime(stats.generated_at)}，结果缓存一分钟。`, `Computed at ${formatTime(stats.generated_at)}; results are cached for a minute.`)}</p>
@@ -203,7 +194,60 @@ export function StatsPage({ state }: { state: State }) {
 // 调用模型的各种用途：[中文, 英文]。 / What the model was called for: [Chinese, English].
 const PURPOSE: Record<string, [string, string]> = {
   generate: ['生成', 'Generate'], refine: ['细化', 'Refine'], fuse: ['融合', 'Fuse'], classify: ['归类', 'Classify'], dedupe: ['查重', 'Find duplicates'],
-  translate: ['翻译', 'Translate'], assistant: ['小助手', 'Assistant'], review: ['回看', 'Review'], job: ['作业', 'Job'],
+  translate: ['翻译', 'Translate'], assistant: ['小助手', 'Assistant'], review: ['回看', 'Review'], job: ['作业', 'Job'], session: ['网页里的会话', 'In-page sessions'],
+}
+
+// idea-loom 自己的调用和 Claude Code 的会话并排，再加一行合计；只写 token，不写美元。
+// idea-loom's own calls beside Claude Code's sessions, plus a total row; tokens only, no dollars.
+function Calls({ stats }: { stats: Stats }) {
+  const lang = useLang()
+  const t = useT()
+  const own = stats.own.tokens ?? { input: 0, output: stats.own.output_tokens, cache_read: 0, cache_write: 0, messages: stats.own.calls }
+  const cc = stats.totals
+  const total = sumTokens(own, cc)
+  const cell = (n: number) => <td className="r num" title={n.toLocaleString()}>{compact(n, lang)}</td>
+  const row = (name: string, count: string, x: Tokens) => (
+    <tr key={name}>
+      <th scope="row">{name}</th>
+      <td className="r num">{count}</td>
+      {cell(x.input)}{cell(x.output)}{cell(x.cache_read)}{cell(x.cache_write)}
+    </tr>
+  )
+  const moved = stats.own.in_transcripts ?? 0
+  return (
+    <>
+      <div className="grid-wrap">
+        <table className="table stats-table">
+          <thead>
+            <tr>
+              <th scope="col">{t('来源', 'Source')}</th>
+              <th scope="col" className="r">{t('次数', 'Count')}</th>
+              <th scope="col" className="r">{t('输入', 'Input')}</th>
+              <th scope="col" className="r">{t('输出', 'Output')}</th>
+              <th scope="col" className="r">{t('缓存读', 'Cache read')}</th>
+              <th scope="col" className="r">{t('缓存写', 'Cache write')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {row(t('idea-loom 自己', 'idea-loom itself'), t(`${stats.own.calls} 次调用`, plural(stats.own.calls, 'call')), own)}
+            {row(t('Claude Code', 'Claude Code'), t(`${compact(cc.messages, lang)} 次回复`, `${compact(cc.messages, lang)} replies`), cc)}
+            {row(t('合计', 'Total'), '', total)}
+          </tbody>
+        </table>
+      </div>
+      {Object.keys(stats.own.by_purpose).length > 0 && (
+        <p className="muted small">
+          {t('idea-loom 自己的调用：', "idea-loom's own calls: ")}
+          {Object.entries(stats.own.by_purpose).map(([k, v]) => `${PURPOSE[k] ? t(...PURPOSE[k]) : k} ${t(`${v} 次`, `× ${v}`)}`).join(' · ')}
+        </p>
+      )}
+      <p className="muted small">
+        {t('Claude Code 一行读的是本机 ~/.claude/projects 下这个仓库的会话记录，连子 Agent 一起算。', "The Claude Code row reads this repository's transcripts under ~/.claude/projects on this machine, subagents included.")}
+        {moved > 0 && t(` 网页里的 Claude Code 会话有 ${moved} 轮也在这些记录里，只算在 Claude Code 一行，不重复。`, ` ${plural(moved, 'turn')} of in-page Claude Code sessions ${moved === 1 ? 'is' : 'are'} also in those transcripts and counted in the Claude Code row only, not twice.`)}
+        {!stats.transcripts_found && t(' 这台机器上没有找到会话记录，这一行是空的。', ' No transcripts were found on this machine, so that row is empty.')}
+      </p>
+    </>
+  )
 }
 
 function Runs({ sessions, names }: { sessions: Session[]; names: string[] }) {

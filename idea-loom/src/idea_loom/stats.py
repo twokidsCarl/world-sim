@@ -130,7 +130,11 @@ class OwnCalls(BaseModel):
     calls: int = 0
     cost_usd: float = 0
     output_tokens: int = 0
+    tokens: Tokens = Field(default_factory=Tokens)  # 输入、输出、缓存；messages 是调用次数 / input, output, cache; messages is the number of calls
     by_purpose: dict[str, int] = Field(default_factory=dict)
+    # 网页里的 Claude Code 会话有几轮已经在 Claude Code 自己的记录里、算在那边了，这里不再算。
+    # How many turns of in-page Claude Code sessions are already in Claude Code's own records and counted there, not here.
+    in_transcripts: int = 0
 
 
 class Stats(BaseModel):
@@ -378,14 +382,25 @@ def attention(actions: Iterable[dict[str, Any]]) -> Attention:
     return a
 
 
-def own_calls() -> OwnCalls:
+def own_calls(transcripts: frozenset[str] | set[str] = frozenset()) -> OwnCalls:
+    """runs/llm.jsonl 里成功的调用加起来。网页里的会话跑在仓库目录下，Claude Code 也把它记进了自己的会话记录：
+    会话编号在 transcripts 里的那几轮（还有没记编号的旧行，只要读得到会话记录）算在 Claude Code 那边，这里跳过，免得算两遍。
+
+    Sum the successful calls in runs/llm.jsonl. In-page sessions run in the repository, so Claude Code also keeps them in
+    its own transcripts: turns whose session id is among `transcripts` (and older rows without an id, whenever any
+    transcripts were read) are counted on Claude Code's side and skipped here, so nothing is counted twice.
+    """
     rows, _ = store.read_lines(llm.runs_dir() / "llm.jsonl")
     o = OwnCalls()
     purposes: Counter[str] = Counter()
     for r in rows:
         if not r.get("ok"):
             continue
+        if r.get("purpose") == "session" and transcripts and (not r.get("session") or r.get("session") in transcripts):
+            o.in_transcripts += 1
+            continue
         o.calls += 1
+        o.tokens.add(r)
         o.cost_usd += float(r.get("cost_usd") or 0)
         o.output_tokens += int(r.get("output_tokens") or 0)
         purposes[str(r.get("purpose") or "其它")] += 1
@@ -471,7 +486,7 @@ def compute(force: bool = False) -> Stats:
     result = Stats(
         generated_at=datetime.now().astimezone().isoformat(timespec="seconds"), projects=out, sessions=sessions,
         days=sorted(days.values(), key=lambda d: (d.day, d.project)), totals=totals, attention=attention(trail.load()),
-        own=own_calls(), transcripts_found=bool(sessions), notes=notes,
+        own=own_calls({s.id for s in sessions}), transcripts_found=bool(sessions), notes=notes,
     )
     _cache[str(repo)] = (time.time(), result)
     try:

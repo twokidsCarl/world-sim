@@ -82,6 +82,28 @@ def test_session_run_time_volume_and_stops(repo):
     assert not any(x.id == "z" for x in s.sessions)  # 名字只是前缀相同的别的目录不算 / a directory that merely shares the prefix is not ours
 
 
+def test_own_calls_are_shown_in_tokens_beside_claude_code_without_counting_twice(repo):
+    """idea-loom 自己的调用按 token 算；网页里的会话已经在 Claude Code 的记录里的，只算在那边。
+
+    idea-loom's own calls are counted in tokens; in-page session turns already in Claude Code's transcripts are counted there only.
+    """
+    from idea_loom import llm
+
+    usage = {"input_tokens": 100, "output_tokens": 20, "cache_read_input_tokens": 1000, "cache_creation_input_tokens": 50}
+    store.append(llm.runs_dir() / "llm.jsonl", [
+        {"purpose": "generate", "ok": True, "cost_usd": 0.01, **usage},
+        {"purpose": "translate", "ok": False, **usage},                                   # 失败的不算 / failures do not count
+        {"purpose": "session", "ok": True, "session": "s1", **usage},                     # 在会话记录里：算在 Claude Code 那边 / in the transcripts: counted on Claude Code's side
+        {"purpose": "session", "ok": True, "cost_usd": None},                             # 旧行，没有编号 / an old row without an id
+        {"purpose": "session", "ok": True, "session": "gone", **usage},                   # 记录已经没了：算在这边 / its transcript is gone: counted here
+    ])
+    own = stats.compute(force=True).own
+    assert (own.calls, own.in_transcripts, own.by_purpose) == (2, 2, {"generate": 1, "session": 1})
+    assert (own.tokens.input, own.tokens.output, own.tokens.cache_read, own.tokens.cache_write, own.tokens.messages) == (200, 40, 2000, 100, 2)
+    # 读不到会话记录时，会话那几轮都算在这边。 / With no transcripts at all, every session turn counts here.
+    assert stats.own_calls().calls == 4
+
+
 def test_sessions_can_be_assigned_by_hand(repo):
     store.write_json(store.data_dir() / "sessions.json", {"s2": "strata"})
     s = stats.compute(force=True)

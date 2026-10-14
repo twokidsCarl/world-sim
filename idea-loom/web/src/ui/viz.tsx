@@ -2,7 +2,7 @@
 // The few small charts the statistics page uses: bars, a heat grid, a timeline strip.
 // Numbers are always written in text ink; colour is for the marks only.
 import type { ReactNode } from 'react'
-import type { TokenUsage } from '../api'
+import type { TokenUsage, Tokens } from '../api'
 import type { Lang } from '../i18n'
 
 // 项目的颜色按固定顺序分配，跟着项目走，不跟着排名走。第九个以后归到"其它"的灰。
@@ -53,6 +53,13 @@ export function usageTitle(tokens: TokenUsage | null | undefined, lang: Lang): s
   return lang === 'en'
     ? `input ${n(tokens?.input_tokens)} · output ${n(tokens?.output_tokens)} · cache read ${n(tokens?.cache_read_input_tokens)} · cache write ${n(tokens?.cache_creation_input_tokens)} tokens`
     : `输入 ${n(tokens?.input_tokens)} · 输出 ${n(tokens?.output_tokens)} · 缓存读 ${n(tokens?.cache_read_input_tokens)} · 缓存写 ${n(tokens?.cache_creation_input_tokens)} token`
+}
+
+// 几份统计里的 token 逐项相加（统计页"模型调用"的合计一行）。 / Add several statistics token counts item by item (the total row of the model calls tab).
+export function sumTokens(...parts: Tokens[]): Tokens {
+  const total: Tokens = { input: 0, output: 0, cache_read: 0, cache_write: 0, messages: 0 }
+  for (const p of parts) for (const k of Object.keys(total) as (keyof Tokens)[]) total[k] += p[k]
+  return total
 }
 
 export function duration(seconds: number, lang: Lang): string {
