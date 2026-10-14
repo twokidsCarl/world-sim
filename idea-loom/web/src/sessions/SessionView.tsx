@@ -7,7 +7,7 @@ import { RestartNotice } from '../ui/RestartNotice'
 import { usageLine, usageTitle } from '../ui/viz'
 import { useDraft } from './drafts'
 import { mark, tell } from './notify'
-import { type Item, type Question, type SessionEvent, type View, emptyView, fold, pending } from './view'
+import { type Item, QUIET, type Question, type SessionEvent, type View, doing, emptyView, fold, pending, span } from './view'
 
 const MODEL_NAMES: Record<string, string> = { 'claude-opus-5-5': 'Opus 5.5', 'claude-sonnet-5-5': 'Sonnet 5.5', 'claude-haiku-5-5': 'Haiku 5.5', 'claude-fable-5-1': 'Fable 5.1' }
 const MODELS = Object.keys(MODEL_NAMES)
@@ -195,8 +195,8 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
           <ItemView key={item.seq} item={item} live={waiting.some((w) => w.seq === item.seq)} onAnswer={(decision, note, answers) => void act(() => api.sessionAnswer(id, (item as { request_id: string }).request_id, decision, note, answers))} />
         ))}
         {waiting.length > 1 && <p className="session-needs small">{t(`上面有 ${waiting.length} 张卡片在等你回答。`, `${waiting.length} cards above are waiting for your answer.`)}</p>}
-        {status === 'running' && waiting.length === 0 && <p className="muted small"><span className="spin" aria-hidden="true">◌</span> {t('它在干活…', 'It is working…')}{usage && <span className="num" title={usageTitle(tokens, lang)}> · {usage}</span>}</p>}
       </div>
+      {status === 'running' && waiting.length === 0 && <Working view={view} usage={usage} usageTitle={usageTitle(tokens, lang)} />}
 
       {error && <div className="notice bad" role="alert">{error}</div>}
       {status !== 'closed' && (
@@ -417,6 +417,52 @@ function RequestCard({ item, live, onAnswer }: { item: Extract<Item, { kind: 're
         </>
       )}
       {foot}
+    </div>
+  )
+}
+
+// 秒针：每秒走一下。 / A second hand that ticks every second.
+function useClock(): number {
+  const [now, setNow] = useState(() => Date.now() / 1000)
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now() / 1000), 1000)
+    return () => clearInterval(timer)
+  }, [])
+  return now
+}
+
+// 它在干活时的那一行，像终端里那样：现在在做哪一步、这一轮跑了多久、上一次有动静是多久以前。
+// 最后是用掉的 token。用来分清"在干活"和"卡住了"。
+// The line shown while it works, as in a terminal: the step it is on, how long this turn has run, and how long
+// since anything last happened, then the tokens used. It tells "working" from "stuck".
+function Working({ view, usage, usageTitle }: { view: View; usage: string; usageTitle: string }) {
+  const t = useT()
+  const now = useClock()
+  const step = doing(view)
+  const ago = (at: number) => span(now - at)
+  const quiet = view.lastAt !== null && now - view.lastAt >= QUIET
+  return (
+    <div className="session-working" role="status">
+      <span className="session-doing">
+        <span className="spin" aria-hidden="true">◌</span>{' '}
+        {step ? (
+          <>
+            {step.under && <span className="muted">{step.under} › </span>}
+            {step.label}
+            {step.lastTool && <span className="muted">{t(` · 最近在用 ${step.lastTool}`, ` · last used ${step.lastTool}`)}</span>}
+            {step.since !== null && <span className="muted num">{` · ${t(...ago(step.since))}`}</span>}
+          </>
+        ) : (
+          t('在想…', 'Thinking…')
+        )}
+      </span>
+      {view.turnStart !== null && <span className="muted num" title={t('这一轮从开始到现在', 'From the start of this turn until now')}>{t(`这一轮 ${ago(view.turnStart)[0]}`, `this turn ${ago(view.turnStart)[1]}`)}</span>}
+      {view.lastAt !== null && (
+        <span className={`num ${quiet ? 'session-quiet' : 'muted'}`} title={t('最近一次有事件（说话、调工具、工具返回、子 Agent 进展）到现在', 'Since the last event (text, a tool call, a tool result, subagent progress)')}>
+          {t(`上一次动静 ${ago(view.lastAt)[0]}前`, `last activity ${ago(view.lastAt)[1]} ago`)}
+        </span>
+      )}
+      {usage && <span className="muted num" title={usageTitle}>{usage}</span>}
     </div>
   )
 }
