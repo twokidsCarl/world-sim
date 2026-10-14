@@ -20,13 +20,27 @@ import type { FaceData, FaceVisemes } from './types.ts'
 import { phonemeTrack, resolveStyle, spokenAt, trackIndex, trackPose } from './visemeTrack.ts'
 
 /**
- * 示范片段包的清单（相对站点根）。再加一个包（例如真人录音）只要在这里加一行：清单的形状相同
- * （clips[] 里每条有 file、lang、text、durationS、phonemes、words；有 model 的是机器合成的）。
- * The manifests of the demo packs (relative to the site root). Adding another pack (recorded voices, say) takes one more line
- * here: the manifest has the same shape (each entry of clips[] has file, lang, text, durationS, phonemes and words; one with a
- * `model` is machine-synthesized).
+ * 示范片段包的清单（相对站点根）。再加一个包只要在这里加一行：清单的形状相同
+ * （clips[] 里每条有 file、lang、text、durationS、phonemes、words；有 model 的是机器合成的，有 source 的是真人录音）。
+ * librispeech-demo 是真人朗读（LibriSpeech，CC BY 4.0），时间线是自动对齐；商业构建也保留它（只去掉 vivae-pain）。
+ * The manifests of the demo packs (relative to the site root). Adding another pack takes one more line here: the manifest has the
+ * same shape (each entry of clips[] has file, lang, text, durationS, phonemes and words; one with a `model` is machine-synthesized,
+ * one with a `source` is a recording of a person). librispeech-demo is real read speech (LibriSpeech, CC BY 4.0) with automatically
+ * aligned timelines; the commercial build keeps it too (only vivae-pain is removed).
  */
-export const DEMO_PACKS: readonly string[] = ['voice/tts-demo/manifest.json']
+export const DEMO_PACKS: readonly string[] = ['voice/tts-demo/manifest.json', 'voice/librispeech-demo/manifest.json']
+
+/** 真人录音片段的出处（只有编号，没有朗读者的名字）/ Where a recorded clip comes from (numbers only, no reader's name). */
+export interface DemoRecording {
+  corpus: string
+  speaker: string
+  sex: 'female' | 'male' | ''
+  chapter: string
+  utterance: string
+  book: string
+  /** 时间线是怎么来的，例如自动对齐 / how the timeline was made, e.g. an automatic alignment. */
+  alignment: string
+}
 
 export interface DemoClip {
   /** 文件名去掉扩展名，如 zh-03；URL 的 say= 用它 / the file name without its extension, e.g. zh-03; what say= in the URL takes. */
@@ -40,6 +54,8 @@ export interface DemoClip {
   phonemes: TtsPhone[]
   words: TtsWord[]
   model: TtsModel | null
+  /** 真人录音的出处；机器合成的为 null / the source of a recording; null when machine-synthesized. */
+  recording: DemoRecording | null
   warnings: { word: string; note: string }[]
 }
 
@@ -51,7 +67,13 @@ export interface DemoPack {
 
 interface Manifest {
   licence?: string
-  clips?: { file?: string; lang?: string; voice?: string; text?: string; durationS?: number; phonemes?: TtsPhone[]; words?: TtsWord[]; model?: TtsModel; warnings?: { word: string; note: string }[] }[]
+  clips?: { file?: string; lang?: string; voice?: string; text?: string; durationS?: number; phonemes?: TtsPhone[]; words?: TtsWord[]; model?: TtsModel; source?: Partial<Record<keyof DemoRecording, unknown>>; warnings?: { word: string; note: string }[] }[]
+}
+
+function recordingOf(s: Partial<Record<keyof DemoRecording, unknown>> | undefined): DemoRecording | null {
+  if (!s || typeof s !== 'object' || typeof s.speaker !== 'string') return null
+  const str = (v: unknown): string => (typeof v === 'string' ? v : '')
+  return { corpus: str(s.corpus), speaker: s.speaker, sex: s.sex === 'female' || s.sex === 'male' ? s.sex : '', chapter: str(s.chapter), utterance: str(s.utterance), book: str(s.book), alignment: str(s.alignment) }
 }
 
 /** 清单 → 包（纯函数）：不完整的条目跳过。 A manifest → a pack (pure): incomplete entries are skipped. */
@@ -72,6 +94,7 @@ export function packFromManifest(path: string, manifest: unknown, root = ''): De
       phonemes: c.phonemes,
       words: Array.isArray(c.words) ? c.words : [],
       model: c.model && typeof c.model.name === 'string' ? c.model : null,
+      recording: c.model ? null : recordingOf(c.source),
       warnings: Array.isArray(c.warnings) ? c.warnings : [],
     })
   }
@@ -174,7 +197,7 @@ function adopt(next: Clip, status: Partial<SayStatus>): void {
   clip = next
   tracks = new Map()
   features = null
-  setStatus({ status: 'ready', clip: next.id, source: next.source, lang: next.lang, durationS: next.durationS, sound: false, message: '', warnings: [], model: null, licence: '', ...status })
+  setStatus({ status: 'ready', clip: next.id, source: next.source, lang: next.lang, durationS: next.durationS, sound: false, message: '', warnings: [], model: null, recording: null, licence: '', ...status })
 }
 
 /**
@@ -194,7 +217,7 @@ export async function loadDemoClip(id: string): Promise<boolean> {
     if (!res.ok) throw new Error(`读不到 ${c.id} 的声音 / the audio of ${c.id} could not be read (HTTP ${res.status})`)
     const wav = decodeWav(new Uint8Array(await res.arrayBuffer()))
     if (mine !== token) return false
-    adopt({ id: c.id, source: 'demo', lang: c.lang, pcm: wav.samples, sampleRate: wav.sampleRate, durationS: wav.samples.length / wav.sampleRate, phonemes: c.phonemes, words: c.words }, { text: c.text, voice: c.voice, warnings: c.warnings, model: c.model ? { name: c.model.name, version: c.model.version, licence: c.model.licence } : null, licence: pack.licence })
+    adopt({ id: c.id, source: 'demo', lang: c.lang, pcm: wav.samples, sampleRate: wav.sampleRate, durationS: wav.samples.length / wav.sampleRate, phonemes: c.phonemes, words: c.words }, { text: c.text, voice: c.voice, warnings: c.warnings, model: c.model ? { name: c.model.name, version: c.model.version, licence: c.model.licence } : null, recording: c.recording, licence: pack.licence })
     return true
   } catch (err) {
     if (mine !== token) return false
@@ -278,7 +301,7 @@ export async function playSay(opts: { sound?: boolean; loop?: boolean } = {}): P
   const mine = ++token
   const ctx = opts.sound === false ? null : await audible()
   if (mine !== token || clip !== c) return false
-  // "按声音分析"要的声学特征在开始前算好（同步，约每分钟声音 1 秒），不放到第一帧里
+  // "按音频"要的声学特征在开始前算好（同步，约每分钟声音 1 秒），不放到第一帧里
   // the acoustic features of "by audio analysis" are computed before the start (synchronous, about 1 s per minute of audio), not inside the first frame
   if (useApp.getState().say.mode === 'audio') features ??= mouthTrack(c.pcm, c.sampleRate)
   playing = ctx ? startAudio(ctx, c, 0) : { clock: 'wall', start: performance.now() / 1000 + 0.05, source: null, pausedAt: null, loop: !!opts.loop }
@@ -314,7 +337,7 @@ export function clearSay(): void {
   clip = null
   tracks = new Map()
   features = null
-  setStatus({ status: 'idle', clip: null, source: null, text: '', lang: null, voice: '', durationS: 0, sound: false, message: '', warnings: [], model: null, licence: '' })
+  setStatus({ status: 'idle', clip: null, source: null, text: '', lang: null, voice: '', durationS: 0, sound: false, message: '', warnings: [], model: null, recording: null, licence: '' })
 }
 
 /** 换带动方式：从头重播（声音的有无不变）/ Change what drives the mouth: replays from the start (audible or not as before). */
@@ -353,7 +376,7 @@ function advance(): number | null {
 
 /**
  * 此刻的口形（正在播放时），按给定人体的视位表算。"按音素"时取视位轨迹的一帧（风格见 resolveStyle）；
- * "按声音分析"时把同一段声音的声学特征逐帧换成口形（近似，与"由音频带动口形"同一条路线）。
+ * "按音频"时把同一段声音的声学特征逐帧换成口形（近似，与"由音频带动口形"同一条路线）。
  * The mouth shape right now (while playing), for the given body's viseme table. "By phonemes" takes a frame of the viseme
  * track (for the style see resolveStyle); "by audio analysis" turns the acoustic features of the same audio into a shape frame
  * by frame (approximate; the same route as "speak from audio").

@@ -38,6 +38,9 @@
 //                                                 say a demo clip (a clip id from the pack manifests under public/voice/): the mouth follows
 //                                                 the phoneme timeline. Without a user gesture it plays silently and the UI shows a "sound"
 //                                                 button. Free text for synthesis never goes into the URL.
+//   drive  phone | audio                          示范片段的口形由什么带动：phone 按音素时间线（缺省，准确），audio 按对同一段声音的分析
+//                                                 （近似）。要和 say 一起给。/ what drives the mouth of the demo clip: phone = the phoneme
+//                                                 timeline (default, accurate), audio = an analysis of the same audio (approximate). Needs say.
 //   style  normal | clear                         说话的风格：normal 正常朗读（按实测标定），clear 夸张。省略时保持的口形用 clear、说话用 normal
 //                                                 the style of speech: normal = read speech (calibrated), clear = exaggerated. When omitted,
 //                                                 held shapes use clear and speech uses normal
@@ -87,7 +90,7 @@ const AXES: Record<string, SectionAxis> = { a: 'axial', c: 'coronal', s: 'sagitt
 const MAPS = { d: 'dermatome', n: 'cutaneousNerve' } as const
 const BODIES = new Set(['male', 'female', 'fixture', 'stress'])
 /** 本模块负责的参数名；其余的原样保留 / Parameter names owned here; all others pass through. */
-export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'say', 'style', 'skin', 'shape', 'stim', 'src', 'cmp'] as const
+export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'say', 'drive', 'style', 'skin', 'shape', 'stim', 'src', 'cmp'] as const
 /** 超过这个数量的部件 id 不写进 URL / Part id lists longer than this are not written to the URL. */
 export const MAX_URL_IDS = 60
 export const MAX_URL_DOFS = 40
@@ -122,6 +125,8 @@ export interface UrlState {
   vis?: string
   /** 示范片段的 id / the id of a demo clip. */
   say?: string
+  /** 示范片段的口形由什么带动 / what drives the demo clip's mouth. */
+  drive?: 'phone' | 'audio'
   /** 说话的风格 / the style of speech. */
   style?: 'normal' | 'clear'
   skin?: boolean
@@ -299,6 +304,11 @@ export function parseUrl(search: string): ParsedUrl {
         else warn(`say: 无法解析 "${value.slice(0, 40)}"（应为示范片段的 id，如 zh-03；自由文字不放进 URL）/ could not be parsed (expected a demo clip id such as zh-03; free text is not carried in the URL)`)
         break
       }
+      case 'drive': {
+        if (value === 'phone' || value === 'audio') state.drive = value
+        else warn(`drive: 应为 phone 或 audio "${value.slice(0, 40)}" / expected phone or audio`)
+        break
+      }
       case 'style': {
         if (value === 'normal' || value === 'clear') state.style = value
         else warn(`style: 应为 normal 或 clear "${value.slice(0, 40)}" / expected normal or clear`)
@@ -327,6 +337,10 @@ export function parseUrl(search: string): ParsedUrl {
   if (state.reg && !state.map) {
     warn('reg: 需要同时给出 map / needs map')
     delete state.reg
+  }
+  if (state.drive && !state.say) {
+    warn('drive: 需要同时给出 say / needs say')
+    delete state.drive
   }
   return { state, warnings, passthrough }
 }
@@ -378,6 +392,8 @@ export function formatUrl(state: UrlState, passthrough: readonly [string, string
   if (state.expr && state.expr.strength > 0) put('expr', state.expr.id + (Math.round(state.expr.strength * 100) === 100 ? '' : `:${Math.round(state.expr.strength * 100) / 100}`))
   if (state.vis) put('vis', state.vis)
   if (state.say) put('say', state.say)
+  // 缺省的 phone 不写 / the default, phone, is not written
+  if (state.say && state.drive === 'audio') put('drive', 'audio')
   if (state.style) put('style', state.style)
   if (state.skin) put('skin', '1')
   if (state.shape && Object.keys(state.shape).length) put('shape', formatShapeParam(state.shape))

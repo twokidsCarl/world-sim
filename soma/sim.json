@@ -387,6 +387,30 @@
       "url": "/?sys=int&cam=0.03,1.47,0.46,0,1.462,0.15&say=en-04&style=clear&skin=1"
     },
     {
+      "id": "say-real-phone",
+      "title": {
+        "zh": "真人朗读：口形按音素走",
+        "en": "Real read speech: the mouth follows the phonemes"
+      },
+      "hint": {
+        "zh": "LibriSpeech 里一位男性读“To ride over salt water upon the back of a little horse seemed to me absurd.” 口形由音素时间线带动：b、p、m 处两唇合上，v 处下唇碰上齿。进来时无声地循环，点“声音”听录音；在下方换成“按音频”对比。录音 CC BY 4.0（LibriSpeech，LibriVox 公有领域有声书）；时间线是自动对齐（Montreal Forced Aligner），不是人工标注",
+        "en": "A male reader from LibriSpeech: “To ride over salt water upon the back of a little horse seemed to me absurd.” The phoneme timeline drives the mouth: the lips meet at b, p and m and the lower lip touches the teeth at v. It loops silently on arrival; press “Sound” to hear the recording, and switch to “By audio” below to compare. Recording CC BY 4.0 (LibriSpeech, from LibriVox public-domain audiobooks); the timeline is an automatic alignment (Montreal Forced Aligner), not hand labels"
+      },
+      "url": "/?sys=int&cam=0.03,1.47,0.46,0,1.462,0.15&say=ls-6241-61946-0017&skin=1"
+    },
+    {
+      "id": "say-real-audio",
+      "title": {
+        "zh": "同一句真人朗读，口形只按声音分析",
+        "en": "The same real recording, the mouth from audio analysis alone"
+      },
+      "hint": {
+        "zh": "同一句录音，这次口形只从声音里分析出来，不知道是哪个音：开口大致跟着响度和元音走，但双唇音几乎合不上，唇齿音也没有。在下方换回“按音素”对比；两种方式的对比数值（下颌角相关、双唇音处的唇间隙）写在示例包的 manifest.json 里。录音 CC BY 4.0（LibriSpeech）",
+        "en": "The same recording, now with the mouth analysed from the sound alone, without knowing which sound is which: the opening roughly follows loudness and the vowels, but the bilabials hardly close and there are no labiodentals. Switch back to “By phoneme” below to compare; the numbers comparing the two modes (jaw-angle correlation, lip gap at the bilabials) are in the example pack's manifest.json. Recording CC BY 4.0 (LibriSpeech)"
+      },
+      "url": "/?sys=int&cam=0.03,1.47,0.46,0,1.462,0.15&say=ls-6241-61946-0017&drive=audio&skin=1"
+    },
+    {
       "id": "expr-angry-muscles",
       "title": {
         "zh": "肌肉视图里的愤怒：皱眉肌和降眉间肌",

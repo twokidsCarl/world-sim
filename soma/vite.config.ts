@@ -2,19 +2,17 @@ import { rm } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
-
-// 开发用的数据集（示例数据、压力测试）只给开发服务器和测试用，不进正式构建的产物。
-// Dev-only datasets (the fixture and the stress set) are for the dev server and the tests; they
-// are kept out of the production build output.
-const DEV_DATASETS = ['fixture', 'stress']
+import { buildRemovals } from './tools/build/removals.ts'
 
 // 录音包（public/voice/vivae-pain/，VIVAE，CC BY-NC 4.0）只许非商业使用。商业部署用
 //   SOMA_COMMERCIAL=1 bunx vite build
-// 构建：产物里不带 voice/vivae-pain/（voice/ 下其余目录许可允许商用，照常保留），界面改用参数合成的声音，并且不显示录音的署名。默认构建不变。
+// 构建：产物里不带 voice/vivae-pain/（voice/ 下其余目录许可允许商用，照常保留：tts-demo 是 Apache-2.0 模型的输出，
+// librispeech-demo 是 CC BY 4.0），界面改用参数合成的声音，并且不显示录音的署名。默认构建不变。
 // The recorded sound pack (public/voice/vivae-pain/, VIVAE, CC BY-NC 4.0) is for non-commercial use only. For a
 // commercial deployment build with
 //   SOMA_COMMERCIAL=1 bunx vite build
-// which leaves voice/vivae-pain/ out of dist (the other directories under voice/ allow commercial use and stay), makes the app use the parametric voice and hides the recordings'
+// which leaves voice/vivae-pain/ out of dist (the other directories under voice/ allow commercial use and stay: tts-demo is the output
+// of Apache-2.0 models and librispeech-demo is CC BY 4.0), makes the app use the parametric voice and hides the recordings'
 // attribution. The default build is unchanged.
 const COMMERCIAL = /^(1|true|yes)$/i.test(process.env.SOMA_COMMERCIAL ?? '')
 
@@ -27,8 +25,7 @@ function excludeDevDatasets(): Plugin {
       outDir = resolve(config.root, config.build.outDir)
     },
     async closeBundle() {
-      for (const name of DEV_DATASETS) await rm(resolve(outDir, 'anatomy', name), { recursive: true, force: true })
-      if (COMMERCIAL) await rm(resolve(outDir, 'voice', 'vivae-pain'), { recursive: true, force: true })
+      for (const dir of buildRemovals(COMMERCIAL)) await rm(resolve(outDir, ...dir.split('/')), { recursive: true, force: true })
     },
   }
 }

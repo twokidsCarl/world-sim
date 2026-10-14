@@ -15,7 +15,7 @@ import { DISCLAIMER } from '../painmodel/index.ts'
 import { replayStimulus } from '../pain/stim.ts'
 import { KINDS, kindSpec } from '../pain/stimulus.ts'
 import { STIM_CAVEATS } from './StimulusPanel.tsx'
-import { enableSaySound, loadDemoClip, loadDemoPacks, playSay, type DemoClip } from '../face/say.ts'
+import { enableSaySound, loadDemoClip, loadDemoPacks, playSay, setSayMode, type DemoClip } from '../face/say.ts'
 import { EXPRESSION_STATEMENT, SAY_STATEMENT, VISEME_STATEMENT } from '../face/statements.ts'
 import { PAIN_STATEMENT, VoiceAttribution } from './PainPanel.tsx'
 import { ShapeSlider } from './ShapeControls.tsx'
@@ -221,7 +221,7 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
               className="tool-btn embed-say"
               value={say.source === 'demo' && say.clip ? say.clip : ''}
               aria-label="示范句子 / demo sentence"
-              title="换一句示范句子（机器合成的声音，带音素时间线）/ another demo sentence (machine-synthesized audio with a phoneme timeline)"
+              title="换一句示范句子（机器合成的，或 LibriSpeech 的真人朗读，都带音素时间线）/ another demo sentence (machine-synthesized, or real read speech from LibriSpeech, each with a phoneme timeline)"
               onChange={(e) => {
                 const id = e.target.value
                 if (id) void loadDemoClip(id).then((ok) => ok && playSay({ sound: true }))
@@ -230,10 +230,22 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
               {!(say.source === 'demo' && say.clip) && <option value="">示范句子 Demo sentence</option>}
               {demoClips.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.id} · {c.text}
+                  {c.recording ? `真人 real · ${c.recording.sex === 'female' ? '女 F' : c.recording.sex === 'male' ? '男 M' : ''}` : c.id} · {c.text}
                 </option>
               ))}
             </select>
+            {/* 口形由什么带动：同一段声音，按音素（准确）或按音频分析（近似）/ what drives the mouth: the same audio by phoneme (accurate) or by audio analysis (approximate) */}
+            {(['phonemes', 'audio'] as const).map((mode) => (
+              <button
+                key={mode}
+                className={`tool-btn${say.mode === mode ? ' on' : ''}`}
+                aria-pressed={say.mode === mode}
+                onClick={() => setSayMode(mode)}
+                title={mode === 'phonemes' ? '按音素时间线：每个音一个口形，双唇音一定合上 / by the phoneme timeline: one shape per sound, bilabials always close' : '对同一段声音做分析：只有开口度可靠 / by analysing the same audio: only the opening is reliable'}
+              >
+                {mode === 'phonemes' ? '按音素' : '按音频'} <span className="en">{mode === 'phonemes' ? 'By phoneme' : 'By audio'}</span>
+              </button>
+            ))}
             <button
               className={`tool-btn${say.status === 'playing' && say.sound ? ' on' : ''}`}
               disabled={say.status !== 'ready' && say.status !== 'playing'}
@@ -265,7 +277,13 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
             {say.status === 'loading' && <span className="embed-note">加载声音… Loading…</span>}
             {say.status === 'error' && <span className="embed-note">{say.message}</span>}
             {say.status === 'playing' && !say.sound && <span className="embed-note">无声播放中，点“声音” playing silently — press Sound</span>}
-            {say.status === 'playing' && say.sound && <span className="embed-note">机器合成的声音 machine-synthesized audio</span>}
+            {say.status === 'playing' && say.sound && !say.recording && <span className="embed-note">机器合成的声音 machine-synthesized audio</span>}
+            {/* 真人录音的署名（CC BY 4.0）一直显示 / the credit of a recording (CC BY 4.0) is always shown */}
+            {say.recording && (say.status === 'ready' || say.status === 'playing') && (
+              <span className="embed-note" title={`${say.recording.corpus} ${say.recording.utterance} · ${say.recording.book}`}>
+                真人朗读 · {say.recording.corpus} 说话人 {say.recording.speaker} · CC BY 4.0 · 时间线为自动对齐 <span className="en">real read speech · speaker {say.recording.speaker} · timeline automatically aligned</span>
+              </span>
+            )}
           </>
         )}
         {stimCard && (

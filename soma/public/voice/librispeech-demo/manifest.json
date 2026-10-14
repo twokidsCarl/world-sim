@@ -1,0 +1,5448 @@
+{
+ "_doc": {
+  "zh": "真人朗读的示例片段：LibriSpeech dev-clean 里的 10 句（男女各 5 位说话人，每人一句），24 kHz、单声道、16 位，带音素时间线（格式与 /api/tts 和 tts-demo 相同）。时间线来自 Montreal Forced Aligner 的自动对齐（Lugosch 2019），不是人工标注。text 是 LibriSpeech 的转写（大写改成句首大写，没有标点）。source.offsetS 是剪掉开头静音的秒数。coverage 是每段里双唇音（P B M）、唇齿音（F V）、圆唇音（UW OW W）和开口元音（AA AE AO）的个数。benchmark 和各段的 bench 由 bun tools/voice/librispeech-demo.ts bench 写入：两种带动方式（按音素、按音频分析）的下颌角相关和双唇音处的唇间隙。",
+  "en": "Real read-speech example clips: 10 utterances from LibriSpeech dev-clean (5 female and 5 male speakers, one each), 24 kHz, mono, 16-bit, with a phoneme timeline (the format of /api/tts and tts-demo). The timelines come from automatic Montreal Forced Aligner alignments (Lugosch 2019), not hand labels. `text` is the LibriSpeech transcript (upper case turned into sentence case, no punctuation). source.offsetS is the leading silence trimmed off, in seconds. `coverage` counts the bilabials (P B M), labiodentals (F V), rounded sounds (UW OW W) and open vowels (AA AE AO) in each clip. `benchmark` and each clip's `bench` are written by bun tools/voice/librispeech-demo.ts bench: the jaw-angle correlation of the two drive modes (by phoneme, by audio analysis) and the lip gap at bilabials."
+ },
+ "generatedBy": {
+  "command": "bun tools/voice/librispeech-demo.ts fetch && bun tools/voice/librispeech-demo.ts build && bun tools/voice/librispeech-demo.ts bench"
+ },
+ "licence": "CC BY 4.0 — LibriSpeech (Panayotov, Chen, Povey & Khudanpur 2015; recordings from LibriVox, public domain) and LibriSpeech Alignments (Lugosch 2019, automatic MFA alignments); see LICENSE and ATTRIBUTION.md",
+ "selection": {
+  "subset": "dev-clean",
+  "durationS": [
+   3,
+   4.5
+  ],
+  "perSex": 5,
+  "required": {
+   "bilabial": [
+    "P",
+    "B",
+    "M"
+   ],
+   "labiodental": [
+    "F",
+    "V"
+   ],
+   "rounded": [
+    "UW",
+    "OW",
+    "W"
+   ],
+   "open": [
+    "AA",
+    "AE",
+    "AO"
+   ]
+  },
+  "rules": {
+   "zh": "每段至少各有一个双唇音、唇齿音、圆唇音和开口元音；没有 spn 和 <unk>；对齐的词与转写一致；没有长于 0.4 秒的非停顿音；剪掉首尾静音（各留 0.25 秒）后 3–4.5 秒；排除含暴力、宗教等词的句子；每位说话人最多一句；按双唇音和唇齿音的个数排序。",
+   "en": "Every clip has at least one bilabial, labiodental, rounded sound and open vowel; no spn or <unk>; the aligned words match the transcript; no non-pause phone longer than 0.4 s; 3–4.5 s after trimming silence at both ends (0.25 s kept); sentences with words of violence, religion and the like are left out; one sentence per speaker at most; ranked by the number of bilabials and labiodentals."
+  }
+ },
+ "benchmark": {
+  "method": {
+   "zh": "由 bun tools/voice/librispeech-demo.ts bench 写入（见 tools/voice/librispeech-bench.ts）。男性人体；按音素用说话的缺省风格\"正常\"。jawR：两种方式下颌角（每秒 100 帧）的 Pearson 相关，全部帧；jawRSpeech：只算说话的帧；bestLagMs / jawRBestLag：±150 ms 内相关最大的时滞（正值 = 按音频的晚）和那时的相关。唇间隙：每个双唇音（P B M）中点那一帧，blendFace 合成后上下唇缘在中间 60% 上的最大竖直距离（毫米，CPU 参考实现），≤ 0.3 mm 算合上。时间线是自动对齐，不是人工标注。",
+   "en": "Written by bun tools/voice/librispeech-demo.ts bench (see tools/voice/librispeech-bench.ts). Male body; by phoneme uses speech's default style, \"normal\". jawR: Pearson correlation of the jaw angle of the two modes (100 frames a second) over all frames; jawRSpeech: over speech frames only; bestLagMs / jawRBestLag: the lag within ±150 ms with the highest correlation (positive = the audio route is later) and that correlation. Lip gap: at the middle frame of every bilabial (P B M), the largest vertical distance between the upper and lower lip margins over the middle 60 % after blendFace (mm, CPU reference); ≤ 0.3 mm counts as sealed. The timelines are automatic alignments, not hand labels."
+  },
+  "body": "male",
+  "style": "normal",
+  "clips": 10,
+  "jawR": {
+   "mean": 0.463,
+   "min": 0.316,
+   "max": 0.628
+  },
+  "jawRSpeech": {
+   "mean": 0.288,
+   "min": 0.035,
+   "max": 0.605
+  },
+  "jawRBestLag": {
+   "mean": 0.525,
+   "lagMsMedian": 60
+  },
+  "bilabials": {
+   "n": 41,
+   "sealed": {
+    "phone": 41,
+    "audio": 3
+   },
+   "gapMm": {
+    "phone": {
+     "median": 0.081,
+     "max": 0.112
+    },
+    "audio": {
+     "median": 3.22,
+     "max": 13.872
+    }
+   }
+  }
+ },
+ "clips": [
+  {
+   "file": "ls-1272-135031-0020.wav",
+   "lang": "en",
+   "voice": "LibriSpeech 1272",
+   "text": "I don't believe Ann knew any magic or she'd have worked it before",
+   "sampleRate": 24000,
+   "durationS": 4.27,
+   "bytes": 205004,
+   "sha256": "a1976f41b7e1568e5148124e3cc3aad0529f357d104f393a28ef5e5238fe39d9",
+   "source": {
+    "corpus": "LibriSpeech",
+    "subset": "dev-clean",
+    "speaker": "1272",
+    "sex": "male",
+    "chapter": "135031",
+    "utterance": "1272-135031-0020",
+    "transcript": "I DON'T BELIEVE ANN KNEW ANY MAGIC OR SHE'D HAVE WORKED IT BEFORE",
+    "book": "Tik-Tok of Oz",
+    "gutenbergId": "956",
+    "offsetS": 0.23,
+    "alignment": "Montreal Forced Aligner (Lugosch 2019, Zenodo 2619474); automatic, not hand-checked"
+   },
+   "coverage": {
+    "bilabial": 3,
+    "labiodental": 3,
+    "rounded": 3,
+    "open": 4
+   },
+   "phonemes": [
+    {
+     "t0": 0,
+     "t1": 0.25,
+     "phone": "sil",
+     "symbol": "sil",
+     "word": null
+    },
+    {
+     "t0": 0.25,
+     "t1": 0.34,
+     "phone": "AY",
+     "symbol": "AY1",
+     "word": 0,
+     "stress": 1
+    },
+    {
+     "t0": 0.34,
+     "t1": 0.4,
+     "phone": "D",
+     "symbol": "D",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.4,
+     "t1": 0.44,
+     "phone": "OW",
+     "symbol": "OW1",
+     "word": 1,
+     "stress": 1
+    },
+    {
+     "t0": 0.44,
+     "t1": 0.53,
+     "phone": "N",
+     "symbol": "N",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.53,
+     "t1": 0.57,
+     "phone": "B",
+     "symbol": "B",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.57,
+     "t1": 0.61,
+     "phone": "IH",
+     "symbol": "IH0",
+     "word": 2,
+     "stress": 0
+    },
+    {
+     "t0": 0.61,
+     "t1": 0.73,
+     "phone": "L",
+     "symbol": "L",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.73,
+     "t1": 0.87,
+     "phone": "IY",
+     "symbol": "IY1",
+     "word": 2,
+     "stress": 1
+    },
+    {
+     "t0": 0.87,
+     "t1": 0.95,
+     "phone": "V",
+     "symbol": "V",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.95,
+     "t1": 1.25,
+     "phone": "AE",
+     "symbol": "AE1",
+     "word": 3,
+     "stress": 1
+    },
+    {
+     "t0": 1.25,
+     "t1": 1.32,
+     "phone": "N",
+     "symbol": "N",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 1.32,
+     "t1": 1.44,
+     "phone": "N",
+     "symbol": "N",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.44,
+     "t1": 1.64,
+     "phone": "UW",
+     "symbol": "UW1",
+     "word": 4,
+     "stress": 1
+    },
+    {
+     "t0": 1.64,
+     "t1": 1.71,
+     "phone": "EH",
+     "symbol": "EH1",
+     "word": 5,
+     "stress": 1
+    },
+    {
+     "t0": 1.71,
+     "t1": 1.79,
+     "phone": "N",
+     "symbol": "N",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.79,
+     "t1": 1.87,
+     "phone": "IY",
+     "symbol": "IY0",
+     "word": 5,
+     "stress": 0
+    },
+    {
+     "t0": 1.87,
+     "t1": 1.99,
+     "phone": "M",
+     "symbol": "M",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 1.99,
+     "t1": 2.12,
+     "phone": "AE",
+     "symbol": "AE1",
+     "word": 6,
+     "stress": 1
+    },
+    {
+     "t0": 2.12,
+     "t1": 2.23,
+     "phone": "JH",
+     "symbol": "JH",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 2.23,
+     "t1": 2.34,
+     "phone": "IH",
+     "symbol": "IH0",
+     "word": 6,
+     "stress": 0
+    },
+    {
+     "t0": 2.34,
+     "t1": 2.5,
+     "phone": "K",
+     "symbol": "K",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 2.5,
+     "t1": 2.59,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    },
+    {
+     "t0": 2.59,
+     "t1": 2.72,
+     "phone": "ER",
+     "symbol": "ER0",
+     "word": 7,
+     "stress": 0
+    },
+    {
+     "t0": 2.72,
+     "t1": 2.84,
+     "phone": "SH",
+     "symbol": "SH",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.84,
+     "t1": 2.89,
+     "phone": "IY",
+     "symbol": "IY1",
+     "word": 8,
+     "stress": 1
+    },
+    {
+     "t0": 2.89,
+     "t1": 2.93,
+     "phone": "D",
+     "symbol": "D",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.93,
+     "t1": 2.96,
+     "phone": "HH",
+     "symbol": "HH",
+     "word": 9,
+     "stress": null
+    },
+    {
+     "t0": 2.96,
+     "t1": 3.01,
+     "phone": "AE",
+     "symbol": "AE1",
+     "word": 9,
+     "stress": 1
+    },
+    {
+     "t0": 3.01,
+     "t1": 3.1,
+     "phone": "V",
+     "symbol": "V",
+     "word": 9,
+     "stress": null
+    },
+    {
+     "t0": 3.1,
+     "t1": 3.16,
+     "phone": "W",
+     "symbol": "W",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 3.16,
+     "t1": 3.23,
+     "phone": "ER",
+     "symbol": "ER1",
+     "word": 10,
+     "stress": 1
+    },
+    {
+     "t0": 3.23,
+     "t1": 3.26,
+     "phone": "K",
+     "symbol": "K",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 3.26,
+     "t1": 3.31,
+     "phone": "T",
+     "symbol": "T",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 3.31,
+     "t1": 3.34,
+     "phone": "IH",
+     "symbol": "IH0",
+     "word": 11,
+     "stress": 0
+    },
+    {
+     "t0": 3.34,
+     "t1": 3.39,
+     "phone": "T",
+     "symbol": "T",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 3.39,
+     "t1": 3.44,
+     "phone": "B",
+     "symbol": "B",
+     "word": 12,
+     "stress": null
+    },
+    {
+     "t0": 3.44,
+     "t1": 3.52,
+     "phone": "IH",
+     "symbol": "IH0",
+     "word": 12,
+     "stress": 0
+    },
+    {
+     "t0": 3.52,
+     "t1": 3.64,
+     "phone": "F",
+     "symbol": "F",
+     "word": 12,
+     "stress": null
+    },
+    {
+     "t0": 3.64,
+     "t1": 3.77,
+     "phone": "AO",
+     "symbol": "AO1",
+     "word": 12,
+     "stress": 1
+    },
+    {
+     "t0": 3.77,
+     "t1": 4.02,
+     "phone": "R",
+     "symbol": "R",
+     "word": 12,
+     "stress": null
+    },
+    {
+     "t0": 4.02,
+     "t1": 4.27,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    }
+   ],
+   "words": [
+    {
+     "t0": 0.25,
+     "t1": 0.34,
+     "text": "I"
+    },
+    {
+     "t0": 0.34,
+     "t1": 0.53,
+     "text": "don't"
+    },
+    {
+     "t0": 0.53,
+     "t1": 0.95,
+     "text": "believe"
+    },
+    {
+     "t0": 0.95,
+     "t1": 1.32,
+     "text": "Ann"
+    },
+    {
+     "t0": 1.32,
+     "t1": 1.64,
+     "text": "knew"
+    },
+    {
+     "t0": 1.64,
+     "t1": 1.87,
+     "text": "any"
+    },
+    {
+     "t0": 1.87,
+     "t1": 2.5,
+     "text": "magic"
+    },
+    {
+     "t0": 2.59,
+     "t1": 2.72,
+     "text": "or"
+    },
+    {
+     "t0": 2.72,
+     "t1": 2.93,
+     "text": "she'd"
+    },
+    {
+     "t0": 2.93,
+     "t1": 3.1,
+     "text": "have"
+    },
+    {
+     "t0": 3.1,
+     "t1": 3.31,
+     "text": "worked"
+    },
+    {
+     "t0": 3.31,
+     "t1": 3.39,
+     "text": "it"
+    },
+    {
+     "t0": 3.39,
+     "t1": 4.02,
+     "text": "before"
+    }
+   ],
+   "bench": {
+    "frames": 426,
+    "jawR": 0.396,
+    "jawRSpeech": 0.291,
+    "bestLagMs": 80,
+    "jawRBestLag": 0.495,
+    "jawMeanDeg": {
+     "phone": 1.81,
+     "audio": 2.528
+    },
+    "bilabials": [
+     {
+      "phone": "B",
+      "t": 0.55,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.044,
+       "audio": 6.964
+      }
+     },
+     {
+      "phone": "M",
+      "t": 1.93,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.098,
+       "audio": 1.894
+      }
+     },
+     {
+      "phone": "B",
+      "t": 3.415,
+      "closure": {
+       "phone": 1,
+       "audio": 0.118
+      },
+      "gapMm": {
+       "phone": 0.067,
+       "audio": 0.574
+      }
+     }
+    ],
+    "sealed": {
+     "phone": 3,
+     "audio": 0,
+     "of": 3
+    }
+   }
+  },
+  {
+   "file": "ls-2035-147961-0020.wav",
+   "lang": "en",
+   "voice": "LibriSpeech 2035",
+   "text": "A black drove came up over the hill behind the wedding party",
+   "sampleRate": 24000,
+   "durationS": 3.55,
+   "bytes": 170444,
+   "sha256": "f1d7e1b7fe26b9c937cc124bffdc345c31c769e91ba6a8b34ee7638645b96ac6",
+   "source": {
+    "corpus": "LibriSpeech",
+    "subset": "dev-clean",
+    "speaker": "2035",
+    "sex": "female",
+    "chapter": "147961",
+    "utterance": "2035-147961-0020",
+    "transcript": "A BLACK DROVE CAME UP OVER THE HILL BEHIND THE WEDDING PARTY",
+    "book": "My Antonia",
+    "gutenbergId": "19810",
+    "offsetS": 0.02,
+    "alignment": "Montreal Forced Aligner (Lugosch 2019, Zenodo 2619474); automatic, not hand-checked"
+   },
+   "coverage": {
+    "bilabial": 5,
+    "labiodental": 2,
+    "rounded": 3,
+    "open": 2
+   },
+   "phonemes": [
+    {
+     "t0": 0,
+     "t1": 0.25,
+     "phone": "sil",
+     "symbol": "sil",
+     "word": null
+    },
+    {
+     "t0": 0.25,
+     "t1": 0.37,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 0,
+     "stress": 0
+    },
+    {
+     "t0": 0.37,
+     "t1": 0.42,
+     "phone": "B",
+     "symbol": "B",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.42,
+     "t1": 0.5,
+     "phone": "L",
+     "symbol": "L",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.5,
+     "t1": 0.62,
+     "phone": "AE",
+     "symbol": "AE1",
+     "word": 1,
+     "stress": 1
+    },
+    {
+     "t0": 0.62,
+     "t1": 0.72,
+     "phone": "K",
+     "symbol": "K",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.72,
+     "t1": 0.81,
+     "phone": "D",
+     "symbol": "D",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.81,
+     "t1": 0.91,
+     "phone": "R",
+     "symbol": "R",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.91,
+     "t1": 1.04,
+     "phone": "OW",
+     "symbol": "OW1",
+     "word": 2,
+     "stress": 1
+    },
+    {
+     "t0": 1.04,
+     "t1": 1.13,
+     "phone": "V",
+     "symbol": "V",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 1.13,
+     "t1": 1.25,
+     "phone": "K",
+     "symbol": "K",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 1.25,
+     "t1": 1.33,
+     "phone": "EY",
+     "symbol": "EY1",
+     "word": 3,
+     "stress": 1
+    },
+    {
+     "t0": 1.33,
+     "t1": 1.4,
+     "phone": "M",
+     "symbol": "M",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 1.4,
+     "t1": 1.47,
+     "phone": "AH",
+     "symbol": "AH1",
+     "word": 4,
+     "stress": 1
+    },
+    {
+     "t0": 1.47,
+     "t1": 1.55,
+     "phone": "P",
+     "symbol": "P",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.55,
+     "t1": 1.62,
+     "phone": "OW",
+     "symbol": "OW1",
+     "word": 5,
+     "stress": 1
+    },
+    {
+     "t0": 1.62,
+     "t1": 1.68,
+     "phone": "V",
+     "symbol": "V",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.68,
+     "t1": 1.74,
+     "phone": "ER",
+     "symbol": "ER0",
+     "word": 5,
+     "stress": 0
+    },
+    {
+     "t0": 1.74,
+     "t1": 1.79,
+     "phone": "DH",
+     "symbol": "DH",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 1.79,
+     "t1": 1.83,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 6,
+     "stress": 0
+    },
+    {
+     "t0": 1.83,
+     "t1": 1.96,
+     "phone": "HH",
+     "symbol": "HH",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 1.96,
+     "t1": 2.05,
+     "phone": "IH",
+     "symbol": "IH1",
+     "word": 7,
+     "stress": 1
+    },
+    {
+     "t0": 2.05,
+     "t1": 2.17,
+     "phone": "L",
+     "symbol": "L",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 2.17,
+     "t1": 2.2,
+     "phone": "B",
+     "symbol": "B",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.2,
+     "t1": 2.26,
+     "phone": "IH",
+     "symbol": "IH0",
+     "word": 8,
+     "stress": 0
+    },
+    {
+     "t0": 2.26,
+     "t1": 2.35,
+     "phone": "HH",
+     "symbol": "HH",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.35,
+     "t1": 2.45,
+     "phone": "AY",
+     "symbol": "AY1",
+     "word": 8,
+     "stress": 1
+    },
+    {
+     "t0": 2.45,
+     "t1": 2.5,
+     "phone": "N",
+     "symbol": "N",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.5,
+     "t1": 2.53,
+     "phone": "D",
+     "symbol": "D",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.53,
+     "t1": 2.56,
+     "phone": "DH",
+     "symbol": "DH",
+     "word": 9,
+     "stress": null
+    },
+    {
+     "t0": 2.56,
+     "t1": 2.6,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 9,
+     "stress": 0
+    },
+    {
+     "t0": 2.6,
+     "t1": 2.67,
+     "phone": "W",
+     "symbol": "W",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 2.67,
+     "t1": 2.72,
+     "phone": "EH",
+     "symbol": "EH1",
+     "word": 10,
+     "stress": 1
+    },
+    {
+     "t0": 2.72,
+     "t1": 2.75,
+     "phone": "D",
+     "symbol": "D",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 2.75,
+     "t1": 2.8,
+     "phone": "IH",
+     "symbol": "IH0",
+     "word": 10,
+     "stress": 0
+    },
+    {
+     "t0": 2.8,
+     "t1": 2.88,
+     "phone": "NG",
+     "symbol": "NG",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 2.88,
+     "t1": 2.98,
+     "phone": "P",
+     "symbol": "P",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 2.98,
+     "t1": 3.03,
+     "phone": "AA",
+     "symbol": "AA1",
+     "word": 11,
+     "stress": 1
+    },
+    {
+     "t0": 3.03,
+     "t1": 3.1,
+     "phone": "R",
+     "symbol": "R",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 3.1,
+     "t1": 3.13,
+     "phone": "T",
+     "symbol": "T",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 3.13,
+     "t1": 3.3,
+     "phone": "IY",
+     "symbol": "IY0",
+     "word": 11,
+     "stress": 0
+    },
+    {
+     "t0": 3.3,
+     "t1": 3.55,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    }
+   ],
+   "words": [
+    {
+     "t0": 0.25,
+     "t1": 0.37,
+     "text": "A"
+    },
+    {
+     "t0": 0.37,
+     "t1": 0.72,
+     "text": "black"
+    },
+    {
+     "t0": 0.72,
+     "t1": 1.13,
+     "text": "drove"
+    },
+    {
+     "t0": 1.13,
+     "t1": 1.4,
+     "text": "came"
+    },
+    {
+     "t0": 1.4,
+     "t1": 1.55,
+     "text": "up"
+    },
+    {
+     "t0": 1.55,
+     "t1": 1.74,
+     "text": "over"
+    },
+    {
+     "t0": 1.74,
+     "t1": 1.83,
+     "text": "the"
+    },
+    {
+     "t0": 1.83,
+     "t1": 2.17,
+     "text": "hill"
+    },
+    {
+     "t0": 2.17,
+     "t1": 2.53,
+     "text": "behind"
+    },
+    {
+     "t0": 2.53,
+     "t1": 2.6,
+     "text": "the"
+    },
+    {
+     "t0": 2.6,
+     "t1": 2.88,
+     "text": "wedding"
+    },
+    {
+     "t0": 2.88,
+     "t1": 3.3,
+     "text": "party"
+    }
+   ],
+   "bench": {
+    "frames": 355,
+    "jawR": 0.488,
+    "jawRSpeech": 0.275,
+    "bestLagMs": 60,
+    "jawRBestLag": 0.558,
+    "jawMeanDeg": {
+     "phone": 2.051,
+     "audio": 3.155
+    },
+    "bilabials": [
+     {
+      "phone": "B",
+      "t": 0.395,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.104,
+       "audio": 3.538
+      }
+     },
+     {
+      "phone": "M",
+      "t": 1.365,
+      "closure": {
+       "phone": 1,
+       "audio": 0.005
+      },
+      "gapMm": {
+       "phone": 0.098,
+       "audio": 5.201
+      }
+     },
+     {
+      "phone": "P",
+      "t": 1.51,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.053,
+       "audio": 6.434
+      }
+     },
+     {
+      "phone": "B",
+      "t": 2.185,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.086,
+       "audio": 4.705
+      }
+     },
+     {
+      "phone": "P",
+      "t": 2.93,
+      "closure": {
+       "phone": 1,
+       "audio": 0.221
+      },
+      "gapMm": {
+       "phone": 0.101,
+       "audio": 0.801
+      }
+     }
+    ],
+    "sealed": {
+     "phone": 5,
+     "audio": 0,
+     "of": 5
+    }
+   }
+  },
+  {
+   "file": "ls-2277-149897-0031.wav",
+   "lang": "en",
+   "voice": "LibriSpeech 2277",
+   "text": "He troubled over many little details and talked perfunctorily to everybody",
+   "sampleRate": 24000,
+   "durationS": 4.385,
+   "bytes": 210524,
+   "sha256": "1ff6f7d171786148413b2bc3418dc83c1bd88b84dd7b2f48595a6d1f2e290c8a",
+   "source": {
+    "corpus": "LibriSpeech",
+    "subset": "dev-clean",
+    "speaker": "2277",
+    "sex": "female",
+    "chapter": "149897",
+    "utterance": "2277-149897-0031",
+    "transcript": "HE TROUBLED OVER MANY LITTLE DETAILS AND TALKED PERFUNCTORILY TO EVERYBODY",
+    "book": "Sister Carrie",
+    "gutenbergId": "5267",
+    "offsetS": 0.02,
+    "alignment": "Montreal Forced Aligner (Lugosch 2019, Zenodo 2619474); automatic, not hand-checked"
+   },
+   "coverage": {
+    "bilabial": 4,
+    "labiodental": 3,
+    "rounded": 1,
+    "open": 3
+   },
+   "phonemes": [
+    {
+     "t0": 0,
+     "t1": 0.25,
+     "phone": "sil",
+     "symbol": "sil",
+     "word": null
+    },
+    {
+     "t0": 0.25,
+     "t1": 0.32,
+     "phone": "HH",
+     "symbol": "HH",
+     "word": 0,
+     "stress": null
+    },
+    {
+     "t0": 0.32,
+     "t1": 0.38,
+     "phone": "IY",
+     "symbol": "IY1",
+     "word": 0,
+     "stress": 1
+    },
+    {
+     "t0": 0.38,
+     "t1": 0.44,
+     "phone": "T",
+     "symbol": "T",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.44,
+     "t1": 0.48,
+     "phone": "R",
+     "symbol": "R",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.48,
+     "t1": 0.54,
+     "phone": "AH",
+     "symbol": "AH1",
+     "word": 1,
+     "stress": 1
+    },
+    {
+     "t0": 0.54,
+     "t1": 0.59,
+     "phone": "B",
+     "symbol": "B",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.59,
+     "t1": 0.62,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 1,
+     "stress": 0
+    },
+    {
+     "t0": 0.62,
+     "t1": 0.68,
+     "phone": "L",
+     "symbol": "L",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.68,
+     "t1": 0.75,
+     "phone": "D",
+     "symbol": "D",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.75,
+     "t1": 0.83,
+     "phone": "OW",
+     "symbol": "OW1",
+     "word": 2,
+     "stress": 1
+    },
+    {
+     "t0": 0.83,
+     "t1": 0.9,
+     "phone": "V",
+     "symbol": "V",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.9,
+     "t1": 0.96,
+     "phone": "ER",
+     "symbol": "ER0",
+     "word": 2,
+     "stress": 0
+    },
+    {
+     "t0": 0.96,
+     "t1": 1.04,
+     "phone": "M",
+     "symbol": "M",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 1.04,
+     "t1": 1.11,
+     "phone": "EH",
+     "symbol": "EH1",
+     "word": 3,
+     "stress": 1
+    },
+    {
+     "t0": 1.11,
+     "t1": 1.15,
+     "phone": "N",
+     "symbol": "N",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 1.15,
+     "t1": 1.27,
+     "phone": "IY",
+     "symbol": "IY0",
+     "word": 3,
+     "stress": 0
+    },
+    {
+     "t0": 1.27,
+     "t1": 1.32,
+     "phone": "L",
+     "symbol": "L",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.32,
+     "t1": 1.37,
+     "phone": "IH",
+     "symbol": "IH1",
+     "word": 4,
+     "stress": 1
+    },
+    {
+     "t0": 1.37,
+     "t1": 1.4,
+     "phone": "T",
+     "symbol": "T",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.4,
+     "t1": 1.47,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 4,
+     "stress": 0
+    },
+    {
+     "t0": 1.47,
+     "t1": 1.51,
+     "phone": "L",
+     "symbol": "L",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.51,
+     "t1": 1.58,
+     "phone": "D",
+     "symbol": "D",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.58,
+     "t1": 1.66,
+     "phone": "IY",
+     "symbol": "IY1",
+     "word": 5,
+     "stress": 1
+    },
+    {
+     "t0": 1.66,
+     "t1": 1.75,
+     "phone": "T",
+     "symbol": "T",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.75,
+     "t1": 1.9,
+     "phone": "EY",
+     "symbol": "EY0",
+     "word": 5,
+     "stress": 0
+    },
+    {
+     "t0": 1.9,
+     "t1": 1.99,
+     "phone": "L",
+     "symbol": "L",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.99,
+     "t1": 2.06,
+     "phone": "Z",
+     "symbol": "Z",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 2.06,
+     "t1": 2.22,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    },
+    {
+     "t0": 2.22,
+     "t1": 2.31,
+     "phone": "AE",
+     "symbol": "AE1",
+     "word": 6,
+     "stress": 1
+    },
+    {
+     "t0": 2.31,
+     "t1": 2.35,
+     "phone": "N",
+     "symbol": "N",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 2.35,
+     "t1": 2.38,
+     "phone": "D",
+     "symbol": "D",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 2.38,
+     "t1": 2.43,
+     "phone": "T",
+     "symbol": "T",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 2.43,
+     "t1": 2.51,
+     "phone": "AO",
+     "symbol": "AO1",
+     "word": 7,
+     "stress": 1
+    },
+    {
+     "t0": 2.51,
+     "t1": 2.57,
+     "phone": "K",
+     "symbol": "K",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 2.57,
+     "t1": 2.65,
+     "phone": "T",
+     "symbol": "T",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 2.65,
+     "t1": 2.7,
+     "phone": "P",
+     "symbol": "P",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.7,
+     "t1": 2.77,
+     "phone": "ER",
+     "symbol": "ER0",
+     "word": 8,
+     "stress": 0
+    },
+    {
+     "t0": 2.77,
+     "t1": 2.85,
+     "phone": "F",
+     "symbol": "F",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.85,
+     "t1": 2.88,
+     "phone": "AH",
+     "symbol": "AH1",
+     "word": 8,
+     "stress": 1
+    },
+    {
+     "t0": 2.88,
+     "t1": 2.94,
+     "phone": "NG",
+     "symbol": "NG",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.94,
+     "t1": 2.97,
+     "phone": "K",
+     "symbol": "K",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.97,
+     "t1": 3.03,
+     "phone": "T",
+     "symbol": "T",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 3.03,
+     "t1": 3.09,
+     "phone": "R",
+     "symbol": "R",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 3.09,
+     "t1": 3.21,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 8,
+     "stress": 0
+    },
+    {
+     "t0": 3.21,
+     "t1": 3.27,
+     "phone": "L",
+     "symbol": "L",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 3.27,
+     "t1": 3.36,
+     "phone": "IY",
+     "symbol": "IY0",
+     "word": 8,
+     "stress": 0
+    },
+    {
+     "t0": 3.36,
+     "t1": 3.42,
+     "phone": "T",
+     "symbol": "T",
+     "word": 9,
+     "stress": null
+    },
+    {
+     "t0": 3.42,
+     "t1": 3.47,
+     "phone": "IH",
+     "symbol": "IH0",
+     "word": 9,
+     "stress": 0
+    },
+    {
+     "t0": 3.47,
+     "t1": 3.59,
+     "phone": "EH",
+     "symbol": "EH1",
+     "word": 10,
+     "stress": 1
+    },
+    {
+     "t0": 3.59,
+     "t1": 3.63,
+     "phone": "V",
+     "symbol": "V",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 3.63,
+     "t1": 3.67,
+     "phone": "R",
+     "symbol": "R",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 3.67,
+     "t1": 3.72,
+     "phone": "IY",
+     "symbol": "IY0",
+     "word": 10,
+     "stress": 0
+    },
+    {
+     "t0": 3.72,
+     "t1": 3.8,
+     "phone": "B",
+     "symbol": "B",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 3.8,
+     "t1": 3.89,
+     "phone": "AA",
+     "symbol": "AA2",
+     "word": 10,
+     "stress": 2
+    },
+    {
+     "t0": 3.89,
+     "t1": 3.94,
+     "phone": "D",
+     "symbol": "D",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 3.94,
+     "t1": 4.14,
+     "phone": "IY",
+     "symbol": "IY0",
+     "word": 10,
+     "stress": 0
+    },
+    {
+     "t0": 4.14,
+     "t1": 4.385,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    }
+   ],
+   "words": [
+    {
+     "t0": 0.25,
+     "t1": 0.38,
+     "text": "He"
+    },
+    {
+     "t0": 0.38,
+     "t1": 0.75,
+     "text": "troubled"
+    },
+    {
+     "t0": 0.75,
+     "t1": 0.96,
+     "text": "over"
+    },
+    {
+     "t0": 0.96,
+     "t1": 1.27,
+     "text": "many"
+    },
+    {
+     "t0": 1.27,
+     "t1": 1.51,
+     "text": "little"
+    },
+    {
+     "t0": 1.51,
+     "t1": 2.06,
+     "text": "details"
+    },
+    {
+     "t0": 2.22,
+     "t1": 2.38,
+     "text": "and"
+    },
+    {
+     "t0": 2.38,
+     "t1": 2.65,
+     "text": "talked"
+    },
+    {
+     "t0": 2.65,
+     "t1": 3.36,
+     "text": "perfunctorily"
+    },
+    {
+     "t0": 3.36,
+     "t1": 3.47,
+     "text": "to"
+    },
+    {
+     "t0": 3.47,
+     "t1": 4.14,
+     "text": "everybody"
+    }
+   ],
+   "bench": {
+    "frames": 438,
+    "jawR": 0.621,
+    "jawRSpeech": 0.503,
+    "bestLagMs": 50,
+    "jawRBestLag": 0.692,
+    "jawMeanDeg": {
+     "phone": 1.91,
+     "audio": 4.829
+    },
+    "bilabials": [
+     {
+      "phone": "B",
+      "t": 0.565,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.082,
+       "audio": 13.872
+      }
+     },
+     {
+      "phone": "M",
+      "t": 1,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.074,
+       "audio": 8.424
+      }
+     },
+     {
+      "phone": "P",
+      "t": 2.675,
+      "closure": {
+       "phone": 1,
+       "audio": 0.466
+      },
+      "gapMm": {
+       "phone": 0.056,
+       "audio": 0.716
+      }
+     },
+     {
+      "phone": "B",
+      "t": 3.76,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.095,
+       "audio": 6.002
+      }
+     }
+    ],
+    "sealed": {
+     "phone": 4,
+     "audio": 0,
+     "of": 4
+    }
+   }
+  },
+  {
+   "file": "ls-3081-166546-0028.wav",
+   "lang": "en",
+   "voice": "LibriSpeech 3081",
+   "text": "It was one which gave me a small triumph over George",
+   "sampleRate": 24000,
+   "durationS": 3.89,
+   "bytes": 186764,
+   "sha256": "88ffaefa9559206e7f6d4ca1ef1c617fd6975d946f832a33a1c88fe24b69d555",
+   "source": {
+    "corpus": "LibriSpeech",
+    "subset": "dev-clean",
+    "speaker": "3081",
+    "sex": "female",
+    "chapter": "166546",
+    "utterance": "3081-166546-0028",
+    "transcript": "IT WAS ONE WHICH GAVE ME A SMALL TRIUMPH OVER GEORGE",
+    "book": "Initials Only",
+    "gutenbergId": "1857",
+    "offsetS": 0.03,
+    "alignment": "Montreal Forced Aligner (Lugosch 2019, Zenodo 2619474); automatic, not hand-checked"
+   },
+   "coverage": {
+    "bilabial": 3,
+    "labiodental": 3,
+    "rounded": 4,
+    "open": 2
+   },
+   "phonemes": [
+    {
+     "t0": 0,
+     "t1": 0.25,
+     "phone": "sil",
+     "symbol": "sil",
+     "word": null
+    },
+    {
+     "t0": 0.25,
+     "t1": 0.36,
+     "phone": "IH",
+     "symbol": "IH1",
+     "word": 0,
+     "stress": 1
+    },
+    {
+     "t0": 0.36,
+     "t1": 0.47,
+     "phone": "T",
+     "symbol": "T",
+     "word": 0,
+     "stress": null
+    },
+    {
+     "t0": 0.47,
+     "t1": 0.5,
+     "phone": "W",
+     "symbol": "W",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.5,
+     "t1": 0.55,
+     "phone": "AH",
+     "symbol": "AH1",
+     "word": 1,
+     "stress": 1
+    },
+    {
+     "t0": 0.55,
+     "t1": 0.64,
+     "phone": "Z",
+     "symbol": "Z",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.64,
+     "t1": 0.75,
+     "phone": "W",
+     "symbol": "W",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.75,
+     "t1": 0.83,
+     "phone": "AH",
+     "symbol": "AH1",
+     "word": 2,
+     "stress": 1
+    },
+    {
+     "t0": 0.83,
+     "t1": 0.92,
+     "phone": "N",
+     "symbol": "N",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.92,
+     "t1": 0.97,
+     "phone": "W",
+     "symbol": "W",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 0.97,
+     "t1": 1.04,
+     "phone": "IH",
+     "symbol": "IH1",
+     "word": 3,
+     "stress": 1
+    },
+    {
+     "t0": 1.04,
+     "t1": 1.18,
+     "phone": "CH",
+     "symbol": "CH",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 1.18,
+     "t1": 1.28,
+     "phone": "G",
+     "symbol": "G",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.28,
+     "t1": 1.41,
+     "phone": "EY",
+     "symbol": "EY1",
+     "word": 4,
+     "stress": 1
+    },
+    {
+     "t0": 1.41,
+     "t1": 1.49,
+     "phone": "V",
+     "symbol": "V",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.49,
+     "t1": 1.59,
+     "phone": "M",
+     "symbol": "M",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.59,
+     "t1": 1.74,
+     "phone": "IY",
+     "symbol": "IY1",
+     "word": 5,
+     "stress": 1
+    },
+    {
+     "t0": 1.74,
+     "t1": 1.77,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    },
+    {
+     "t0": 1.77,
+     "t1": 1.87,
+     "phone": "EY",
+     "symbol": "EY1",
+     "word": 6,
+     "stress": 1
+    },
+    {
+     "t0": 1.87,
+     "t1": 2,
+     "phone": "S",
+     "symbol": "S",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 2,
+     "t1": 2.1,
+     "phone": "M",
+     "symbol": "M",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 2.1,
+     "t1": 2.13,
+     "phone": "AO",
+     "symbol": "AO1",
+     "word": 7,
+     "stress": 1
+    },
+    {
+     "t0": 2.13,
+     "t1": 2.26,
+     "phone": "L",
+     "symbol": "L",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 2.26,
+     "t1": 2.29,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    },
+    {
+     "t0": 2.29,
+     "t1": 2.4,
+     "phone": "T",
+     "symbol": "T",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.4,
+     "t1": 2.45,
+     "phone": "R",
+     "symbol": "R",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.45,
+     "t1": 2.55,
+     "phone": "AY",
+     "symbol": "AY1",
+     "word": 8,
+     "stress": 1
+    },
+    {
+     "t0": 2.55,
+     "t1": 2.69,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 8,
+     "stress": 0
+    },
+    {
+     "t0": 2.69,
+     "t1": 2.76,
+     "phone": "M",
+     "symbol": "M",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.76,
+     "t1": 2.88,
+     "phone": "F",
+     "symbol": "F",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.88,
+     "t1": 2.94,
+     "phone": "OW",
+     "symbol": "OW1",
+     "word": 9,
+     "stress": 1
+    },
+    {
+     "t0": 2.94,
+     "t1": 3.02,
+     "phone": "V",
+     "symbol": "V",
+     "word": 9,
+     "stress": null
+    },
+    {
+     "t0": 3.02,
+     "t1": 3.09,
+     "phone": "ER",
+     "symbol": "ER0",
+     "word": 9,
+     "stress": 0
+    },
+    {
+     "t0": 3.09,
+     "t1": 3.19,
+     "phone": "JH",
+     "symbol": "JH",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 3.19,
+     "t1": 3.34,
+     "phone": "AO",
+     "symbol": "AO1",
+     "word": 10,
+     "stress": 1
+    },
+    {
+     "t0": 3.34,
+     "t1": 3.41,
+     "phone": "R",
+     "symbol": "R",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 3.41,
+     "t1": 3.64,
+     "phone": "JH",
+     "symbol": "JH",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 3.64,
+     "t1": 3.89,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    }
+   ],
+   "words": [
+    {
+     "t0": 0.25,
+     "t1": 0.47,
+     "text": "It"
+    },
+    {
+     "t0": 0.47,
+     "t1": 0.64,
+     "text": "was"
+    },
+    {
+     "t0": 0.64,
+     "t1": 0.92,
+     "text": "one"
+    },
+    {
+     "t0": 0.92,
+     "t1": 1.18,
+     "text": "which"
+    },
+    {
+     "t0": 1.18,
+     "t1": 1.49,
+     "text": "gave"
+    },
+    {
+     "t0": 1.49,
+     "t1": 1.74,
+     "text": "me"
+    },
+    {
+     "t0": 1.77,
+     "t1": 1.87,
+     "text": "a"
+    },
+    {
+     "t0": 1.87,
+     "t1": 2.26,
+     "text": "small"
+    },
+    {
+     "t0": 2.29,
+     "t1": 2.88,
+     "text": "triumph"
+    },
+    {
+     "t0": 2.88,
+     "t1": 3.09,
+     "text": "over"
+    },
+    {
+     "t0": 3.09,
+     "t1": 3.64,
+     "text": "George"
+    }
+   ],
+   "bench": {
+    "frames": 389,
+    "jawR": 0.426,
+    "jawRSpeech": 0.232,
+    "bestLagMs": 60,
+    "jawRBestLag": 0.489,
+    "jawMeanDeg": {
+     "phone": 1.681,
+     "audio": 2.496
+    },
+    "bilabials": [
+     {
+      "phone": "M",
+      "t": 1.54,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.081,
+       "audio": 8.513
+      }
+     },
+     {
+      "phone": "M",
+      "t": 2.05,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.055,
+       "audio": 2.435
+      }
+     },
+     {
+      "phone": "M",
+      "t": 2.725,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.08,
+       "audio": 4.744
+      }
+     }
+    ],
+    "sealed": {
+     "phone": 3,
+     "audio": 0,
+     "of": 3
+    }
+   }
+  },
+  {
+   "file": "ls-3536-8226-0030.wav",
+   "lang": "en",
+   "voice": "LibriSpeech 3536",
+   "text": "But if you ask me my opinion why in course they've been together somewhere",
+   "sampleRate": 24000,
+   "durationS": 4.05,
+   "bytes": 194444,
+   "sha256": "1b3462d2b49954aa6d9380752b41ac25d454f2b730dadfb652275114929f07b8",
+   "source": {
+    "corpus": "LibriSpeech",
+    "subset": "dev-clean",
+    "speaker": "3536",
+    "sex": "female",
+    "chapter": "8226",
+    "utterance": "3536-8226-0030",
+    "transcript": "BUT IF YOU ASK ME MY OPINION WHY IN COURSE THEY'VE BEEN TOGETHER SOMEWHERE",
+    "book": "He Knew He Was Right",
+    "gutenbergId": "5140",
+    "offsetS": 0,
+    "alignment": "Montreal Forced Aligner (Lugosch 2019, Zenodo 2619474); automatic, not hand-checked"
+   },
+   "coverage": {
+    "bilabial": 6,
+    "labiodental": 2,
+    "rounded": 3,
+    "open": 2
+   },
+   "phonemes": [
+    {
+     "t0": 0,
+     "t1": 0.22,
+     "phone": "sil",
+     "symbol": "sil",
+     "word": null
+    },
+    {
+     "t0": 0.22,
+     "t1": 0.27,
+     "phone": "B",
+     "symbol": "B",
+     "word": 0,
+     "stress": null
+    },
+    {
+     "t0": 0.27,
+     "t1": 0.31,
+     "phone": "AH",
+     "symbol": "AH1",
+     "word": 0,
+     "stress": 1
+    },
+    {
+     "t0": 0.31,
+     "t1": 0.34,
+     "phone": "T",
+     "symbol": "T",
+     "word": 0,
+     "stress": null
+    },
+    {
+     "t0": 0.34,
+     "t1": 0.39,
+     "phone": "IH",
+     "symbol": "IH1",
+     "word": 1,
+     "stress": 1
+    },
+    {
+     "t0": 0.39,
+     "t1": 0.44,
+     "phone": "F",
+     "symbol": "F",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.44,
+     "t1": 0.49,
+     "phone": "Y",
+     "symbol": "Y",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.49,
+     "t1": 0.57,
+     "phone": "UW",
+     "symbol": "UW1",
+     "word": 2,
+     "stress": 1
+    },
+    {
+     "t0": 0.57,
+     "t1": 0.71,
+     "phone": "AE",
+     "symbol": "AE1",
+     "word": 3,
+     "stress": 1
+    },
+    {
+     "t0": 0.71,
+     "t1": 0.79,
+     "phone": "S",
+     "symbol": "S",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 0.79,
+     "t1": 0.84,
+     "phone": "K",
+     "symbol": "K",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 0.84,
+     "t1": 0.9,
+     "phone": "M",
+     "symbol": "M",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 0.9,
+     "t1": 0.98,
+     "phone": "IY",
+     "symbol": "IY1",
+     "word": 4,
+     "stress": 1
+    },
+    {
+     "t0": 0.98,
+     "t1": 1.06,
+     "phone": "M",
+     "symbol": "M",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.06,
+     "t1": 1.22,
+     "phone": "AY",
+     "symbol": "AY1",
+     "word": 5,
+     "stress": 1
+    },
+    {
+     "t0": 1.22,
+     "t1": 1.27,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 6,
+     "stress": 0
+    },
+    {
+     "t0": 1.27,
+     "t1": 1.36,
+     "phone": "P",
+     "symbol": "P",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 1.36,
+     "t1": 1.42,
+     "phone": "IH",
+     "symbol": "IH1",
+     "word": 6,
+     "stress": 1
+    },
+    {
+     "t0": 1.42,
+     "t1": 1.52,
+     "phone": "N",
+     "symbol": "N",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 1.52,
+     "t1": 1.61,
+     "phone": "Y",
+     "symbol": "Y",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 1.61,
+     "t1": 1.64,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 6,
+     "stress": 0
+    },
+    {
+     "t0": 1.64,
+     "t1": 1.76,
+     "phone": "N",
+     "symbol": "N",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 1.76,
+     "t1": 1.8,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    },
+    {
+     "t0": 1.8,
+     "t1": 1.94,
+     "phone": "HH",
+     "symbol": "HH",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 1.94,
+     "t1": 2.02,
+     "phone": "W",
+     "symbol": "W",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 2.02,
+     "t1": 2.17,
+     "phone": "AY",
+     "symbol": "AY1",
+     "word": 7,
+     "stress": 1
+    },
+    {
+     "t0": 2.17,
+     "t1": 2.21,
+     "phone": "IH",
+     "symbol": "IH1",
+     "word": 8,
+     "stress": 1
+    },
+    {
+     "t0": 2.21,
+     "t1": 2.28,
+     "phone": "N",
+     "symbol": "N",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.28,
+     "t1": 2.36,
+     "phone": "K",
+     "symbol": "K",
+     "word": 9,
+     "stress": null
+    },
+    {
+     "t0": 2.36,
+     "t1": 2.42,
+     "phone": "AO",
+     "symbol": "AO1",
+     "word": 9,
+     "stress": 1
+    },
+    {
+     "t0": 2.42,
+     "t1": 2.53,
+     "phone": "R",
+     "symbol": "R",
+     "word": 9,
+     "stress": null
+    },
+    {
+     "t0": 2.53,
+     "t1": 2.59,
+     "phone": "S",
+     "symbol": "S",
+     "word": 9,
+     "stress": null
+    },
+    {
+     "t0": 2.59,
+     "t1": 2.64,
+     "phone": "DH",
+     "symbol": "DH",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 2.64,
+     "t1": 2.7,
+     "phone": "EY",
+     "symbol": "EY1",
+     "word": 10,
+     "stress": 1
+    },
+    {
+     "t0": 2.7,
+     "t1": 2.76,
+     "phone": "V",
+     "symbol": "V",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 2.76,
+     "t1": 2.79,
+     "phone": "B",
+     "symbol": "B",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 2.79,
+     "t1": 2.83,
+     "phone": "IH",
+     "symbol": "IH1",
+     "word": 11,
+     "stress": 1
+    },
+    {
+     "t0": 2.83,
+     "t1": 2.88,
+     "phone": "N",
+     "symbol": "N",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 2.88,
+     "t1": 2.94,
+     "phone": "T",
+     "symbol": "T",
+     "word": 12,
+     "stress": null
+    },
+    {
+     "t0": 2.94,
+     "t1": 2.99,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 12,
+     "stress": 0
+    },
+    {
+     "t0": 2.99,
+     "t1": 3.05,
+     "phone": "G",
+     "symbol": "G",
+     "word": 12,
+     "stress": null
+    },
+    {
+     "t0": 3.05,
+     "t1": 3.15,
+     "phone": "EH",
+     "symbol": "EH1",
+     "word": 12,
+     "stress": 1
+    },
+    {
+     "t0": 3.15,
+     "t1": 3.21,
+     "phone": "DH",
+     "symbol": "DH",
+     "word": 12,
+     "stress": null
+    },
+    {
+     "t0": 3.21,
+     "t1": 3.3,
+     "phone": "ER",
+     "symbol": "ER0",
+     "word": 12,
+     "stress": 0
+    },
+    {
+     "t0": 3.3,
+     "t1": 3.42,
+     "phone": "S",
+     "symbol": "S",
+     "word": 13,
+     "stress": null
+    },
+    {
+     "t0": 3.42,
+     "t1": 3.49,
+     "phone": "AH",
+     "symbol": "AH1",
+     "word": 13,
+     "stress": 1
+    },
+    {
+     "t0": 3.49,
+     "t1": 3.55,
+     "phone": "M",
+     "symbol": "M",
+     "word": 13,
+     "stress": null
+    },
+    {
+     "t0": 3.55,
+     "t1": 3.61,
+     "phone": "W",
+     "symbol": "W",
+     "word": 13,
+     "stress": null
+    },
+    {
+     "t0": 3.61,
+     "t1": 3.74,
+     "phone": "EH",
+     "symbol": "EH2",
+     "word": 13,
+     "stress": 2
+    },
+    {
+     "t0": 3.74,
+     "t1": 3.9,
+     "phone": "R",
+     "symbol": "R",
+     "word": 13,
+     "stress": null
+    },
+    {
+     "t0": 3.9,
+     "t1": 4.05,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    }
+   ],
+   "words": [
+    {
+     "t0": 0.22,
+     "t1": 0.34,
+     "text": "But"
+    },
+    {
+     "t0": 0.34,
+     "t1": 0.44,
+     "text": "if"
+    },
+    {
+     "t0": 0.44,
+     "t1": 0.57,
+     "text": "you"
+    },
+    {
+     "t0": 0.57,
+     "t1": 0.84,
+     "text": "ask"
+    },
+    {
+     "t0": 0.84,
+     "t1": 0.98,
+     "text": "me"
+    },
+    {
+     "t0": 0.98,
+     "t1": 1.22,
+     "text": "my"
+    },
+    {
+     "t0": 1.22,
+     "t1": 1.76,
+     "text": "opinion"
+    },
+    {
+     "t0": 1.8,
+     "t1": 2.17,
+     "text": "why"
+    },
+    {
+     "t0": 2.17,
+     "t1": 2.28,
+     "text": "in"
+    },
+    {
+     "t0": 2.28,
+     "t1": 2.59,
+     "text": "course"
+    },
+    {
+     "t0": 2.59,
+     "t1": 2.76,
+     "text": "they've"
+    },
+    {
+     "t0": 2.76,
+     "t1": 2.88,
+     "text": "been"
+    },
+    {
+     "t0": 2.88,
+     "t1": 3.3,
+     "text": "together"
+    },
+    {
+     "t0": 3.3,
+     "t1": 3.9,
+     "text": "somewhere"
+    }
+   ],
+   "bench": {
+    "frames": 405,
+    "jawR": 0.316,
+    "jawRSpeech": 0.183,
+    "bestLagMs": 60,
+    "jawRBestLag": 0.42,
+    "jawMeanDeg": {
+     "phone": 1.936,
+     "audio": 2.611
+    },
+    "bilabials": [
+     {
+      "phone": "B",
+      "t": 0.245,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.109,
+       "audio": 0
+      }
+     },
+     {
+      "phone": "M",
+      "t": 0.87,
+      "closure": {
+       "phone": 1,
+       "audio": 0.146
+      },
+      "gapMm": {
+       "phone": 0.08,
+       "audio": 3.518
+      }
+     },
+     {
+      "phone": "M",
+      "t": 1.02,
+      "closure": {
+       "phone": 1,
+       "audio": 0.534
+      },
+      "gapMm": {
+       "phone": 0.1,
+       "audio": 0.877
+      }
+     },
+     {
+      "phone": "P",
+      "t": 1.315,
+      "closure": {
+       "phone": 1,
+       "audio": 0.178
+      },
+      "gapMm": {
+       "phone": 0.095,
+       "audio": 6.295
+      }
+     },
+     {
+      "phone": "B",
+      "t": 2.775,
+      "closure": {
+       "phone": 1,
+       "audio": 0.009
+      },
+      "gapMm": {
+       "phone": 0.075,
+       "audio": 1.366
+      }
+     },
+     {
+      "phone": "M",
+      "t": 3.52,
+      "closure": {
+       "phone": 1,
+       "audio": 0.061
+      },
+      "gapMm": {
+       "phone": 0.054,
+       "audio": 6.76
+      }
+     }
+    ],
+    "sealed": {
+     "phone": 6,
+     "audio": 1,
+     "of": 6
+    }
+   }
+  },
+  {
+   "file": "ls-3752-4944-0051.wav",
+   "lang": "en",
+   "voice": "LibriSpeech 3752",
+   "text": "This of course was mere bravado on the part of the commandant",
+   "sampleRate": 24000,
+   "durationS": 3.345,
+   "bytes": 160604,
+   "sha256": "d147c74872c7ea82a483af67bf9b7e3953d5b565603780bb5f24e838e5260079",
+   "source": {
+    "corpus": "LibriSpeech",
+    "subset": "dev-clean",
+    "speaker": "3752",
+    "sex": "male",
+    "chapter": "4944",
+    "utterance": "3752-4944-0051",
+    "transcript": "THIS OF COURSE WAS MERE BRAVADO ON THE PART OF THE COMMANDANT",
+    "book": "For the Term of His Natural Life",
+    "gutenbergId": "3424",
+    "offsetS": 0.19,
+    "alignment": "Montreal Forced Aligner (Lugosch 2019, Zenodo 2619474); automatic, not hand-checked"
+   },
+   "coverage": {
+    "bilabial": 4,
+    "labiodental": 3,
+    "rounded": 2,
+    "open": 6
+   },
+   "phonemes": [
+    {
+     "t0": 0,
+     "t1": 0.25,
+     "phone": "sil",
+     "symbol": "sil",
+     "word": null
+    },
+    {
+     "t0": 0.25,
+     "t1": 0.32,
+     "phone": "DH",
+     "symbol": "DH",
+     "word": 0,
+     "stress": null
+    },
+    {
+     "t0": 0.32,
+     "t1": 0.38,
+     "phone": "IH",
+     "symbol": "IH0",
+     "word": 0,
+     "stress": 0
+    },
+    {
+     "t0": 0.38,
+     "t1": 0.47,
+     "phone": "S",
+     "symbol": "S",
+     "word": 0,
+     "stress": null
+    },
+    {
+     "t0": 0.47,
+     "t1": 0.5,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 1,
+     "stress": 0
+    },
+    {
+     "t0": 0.5,
+     "t1": 0.58,
+     "phone": "V",
+     "symbol": "V",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.58,
+     "t1": 0.67,
+     "phone": "K",
+     "symbol": "K",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.67,
+     "t1": 0.75,
+     "phone": "AO",
+     "symbol": "AO1",
+     "word": 2,
+     "stress": 1
+    },
+    {
+     "t0": 0.75,
+     "t1": 0.84,
+     "phone": "R",
+     "symbol": "R",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.84,
+     "t1": 0.94,
+     "phone": "S",
+     "symbol": "S",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.94,
+     "t1": 0.99,
+     "phone": "W",
+     "symbol": "W",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 0.99,
+     "t1": 1.03,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 3,
+     "stress": 0
+    },
+    {
+     "t0": 1.03,
+     "t1": 1.09,
+     "phone": "Z",
+     "symbol": "Z",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 1.09,
+     "t1": 1.18,
+     "phone": "M",
+     "symbol": "M",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.18,
+     "t1": 1.24,
+     "phone": "IH",
+     "symbol": "IH1",
+     "word": 4,
+     "stress": 1
+    },
+    {
+     "t0": 1.24,
+     "t1": 1.36,
+     "phone": "R",
+     "symbol": "R",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.36,
+     "t1": 1.44,
+     "phone": "B",
+     "symbol": "B",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.44,
+     "t1": 1.52,
+     "phone": "R",
+     "symbol": "R",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.52,
+     "t1": 1.55,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 5,
+     "stress": 0
+    },
+    {
+     "t0": 1.55,
+     "t1": 1.68,
+     "phone": "V",
+     "symbol": "V",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.68,
+     "t1": 1.81,
+     "phone": "AA",
+     "symbol": "AA1",
+     "word": 5,
+     "stress": 1
+    },
+    {
+     "t0": 1.81,
+     "t1": 1.84,
+     "phone": "D",
+     "symbol": "D",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.84,
+     "t1": 2,
+     "phone": "OW",
+     "symbol": "OW0",
+     "word": 5,
+     "stress": 0
+    },
+    {
+     "t0": 2,
+     "t1": 2.04,
+     "phone": "AA",
+     "symbol": "AA1",
+     "word": 6,
+     "stress": 1
+    },
+    {
+     "t0": 2.04,
+     "t1": 2.07,
+     "phone": "N",
+     "symbol": "N",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 2.07,
+     "t1": 2.11,
+     "phone": "DH",
+     "symbol": "DH",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 2.11,
+     "t1": 2.16,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 7,
+     "stress": 0
+    },
+    {
+     "t0": 2.16,
+     "t1": 2.26,
+     "phone": "P",
+     "symbol": "P",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.26,
+     "t1": 2.32,
+     "phone": "AA",
+     "symbol": "AA1",
+     "word": 8,
+     "stress": 1
+    },
+    {
+     "t0": 2.32,
+     "t1": 2.36,
+     "phone": "R",
+     "symbol": "R",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.36,
+     "t1": 2.39,
+     "phone": "T",
+     "symbol": "T",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.39,
+     "t1": 2.42,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 9,
+     "stress": 0
+    },
+    {
+     "t0": 2.42,
+     "t1": 2.47,
+     "phone": "V",
+     "symbol": "V",
+     "word": 9,
+     "stress": null
+    },
+    {
+     "t0": 2.47,
+     "t1": 2.5,
+     "phone": "DH",
+     "symbol": "DH",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 2.5,
+     "t1": 2.55,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 10,
+     "stress": 0
+    },
+    {
+     "t0": 2.55,
+     "t1": 2.64,
+     "phone": "K",
+     "symbol": "K",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 2.64,
+     "t1": 2.72,
+     "phone": "AA",
+     "symbol": "AA2",
+     "word": 11,
+     "stress": 2
+    },
+    {
+     "t0": 2.72,
+     "t1": 2.78,
+     "phone": "M",
+     "symbol": "M",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 2.78,
+     "t1": 2.81,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 11,
+     "stress": 0
+    },
+    {
+     "t0": 2.81,
+     "t1": 2.85,
+     "phone": "N",
+     "symbol": "N",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 2.85,
+     "t1": 2.91,
+     "phone": "D",
+     "symbol": "D",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 2.91,
+     "t1": 3.06,
+     "phone": "AA",
+     "symbol": "AA1",
+     "word": 11,
+     "stress": 1
+    },
+    {
+     "t0": 3.06,
+     "t1": 3.09,
+     "phone": "N",
+     "symbol": "N",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 3.09,
+     "t1": 3.2,
+     "phone": "T",
+     "symbol": "T",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 3.2,
+     "t1": 3.345,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    }
+   ],
+   "words": [
+    {
+     "t0": 0.25,
+     "t1": 0.47,
+     "text": "This"
+    },
+    {
+     "t0": 0.47,
+     "t1": 0.58,
+     "text": "of"
+    },
+    {
+     "t0": 0.58,
+     "t1": 0.94,
+     "text": "course"
+    },
+    {
+     "t0": 0.94,
+     "t1": 1.09,
+     "text": "was"
+    },
+    {
+     "t0": 1.09,
+     "t1": 1.36,
+     "text": "mere"
+    },
+    {
+     "t0": 1.36,
+     "t1": 2,
+     "text": "bravado"
+    },
+    {
+     "t0": 2,
+     "t1": 2.07,
+     "text": "on"
+    },
+    {
+     "t0": 2.07,
+     "t1": 2.16,
+     "text": "the"
+    },
+    {
+     "t0": 2.16,
+     "t1": 2.39,
+     "text": "part"
+    },
+    {
+     "t0": 2.39,
+     "t1": 2.47,
+     "text": "of"
+    },
+    {
+     "t0": 2.47,
+     "t1": 2.55,
+     "text": "the"
+    },
+    {
+     "t0": 2.55,
+     "t1": 3.2,
+     "text": "commandant"
+    }
+   ],
+   "bench": {
+    "frames": 334,
+    "jawR": 0.613,
+    "jawRSpeech": 0.605,
+    "bestLagMs": 50,
+    "jawRBestLag": 0.662,
+    "jawMeanDeg": {
+     "phone": 2.035,
+     "audio": 3.315
+    },
+    "bilabials": [
+     {
+      "phone": "M",
+      "t": 1.135,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.06,
+       "audio": 1.437
+      }
+     },
+     {
+      "phone": "B",
+      "t": 1.4,
+      "closure": {
+       "phone": 1,
+       "audio": 0.582
+      },
+      "gapMm": {
+       "phone": 0.065,
+       "audio": 0.799
+      }
+     },
+     {
+      "phone": "P",
+      "t": 2.21,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.107,
+       "audio": 3.22
+      }
+     },
+     {
+      "phone": "M",
+      "t": 2.75,
+      "closure": {
+       "phone": 1,
+       "audio": 0.016
+      },
+      "gapMm": {
+       "phone": 0.1,
+       "audio": 12.725
+      }
+     }
+    ],
+    "sealed": {
+     "phone": 4,
+     "audio": 0,
+     "of": 4
+    }
+   }
+  },
+  {
+   "file": "ls-5536-43359-0006.wav",
+   "lang": "en",
+   "voice": "LibriSpeech 5536",
+   "text": "The family was not only the social unit but also the unit of government",
+   "sampleRate": 24000,
+   "durationS": 4.06,
+   "bytes": 194924,
+   "sha256": "304b638e29c514d042b2fe8d2f9361f061115cf1535ad3fcb192c48a41c550a0",
+   "source": {
+    "corpus": "LibriSpeech",
+    "subset": "dev-clean",
+    "speaker": "5536",
+    "sex": "male",
+    "chapter": "43359",
+    "utterance": "5536-43359-0006",
+    "transcript": "THE FAMILY WAS NOT ONLY THE SOCIAL UNIT BUT ALSO THE UNIT OF GOVERNMENT",
+    "book": "The Soul of the Indian",
+    "gutenbergId": "340",
+    "offsetS": 0.28,
+    "alignment": "Montreal Forced Aligner (Lugosch 2019, Zenodo 2619474); automatic, not hand-checked"
+   },
+   "coverage": {
+    "bilabial": 3,
+    "labiodental": 3,
+    "rounded": 6,
+    "open": 3
+   },
+   "phonemes": [
+    {
+     "t0": 0,
+     "t1": 0.25,
+     "phone": "sil",
+     "symbol": "sil",
+     "word": null
+    },
+    {
+     "t0": 0.25,
+     "t1": 0.33,
+     "phone": "DH",
+     "symbol": "DH",
+     "word": 0,
+     "stress": null
+    },
+    {
+     "t0": 0.33,
+     "t1": 0.39,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 0,
+     "stress": 0
+    },
+    {
+     "t0": 0.39,
+     "t1": 0.47,
+     "phone": "F",
+     "symbol": "F",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.47,
+     "t1": 0.57,
+     "phone": "AE",
+     "symbol": "AE1",
+     "word": 1,
+     "stress": 1
+    },
+    {
+     "t0": 0.57,
+     "t1": 0.61,
+     "phone": "M",
+     "symbol": "M",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.61,
+     "t1": 0.68,
+     "phone": "L",
+     "symbol": "L",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.68,
+     "t1": 0.74,
+     "phone": "IY",
+     "symbol": "IY0",
+     "word": 1,
+     "stress": 0
+    },
+    {
+     "t0": 0.74,
+     "t1": 0.84,
+     "phone": "W",
+     "symbol": "W",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.84,
+     "t1": 0.87,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 2,
+     "stress": 0
+    },
+    {
+     "t0": 0.87,
+     "t1": 0.93,
+     "phone": "Z",
+     "symbol": "Z",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.93,
+     "t1": 0.98,
+     "phone": "N",
+     "symbol": "N",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 0.98,
+     "t1": 1.09,
+     "phone": "AA",
+     "symbol": "AA1",
+     "word": 3,
+     "stress": 1
+    },
+    {
+     "t0": 1.09,
+     "t1": 1.14,
+     "phone": "T",
+     "symbol": "T",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 1.14,
+     "t1": 1.23,
+     "phone": "OW",
+     "symbol": "OW1",
+     "word": 4,
+     "stress": 1
+    },
+    {
+     "t0": 1.23,
+     "t1": 1.28,
+     "phone": "N",
+     "symbol": "N",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.28,
+     "t1": 1.36,
+     "phone": "L",
+     "symbol": "L",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.36,
+     "t1": 1.41,
+     "phone": "IY",
+     "symbol": "IY0",
+     "word": 4,
+     "stress": 0
+    },
+    {
+     "t0": 1.41,
+     "t1": 1.47,
+     "phone": "DH",
+     "symbol": "DH",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.47,
+     "t1": 1.54,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 5,
+     "stress": 0
+    },
+    {
+     "t0": 1.54,
+     "t1": 1.64,
+     "phone": "S",
+     "symbol": "S",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 1.64,
+     "t1": 1.72,
+     "phone": "OW",
+     "symbol": "OW1",
+     "word": 6,
+     "stress": 1
+    },
+    {
+     "t0": 1.72,
+     "t1": 1.8,
+     "phone": "SH",
+     "symbol": "SH",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 1.8,
+     "t1": 1.87,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 6,
+     "stress": 0
+    },
+    {
+     "t0": 1.87,
+     "t1": 1.93,
+     "phone": "L",
+     "symbol": "L",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 1.93,
+     "t1": 2.06,
+     "phone": "Y",
+     "symbol": "Y",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 2.06,
+     "t1": 2.14,
+     "phone": "UW",
+     "symbol": "UW1",
+     "word": 7,
+     "stress": 1
+    },
+    {
+     "t0": 2.14,
+     "t1": 2.18,
+     "phone": "N",
+     "symbol": "N",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 2.18,
+     "t1": 2.3,
+     "phone": "IH",
+     "symbol": "IH0",
+     "word": 7,
+     "stress": 0
+    },
+    {
+     "t0": 2.3,
+     "t1": 2.42,
+     "phone": "T",
+     "symbol": "T",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 2.42,
+     "t1": 2.47,
+     "phone": "B",
+     "symbol": "B",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.47,
+     "t1": 2.52,
+     "phone": "AH",
+     "symbol": "AH1",
+     "word": 8,
+     "stress": 1
+    },
+    {
+     "t0": 2.52,
+     "t1": 2.57,
+     "phone": "T",
+     "symbol": "T",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.57,
+     "t1": 2.64,
+     "phone": "AO",
+     "symbol": "AO1",
+     "word": 9,
+     "stress": 1
+    },
+    {
+     "t0": 2.64,
+     "t1": 2.71,
+     "phone": "L",
+     "symbol": "L",
+     "word": 9,
+     "stress": null
+    },
+    {
+     "t0": 2.71,
+     "t1": 2.79,
+     "phone": "S",
+     "symbol": "S",
+     "word": 9,
+     "stress": null
+    },
+    {
+     "t0": 2.79,
+     "t1": 2.86,
+     "phone": "OW",
+     "symbol": "OW0",
+     "word": 9,
+     "stress": 0
+    },
+    {
+     "t0": 2.86,
+     "t1": 2.94,
+     "phone": "DH",
+     "symbol": "DH",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 2.94,
+     "t1": 2.99,
+     "phone": "IY",
+     "symbol": "IY0",
+     "word": 10,
+     "stress": 0
+    },
+    {
+     "t0": 2.99,
+     "t1": 3.07,
+     "phone": "Y",
+     "symbol": "Y",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 3.07,
+     "t1": 3.12,
+     "phone": "UW",
+     "symbol": "UW1",
+     "word": 11,
+     "stress": 1
+    },
+    {
+     "t0": 3.12,
+     "t1": 3.2,
+     "phone": "N",
+     "symbol": "N",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 3.2,
+     "t1": 3.26,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 11,
+     "stress": 0
+    },
+    {
+     "t0": 3.26,
+     "t1": 3.3,
+     "phone": "T",
+     "symbol": "T",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 3.3,
+     "t1": 3.36,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 12,
+     "stress": 0
+    },
+    {
+     "t0": 3.36,
+     "t1": 3.44,
+     "phone": "V",
+     "symbol": "V",
+     "word": 12,
+     "stress": null
+    },
+    {
+     "t0": 3.44,
+     "t1": 3.52,
+     "phone": "G",
+     "symbol": "G",
+     "word": 13,
+     "stress": null
+    },
+    {
+     "t0": 3.52,
+     "t1": 3.59,
+     "phone": "AH",
+     "symbol": "AH1",
+     "word": 13,
+     "stress": 1
+    },
+    {
+     "t0": 3.59,
+     "t1": 3.65,
+     "phone": "V",
+     "symbol": "V",
+     "word": 13,
+     "stress": null
+    },
+    {
+     "t0": 3.65,
+     "t1": 3.69,
+     "phone": "ER",
+     "symbol": "ER0",
+     "word": 13,
+     "stress": 0
+    },
+    {
+     "t0": 3.69,
+     "t1": 3.76,
+     "phone": "M",
+     "symbol": "M",
+     "word": 13,
+     "stress": null
+    },
+    {
+     "t0": 3.76,
+     "t1": 3.81,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 13,
+     "stress": 0
+    },
+    {
+     "t0": 3.81,
+     "t1": 3.87,
+     "phone": "N",
+     "symbol": "N",
+     "word": 13,
+     "stress": null
+    },
+    {
+     "t0": 3.87,
+     "t1": 3.92,
+     "phone": "T",
+     "symbol": "T",
+     "word": 13,
+     "stress": null
+    },
+    {
+     "t0": 3.92,
+     "t1": 4.06,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    }
+   ],
+   "words": [
+    {
+     "t0": 0.25,
+     "t1": 0.39,
+     "text": "The"
+    },
+    {
+     "t0": 0.39,
+     "t1": 0.74,
+     "text": "family"
+    },
+    {
+     "t0": 0.74,
+     "t1": 0.93,
+     "text": "was"
+    },
+    {
+     "t0": 0.93,
+     "t1": 1.14,
+     "text": "not"
+    },
+    {
+     "t0": 1.14,
+     "t1": 1.41,
+     "text": "only"
+    },
+    {
+     "t0": 1.41,
+     "t1": 1.54,
+     "text": "the"
+    },
+    {
+     "t0": 1.54,
+     "t1": 1.93,
+     "text": "social"
+    },
+    {
+     "t0": 1.93,
+     "t1": 2.42,
+     "text": "unit"
+    },
+    {
+     "t0": 2.42,
+     "t1": 2.57,
+     "text": "but"
+    },
+    {
+     "t0": 2.57,
+     "t1": 2.86,
+     "text": "also"
+    },
+    {
+     "t0": 2.86,
+     "t1": 2.99,
+     "text": "the"
+    },
+    {
+     "t0": 2.99,
+     "t1": 3.3,
+     "text": "unit"
+    },
+    {
+     "t0": 3.3,
+     "t1": 3.44,
+     "text": "of"
+    },
+    {
+     "t0": 3.44,
+     "t1": 3.92,
+     "text": "government"
+    }
+   ],
+   "bench": {
+    "frames": 405,
+    "jawR": 0.365,
+    "jawRSpeech": 0.051,
+    "bestLagMs": 70,
+    "jawRBestLag": 0.441,
+    "jawMeanDeg": {
+     "phone": 1.876,
+     "audio": 3.041
+    },
+    "bilabials": [
+     {
+      "phone": "M",
+      "t": 0.59,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.089,
+       "audio": 10.807
+      }
+     },
+     {
+      "phone": "B",
+      "t": 2.445,
+      "closure": {
+       "phone": 1,
+       "audio": 0.487
+      },
+      "gapMm": {
+       "phone": 0.081,
+       "audio": 0.269
+      }
+     },
+     {
+      "phone": "M",
+      "t": 3.725,
+      "closure": {
+       "phone": 1,
+       "audio": 0.003
+      },
+      "gapMm": {
+       "phone": 0.079,
+       "audio": 5.061
+      }
+     }
+    ],
+    "sealed": {
+     "phone": 3,
+     "audio": 1,
+     "of": 3
+    }
+   }
+  },
+  {
+   "file": "ls-6241-61946-0017.wav",
+   "lang": "en",
+   "voice": "LibriSpeech 6241",
+   "text": "To ride over salt water upon the back of a little horse seemed to me absurd",
+   "sampleRate": 24000,
+   "durationS": 4.3,
+   "bytes": 206444,
+   "sha256": "f119cbe556fd1c85e2fae084752831c787c28a0c6dcfbae10575b060e453eed5",
+   "source": {
+    "corpus": "LibriSpeech",
+    "subset": "dev-clean",
+    "speaker": "6241",
+    "sex": "male",
+    "chapter": "61946",
+    "utterance": "6241-61946-0017",
+    "transcript": "TO RIDE OVER SALT WATER UPON THE BACK OF A LITTLE HORSE SEEMED TO ME ABSURD",
+    "book": "A Journey to the Centre of the Earth",
+    "gutenbergId": "18857",
+    "offsetS": 0.13,
+    "alignment": "Montreal Forced Aligner (Lugosch 2019, Zenodo 2619474); automatic, not hand-checked"
+   },
+   "coverage": {
+    "bilabial": 5,
+    "labiodental": 2,
+    "rounded": 2,
+    "open": 5
+   },
+   "phonemes": [
+    {
+     "t0": 0,
+     "t1": 0.25,
+     "phone": "sil",
+     "symbol": "sil",
+     "word": null
+    },
+    {
+     "t0": 0.25,
+     "t1": 0.33,
+     "phone": "T",
+     "symbol": "T",
+     "word": 0,
+     "stress": null
+    },
+    {
+     "t0": 0.33,
+     "t1": 0.38,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 0,
+     "stress": 0
+    },
+    {
+     "t0": 0.38,
+     "t1": 0.45,
+     "phone": "R",
+     "symbol": "R",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.45,
+     "t1": 0.54,
+     "phone": "AY",
+     "symbol": "AY1",
+     "word": 1,
+     "stress": 1
+    },
+    {
+     "t0": 0.54,
+     "t1": 0.58,
+     "phone": "D",
+     "symbol": "D",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.58,
+     "t1": 0.66,
+     "phone": "OW",
+     "symbol": "OW1",
+     "word": 2,
+     "stress": 1
+    },
+    {
+     "t0": 0.66,
+     "t1": 0.7,
+     "phone": "V",
+     "symbol": "V",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.7,
+     "t1": 0.8,
+     "phone": "ER",
+     "symbol": "ER0",
+     "word": 2,
+     "stress": 0
+    },
+    {
+     "t0": 0.8,
+     "t1": 0.93,
+     "phone": "S",
+     "symbol": "S",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 0.93,
+     "t1": 1.01,
+     "phone": "AO",
+     "symbol": "AO1",
+     "word": 3,
+     "stress": 1
+    },
+    {
+     "t0": 1.01,
+     "t1": 1.08,
+     "phone": "L",
+     "symbol": "L",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 1.08,
+     "t1": 1.11,
+     "phone": "T",
+     "symbol": "T",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 1.11,
+     "t1": 1.18,
+     "phone": "W",
+     "symbol": "W",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.18,
+     "t1": 1.26,
+     "phone": "AO",
+     "symbol": "AO1",
+     "word": 4,
+     "stress": 1
+    },
+    {
+     "t0": 1.26,
+     "t1": 1.32,
+     "phone": "T",
+     "symbol": "T",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.32,
+     "t1": 1.39,
+     "phone": "ER",
+     "symbol": "ER0",
+     "word": 4,
+     "stress": 0
+    },
+    {
+     "t0": 1.39,
+     "t1": 1.45,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 5,
+     "stress": 0
+    },
+    {
+     "t0": 1.45,
+     "t1": 1.54,
+     "phone": "P",
+     "symbol": "P",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.54,
+     "t1": 1.63,
+     "phone": "AA",
+     "symbol": "AA1",
+     "word": 5,
+     "stress": 1
+    },
+    {
+     "t0": 1.63,
+     "t1": 1.67,
+     "phone": "N",
+     "symbol": "N",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.67,
+     "t1": 1.7,
+     "phone": "DH",
+     "symbol": "DH",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 1.7,
+     "t1": 1.74,
+     "phone": "AH",
+     "symbol": "AH1",
+     "word": 6,
+     "stress": 1
+    },
+    {
+     "t0": 1.74,
+     "t1": 1.85,
+     "phone": "B",
+     "symbol": "B",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 1.85,
+     "t1": 1.98,
+     "phone": "AE",
+     "symbol": "AE1",
+     "word": 7,
+     "stress": 1
+    },
+    {
+     "t0": 1.98,
+     "t1": 2.04,
+     "phone": "K",
+     "symbol": "K",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 2.04,
+     "t1": 2.09,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 8,
+     "stress": 0
+    },
+    {
+     "t0": 2.09,
+     "t1": 2.13,
+     "phone": "V",
+     "symbol": "V",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.13,
+     "t1": 2.16,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 9,
+     "stress": 0
+    },
+    {
+     "t0": 2.16,
+     "t1": 2.25,
+     "phone": "L",
+     "symbol": "L",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 2.25,
+     "t1": 2.29,
+     "phone": "IH",
+     "symbol": "IH1",
+     "word": 10,
+     "stress": 1
+    },
+    {
+     "t0": 2.29,
+     "t1": 2.32,
+     "phone": "T",
+     "symbol": "T",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 2.32,
+     "t1": 2.35,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 10,
+     "stress": 0
+    },
+    {
+     "t0": 2.35,
+     "t1": 2.42,
+     "phone": "L",
+     "symbol": "L",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 2.42,
+     "t1": 2.55,
+     "phone": "HH",
+     "symbol": "HH",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 2.55,
+     "t1": 2.64,
+     "phone": "AO",
+     "symbol": "AO1",
+     "word": 11,
+     "stress": 1
+    },
+    {
+     "t0": 2.64,
+     "t1": 2.76,
+     "phone": "R",
+     "symbol": "R",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 2.76,
+     "t1": 2.85,
+     "phone": "S",
+     "symbol": "S",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 2.85,
+     "t1": 2.88,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    },
+    {
+     "t0": 2.88,
+     "t1": 3.04,
+     "phone": "S",
+     "symbol": "S",
+     "word": 12,
+     "stress": null
+    },
+    {
+     "t0": 3.04,
+     "t1": 3.11,
+     "phone": "IY",
+     "symbol": "IY1",
+     "word": 12,
+     "stress": 1
+    },
+    {
+     "t0": 3.11,
+     "t1": 3.17,
+     "phone": "M",
+     "symbol": "M",
+     "word": 12,
+     "stress": null
+    },
+    {
+     "t0": 3.17,
+     "t1": 3.22,
+     "phone": "D",
+     "symbol": "D",
+     "word": 12,
+     "stress": null
+    },
+    {
+     "t0": 3.22,
+     "t1": 3.26,
+     "phone": "T",
+     "symbol": "T",
+     "word": 13,
+     "stress": null
+    },
+    {
+     "t0": 3.26,
+     "t1": 3.3,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 13,
+     "stress": 0
+    },
+    {
+     "t0": 3.3,
+     "t1": 3.39,
+     "phone": "M",
+     "symbol": "M",
+     "word": 14,
+     "stress": null
+    },
+    {
+     "t0": 3.39,
+     "t1": 3.46,
+     "phone": "IY",
+     "symbol": "IY1",
+     "word": 14,
+     "stress": 1
+    },
+    {
+     "t0": 3.46,
+     "t1": 3.52,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 15,
+     "stress": 0
+    },
+    {
+     "t0": 3.52,
+     "t1": 3.58,
+     "phone": "B",
+     "symbol": "B",
+     "word": 15,
+     "stress": null
+    },
+    {
+     "t0": 3.58,
+     "t1": 3.73,
+     "phone": "S",
+     "symbol": "S",
+     "word": 15,
+     "stress": null
+    },
+    {
+     "t0": 3.73,
+     "t1": 3.97,
+     "phone": "ER",
+     "symbol": "ER1",
+     "word": 15,
+     "stress": 1
+    },
+    {
+     "t0": 3.97,
+     "t1": 4.05,
+     "phone": "D",
+     "symbol": "D",
+     "word": 15,
+     "stress": null
+    },
+    {
+     "t0": 4.05,
+     "t1": 4.3,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    }
+   ],
+   "words": [
+    {
+     "t0": 0.25,
+     "t1": 0.38,
+     "text": "To"
+    },
+    {
+     "t0": 0.38,
+     "t1": 0.58,
+     "text": "ride"
+    },
+    {
+     "t0": 0.58,
+     "t1": 0.8,
+     "text": "over"
+    },
+    {
+     "t0": 0.8,
+     "t1": 1.11,
+     "text": "salt"
+    },
+    {
+     "t0": 1.11,
+     "t1": 1.39,
+     "text": "water"
+    },
+    {
+     "t0": 1.39,
+     "t1": 1.67,
+     "text": "upon"
+    },
+    {
+     "t0": 1.67,
+     "t1": 1.74,
+     "text": "the"
+    },
+    {
+     "t0": 1.74,
+     "t1": 2.04,
+     "text": "back"
+    },
+    {
+     "t0": 2.04,
+     "t1": 2.13,
+     "text": "of"
+    },
+    {
+     "t0": 2.13,
+     "t1": 2.16,
+     "text": "a"
+    },
+    {
+     "t0": 2.16,
+     "t1": 2.42,
+     "text": "little"
+    },
+    {
+     "t0": 2.42,
+     "t1": 2.85,
+     "text": "horse"
+    },
+    {
+     "t0": 2.88,
+     "t1": 3.22,
+     "text": "seemed"
+    },
+    {
+     "t0": 3.22,
+     "t1": 3.3,
+     "text": "to"
+    },
+    {
+     "t0": 3.3,
+     "t1": 3.46,
+     "text": "me"
+    },
+    {
+     "t0": 3.46,
+     "t1": 4.05,
+     "text": "absurd"
+    }
+   ],
+   "bench": {
+    "frames": 430,
+    "jawR": 0.628,
+    "jawRSpeech": 0.509,
+    "bestLagMs": 0,
+    "jawRBestLag": 0.628,
+    "jawMeanDeg": {
+     "phone": 1.848,
+     "audio": 3.024
+    },
+    "bilabials": [
+     {
+      "phone": "P",
+      "t": 1.495,
+      "closure": {
+       "phone": 1,
+       "audio": 0.263
+      },
+      "gapMm": {
+       "phone": 0.11,
+       "audio": 2.094
+      }
+     },
+     {
+      "phone": "B",
+      "t": 1.795,
+      "closure": {
+       "phone": 1,
+       "audio": 0.001
+      },
+      "gapMm": {
+       "phone": 0.112,
+       "audio": 2.855
+      }
+     },
+     {
+      "phone": "M",
+      "t": 3.14,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.07,
+       "audio": 3.185
+      }
+     },
+     {
+      "phone": "M",
+      "t": 3.345,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.093,
+       "audio": 4.175
+      }
+     },
+     {
+      "phone": "B",
+      "t": 3.55,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.081,
+       "audio": 1.775
+      }
+     }
+    ],
+    "sealed": {
+     "phone": 5,
+     "audio": 0,
+     "of": 5
+    }
+   }
+  },
+  {
+   "file": "ls-6295-244435-0003.wav",
+   "lang": "en",
+   "voice": "LibriSpeech 6295",
+   "text": "Boats put out both from the fort and the shore",
+   "sampleRate": 24000,
+   "durationS": 3.07,
+   "bytes": 147404,
+   "sha256": "ccf95256deabbd99e38facd698908ec3479f79540f109d6b80a87df6879cf2d0",
+   "source": {
+    "corpus": "LibriSpeech",
+    "subset": "dev-clean",
+    "speaker": "6295",
+    "sex": "male",
+    "chapter": "244435",
+    "utterance": "6295-244435-0003",
+    "transcript": "BOATS PUT OUT BOTH FROM THE FORT AND THE SHORE",
+    "book": "The Guns of Bull Run: A Story of the Civil War's Eve",
+    "gutenbergId": "3653",
+    "offsetS": 0.13,
+    "alignment": "Montreal Forced Aligner (Lugosch 2019, Zenodo 2619474); automatic, not hand-checked"
+   },
+   "coverage": {
+    "bilabial": 4,
+    "labiodental": 2,
+    "rounded": 2,
+    "open": 3
+   },
+   "phonemes": [
+    {
+     "t0": 0,
+     "t1": 0.25,
+     "phone": "sil",
+     "symbol": "sil",
+     "word": null
+    },
+    {
+     "t0": 0.25,
+     "t1": 0.33,
+     "phone": "B",
+     "symbol": "B",
+     "word": 0,
+     "stress": null
+    },
+    {
+     "t0": 0.33,
+     "t1": 0.47,
+     "phone": "OW",
+     "symbol": "OW1",
+     "word": 0,
+     "stress": 1
+    },
+    {
+     "t0": 0.47,
+     "t1": 0.53,
+     "phone": "T",
+     "symbol": "T",
+     "word": 0,
+     "stress": null
+    },
+    {
+     "t0": 0.53,
+     "t1": 0.61,
+     "phone": "S",
+     "symbol": "S",
+     "word": 0,
+     "stress": null
+    },
+    {
+     "t0": 0.61,
+     "t1": 0.69,
+     "phone": "P",
+     "symbol": "P",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.69,
+     "t1": 0.74,
+     "phone": "UH",
+     "symbol": "UH1",
+     "word": 1,
+     "stress": 1
+    },
+    {
+     "t0": 0.74,
+     "t1": 0.8,
+     "phone": "T",
+     "symbol": "T",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.8,
+     "t1": 0.92,
+     "phone": "AW",
+     "symbol": "AW1",
+     "word": 2,
+     "stress": 1
+    },
+    {
+     "t0": 0.92,
+     "t1": 0.99,
+     "phone": "T",
+     "symbol": "T",
+     "word": 2,
+     "stress": null
+    },
+    {
+     "t0": 0.99,
+     "t1": 1.05,
+     "phone": "B",
+     "symbol": "B",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 1.05,
+     "t1": 1.25,
+     "phone": "OW",
+     "symbol": "OW1",
+     "word": 3,
+     "stress": 1
+    },
+    {
+     "t0": 1.25,
+     "t1": 1.33,
+     "phone": "TH",
+     "symbol": "TH",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 1.33,
+     "t1": 1.4,
+     "phone": "F",
+     "symbol": "F",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.4,
+     "t1": 1.48,
+     "phone": "ER",
+     "symbol": "ER0",
+     "word": 4,
+     "stress": 0
+    },
+    {
+     "t0": 1.48,
+     "t1": 1.52,
+     "phone": "M",
+     "symbol": "M",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.52,
+     "t1": 1.56,
+     "phone": "DH",
+     "symbol": "DH",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.56,
+     "t1": 1.61,
+     "phone": "AH",
+     "symbol": "AH1",
+     "word": 5,
+     "stress": 1
+    },
+    {
+     "t0": 1.61,
+     "t1": 1.74,
+     "phone": "F",
+     "symbol": "F",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 1.74,
+     "t1": 1.87,
+     "phone": "AO",
+     "symbol": "AO1",
+     "word": 6,
+     "stress": 1
+    },
+    {
+     "t0": 1.87,
+     "t1": 1.92,
+     "phone": "R",
+     "symbol": "R",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 1.92,
+     "t1": 1.99,
+     "phone": "T",
+     "symbol": "T",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 1.99,
+     "t1": 2.06,
+     "phone": "AE",
+     "symbol": "AE1",
+     "word": 7,
+     "stress": 1
+    },
+    {
+     "t0": 2.06,
+     "t1": 2.14,
+     "phone": "N",
+     "symbol": "N",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 2.14,
+     "t1": 2.18,
+     "phone": "D",
+     "symbol": "D",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 2.18,
+     "t1": 2.21,
+     "phone": "DH",
+     "symbol": "DH",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.21,
+     "t1": 2.29,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 8,
+     "stress": 0
+    },
+    {
+     "t0": 2.29,
+     "t1": 2.42,
+     "phone": "SH",
+     "symbol": "SH",
+     "word": 9,
+     "stress": null
+    },
+    {
+     "t0": 2.42,
+     "t1": 2.62,
+     "phone": "AO",
+     "symbol": "AO1",
+     "word": 9,
+     "stress": 1
+    },
+    {
+     "t0": 2.62,
+     "t1": 2.82,
+     "phone": "R",
+     "symbol": "R",
+     "word": 9,
+     "stress": null
+    },
+    {
+     "t0": 2.82,
+     "t1": 3.07,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    }
+   ],
+   "words": [
+    {
+     "t0": 0.25,
+     "t1": 0.61,
+     "text": "Boats"
+    },
+    {
+     "t0": 0.61,
+     "t1": 0.8,
+     "text": "put"
+    },
+    {
+     "t0": 0.8,
+     "t1": 0.99,
+     "text": "out"
+    },
+    {
+     "t0": 0.99,
+     "t1": 1.33,
+     "text": "both"
+    },
+    {
+     "t0": 1.33,
+     "t1": 1.52,
+     "text": "from"
+    },
+    {
+     "t0": 1.52,
+     "t1": 1.61,
+     "text": "the"
+    },
+    {
+     "t0": 1.61,
+     "t1": 1.99,
+     "text": "fort"
+    },
+    {
+     "t0": 1.99,
+     "t1": 2.18,
+     "text": "and"
+    },
+    {
+     "t0": 2.18,
+     "t1": 2.29,
+     "text": "the"
+    },
+    {
+     "t0": 2.29,
+     "t1": 2.82,
+     "text": "shore"
+    }
+   ],
+   "bench": {
+    "frames": 307,
+    "jawR": 0.445,
+    "jawRSpeech": 0.035,
+    "bestLagMs": 0,
+    "jawRBestLag": 0.445,
+    "jawMeanDeg": {
+     "phone": 1.831,
+     "audio": 2.858
+    },
+    "bilabials": [
+     {
+      "phone": "B",
+      "t": 0.29,
+      "closure": {
+       "phone": 1,
+       "audio": 0
+      },
+      "gapMm": {
+       "phone": 0.039,
+       "audio": 0
+      }
+     },
+     {
+      "phone": "P",
+      "t": 0.65,
+      "closure": {
+       "phone": 1,
+       "audio": 0.387
+      },
+      "gapMm": {
+       "phone": 0.036,
+       "audio": 3.467
+      }
+     },
+     {
+      "phone": "B",
+      "t": 1.02,
+      "closure": {
+       "phone": 1,
+       "audio": 0.505
+      },
+      "gapMm": {
+       "phone": 0.034,
+       "audio": 0.546
+      }
+     },
+     {
+      "phone": "M",
+      "t": 1.5,
+      "closure": {
+       "phone": 1,
+       "audio": 0.016
+      },
+      "gapMm": {
+       "phone": 0.077,
+       "audio": 5.175
+      }
+     }
+    ],
+    "sealed": {
+     "phone": 4,
+     "audio": 1,
+     "of": 4
+    }
+   }
+  },
+  {
+   "file": "ls-6313-76958-0007.wav",
+   "lang": "en",
+   "voice": "LibriSpeech 6313",
+   "text": "We've got a hard drive before us and every man must be fit as a fiddle",
+   "sampleRate": 24000,
+   "durationS": 3.7,
+   "bytes": 177644,
+   "sha256": "ae3497dfd89b319c3985386c68d3e59096ba16c68298f4bf1b670695db2c8b2b",
+   "source": {
+    "corpus": "LibriSpeech",
+    "subset": "dev-clean",
+    "speaker": "6313",
+    "sex": "female",
+    "chapter": "76958",
+    "utterance": "6313-76958-0007",
+    "transcript": "WE'VE GOT A HARD DRIVE BEFORE US AND EVERY MAN MUST BE FIT AS A FIDDLE",
+    "book": "The Pony Rider Boys in Texas; Or, The Veiled Riddle of the Plains",
+    "gutenbergId": "20087",
+    "offsetS": 0,
+    "alignment": "Montreal Forced Aligner (Lugosch 2019, Zenodo 2619474); automatic, not hand-checked"
+   },
+   "coverage": {
+    "bilabial": 4,
+    "labiodental": 6,
+    "rounded": 1,
+    "open": 4
+   },
+   "phonemes": [
+    {
+     "t0": 0,
+     "t1": 0.22,
+     "phone": "sil",
+     "symbol": "sil",
+     "word": null
+    },
+    {
+     "t0": 0.22,
+     "t1": 0.29,
+     "phone": "W",
+     "symbol": "W",
+     "word": 0,
+     "stress": null
+    },
+    {
+     "t0": 0.29,
+     "t1": 0.35,
+     "phone": "IY",
+     "symbol": "IY1",
+     "word": 0,
+     "stress": 1
+    },
+    {
+     "t0": 0.35,
+     "t1": 0.4,
+     "phone": "V",
+     "symbol": "V",
+     "word": 0,
+     "stress": null
+    },
+    {
+     "t0": 0.4,
+     "t1": 0.48,
+     "phone": "G",
+     "symbol": "G",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.48,
+     "t1": 0.54,
+     "phone": "AA",
+     "symbol": "AA1",
+     "word": 1,
+     "stress": 1
+    },
+    {
+     "t0": 0.54,
+     "t1": 0.6,
+     "phone": "T",
+     "symbol": "T",
+     "word": 1,
+     "stress": null
+    },
+    {
+     "t0": 0.6,
+     "t1": 0.65,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 2,
+     "stress": 0
+    },
+    {
+     "t0": 0.65,
+     "t1": 0.74,
+     "phone": "HH",
+     "symbol": "HH",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 0.74,
+     "t1": 0.82,
+     "phone": "AA",
+     "symbol": "AA1",
+     "word": 3,
+     "stress": 1
+    },
+    {
+     "t0": 0.82,
+     "t1": 0.91,
+     "phone": "R",
+     "symbol": "R",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 0.91,
+     "t1": 0.95,
+     "phone": "D",
+     "symbol": "D",
+     "word": 3,
+     "stress": null
+    },
+    {
+     "t0": 0.95,
+     "t1": 1,
+     "phone": "D",
+     "symbol": "D",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1,
+     "t1": 1.06,
+     "phone": "R",
+     "symbol": "R",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.06,
+     "t1": 1.16,
+     "phone": "AY",
+     "symbol": "AY1",
+     "word": 4,
+     "stress": 1
+    },
+    {
+     "t0": 1.16,
+     "t1": 1.21,
+     "phone": "V",
+     "symbol": "V",
+     "word": 4,
+     "stress": null
+    },
+    {
+     "t0": 1.21,
+     "t1": 1.27,
+     "phone": "B",
+     "symbol": "B",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.27,
+     "t1": 1.35,
+     "phone": "IY",
+     "symbol": "IY2",
+     "word": 5,
+     "stress": 2
+    },
+    {
+     "t0": 1.35,
+     "t1": 1.47,
+     "phone": "F",
+     "symbol": "F",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.47,
+     "t1": 1.56,
+     "phone": "AO",
+     "symbol": "AO1",
+     "word": 5,
+     "stress": 1
+    },
+    {
+     "t0": 1.56,
+     "t1": 1.62,
+     "phone": "R",
+     "symbol": "R",
+     "word": 5,
+     "stress": null
+    },
+    {
+     "t0": 1.62,
+     "t1": 1.66,
+     "phone": "AH",
+     "symbol": "AH1",
+     "word": 6,
+     "stress": 1
+    },
+    {
+     "t0": 1.66,
+     "t1": 1.76,
+     "phone": "S",
+     "symbol": "S",
+     "word": 6,
+     "stress": null
+    },
+    {
+     "t0": 1.76,
+     "t1": 1.8,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 7,
+     "stress": 0
+    },
+    {
+     "t0": 1.8,
+     "t1": 1.83,
+     "phone": "N",
+     "symbol": "N",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 1.83,
+     "t1": 1.88,
+     "phone": "D",
+     "symbol": "D",
+     "word": 7,
+     "stress": null
+    },
+    {
+     "t0": 1.88,
+     "t1": 1.91,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    },
+    {
+     "t0": 1.91,
+     "t1": 2.01,
+     "phone": "EH",
+     "symbol": "EH1",
+     "word": 8,
+     "stress": 1
+    },
+    {
+     "t0": 2.01,
+     "t1": 2.06,
+     "phone": "V",
+     "symbol": "V",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.06,
+     "t1": 2.12,
+     "phone": "R",
+     "symbol": "R",
+     "word": 8,
+     "stress": null
+    },
+    {
+     "t0": 2.12,
+     "t1": 2.17,
+     "phone": "IY",
+     "symbol": "IY0",
+     "word": 8,
+     "stress": 0
+    },
+    {
+     "t0": 2.17,
+     "t1": 2.27,
+     "phone": "M",
+     "symbol": "M",
+     "word": 9,
+     "stress": null
+    },
+    {
+     "t0": 2.27,
+     "t1": 2.41,
+     "phone": "AE",
+     "symbol": "AE1",
+     "word": 9,
+     "stress": 1
+    },
+    {
+     "t0": 2.41,
+     "t1": 2.46,
+     "phone": "N",
+     "symbol": "N",
+     "word": 9,
+     "stress": null
+    },
+    {
+     "t0": 2.46,
+     "t1": 2.49,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    },
+    {
+     "t0": 2.49,
+     "t1": 2.52,
+     "phone": "M",
+     "symbol": "M",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 2.52,
+     "t1": 2.57,
+     "phone": "AH",
+     "symbol": "AH1",
+     "word": 10,
+     "stress": 1
+    },
+    {
+     "t0": 2.57,
+     "t1": 2.64,
+     "phone": "S",
+     "symbol": "S",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 2.64,
+     "t1": 2.67,
+     "phone": "T",
+     "symbol": "T",
+     "word": 10,
+     "stress": null
+    },
+    {
+     "t0": 2.67,
+     "t1": 2.71,
+     "phone": "B",
+     "symbol": "B",
+     "word": 11,
+     "stress": null
+    },
+    {
+     "t0": 2.71,
+     "t1": 2.77,
+     "phone": "IY",
+     "symbol": "IY0",
+     "word": 11,
+     "stress": 0
+    },
+    {
+     "t0": 2.77,
+     "t1": 2.9,
+     "phone": "F",
+     "symbol": "F",
+     "word": 12,
+     "stress": null
+    },
+    {
+     "t0": 2.9,
+     "t1": 2.97,
+     "phone": "IH",
+     "symbol": "IH1",
+     "word": 12,
+     "stress": 1
+    },
+    {
+     "t0": 2.97,
+     "t1": 3.04,
+     "phone": "T",
+     "symbol": "T",
+     "word": 12,
+     "stress": null
+    },
+    {
+     "t0": 3.04,
+     "t1": 3.08,
+     "phone": "EH",
+     "symbol": "EH1",
+     "word": 13,
+     "stress": 1
+    },
+    {
+     "t0": 3.08,
+     "t1": 3.16,
+     "phone": "Z",
+     "symbol": "Z",
+     "word": 13,
+     "stress": null
+    },
+    {
+     "t0": 3.16,
+     "t1": 3.23,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 14,
+     "stress": 0
+    },
+    {
+     "t0": 3.23,
+     "t1": 3.31,
+     "phone": "F",
+     "symbol": "F",
+     "word": 15,
+     "stress": null
+    },
+    {
+     "t0": 3.31,
+     "t1": 3.37,
+     "phone": "IH",
+     "symbol": "IH1",
+     "word": 15,
+     "stress": 1
+    },
+    {
+     "t0": 3.37,
+     "t1": 3.4,
+     "phone": "D",
+     "symbol": "D",
+     "word": 15,
+     "stress": null
+    },
+    {
+     "t0": 3.4,
+     "t1": 3.43,
+     "phone": "AH",
+     "symbol": "AH0",
+     "word": 15,
+     "stress": 0
+    },
+    {
+     "t0": 3.43,
+     "t1": 3.52,
+     "phone": "L",
+     "symbol": "L",
+     "word": 15,
+     "stress": null
+    },
+    {
+     "t0": 3.52,
+     "t1": 3.7,
+     "phone": "sil",
+     "symbol": "sp",
+     "word": null
+    }
+   ],
+   "words": [
+    {
+     "t0": 0.22,
+     "t1": 0.4,
+     "text": "We've"
+    },
+    {
+     "t0": 0.4,
+     "t1": 0.6,
+     "text": "got"
+    },
+    {
+     "t0": 0.6,
+     "t1": 0.65,
+     "text": "a"
+    },
+    {
+     "t0": 0.65,
+     "t1": 0.95,
+     "text": "hard"
+    },
+    {
+     "t0": 0.95,
+     "t1": 1.21,
+     "text": "drive"
+    },
+    {
+     "t0": 1.21,
+     "t1": 1.62,
+     "text": "before"
+    },
+    {
+     "t0": 1.62,
+     "t1": 1.76,
+     "text": "us"
+    },
+    {
+     "t0": 1.76,
+     "t1": 1.88,
+     "text": "and"
+    },
+    {
+     "t0": 1.91,
+     "t1": 2.17,
+     "text": "every"
+    },
+    {
+     "t0": 2.17,
+     "t1": 2.46,
+     "text": "man"
+    },
+    {
+     "t0": 2.49,
+     "t1": 2.67,
+     "text": "must"
+    },
+    {
+     "t0": 2.67,
+     "t1": 2.77,
+     "text": "be"
+    },
+    {
+     "t0": 2.77,
+     "t1": 3.04,
+     "text": "fit"
+    },
+    {
+     "t0": 3.04,
+     "t1": 3.16,
+     "text": "as"
+    },
+    {
+     "t0": 3.16,
+     "t1": 3.23,
+     "text": "a"
+    },
+    {
+     "t0": 3.23,
+     "t1": 3.52,
+     "text": "fiddle"
+    }
+   ],
+   "bench": {
+    "frames": 370,
+    "jawR": 0.337,
+    "jawRSpeech": 0.197,
+    "bestLagMs": 60,
+    "jawRBestLag": 0.416,
+    "jawMeanDeg": {
+     "phone": 1.919,
+     "audio": 3.446
+    },
+    "bilabials": [
+     {
+      "phone": "B",
+      "t": 1.24,
+      "closure": {
+       "phone": 1,
+       "audio": 0.409
+      },
+      "gapMm": {
+       "phone": 0.076,
+       "audio": 3.326
+      }
+     },
+     {
+      "phone": "M",
+      "t": 2.22,
+      "closure": {
+       "phone": 1,
+       "audio": 0.37
+      },
+      "gapMm": {
+       "phone": 0.097,
+       "audio": 0.705
+      }
+     },
+     {
+      "phone": "M",
+      "t": 2.505,
+      "closure": {
+       "phone": 1,
+       "audio": 0.296
+      },
+      "gapMm": {
+       "phone": 0.089,
+       "audio": 3.105
+      }
+     },
+     {
+      "phone": "B",
+      "t": 2.69,
+      "closure": {
+       "phone": 1,
+       "audio": 0.416
+      },
+      "gapMm": {
+       "phone": 0.062,
+       "audio": 1.37
+      }
+     }
+    ],
+    "sealed": {
+     "phone": 4,
+     "audio": 0,
+     "of": 4
+    }
+   }
+  }
+ ]
+}

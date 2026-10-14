@@ -62,8 +62,9 @@
   - 开关在"缺省"时，口形按钮用夸张、说话用正常。每个数值的来历写在 `data/curated/face/visemes.json` 的 `calibration` 和各视位的 `provenance` 里。
 - **说一句话（由音素带动口形）。** 一段带音素时间线的声音，口形由"现在在发哪个音"决定，不是从声音里猜的：音素 → 视位（`data/curated/face/phonemes-en.json`、`visemes-zh.json`）→ 协同发音（JALI 的习惯；普通话按音节分组，圆唇不跨音节）→ 口形，和声音走同一个时钟。面板上显示正在说的词和音。
   - 随仓库带了 12 句示范（英语、普通话各 6 句，`public/voice/tts-demo/`），**不需要后端**。
+  - **真人朗读的示例**（"示例：真人朗读"下拉框，`public/voice/librispeech-demo/`）：LibriSpeech dev-clean 里的 10 句英语朗读（男女各 5 位说话人，每句 3–4.5 秒，CC BY 4.0），每句至少有一个双唇音、唇齿音、圆唇音和开口元音。音素时间线是 Montreal Forced Aligner 的**自动对齐**（Lugosch 2019），不是人工标注。同一段录音可以"按音素"或"按音频"带动口形，所以它也是音频分析（`mouthTrack`）随仓库附带的基准：`bun tools/voice/librispeech-demo.ts bench` 把两种方式的下颌角相关、双唇音中点的唇间隙写进清单。现在的结果：下颌角相关平均 0.46（0.32–0.63），按音频的约晚 60 毫秒；41 个双唇音按音素全部合上（唇间隙 ≤ 0.11 毫米），按音频只有 3 个合上（唇间隙中位数 3.2 毫米）。选段和生成见 `tools/voice/librispeech-demo.ts`。
   - 语音合成后端在的时候（见"运行"），可以自己输入一句英语或普通话，选声音和语速；后端的拒绝信息和提示原样显示。**声音是机器合成的**（Kokoro-82M，Apache-2.0），界面上写明。
-  - 同一段声音可以切换"按音素"（准确）和"按声音分析"（近似），对比两者的差别。
+  - 同一段声音可以切换"按音素"（准确）和"按音频"（对同一段声音的分析，近似），对比两者的差别；链接里用 `drive=audio`。
   - 没有用户手势时（由链接或卡片打开）浏览器不让出声：口形按页面时钟无声地走（嵌入时循环），点"声音"后带声音从头播一遍。
 - **由音频带动口形。** 选择或拖入一个音频文件，在页面内解码并分析，点"播放"后口形跟着声音走，面板上有一条开口、圆唇、闭合的轨迹。文件不会上传。**从声音推出的口形只是近似**：开口度较可靠，圆唇一般，闭唇较弱（只当作一般的闭合），唇齿音（f、v）检测不出来。
 
@@ -151,7 +152,8 @@ cd .. && SOMA_API_PORT=<端口> bun run dev                              # 开�
 | `au` | `4:3,43:5` | 手动设定面部动作单元，编号:强度（0–5）；与 `pain`、`expr` 逐项取较大者 |
 | `expr` | `happy`、`fearful:0.6` | 情绪表情：表情 id，可带强度（0–1，省略为 1）。id：`happy sad fearful angry surprised disgusted`，以及 `happily_surprised happily_disgusted sadly_fearful sadly_angry sadly_surprised sadly_disgusted fearfully_angry fearfully_surprised fearfully_disgusted angrily_surprised angrily_disgusted disgustedly_surprised appalled hatred awed` |
 | `vis` | `PBM` | 保持一个口形（视位）。id：`SIL PBM FV TH TDN L SZ SH KG R W UW OW IY EH AA AX`，以及普通话专用的 `YU ZHCHSH JQX ER HX` |
-| `say` | `zh-03` | 说一句示范片段：`en-01`…`en-06`、`zh-01`…`zh-06`。口形按音素时间线走；没有用户手势时无声地播，界面上有“声音”按钮。合成用的自由文字不进地址 |
+| `say` | `zh-03` | 说一句示范片段：`en-01`…`en-06`、`zh-01`…`zh-06`，或真人朗读的 `ls-<LibriSpeech 语句号>`（如 `ls-6241-61946-0017`，见 `public/voice/librispeech-demo/manifest.json`）。口形按音素时间线走；没有用户手势时无声地播，界面上有“声音”按钮。合成用的自由文字不进地址 |
+| `drive` | `audio` | 和 `say` 一起用：口形由什么带动。`phone` 按音素时间线（缺省，不写进地址），`audio` 按对同一段声音的分析（近似） |
 | `style` | `normal`、`clear` | 说话的风格：正常朗读（按实测标定）或夸张。省略时保持的口形用夸张、说话用正常 |
 | `skin` | `1` | 不透明皮肤视图 |
 | `act` | `len`、`load` | 肌肉活动：`len` 作用线长度变化（几何），`load` 抵抗重力所需的激活度（估计） |
@@ -236,13 +238,14 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 
 - 内容：VIVAE 语料库（Holz、Larrouy-Maestri、Poeppel，[doi:10.5281/zenodo.4066235](https://doi.org/10.5281/zenodo.4066235)）里"身体疼痛"类的 185 条录音，重采样到 24 kHz，另加本项目做的逐条分析。这些是按指令表演出来的发声，不是真实疼痛时的录音。署名、许可和改动清单在该目录的 `ATTRIBUTION.txt` 和 `LICENSE.txt` 里。
 - 用法：`src/voice/` 在运行时加载它，在录音基础上做变化（换录音、小幅变调变速、连成持续性发声、由女声推出男声）。目录不存在时自动改用参数化合成器。
-- **商业用途的构建或部署不得带这个目录。** 用 `SOMA_COMMERCIAL=1 bunx vite build` 构建：产物里不带 `voice/vivae-pain/`（`voice/tts-demo/` 的许可允许商用，照常保留），界面改用参数合成的声音，也不显示录音的署名。默认构建不变（带录音包）。
+- **商业用途的构建或部署不得带这个目录。** 用 `SOMA_COMMERCIAL=1 bunx vite build` 构建：产物里不带 `voice/vivae-pain/`（`voice/tts-demo/` 和 `voice/librispeech-demo/` 的许可允许商用，照常保留），界面改用参数合成的声音，也不显示录音的署名。默认构建不变（带录音包）。
 - `data/curated/voice/calibration.json` 只含由该语料统计出的汇总量，不含音频。
 
 ### 语音合成：模型、示范片段和口形的标定数据
 
 - **模型**不进 git：Kokoro-82M v1.0（英语）和 Kokoro-82M-v1.1-zh（普通话），hexgrad，Apache-2.0。来源、固定的提交、读到的许可条款和每个文件的 sha256 在 `server/models.json`。
 - **示范片段** `public/voice/tts-demo/`：12 句**机器合成**的声音和它们的音素时间线，由上面的模型生成，本项目没有附加限制；署名和生成方式见该目录的 `ATTRIBUTION.txt`、`LICENSE.txt`。没有真人录音。
+- **真人朗读的示例** `public/voice/librispeech-demo/`：LibriSpeech（Panayotov、Chen、Povey、Khudanpur 2015，https://www.openslr.org/12/ ，CC BY 4.0；录音来自 LibriVox 的公有领域有声书）dev-clean 里的 10 句，和 LibriSpeech Alignments（Lugosch，Zenodo 2619474，CC BY 4.0，Montreal Forced Aligner 的自动对齐）里它们的音素时间线。逐句的说话人编号、章节、语句号、书名和转写见该目录的 `ATTRIBUTION.md`，许可见 `LICENSE`；不写朗读者的名字。许可允许商用，商业构建照常保留。重新生成：`bun tools/voice/librispeech-demo.ts fetch`（下载到 `data/raw/librispeech/`，不入库；对齐的 zip 只按 HTTP Range 取 dev-clean 那一段），然后 `build`、`bench`；需要 ffmpeg。
 - **口形的标定数据**：`data/curated/reference/articulation-summary.json` 是本项目从两个发音语料算出的汇总量（各音的切牙开度、唇开度、线圈高度的均值）。USC-TIMIT 是 CC BY 4.0；**MOCHA-TIMIT 只许研究、教育和个人使用，未经许可不得商用**，仓库里没有它的原始数据，依赖它的数值在 `visemes.json` 里标了 `calibratedAgainstNonCommercialData`。
 
 ## 已知的缺口
@@ -340,8 +343,9 @@ The "Expression" panel on the left:
   - With the switch on "Default" the shape buttons use Clear and speech uses Normal. Where each number comes from is recorded under `calibration` and each viseme's `provenance` in `data/curated/face/visemes.json`.
 - **Say something (phoneme-driven).** Audio that comes with a phoneme timeline; the mouth shape is set by which sound is being made, not guessed from the audio: phonemes → visemes (`data/curated/face/phonemes-en.json`, `visemes-zh.json`) → co-articulation (the JALI habits; Mandarin is grouped by syllable, so rounding does not cross a syllable boundary) → mouth shape, on the same clock as the audio. The panel shows the word and sound being spoken.
   - 12 demo sentences ship with the repository (6 English, 6 Mandarin, `public/voice/tts-demo/`) and **need no backend**.
+  - **Real read-speech examples** (the "Examples: real read speech" list, `public/voice/librispeech-demo/`): 10 English sentences read aloud, from LibriSpeech dev-clean (5 female and 5 male speakers, 3–4.5 s each, CC BY 4.0); every one has at least one bilabial, labiodental, rounded sound and open vowel. The phoneme timelines are **automatic** Montreal Forced Aligner alignments (Lugosch 2019), not hand labels. The same recording can drive the mouth "By phoneme" or "By audio", so the pack is also a benchmark for the audio analysis (`mouthTrack`) that ships with the repository: `bun tools/voice/librispeech-demo.ts bench` writes the jaw-angle correlation of the two modes and the lip gap at the middle of each bilabial into the manifest. Current results: jaw-angle correlation 0.46 on average (0.32–0.63), with the audio route about 60 ms late; of 41 bilabials all close by phoneme (lip gap ≤ 0.11 mm) and only 3 by audio (median lip gap 3.2 mm). Selection and generation are in `tools/voice/librispeech-demo.ts`.
   - With the speech-synthesis backend present (see "Run") you can type an English or Mandarin sentence and choose a voice and a speed; the backend's refusals and warnings are shown verbatim. **The audio is machine-synthesized** (Kokoro-82M, Apache-2.0), and the UI says so.
-  - The same audio can be switched between "By phonemes" (accurate) and "By audio analysis" (approximate) to see the difference.
+  - The same audio can be switched between "By phoneme" (accurate) and "By audio" (an analysis of the same audio, approximate) to see the difference; in a link, `drive=audio`.
   - Without a user gesture (opened by a link or a card) browsers allow no sound: the mouth runs silently on the page clock (looping when embedded), and "Sound" replays it from the start with audio.
 - **Speak from audio.** Choose or drop an audio file; it is decoded and analysed in the page, and after pressing Play the mouth follows the sound, with a strip showing opening, rounding and closure. The file is never uploaded. **Mouth shapes derived from sound are approximate**: opening is fairly reliable, rounding moderate, lip closure weak (treated as a generic closure), and labiodentals (f, v) are not detected.
 
@@ -429,7 +433,8 @@ The whole view state lives in the query string, so any view can be opened by one
 | `au` | `4:3,43:5` | Manual facial action units, number:intensity (0–5); combined with `pain` and `expr` by maximum |
 | `expr` | `happy`, `fearful:0.6` | Emotion expression: an expression id, optionally with a strength (0–1; 1 when omitted). Ids: `happy sad fearful angry surprised disgusted`, and `happily_surprised happily_disgusted sadly_fearful sadly_angry sadly_surprised sadly_disgusted fearfully_angry fearfully_surprised fearfully_disgusted angrily_surprised angrily_disgusted disgustedly_surprised appalled hatred awed` |
 | `vis` | `PBM` | Hold one mouth shape (viseme). Ids: `SIL PBM FV TH TDN L SZ SH KG R W UW OW IY EH AA AX`, and the Mandarin-only `YU ZHCHSH JQX ER HX` |
-| `say` | `zh-03` | Say a demo clip: `en-01`…`en-06`, `zh-01`…`zh-06`. The mouth follows the phoneme timeline; without a user gesture it plays silently and the UI shows a “Sound” button. Free text for synthesis never goes into the URL |
+| `say` | `zh-03` | Say a demo clip: `en-01`…`en-06`, `zh-01`…`zh-06`, or a real read-speech clip `ls-<LibriSpeech utterance id>` (e.g. `ls-6241-61946-0017`; see `public/voice/librispeech-demo/manifest.json`). The mouth follows the phoneme timeline; without a user gesture it plays silently and the UI shows a “Sound” button. Free text for synthesis never goes into the URL |
+| `drive` | `audio` | With `say`: what drives the mouth. `phone` = the phoneme timeline (default, not written to the URL), `audio` = an analysis of the same audio (approximate) |
 | `style` | `normal`, `clear` | Style of speech: normal read speech (calibrated against measurements) or exaggerated. When omitted, held shapes use clear and speech uses normal |
 | `skin` | `1` | Opaque-skin view |
 | `act` | `len`, `load` | Muscle activity: `len` length change of the lines of action (geometry), `load` activation needed against gravity (an estimate) |
@@ -514,13 +519,14 @@ About two thirds of the Chinese names are machine-generated from a term lexicon 
 
 - Contents: the 185 physical-pain recordings of the VIVAE corpus (Holz, Larrouy-Maestri, Poeppel, [doi:10.5281/zenodo.4066235](https://doi.org/10.5281/zenodo.4066235)), resampled to 24 kHz, plus a per-clip analysis made by this project. They are vocalisations performed on instruction, not recordings of real pain. Attribution, licence and the list of changes are in `ATTRIBUTION.txt` and `LICENSE.txt` in that directory.
 - Use: `src/voice/` loads it at run time and varies the recordings (clip choice, small pitch and time changes, sequences for sustained pain, a male voice derived from the female recordings). Without the directory it falls back to the parametric synthesizer.
-- **A build or deployment for commercial use must not include this directory.** Build with `SOMA_COMMERCIAL=1 bunx vite build`: `dist/` then has no `voice/vivae-pain/` (`voice/tts-demo/` allows commercial use and stays), the app uses the parametric voice and the recordings' attribution is not shown. The default build is unchanged (it includes the pack).
+- **A build or deployment for commercial use must not include this directory.** Build with `SOMA_COMMERCIAL=1 bunx vite build`: `dist/` then has no `voice/vivae-pain/` (`voice/tts-demo/` and `voice/librispeech-demo/` allow commercial use and stay), the app uses the parametric voice and the recordings' attribution is not shown. The default build is unchanged (it includes the pack).
 - `data/curated/voice/calibration.json` holds only aggregates computed from the corpus, no audio.
 
 ### Speech synthesis: models, demo clips and the data behind the mouth shapes
 
 - **The models** are not in git: Kokoro-82M v1.0 (English) and Kokoro-82M-v1.1-zh (Mandarin) by hexgrad, Apache-2.0. Source, pinned commit, the licence clauses as read and the sha256 of every file are in `server/models.json`.
 - **The demo clips** in `public/voice/tts-demo/`: 12 **machine-synthesized** sentences with their phoneme timelines, generated with the models above; this project adds no restriction. Attribution and how they were made are in `ATTRIBUTION.txt` and `LICENSE.txt` in that directory. None is a recording of a person.
+- **The real read-speech examples** in `public/voice/librispeech-demo/`: 10 sentences from LibriSpeech dev-clean (Panayotov, Chen, Povey & Khudanpur 2015, https://www.openslr.org/12/, CC BY 4.0; the recordings come from LibriVox's public-domain audiobooks) with their phoneme timelines from LibriSpeech Alignments (Lugosch, Zenodo 2619474, CC BY 4.0; automatic Montreal Forced Aligner alignments). Speaker number, chapter, utterance id, book and transcript of every clip are in `ATTRIBUTION.md` in that directory and the licence in `LICENSE`; readers' names are not given. The licence allows commercial use and the commercial build keeps the pack. To regenerate: `bun tools/voice/librispeech-demo.ts fetch` (downloads into `data/raw/librispeech/`, not committed; only the dev-clean stretch of the alignment zip is fetched with HTTP Range requests), then `build` and `bench`; ffmpeg is needed.
 - **The data behind the mouth shapes**: `data/curated/reference/articulation-summary.json` holds aggregates this project computed from two articulatory corpora (mean incisor opening, lip aperture and coil heights per sound). USC-TIMIT is CC BY 4.0; **MOCHA-TIMIT is for research, educational and individual use only and not for commercial use without permission** — none of its raw data is in the repository, and the values depending on it are marked `calibratedAgainstNonCommercialData` in `visemes.json`.
 
 ## Known gaps

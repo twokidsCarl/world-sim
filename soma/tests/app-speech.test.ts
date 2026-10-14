@@ -407,7 +407,8 @@ describe('demo packs', () => {
 
   it('every speech card of sim.json points at a shipped clip and carries no text', () => {
     const sim = json<{ cards: { id: string; url: string }[] }>('sim.json')
-    const ids = new Set(packFromManifest('voice/tts-demo/manifest.json', manifest).clips.map((c) => c.id))
+    // 所有示范包里的片段（tts-demo 和 librispeech-demo）/ the clips of every demo pack (tts-demo and librispeech-demo)
+    const ids = new Set(DEMO_PACKS.flatMap((path) => packFromManifest(path, json(`public/${path}`)).clips.map((c) => c.id)))
     const cards = sim.cards.filter((c) => /[?&]say=/.test(c.url))
     expect(cards.length).toBeGreaterThanOrEqual(3)
     for (const c of cards) {
