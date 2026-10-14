@@ -23,6 +23,8 @@ import { useStale } from '../version'
 import { Icon } from './icons'
 import { IDEA_VIEWS, NAV, ideaView, navEntry } from './nav'
 import { watch } from './watch'
+import { WaitingBubbles } from '../sessions/WaitingBubble'
+import { useWaiting } from '../sessions/waiting'
 
 export function App() {
   const { me, state, error, load, theme, toggleTheme, lang, toggleLang, navNarrow, toggleNav, sync, syncing, syncResult, runSync, clearSyncResult, proposals } = useStore()
@@ -30,6 +32,10 @@ export function App() {
   const pendingWishes = useAssistant((a) => a.pendingWishes)
   const refreshAssistant = useAssistant((a) => a.refresh)
   const owner = me?.role === 'owner'
+  // 会话只在本机、只有主人：那时才去看有没有会话在等回答。 / Sessions are local and owner-only: only then is there anything to check for waiting ones.
+  const sessionsOn = owner && me?.auth_enabled === false
+  const waiting = useWaiting((w) => w.waiting.length)
+  const loadWaiting = useWaiting((w) => w.load)
   // 现在这一页属于哪个菜单项，是不是「想法」的某个视图。
   // Which menu entry the current page belongs to, and whether it is one of the views of "Ideas".
   const { pathname } = useLocation()
@@ -54,9 +60,18 @@ export function App() {
   useEffect(() => {
     void load()
   }, [load])
-  // 许愿池的数（还有小助手能不能用）跟着后端走：进来、回到前台、看得见时每隔一会儿各取一次。命令行里改了状态也跟得上。
-  // The wish pool count (and whether the assistant can be used) follows the backend: fetched on arrival, on coming back to the front, and every so often while visible. Status changes made from the command line show up too.
-  useEffect(() => (owner ? watch(() => void refreshAssistant()) : undefined), [owner, refreshAssistant])
+  // 许愿池的数（还有小助手能不能用）和在等回答的会话跟着后端走：进来、回到前台、看得见时每隔一会儿各取一次。命令行里改了状态也跟得上。
+  // The wish pool count (and whether the assistant can be used) and the sessions waiting for an answer follow the backend: fetched on arrival, on coming back to the front, and every so often while visible. Status changes made from the command line show up too.
+  useEffect(
+    () =>
+      owner
+        ? watch(() => {
+            void refreshAssistant()
+            if (sessionsOn) void loadWaiting()
+          })
+        : undefined,
+    [owner, sessionsOn, refreshAssistant, loadWaiting],
+  )
   useEffect(() => {
     document.documentElement.dataset.theme = theme
   }, [theme])
@@ -79,6 +94,7 @@ export function App() {
             <span className="nav-short" aria-hidden="true"><Icon name={n.icon} /></span>
             {n.to === '/' && state && <span className="count num">{state.counts.live}</span>}
             {n.to === '/wishes' && pendingWishes > 0 && <span className="count pill num">{pendingWishes}</span>}
+            {n.to === '/sessions' && waiting > 0 && <span className="count pill num" title={t(`${waiting} 个会话在等你回答`, `${plural(waiting, 'session')} waiting for your answer`)}>{waiting}</span>}
             {n.to === '/' && owner && proposals && proposals.open > 0 && <span className="count pill num">{proposals.open}</span>}
           </Link>
         ))}
@@ -231,6 +247,7 @@ export function App() {
           </Routes>
         )}
       </main>
+      {sessionsOn && <WaitingBubbles />}
       {owner && <AssistantDock />}
     </div>
   )
