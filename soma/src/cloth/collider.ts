@@ -335,14 +335,23 @@ export class MeshCollider implements Collider {
  * barycentrics. The cloth's outer side is recorded per triangle when this is created (the direction from the
  * nearest skin point to its three corners).
  */
+/** 反向检查要的皮肤：位置、法线，可选的最近点查询（定布的外侧用）/ The skin the reverse check needs: positions, normals and optionally closest-point queries (to find the cloth's outer side). */
+export interface SkinLike {
+  pos: Float64Array
+  normal: Float64Array
+  closest?(px: number, py: number, pz: number, out: Closest): boolean
+}
+
 export class SkinVertexCollider implements Collider {
   private readonly sign: Int8Array
+  /** 只看这些皮肤顶点（下标 × 3），null = 布包围盒附近的全部 / Only these skin vertices (index × 3); null = all near the cloth's bounding box. */
+  only: Int32Array | null = null
   private tableSize = 1
   private cellStart = new Int32Array(1)
   private entries = new Int32Array(0)
   constructor(
     readonly triangles: Uint32Array,
-    readonly skin: MeshCollider,
+    readonly skin: SkinLike,
     x: Float64Array,
     readonly cell = 0.02,
     readonly reach = 0.015,
@@ -351,9 +360,17 @@ export class SkinVertexCollider implements Collider {
     this.sign = new Int8Array(nt)
     const out = new Float64Array(x.length)
     const c: Closest = { tri: 0, b0: 0, b1: 0, b2: 0, signed: 0, qx: 0, qy: 0, qz: 0, nx: 0, ny: 0, nz: 0 }
-    for (let i = 0; i < x.length / 3; i++) {
-      if (skin.closest(x[i * 3]!, x[i * 3 + 1]!, x[i * 3 + 2]!, c)) out.set([c.nx, c.ny, c.nz], i * 3)
+    if (skin.closest) {
+      for (let i = 0; i < x.length / 3; i++) {
+        if (skin.closest(x[i * 3]!, x[i * 3 + 1]!, x[i * 3 + 2]!, c)) out.set([c.nx, c.ny, c.nz], i * 3)
+      }
     }
+    this.orient(x, out)
+  }
+
+  /** 按每个布顶点朝外的方向重定每个三角形的外侧 / Re-decide each triangle's outer side from an outward direction per cloth vertex. */
+  orient(x: ArrayLike<number>, outward: ArrayLike<number>): void {
+    const triangles = this.triangles, nt = triangles.length / 3, out = outward
     for (let t = 0; t < nt; t++) {
       const [nx, ny, nz] = this.normal(x, t)
       let s = 0
@@ -365,7 +382,7 @@ export class SkinVertexCollider implements Collider {
     }
   }
 
-  private normal(x: Float64Array, t: number): [number, number, number] {
+  private normal(x: ArrayLike<number>, t: number): [number, number, number] {
     const a = this.triangles[t * 3]! * 3, b = this.triangles[t * 3 + 1]! * 3, c = this.triangles[t * 3 + 2]! * 3
     const ux = x[b]! - x[a]!, uy = x[b + 1]! - x[a + 1]!, uz = x[b + 2]! - x[a + 2]!
     const vx = x[c]! - x[a]!, vy = x[c + 1]! - x[a + 1]!, vz = x[c + 2]! - x[a + 2]!
@@ -401,7 +418,13 @@ export class SkinVertexCollider implements Collider {
           for (let zi = Math.floor((lz - r) / cell); zi <= Math.floor((hz + r) / cell); zi++) f(this.hash(xi, yi, zi))
     }
     let total = 0
-    for (let t = 0; t < nt; t++) each(t, (h) => {
+    const B = this.box
+    const keep = (t: number): boolean => {
+      if (!B) return true
+      const v = T[t * 3]! * 3
+      return x[v]! > B[0]! && x[v + 1]! > B[1]! && x[v + 2]! > B[2]! && x[v]! < B[3]! && x[v + 1]! < B[4]! && x[v + 2]! < B[5]!
+    }
+    for (let t = 0; t < nt; t++) if (keep(t)) each(t, (h) => {
       start[h]!++
       total++
     })
@@ -412,7 +435,7 @@ export class SkinVertexCollider implements Collider {
     }
     start[this.tableSize] = acc
     if (this.entries.length < total) this.entries = new Int32Array(total)
-    for (let t = 0; t < nt; t++) each(t, (h) => {
+    for (let t = 0; t < nt; t++) if (keep(t)) each(t, (h) => {
       start[h]!--
       this.entries[start[h]!] = t
     })
@@ -420,19 +443,47 @@ export class SkinVertexCollider implements Collider {
 
   /** 每几次调用才真正做一次（它比顶点碰撞贵得多）/ Only every this many calls does real work (it costs far more than vertex collisions). */
   every = 10
+  /** 不参与的皮肤顶点（例如埋在身体里的，见 tools/cloth/buried.ts）/ Skin vertices left out (e.g. buried ones, see tools/cloth/buried.ts). */
+  skip: Uint8Array | null = null
+  /**
+   * 每个布顶点累计最多被推多远（米）；超出的不再推。用于静态收尾：褶在一起的布（腋下）三角形朝向乱，反复推会越推越远。
+   * How far each cloth vertex may be pushed in total (metres); beyond that it is left alone. For static clean-up: in folded
+   * cloth (the armpit) triangle orientations are muddled, and repeated pushes would run away.
+   */
+  maxShift = Infinity
+  private shifted: Float64Array | null = null
+  /** 给了就把推开量同样加到它上面（通常是上一步的位置，推开不带速度）/ When given, pushes are added to it as well (usually the previous positions, so a push carries no velocity). */
+  carry: Float64Array | null = null
+  /** 累计推开量清零（maxShift 按“每次”算时用）/ Reset the accumulated pushes (for a maxShift per call). */
+  resetShift(): void {
+    this.shifted?.fill(0)
+  }
+
+  /** 只把这个盒子（xmin…zmax）里的布三角形放进哈希；null = 全部 / Only cloth triangles inside this box (xmin…zmax) go into the hash; null = all. */
+  box: number[] | null = null
   private calls = 0
   private near: Int32Array | null = null
 
   resolve(x: Float64Array, _prev: Float64Array, w: Float64Array, margin: number): void {
     if (this.calls++ % this.every !== 0) return
+    if (Number.isFinite(this.maxShift) && (!this.shifted || this.shifted.length !== w.length)) this.shifted = new Float64Array(w.length)
+    const shifted = this.shifted
     this.scan(x, margin, (t, b0, b1, b2, nx, ny, nz, depth) => {
       const T = this.triangles
+      if (shifted && (shifted[T[t * 3]!]! > this.maxShift || shifted[T[t * 3 + 1]!]! > this.maxShift || shifted[T[t * 3 + 2]!]! > this.maxShift)) return
       const wsum = b0 * b0 * w[T[t * 3]!]! + b1 * b1 * w[T[t * 3 + 1]!]! + b2 * b2 * w[T[t * 3 + 2]!]!
       if (wsum <= 0) return
       const bs = [b0, b1, b2]
       for (let k = 0; k < 3; k++) {
         const v = T[t * 3 + k]!
         const m = (depth * bs[k]! * w[v]!) / wsum
+        if (shifted) shifted[v] = shifted[v]! + Math.abs(m)
+        if (this.carry) {
+          // 推开不带速度 / the push carries no velocity
+          this.carry[v * 3] = this.carry[v * 3]! + m * nx
+          this.carry[v * 3 + 1] = this.carry[v * 3 + 1]! + m * ny
+          this.carry[v * 3 + 2] = this.carry[v * 3 + 2]! + m * nz
+        }
         x[v * 3] = x[v * 3]! + m * nx
         x[v * 3 + 1] = x[v * 3 + 1]! + m * ny
         x[v * 3 + 2] = x[v * 3 + 2]! + m * nz
@@ -460,7 +511,8 @@ export class SkinVertexCollider implements Collider {
     this.build(x)
     const P = this.skin.pos, T = this.triangles, cell = this.cell
     // 只看布的包围盒附近的皮肤顶点（每 20 次重算）/ only skin vertices near the cloth's bounding box (recomputed every 20 rounds)
-    if (!this.near || this.calls % (20 * this.every) === 1) {
+    if (this.only) this.near = this.only
+    else if (!this.near || this.calls % (20 * this.every) === 1) {
       let lx = Infinity, ly = Infinity, lz = Infinity, hx = -Infinity, hy = -Infinity, hz = -Infinity
       for (let i = 0; i < x.length; i += 3) {
         lx = Math.min(lx, x[i]!)
@@ -472,6 +524,7 @@ export class SkinVertexCollider implements Collider {
       }
       const r = 0.03, list: number[] = []
       for (let s = 0; s < P.length; s += 3) {
+        if (this.skip?.[s / 3]) continue
         if (P[s]! > lx - r && P[s]! < hx + r && P[s + 1]! > ly - r && P[s + 1]! < hy + r && P[s + 2]! > lz - r && P[s + 2]! < hz + r) list.push(s)
       }
       this.near = Int32Array.from(list)
@@ -507,6 +560,75 @@ export class SkinVertexCollider implements Collider {
         if (b0 < 0 || b1 < 0 || b2 < 0) continue
         visit(t, b0, b1, b2, nx, ny, nz, d + margin, s / 3)
       }
+    }
+  }
+}
+
+/** 26 个方向（立方体的面、棱、角）/ 26 directions (the faces, edges and corners of a cube). */
+const KDOP_DIRS: number[] = (() => {
+  const out: number[] = []
+  for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) for (let z = -1; z <= 1; z++) {
+    if (!x && !y && !z) continue
+    const l = Math.sqrt(x * x + y * y + z * z)
+    out.push(x / l, y / l, z / l)
+  }
+  return out
+})()
+
+/**
+ * 一群点的 26 向包围多面体（k-DOP）作碰撞体：外生殖器这样细小、突出的部分换成一个凸的“鼓包”，
+ * 布在上面绷过去，不会从阴茎旁边滑到它后面、让它从布里穿出来。每帧用摆好姿势的点重算。
+ * The 26-direction bounding polytope (k-DOP) of a set of points as a collider: a small protruding part such as the
+ * external genitalia becomes one convex bulge that cloth stretches over, so the cloth cannot slide past the penis to
+ * behind it and leave it poking through. Recomputed from the posed points every frame.
+ */
+export class KdopCollider implements Collider {
+  readonly h = new Float64Array(26)
+  active = false
+
+  fit(pos: ArrayLike<number>, verts: ArrayLike<number>): void {
+    this.h.fill(-Infinity)
+    for (let k = 0; k < verts.length; k++) {
+      const v = verts[k]! * 3
+      const x = pos[v]!, y = pos[v + 1]!, z = pos[v + 2]!
+      for (let d = 0; d < 26; d++) {
+        const s = x * KDOP_DIRS[d * 3]! + y * KDOP_DIRS[d * 3 + 1]! + z * KDOP_DIRS[d * 3 + 2]!
+        if (s > this.h[d]!) this.h[d] = s
+      }
+    }
+    this.active = verts.length > 3
+  }
+
+  resolve(x: Float64Array, prev: Float64Array, w: Float64Array, margin: number): void {
+    if (!this.active) return
+    const D = KDOP_DIRS, H = this.h
+    for (let i = 0; i < w.length; i++) {
+      if (w[i] === 0) continue
+      const k = i * 3
+      const px = x[k]!, py = x[k + 1]!, pz = x[k + 2]!
+      // 在所有半空间里（含 margin）才算在里面；从“最浅”的那个面推出去 / inside only when inside every half-space (with margin); pushed out through the shallowest face
+      let best = -Infinity, bd = -1
+      for (let d = 0; d < 26; d++) {
+        const s = px * D[d * 3]! + py * D[d * 3 + 1]! + pz * D[d * 3 + 2]! - H[d]! - margin
+        if (s >= 0) {
+          bd = -1
+          break
+        }
+        if (s > best) {
+          best = s
+          bd = d
+        }
+      }
+      if (bd < 0) continue
+      const m = -best
+      const nx = D[bd * 3]!, ny = D[bd * 3 + 1]!, nz = D[bd * 3 + 2]!
+      x[k] = px + nx * m
+      x[k + 1] = py + ny * m
+      x[k + 2] = pz + nz * m
+      // 推开不带速度 / the push carries no velocity
+      prev[k] = prev[k]! + nx * m
+      prev[k + 1] = prev[k + 1]! + ny * m
+      prev[k + 2] = prev[k + 2]! + nz * m
     }
   }
 }

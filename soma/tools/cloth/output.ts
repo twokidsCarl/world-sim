@@ -14,12 +14,13 @@
 //   bindOffset f32 × n       沿该三角形面法线的距离（米）/ distance along that triangle's face normal (metres)
 //   edgeKind   i8 × n        边类型（json 的 edgeKinds 下标，内部点 −1）/ edge kind (index into the json's edgeKinds, −1 inside)
 //   panel      u8 × n        所属裁片（json 的 panels 下标）/ panel (index into the json's panels)
+//   attach     u8 × n        1 = 绑在皮肤上（腰头、无袖上衣的肩缝），运行时跟着皮肤走 / 1 = bound to the skin (waistband, a sleeveless top's shoulder seams), moved with the skin at run time
 // 由绑定重建位置：p = Σ b_i·v_i + h·n̂，n̂ 为三角形 (v0, v1, v2) 的单位面法线 (v1 − v0) × (v2 − v0)。
 // Rebuilding a position from the binding: p = Σ b_i·v_i + h·n̂, n̂ the unit face normal (v1 − v0) × (v2 − v0) of the triangle.
 
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { MeshCollider, type Closest } from '../../src/cloth/collider.ts'
+import { MeshCollider, SkinVertexCollider, type Closest } from '../../src/cloth/collider.ts'
 import { planeBinding } from '../../src/cloth/attach.ts'
 import type { ClothSolver, FabricMechanics } from '../../src/cloth/solver.ts'
 import type { SkinBody } from './body.ts'
@@ -34,6 +35,9 @@ export interface DressReport {
   maxPenetrationMm: number
   p99PenetrationMm: number
   verticesInsideOver1mm: number
+  /** 皮肤从布的三角形中间钻出的最大深度（毫米，埋在身体里的皮肤顶点不算）/ Deepest poke-through of skin between cloth vertices (mm; buried skin vertices left out). */
+  skinPokeMaxMm: number
+  skinPokeOver1mm: number
   maxStitchGapMm: number
   /** 面积加权的经、纬向应变（%）/ Area-weighted warp and weft strain (%). */
   strain: { weftMeanPct: number; warpMeanPct: number; weftP95Pct: number; warpP95Pct: number; weftMaxPct: number; warpMaxPct: number }
@@ -94,7 +98,7 @@ export function clothDir(b: SkinBody): string {
   return join(b.dir, 'cloth')
 }
 
-export function writeGarment(b: SkinBody, garment: string, spec: GcSpec, mesh: GarmentMesh, solver: ClothSolver, fabric: FabricMechanics): DressReport {
+export function writeGarment(b: SkinBody, garment: string, spec: GcSpec, mesh: GarmentMesh, solver: ClothSolver, fabric: FabricMechanics, buried: Uint8Array | null = null): DressReport {
   const n = solver.n
   const x = solver.x
   const q = new SkinQuery(b.rest, b.indices)
@@ -115,6 +119,9 @@ export function writeGarment(b: SkinBody, garment: string, spec: GcSpec, mesh: G
   const weft = Array.from(st.weft), warp = Array.from(st.warp)
   const mean = (v: number[]): number => v.reduce((s, x, i) => s + x * areas[i]!, 0) / areas.reduce((s, a) => s + a, 0)
   const sortedPen = pen.slice().sort((a, b) => a - b)
+  const reverse = new SkinVertexCollider(mesh.triangles, q.near, x)
+  reverse.skip = buried
+  const poke = reverse.measure(x)
   const report: DressReport = {
     garment,
     vertices: n,
@@ -123,6 +130,8 @@ export function writeGarment(b: SkinBody, garment: string, spec: GcSpec, mesh: G
     maxPenetrationMm: +(sortedPen[n - 1]! * 1000).toFixed(2),
     p99PenetrationMm: +(sortedPen[Math.floor(0.99 * (n - 1))]! * 1000).toFixed(2),
     verticesInsideOver1mm: pen.filter((p) => p > 0.001).length,
+    skinPokeMaxMm: +(poke.maxDepth * 1000).toFixed(2),
+    skinPokeOver1mm: poke.over1mm,
     maxStitchGapMm: +(solver.maxStitchGap() * 1000).toFixed(2),
     strain: {
       weftMeanPct: +(mean(weft) * 100).toFixed(1),
@@ -147,6 +156,7 @@ export function writeGarment(b: SkinBody, garment: string, spec: GcSpec, mesh: G
     { name: 'bindOffset', data: bindOffset, type: 'f32', itemSize: 1 },
     { name: 'edgeKind', data: Int8Array.from(mesh.edgeKind), type: 'i8', itemSize: 1 },
     { name: 'panel', data: Uint8Array.from(mesh.panelOf), type: 'u8', itemSize: 1 },
+    { name: 'attach', data: Uint8Array.from(solver.w, (w) => (w === 0 ? 1 : 0)), type: 'u8', itemSize: 1 },
   ]
   let off = 0
   const layout: Record<string, { offset: number; count: number; type: string; itemSize: number }> = {}
@@ -203,7 +213,7 @@ export function writeGarment(b: SkinBody, garment: string, spec: GcSpec, mesh: G
   return report
 }
 
-function updateIndex(b: SkinBody): void {
+export function updateIndex(b: SkinBody): void {
   // 按目录里现有的衣服重写（几件衣服可以并行生成）/ rewritten from the garments in the directory (several may be built in parallel)
   const dir = clothDir(b)
   const garments: Record<string, unknown> = {}
@@ -211,7 +221,26 @@ function updateIndex(b: SkinBody): void {
     const d = JSON.parse(readFileSync(join(dir, f), 'utf8')) as { garment: string; fabric: { id: string }; vertexCount: number; triangleCount: number; checks: DressReport }
     garments[d.garment] = { file: f, fabric: d.fabric.id, vertices: d.vertexCount, triangles: d.triangleCount, bytes: d.checks.bytes }
   }
-  writeFileSync(join(dir, 'index.json'), JSON.stringify({ schema: 1, body: b.id, garments }, null, 1))
+  writeFileSync(join(dir, 'index.json'), JSON.stringify({ schema: 1, body: b.id, garments, guard: guardVertices(b) }, null, 1))
+}
+
+/**
+ * 运行时做反向检查的皮肤顶点：外生殖器移植片（skin-pieces.u8 里 genitalSkin 那一片）。没有时为空。
+ * The skin vertices the runtime gives the reverse check: the external genitalia graft (the genitalSkin piece of
+ * skin-pieces.u8). Empty when there is none.
+ */
+function guardVertices(b: SkinBody): { what: { zh: string; en: string }; vertices: number[] } {
+  const what = { zh: '外生殖器的皮肤（细小的突起，顶点碰撞拦不住它们从布的顶点之间钻出）', en: 'the skin of the external genitalia (small protrusions that vertex collisions cannot stop from slipping out between cloth vertices)' }
+  const anatomy = JSON.parse(readFileSync(join(b.dir, 'anatomy.json'), 'utf8')) as { parts: { id: string; composition?: { what?: { en?: string } }[] }[] }
+  const comp = anatomy.parts.find((p) => p.id === b.skinId)?.composition ?? []
+  const piece = comp.findIndex((c) => /genitalSkin|vulva/i.test(c.what?.en ?? ''))
+  if (piece < 0) return { what, vertices: [] }
+  const pieces = new Uint8Array(readFileSync(join(b.dir, 'skin-pieces.u8')))
+  const vertices: number[] = []
+  pieces.forEach((p, i) => {
+    if (p === piece) vertices.push(i)
+  })
+  return { what, vertices }
 }
 
 /** 调试用的 OBJ（不提交）/ A debug OBJ (not committed). */

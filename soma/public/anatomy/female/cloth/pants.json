@@ -126,6 +126,12 @@
    "count": 6966,
    "type": "u8",
    "itemSize": 1
+  },
+  "attach": {
+   "offset": 399852,
+   "count": 6966,
+   "type": "u8",
+   "itemSize": 1
   }
  },
  "checks": {
@@ -136,16 +142,18 @@
   "maxPenetrationMm": 0,
   "p99PenetrationMm": 0,
   "verticesInsideOver1mm": 0,
+  "skinPokeMaxMm": 0,
+  "skinPokeOver1mm": 0,
   "maxStitchGapMm": 0,
   "strain": {
    "weftMeanPct": 0.8,
    "warpMeanPct": 0.5,
-   "weftP95Pct": 4.4,
-   "warpP95Pct": 2.7,
-   "weftMaxPct": 123.8,
-   "warpMaxPct": 32.5
+   "weftP95Pct": 4.3,
+   "warpP95Pct": 2.6,
+   "weftMaxPct": 129.3,
+   "warpMaxPct": 32
   },
-  "bytes": 402389
+  "bytes": 409493
  },
  "source": {
   "pattern": "data/curated/cloth/patterns/female-pants.json",

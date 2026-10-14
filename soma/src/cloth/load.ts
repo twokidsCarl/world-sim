@@ -22,10 +22,10 @@ export interface ClothData {
   skinTriangleCount: number
   vertexCount: number
   triangleCount: number
-  fabric: { id: string; thickness: number; [k: string]: number | string }
+  fabric: { id: string; density: number; stretchWarp: number; stretchWeft: number; shear: number; bending: number; thickness: number; friction: number }
   panels: { name: string; part: string; front: boolean; offset: number; count: number }[]
   edgeKinds: string[]
-  buffers: Record<'position' | 'uv' | 'index' | 'stitch' | 'bindVert' | 'bindBary' | 'bindOffset' | 'edgeKind' | 'panel', BufferInfo>
+  buffers: Record<'position' | 'uv' | 'index' | 'stitch' | 'bindVert' | 'bindBary' | 'bindOffset' | 'edgeKind' | 'panel', BufferInfo> & { attach?: BufferInfo }
 }
 
 export interface LoadedCloth {
@@ -38,6 +38,10 @@ export interface LoadedCloth {
   bindVert: Uint32Array
   bindBary: Float32Array
   bindOffset: Float32Array
+  /** 1 = 绑在皮肤上（运行时跟着皮肤走）/ 1 = bound to the skin (moved with it at run time) */
+  attach: Uint8Array
+  edgeKind: Int8Array
+  panel: Uint8Array
 }
 
 function view(bin: ArrayBuffer, b: BufferInfo): Float32Array | Uint32Array | Uint16Array | Uint8Array | Int8Array {
@@ -67,6 +71,9 @@ export function decodeCloth(data: ClothData, bin: ArrayBuffer): LoadedCloth {
     bindVert,
     bindBary: Float32Array.from(view(bin, b.bindBary)),
     bindOffset: Float32Array.from(view(bin, b.bindOffset)),
+    attach: b.attach ? Uint8Array.from(view(bin, b.attach)) : new Uint8Array(n),
+    edgeKind: Int8Array.from(view(bin, b.edgeKind)),
+    panel: Uint8Array.from(view(bin, b.panel)),
   }
 }
 

@@ -22,6 +22,7 @@ import { Poser, armElevation, mergePoses, type Pose } from '../rig/pose.ts'
 import { BODIES, ROOT, loadSkinBody, type BodyId, type SkinBody } from './body.ts'
 import { EDGE_KINDS, meshGarment, type GarmentMesh, type GcSpec } from './pattern.ts'
 import { placeGarment } from './place.ts'
+import { buriedVertices } from './buried.ts'
 import { SkinQuery, writeGarment, type DressReport } from './output.ts'
 import type { Closest } from '../../src/cloth/collider.ts'
 
@@ -182,6 +183,14 @@ function weldSeams(solver: ClothSolver, mesh: GarmentMesh, collider: MeshCollide
   solver.v.fill(0)
 }
 
+const buriedCache = new Map<string, Uint8Array>()
+/** 埋在身体里或夹在两层皮之间（< 15 mm）的皮肤顶点（每副人体算一次）/ Skin vertices buried in the body or caught in a pinch under 15 mm (once per body). */
+export function buried(b: SkinBody): Uint8Array {
+  let m = buriedCache.get(b.id)
+  if (!m) buriedCache.set(b.id, (m = buriedVertices(b.rest, b.indices, 0.015)))
+  return m
+}
+
 export interface DressResult {
   mesh: GarmentMesh
   positions: Float64Array
@@ -283,11 +292,29 @@ export function dress(b: SkinBody, levels: Levels, garment: string, fabrics: Rec
   // 静止姿势下再加反向检查：皮肤顶点不能从布的三角形中间穿出 / at rest, add the reverse check: no skin vertex may come out through a cloth triangle
   const reverse = new SkinVertexCollider(mesh.triangles, collider, solver.x)
   reverse.every = 4
+  reverse.skip = buried(b)
   solver.colliders.push(reverse)
   // 最后 40 帧每个子步多迭代几遍，把缝线收紧 / more iterations per substep over the last 40 frames, pulling the seams shut
-  for (let f = 0; f < SETTLE; f++) solver.step(DT, { gravity: [0, -9.81, 0], substeps: 20, damping: 4, maxSpeed: 1, iterations: f < SETTLE - 40 ? 1 : 4 })
+  for (let f = 0; f < SETTLE; f++) {
+    // 最后 40 帧反向检查更勤 / the reverse check runs more often over the last 40 frames
+    if (f === SETTLE - 40) reverse.every = 2
+    solver.step(DT, { gravity: [0, -9.81, 0], substeps: 20, damping: 4, maxSpeed: 1, iterations: f < SETTLE - 40 ? 1 : 4 })
+  }
   log(`    at rest: gap ${(solver.maxStitchGap() * 1000).toFixed(1)} mm (${((performance.now() - t0) / 1000).toFixed(1)} s)`)
   weldSeams(solver, mesh, collider)
+  // 静态收尾：皮肤从布的三角形中间钻出来的地方把布推开（每个顶点累计最多 2 cm），再保证顶点都在皮肤外
+  // static clean-up: where skin pokes out between cloth vertices the cloth is pushed off (at most 2 cm per vertex in
+  // total), then every vertex is made to sit outside the skin again
+  reverse.every = 1
+  reverse.maxShift = 0.02
+  // 每轮推开后马上把缝线两边合回一点（缝线常常正好压在突起上，例如前裆缝）
+  // after every push the two sides of each seam are merged again at once (a seam often lies right over a protrusion,
+  // such as the front crotch seam)
+  for (let r = 0; r < 30; r++) {
+    reverse.resolve(solver.x, solver.prev, solver.w, solver.collisionMargin)
+    collider.resolve(solver.x, solver.prev, solver.w, solver.collisionMargin, 0)
+    weldSeams(solver, mesh, collider)
+  }
   // 诊断：最大缝隙和最大应变的位置 / diagnostics: where the largest gap and strain are
   {
     let gi = 0, gm = 0
@@ -305,7 +332,7 @@ export function dress(b: SkinBody, levels: Levels, garment: string, fabrics: Rec
     const at = (i: number): string => `(${[0, 1, 2].map((k) => solver.x[i * 3 + k]!.toFixed(3)).join(', ')}) ${mesh.panels[mesh.panelOf[i]!]!.name}`
     log(`    largest gap ${(gm * 1000).toFixed(1)} mm at ${at(gi)}; largest strain ${(Math.max(st.warp[ti]!, st.weft[ti]!) * 100).toFixed(0)}% at ${at(mesh.triangles[ti * 3]!)}`)
   }
-  const report = writeGarment(b, garment, spec, mesh, solver, fabric)
+  const report = writeGarment(b, garment, spec, mesh, solver, fabric, buried(b))
   return { mesh, positions: solver.x, solver, report }
 }
 

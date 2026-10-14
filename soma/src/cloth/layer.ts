@@ -26,11 +26,24 @@ export const CLOTH_COLORS: Record<GarmentId, string> = {
  */
 function dominantVertex(c: LoadedCloth): Uint32Array {
   const n = c.data.vertexCount
+  // 缝在一起的顶点用同一个（编号最小的那个顶点的绑定），与 worker 焊缝时的取法一致；否则摆姿势时缝线处会裂开一条细缝
+  // stitched vertices share one (the binding of the lowest-numbered vertex of the group), as the worker picks when it
+  // welds seams; otherwise a thin crack opens along the seams in a pose
+  const parent = Int32Array.from({ length: n }, (_, i) => i)
+  const find = (v: number): number => {
+    while (parent[v] !== v) v = parent[v] = parent[parent[v]!]!
+    return v
+  }
+  for (let k = 0; k < c.stitch.length; k += 2) {
+    const p = find(c.stitch[k]!), q = find(c.stitch[k + 1]!)
+    if (p !== q) parent[Math.max(p, q)] = Math.min(p, q)
+  }
   const out = new Uint32Array(n)
   for (let i = 0; i < n; i++) {
-    const b1 = c.bindBary[i * 2]!, b2 = c.bindBary[i * 2 + 1]!, b0 = 1 - b1 - b2
+    const o = find(i)
+    const b1 = c.bindBary[o * 2]!, b2 = c.bindBary[o * 2 + 1]!, b0 = 1 - b1 - b2
     const k = b0 >= b1 && b0 >= b2 ? 0 : b1 >= b2 ? 1 : 2
-    out[i] = c.bindVert[i * 3 + k]!
+    out[i] = c.bindVert[o * 3 + k]!
   }
   return out
 }
@@ -41,6 +54,13 @@ class ClothPatch extends SkinPatch {
   /** 每个顶点绑定三角形的三个皮肤顶点 / the three skin vertices of each vertex's bound triangle */
   private corners: Uint32Array | null = null
   private lift = 0
+  /** 正在显示模拟结果（静止位置的改变只通知，不覆盖）/ Showing simulation results (a change of rest positions is only reported, not drawn). */
+  private sim = false
+  private lastPos: ArrayLike<number> | null = null
+  private lastNor: ArrayLike<number> | null = null
+  private restSig = NaN
+  /** 绑定用到的皮肤顶点移动了（体型）/ The skin vertices the binding uses moved (shape). */
+  onRest: ((rest: ArrayLike<number>) => void) | null = null
 
   constructor(source: SkinGeometry, cloth: LoadedCloth, material: MeshStandardNodeMaterial) {
     super(source, null, material, undefined, { vertices: dominantVertex(cloth), index: cloth.index })
@@ -57,6 +77,15 @@ class ClothPatch extends SkinPatch {
       return
     }
     const c = this.cloth, I = this.corners
+    this.lastPos = position
+    this.lastNor = normal
+    // 只看绑定用到的皮肤顶点（表情动的是脸，不必惊动模拟）/ only the skin vertices the binding uses (expression moves the face; no need to disturb the simulation)
+    let sig = 0
+    for (let k = 0; k < I.length; k += 7) sig += position[I[k]! * 3]! * 1.3 + position[I[k]! * 3 + 1]! * 1.7 + position[I[k]! * 3 + 2]! * 1.1
+    const was = this.restSig
+    this.restSig = sig
+    if (!Number.isNaN(was) && was !== sig) this.onRest?.(position)
+    if (this.sim) return
     const geo = this.mesh.geometry
     const pos = geo.getAttribute('position').array as Float32Array
     const nor = geo.getAttribute('normal').array as Float32Array
@@ -101,6 +130,16 @@ class ClothPatch extends SkinPatch {
         nor[q + 2] = nor[q + 2]! + s * fz
       }
     }
+    // 缝在一起的顶点取同一个法线，缝线处没有明暗断层 / stitched vertices share one normal, so seams show no shading break
+    const st = c.stitch
+    for (let k = 0; k < st.length; k += 2) {
+      const a = st[k]! * 3, b = st[k + 1]! * 3
+      for (let r = 0; r < 3; r++) {
+        const m = nor[a + r]! + nor[b + r]!
+        nor[a + r] = m
+        nor[b + r] = m
+      }
+    }
     for (let i = 0; i < n; i++) {
       const l = Math.hypot(nor[i * 3]!, nor[i * 3 + 1]!, nor[i * 3 + 2]!) || 1
       nor[i * 3] = nor[i * 3]! / l
@@ -111,6 +150,30 @@ class ClothPatch extends SkinPatch {
     geo.getAttribute('normal').needsUpdate = true
     geo.computeBoundingSphere()
   }
+
+  /**
+   * 写入模拟结果（静止空间的位置和法线，见 src/cloth/engine.ts 的 GarmentOut）；null 回到按绑定的静态形状。
+   * Write a simulation result (rest-space positions and normals, see GarmentOut in src/cloth/engine.ts); null goes back to
+   * the static shape from the binding.
+   */
+  simulated(p: Float32Array | null, q: Float32Array | null): void {
+    if (!p || !q) {
+      this.sim = false
+      if (this.lastPos && this.lastNor) {
+        this.restSig = NaN
+        this.setPositions(this.lastPos, this.lastNor)
+      }
+      return
+    }
+    this.sim = true
+    const geo = this.mesh.geometry
+    const pos = geo.getAttribute('position').array as Float32Array
+    const nor = geo.getAttribute('normal').array as Float32Array
+    for (let i = 0; i < p.length; i++) pos[i] = p[i]! + this.lift * q[i]!
+    nor.set(q)
+    geo.getAttribute('position').needsUpdate = true
+    geo.getAttribute('normal').needsUpdate = true
+  }
 }
 
 /** 一件衣服的预览层（Viewer 的跟随者）/ The preview layer of one garment (a Viewer follower). */
@@ -120,6 +183,12 @@ export class ClothLayer {
 
   constructor(source: SkinGeometry, readonly cloth: LoadedCloth, private readonly skinning: SkinningData) {
     this.material = new MeshStandardNodeMaterial({ color: new Color(CLOTH_COLORS[cloth.data.garment] ?? '#cccccc'), roughness: 0.92, metalness: 0, side: DoubleSide })
+    // 深度上往相机拉一点，比写实皮肤层（-1）拉得多：布离皮肤只有几毫米，掠射处皮肤层的深度偏移会让它从布底下透出来
+    // pulled towards the camera in depth, more than the lifelike skin layer (-1): cloth lies only millimetres off the skin,
+    // and at grazing angles that layer's depth offset would let it show through the cloth
+    this.material.polygonOffset = true
+    this.material.polygonOffsetFactor = -3
+    this.material.polygonOffsetUnits = -6
     this.patch = new ClothPatch(source, cloth, this.material)
     this.patch.mesh.name = `cloth:${cloth.data.garment}`
     this.patch.mesh.renderOrder = 2
@@ -129,6 +198,15 @@ export class ClothLayer {
   /** 这份数据是否属于这张皮肤 / Whether this data belongs to this skin. */
   static fits(source: SkinGeometry, cloth: LoadedCloth): boolean {
     return cloth.data.skinVertexCount * 3 === source.position.length
+  }
+
+  /** 模拟结果；null 回到静态形状 / A simulation result; null goes back to the static shape. */
+  setSimulated(positions: Float32Array | null, normals: Float32Array | null): void {
+    ;(this.patch as ClothPatch).simulated(positions, normals)
+  }
+
+  set onRest(fn: ((rest: ArrayLike<number>) => void) | null) {
+    ;(this.patch as ClothPatch).onRest = fn
   }
 
   setSkinning(mode: SkinningMode): void {
