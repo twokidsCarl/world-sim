@@ -22,6 +22,7 @@
 import { Color, DataTexture, MeshStandardNodeMaterial, NearestFilter, RGBAFormat, UnsignedByteType } from 'three/webgpu'
 import { Fn, If, abs, attribute, cross, dFdx, dFdy, dot, float, floor, int, ivec2, max, min, normalView, positionView, select, sign, textureLoad, uniform, varying, vec2, vec3, vec4 } from 'three/tsl'
 import type { LoadedDetail } from '../pain/detail.ts'
+import { makeSkinMaterial, type SkinLook } from '../look/skinMaterial.ts'
 import type { SkinGeometry } from './skinLayer.ts'
 import { SkinPatch } from './skinPatch.ts'
 import { positionNodeFor, type SkinningData, type SkinningMode } from './skinning.ts'
@@ -39,6 +40,11 @@ export class FaceDetailLayer {
   private readonly weights: { value: number }[]
   private readonly color = uniform(new Color(0xffffff))
   private active = false
+  /** 合成后的视空间法线；写实材质也用它 / the composite view-space normal; the lifelike material uses it too */
+  private readonly viewNormal: N
+  /** 写实模式下换上的材质（与写实皮肤同一套参数）/ the material swapped in for the lifelike mode (same parameters as the lifelike skin) */
+  private lookMaterial: ReturnType<typeof makeSkinMaterial> | null = null
+  private skinningMode: SkinningMode = 'off'
 
   constructor(
     source: SkinGeometry,
@@ -110,6 +116,7 @@ export class FaceDetailLayer {
     this.material = new MeshStandardNodeMaterial({ roughness: 0.6, metalness: 0 })
     this.material.colorNode = this.color as N
     this.material.normalNode = viewNormal
+    this.viewNormal = viewNormal
     // 与皮肤共面：往相机方向偏一点，压住下面的皮肤 / coplanar with the skin: biased towards the camera to sit over it
     this.material.polygonOffset = true
     this.material.polygonOffsetFactor = -1
@@ -151,8 +158,34 @@ export class FaceDetailLayer {
   }
 
   setSkinning(mode: SkinningMode): void {
-    this.material.positionNode = positionNodeFor(this.skinning, mode, false) as typeof this.material.positionNode
-    this.material.needsUpdate = true
+    this.skinningMode = mode
+    for (const m of [this.material, this.lookMaterial]) {
+      if (!m) continue
+      m.positionNode = positionNodeFor(this.skinning, mode, false) as typeof m.positionNode
+      m.needsUpdate = true
+    }
+  }
+
+  /**
+   * 写实模式：用写实皮肤的材质画（皱纹法线不变），`uv` 是每个皮肤顶点的写实 UV；null 换回原来的材质。
+   * Lifelike mode: draw with the lifelike skin material (same wrinkle normal); `uv` is the lifelike UV per
+   * skin vertex. null switches back to the plain material.
+   */
+  useLook(look: SkinLook | null, uv: Float32Array | null): void {
+    if (look && uv) {
+      if (!this.lookMaterial) {
+        const m = makeSkinMaterial(look, { normalNode: this.viewNormal })
+        m.polygonOffset = true
+        m.polygonOffsetFactor = -1
+        m.polygonOffsetUnits = -2
+        this.lookMaterial = m
+        this.patch.setAttribute('uv', uv, 2)
+        this.setSkinning(this.skinningMode)
+      }
+      this.patch.mesh.material = this.lookMaterial
+    } else {
+      this.patch.mesh.material = this.material
+    }
   }
 
   /** 验证用：切换输出 / Verification: switch the output. */
@@ -166,6 +199,7 @@ export class FaceDetailLayer {
   dispose(): void {
     this.patch.dispose()
     this.material.dispose()
+    this.lookMaterial?.dispose()
     this.atlas.dispose()
   }
 }

@@ -22,19 +22,31 @@ export class SkinPatch {
    * `triangles`：改为直接给出三角形（展平的皮肤顶点下标），顶点就是它们用到的那些。
    * `subset`: the skin vertices to include (ascending); null = all. Only triangles with all three vertices inside are kept.
    * `triangles`: give the triangles directly instead (flat skin vertex indices); the vertices are the ones they use.
+   * `map`：顶点映射（本网格顶点 → 皮肤顶点，可重复）和本网格自己的三角形；给了它，前面几项就不用了。
+   * `map`: a vertex map (this mesh's vertex → skin vertex, repeats allowed) and this mesh's own triangles; when given, the above are not used.
    */
-  constructor(source: SkinGeometry, subset: Uint32Array | null, material: Material, triangles?: ArrayLike<number>) {
+  constructor(source: SkinGeometry, subset: Uint32Array | null, material: Material, triangles?: ArrayLike<number>, map?: { vertices: Uint32Array; index: Uint32Array }) {
     const total = source.position.length / 3
-    const index = triangles ?? source.index
-    const vertices = triangles ? Uint32Array.from(new Set(Array.from(triangles))).sort() : (subset ?? Uint32Array.from({ length: total }, (_, i) => i))
-    this.vertices = vertices
-    const local = new Int32Array(total).fill(-1)
-    vertices.forEach((v, i) => (local[v] = i))
-    const kept: number[] = []
-    for (let t = 0; t + 2 < index.length; t += 3) {
-      const a = local[index[t]!]!, b = local[index[t + 1]!]!, c = local[index[t + 2]!]!
-      if (a >= 0 && b >= 0 && c >= 0) kept.push(a, b, c)
+    let vertices: Uint32Array
+    let kept: ArrayLike<number>
+    if (map) {
+      // 直接给出顶点映射（可以重复，例如 UV 接缝处一个皮肤顶点的两个副本）和本网格的三角形
+      // the vertex map given directly (it may repeat, e.g. two copies of a skin vertex at a UV seam) with this mesh's own triangles
+      vertices = map.vertices
+      kept = map.index
+    } else {
+      const index = triangles ?? source.index
+      vertices = triangles ? Uint32Array.from(new Set(Array.from(triangles))).sort() : (subset ?? Uint32Array.from({ length: total }, (_, i) => i))
+      const local = new Int32Array(total).fill(-1)
+      vertices.forEach((v, i) => (local[v] = i))
+      const list: number[] = []
+      for (let t = 0; t + 2 < index.length; t += 3) {
+        const a = local[index[t]!]!, b = local[index[t + 1]!]!, c = local[index[t + 2]!]!
+        if (a >= 0 && b >= 0 && c >= 0) list.push(a, b, c)
+      }
+      kept = list
     }
+    this.vertices = vertices
     this.triangleCount = kept.length / 3
     const n = vertices.length
     this.position = new BufferAttribute(new Float32Array(n * 3), 3)
