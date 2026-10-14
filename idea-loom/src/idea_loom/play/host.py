@@ -21,7 +21,7 @@ from urllib.parse import urlparse
 
 import httpx
 from starlette.concurrency import run_in_threadpool
-from starlette.requests import Request
+from starlette.requests import ClientDisconnect, Request
 from starlette.responses import FileResponse, HTMLResponse, JSONResponse, Response, StreamingResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
@@ -110,9 +110,15 @@ def _static(root: Path, path: str) -> Response:
 async def _proxy(request: Request, port: int) -> Response:
     url = f"http://127.0.0.1:{port}{request.url.path}" + (f"?{request.url.query}" if request.url.query else "")
     headers = {k: v for k, v in request.headers.items() if k.lower() not in HOP}
+    try:
+        content = await request.body()
+    except ClientDisconnect:
+        # 浏览器在请求发到一半时走了（切走、刷新）：没有谁在等回答，不转发，也不算出错。
+        # The browser left halfway through sending (navigated away, reloaded): nobody awaits a reply, so nothing is forwarded and it is no error.
+        return Response(status_code=499)
     client = httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=5.0))
     try:
-        upstream = await client.send(client.build_request(request.method, url, headers=headers, content=await request.body()), stream=True)
+        upstream = await client.send(client.build_request(request.method, url, headers=headers, content=content), stream=True)
     except httpx.HTTPError as e:
         await client.aclose()
         return JSONResponse({"detail": f"后端没有回应：{e}"}, status_code=502)
