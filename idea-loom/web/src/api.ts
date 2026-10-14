@@ -60,6 +60,9 @@ export type Wish = {
   // 正在做这条愿望的作业走到哪一步；没有作业在做时为空。
   // Where the job working on this wish has got to; empty when no job is.
   job_id?: string | null; job_phase?: string | null; job_label?: string | null; job_queued?: boolean
+  // 有 Claude Code 会话在给它出计划时：谁、从什么时候起、到什么时候自动失效。没人认领时为空。
+  // While a Claude Code session is planning it: who, since when and until when it lapses. Empty when unclaimed.
+  claimed_by?: string | null; claimed_by_label?: string | null; claimed_at?: string | null; claim_until?: string | null; claim_note?: string | null
 }
 export type WishDetail = Wish & {
   copy_text: string

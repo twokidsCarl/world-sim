@@ -80,7 +80,7 @@ const EN = {
   wishStatus: { open: 'Open', accepted: 'Accepted', done: 'Done', declined: 'Declined', withdrawn: 'Withdrawn' },
   wishEvent: {
     recorded: 'Recorded', seen: 'Seen again', edited: 'Rewritten', withdrawn: 'Withdrawn', restored: 'Restored',
-    status: 'Status changed', noted: 'Note', linked: 'Linked',
+    status: 'Status changed', noted: 'Note', linked: 'Linked', claimed: 'Planning started', released: 'Released',
   },
   wishBy: { assistant: 'Assistant', human: 'You', review: 'Review', 'claude-code': 'Claude Code' },
   taskStatus: {
