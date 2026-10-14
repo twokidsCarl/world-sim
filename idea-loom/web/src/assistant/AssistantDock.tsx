@@ -11,7 +11,7 @@ import { clearRefs, snapshot } from './pageSnapshot'
 import { MAX_WIDTH, MIN_WIDTH, useAssistant } from './store'
 import { stuck } from './stuck'
 import { arrive, install, note, recentActions, subscribe } from './trail'
-import type { Block, TurnView } from './turnView'
+import { type Block, type TurnView, imageUrls } from './turnView'
 
 // 建议的问题和"解释这一页"的那句话：[中文, 英文]。界面是英文时，发出去的也是英文。
 // The suggested questions and the canned "explain this page" question: [Chinese, English].
@@ -274,7 +274,7 @@ export function AssistantDock() {
             </div>
           )}
           {a.turns.map((t, i) => (
-            <Turn key={i} turn={t} last={i === a.turns.length - 1} imageBase={a.conversationId ? `/api/assistant/conversations/${a.conversationId}/turns/${i + 1}/images/` : ''} />
+            <Turn key={i} turn={t} last={i === a.turns.length - 1} images={imageUrls(t, a.conversationId)} />
           ))}
           {a.error && <p className="err" role="alert">{a.error}</p>}
         </div>
@@ -350,9 +350,7 @@ export function AssistantDock() {
   )
 }
 
-function Turn({ turn, last, imageBase }: { turn: TurnView; last: boolean; imageBase: string }) {
-  // 刚发的用本地的图；回看以前的对话时从服务器取。 / A fresh turn uses the local images; older conversations fetch them from the server.
-  const images = turn.images.length ? turn.images : imageBase ? Array.from({ length: turn.imageCount }, (_, i) => `${imageBase}${i}`) : []
+function Turn({ turn, last, images }: { turn: TurnView; last: boolean; images: string[] }) {
   const running = turn.status === 'running'
   const t = useT()
   const refused = turn.steps.filter((s) => s.state === 'refused')
