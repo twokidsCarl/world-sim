@@ -47,6 +47,7 @@
 //   skin   1                                      皮肤画成不透明（看表情）/ skin drawn opaque (to read the expression)
 //   look   0                                      不透明皮肤不用写实外观，改回解剖配色（缺省是写实）
 //                                                 an opaque skin without the lifelike look, in the anatomical colours (lifelike is the default)
+//   sss    1                                      写实皮肤做屏幕空间次表面散射（缺省不做，只在 WebGPU 上）/ screen-space subsurface scattering on the lifelike skin (off by default, WebGPU only)
 //   tone   0–100                                  写实皮肤的色调（黑色素；只写不在缺省值的）/ the lifelike skin tone (melanin; written only when not the default)
 //   iris   blue                                   写实的眼的虹膜颜色：brown（缺省）dark hazel green blue grey
 //                                                 iris colour of the lifelike eyes: brown (default) dark hazel green blue grey
@@ -118,7 +119,7 @@ const AXES: Record<string, SectionAxis> = { a: 'axial', c: 'coronal', s: 'sagitt
 const MAPS = { d: 'dermatome', n: 'cutaneousNerve' } as const
 const BODIES = new Set(['male', 'female', 'fixture', 'stress'])
 /** 本模块负责的参数名；其余的原样保留 / Parameter names owned here; all others pass through. */
-export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'say', 'drive', 'style', 'skin', 'look', 'tone', 'shape', 'stim', 'src', 'cmp', 'iris', 'gaze', 'blink', 'hair', 'hc', 'beard', 'wear'] as const
+export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'say', 'drive', 'style', 'skin', 'look', 'tone', 'shape', 'stim', 'src', 'cmp', 'iris', 'gaze', 'blink', 'hair', 'hc', 'beard', 'wear', 'sss'] as const
 /** 超过这个数量的部件 id 不写进 URL / Part id lists longer than this are not written to the URL. */
 export const MAX_URL_IDS = 60
 export const MAX_URL_DOFS = 40
@@ -160,6 +161,8 @@ export interface UrlState {
   skin?: boolean
   /** false：不透明皮肤用解剖配色；缺省（写实）不写 / false: an opaque skin in the anatomical colours; the default (lifelike) is not written */
   look?: boolean
+  /** true：做屏幕空间次表面散射；缺省（不做）不写 / true: screen-space subsurface scattering; the default (off) is not written */
+  sss?: boolean
   /** 写实皮肤的色调 0–100 / the lifelike skin tone 0–100 */
   tone?: number
   /** 虹膜颜色；缺省（棕）不写 / iris colour; the default (brown) is not written */
@@ -235,6 +238,12 @@ export function parseUrl(search: string): ParsedUrl {
         const f = flag(value)
         if (f === null) warn(`${key}: 应为 1 或 0 / expected 1 or 0`)
         else if (!f) state.look = false
+        break
+      }
+      case 'sss': {
+        const f = flag(value)
+        if (f === null) warn(`${key}: 应为 1 或 0 / expected 1 or 0`)
+        else if (f) state.sss = true
         break
       }
       case 'tone': {
@@ -491,6 +500,7 @@ export function formatUrl(state: UrlState, passthrough: readonly [string, string
   if (state.skin) put('skin', '1')
   if (state.look === false) put('look', '0')
   if (state.tone !== undefined) put('tone', String(Math.round(state.tone)))
+  if (state.sss) put('sss', '1')
   if (state.iris && state.iris !== 'brown') put('iris', state.iris)
   if (state.blink === false) put('blink', '0')
   if (state.gaze) {

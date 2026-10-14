@@ -98,6 +98,7 @@ import { isTrackpadScroll } from './wheel.ts'
 import { LookSkin } from '../look/lookSkin.ts'
 import { LookEnvironment } from '../look/environment.ts'
 import { SkinLook } from '../look/skinMaterial.ts'
+import { SkinSSS } from '../look/sssPass.ts'
 import type { LoadedSkinUv } from '../look/load.ts'
 import { EyeLook, LookEyes } from '../look/eyes.ts'
 import { fitEye, type EyeFit, type M3 } from '../look/eyesFit.ts'
@@ -221,6 +222,7 @@ export type ViewState = Pick<
   | 'skinOpaque'
   | 'look'
   | 'tone'
+  | 'sss'
   | 'iris'
   | 'gaze'
   | 'blink'
@@ -375,6 +377,9 @@ export class Viewer {
   private readonly skinLook = new SkinLook()
   private lookEnv!: LookEnvironment
   private lookWanted = true
+  /** 屏幕空间次表面散射（只在 WebGPU、写实外观显示时）/ screen-space subsurface scattering (WebGPU only, while the lifelike look shows) */
+  private skinSss!: SkinSSS
+  private sssWanted = true
   /** 每个皮肤顶点的写实 UV（给皱纹层），按 appliedSkinUv 缓存 / the lifelike UV per skin vertex (for the wrinkle layer), cached for appliedSkinUv */
   private lookUvPerSkin: Float32Array | null = null
   /** 写实的眼（src/look/eyes.ts）、扫描眼球部件的下标（写实的眼显示时藏起来）/ the lifelike eyes (src/look/eyes.ts) and the scanned eyeball parts (hidden while they show) */
@@ -620,6 +625,7 @@ export class Viewer {
     const fill = new HemisphereLight(0xf2f5fa, 0x4a443e, 1.25)
     this.scene.add(fill)
     this.lookEnv = new LookEnvironment(this.renderer, this.scene, fill)
+    this.skinSss = new SkinSSS(this.renderer, this.scene, this.camera)
     const key = new DirectionalLight(0xfff6ea, 2.3)
     key.position.set(-0.35, 0.55, 1)
     const keyTarget = new Object3D()
@@ -1638,6 +1644,10 @@ export class Viewer {
   /** 写实皮肤层：UV 数据到了（或换了）就重建；可见性由 updateLook 管 / The lifelike skin layer: rebuilt when its UV data arrive or change; visibility is updateLook's job. */
   private syncLook(s: ViewState): void {
     this.lookWanted = s.look
+    if (this.sssWanted !== s.sss) {
+      this.sssWanted = s.sss
+      this.updateLook()
+    }
     if (this.skinLook.setTone(s.tone)) this.dirty = true
     if (s.skinUv === this.appliedSkinUv && (this.lookSkin || !s.skinUv)) return
     const i = this.mainSkinIndex()
@@ -1818,6 +1828,7 @@ export class Viewer {
       this.dirty = true
     }
     if (this.lookEnv.set(show)) this.dirty = true
+    if (this.skinSss.setActive(show && this.sssWanted)) this.dirty = true
     if (this.lookEyes) {
       const sel = this.eyeSidesSelected(this.source())
       if (this.lookEyes.setVisible(show, { L: !sel.L, R: !sel.R })) this.dirty = true
@@ -3824,7 +3835,7 @@ export class Viewer {
       const r0 = performance.now()
       this.renderer.info.reset()
       this.batches?.beforeRender(this.camera)
-      this.renderer.render(this.scene, this.camera)
+      if (!this.skinSss.render()) this.renderer.render(this.scene, this.camera)
       const dt = performance.now() - r0
       this.statFrames++
       this.statRenderMs += dt
@@ -3944,7 +3955,7 @@ export class Viewer {
     }
     for (let i = 0; i < 5; i++) {
       step()
-      this.renderer.render(this.scene, this.camera)
+      if (!this.skinSss.render()) this.renderer.render(this.scene, this.camera)
       await gpuDone()
     }
     const times: number[] = []
@@ -3954,7 +3965,7 @@ export class Viewer {
       const t0 = performance.now()
       this.renderer.info.reset()
       this.batches?.beforeRender(this.camera)
-      this.renderer.render(this.scene, this.camera)
+      if (!this.skinSss.render()) this.renderer.render(this.scene, this.camera)
       cpu += performance.now() - t0
       await gpuDone()
       times.push(performance.now() - t0)

@@ -29,6 +29,7 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
   const skinOpaque = useApp((s) => s.skinOpaque)
   const look = useApp((s) => s.look)
   const tone = useApp((s) => s.tone)
+  const sss = useApp((s) => s.sss)
   const toneData = useApp((s) => s.skinUv?.colour?.data.tone)
   const toneDefault = toneData?.default ?? DEFAULT_TONE
   const iris = useApp((s) => s.iris)
@@ -140,6 +141,12 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
                 />
                 <span className="value">{tone ?? toneDefault}</span>
               </div>
+            )}
+            {skinOpaque && look && (
+              <label className="check" title="Screen-space subsurface scattering of the lifelike skin (WebGPU only; WebGL2 keeps the pre-integrated diffuse)">
+                <input type="checkbox" checked={sss} onChange={(e) => app.setSss(e.target.checked)} />
+                次表面散射（屏幕空间，WebGPU） <span className="en">Subsurface scattering (screen space, WebGPU)</span>
+              </label>
             )}
             {skinOpaque && look && toneData && (tone ?? toneDefault) > toneData.nistMax && (
               <p className="hint">

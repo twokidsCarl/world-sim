@@ -13,10 +13,19 @@
 //     difference between the two, so the rest of three's model (Fresnel, sheen) stays as it is.
 
 import { MeshSSSNodeMaterial, PhysicalLightingModel } from 'three/webgpu'
-import { BRDF_Lambert, diffuseContribution, float, normalView, positionViewDirection, vec2, vec3 } from 'three/tsl'
+import { BRDF_Lambert, diffuseContribution, float, normalView, positionViewDirection, property, vec2, vec3, vec4 } from 'three/tsl'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type N = any
+
+/**
+ * 屏幕空间次表面散射的 sss 目标（见 sssPass.ts）：rgb 是皮肤的漫反射光（直射 + 环境），a = 1（皮肤）。只有皮肤材质给它赋值；
+ * 别的材质里它是 WGSL 变量的零初始值，所以那里是 (0, 0, 0, 0)。
+ * The `sss` target of the screen-space subsurface scattering (see sssPass.ts): rgb is the skin's diffuse light
+ * (direct + ambient), a = 1 (skin). Only the skin material assigns it; in every other material it
+ * keeps the zero initial value of a WGSL variable, so there it reads (0, 0, 0, 0).
+ */
+export const skinSss = property('vec4', 'SkinSss')
 
 export interface SkinLightingExtras {
   /** 按表坐标取预积分表 / sample the pre-integrated table at table coordinates */
@@ -63,6 +72,14 @@ class SkinLightingModel extends PhysicalLightingModel {
       const lambert: N = (BRDF_Lambert as N)({ diffuseColor: diffuseContribution })
       reflectedLight.directDiffuse.addAssign(pre.sub(nl.clamp()).mul(lightColor).mul(lambert).mul(x.on))
     }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  finish(builder: any): void {
+    super.finish(builder)
+    // 漫反射单独记下，屏幕空间次表面散射只模糊它 / record the diffuse alone; the screen-space subsurface scattering blurs only that
+    const r = (builder as { context: { reflectedLight: { directDiffuse: N; indirectDiffuse: N } } }).context.reflectedLight
+    ;(skinSss as N).assign((vec4 as N)(r.directDiffuse.add(r.indirectDiffuse), 1))
   }
 }
 
