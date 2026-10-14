@@ -117,3 +117,63 @@ export function dominantVertex(d: DecodedLod, c: number): number {
   for (let k = 1; k < 3; k++) if (d.rootBary[c * 3 + k]! > d.rootBary[c * 3 + best]!) best = k
   return d.rootVerts[c * 3 + best]!
 }
+
+/**
+ * 每个发片顶点最近的皮肤顶点（按静止位置）。贴着皮肤的毛（胡须、阴毛、腋毛）每个顶点照抄它的蒙皮影响：皮肤在大幅姿势下
+ * 拉伸、转动时，发片沿整条跟着那一片皮肤走，不会像按根刚性连着那样离开皮肤。
+ * The nearest skin vertex of every card vertex (by rest position). For hair lying on the skin (beard, pubic, axillary)
+ * each vertex copies its skinning influences: when the skin stretches and turns in a large pose, the card follows that
+ * patch of skin along its whole length instead of leaving it, as it would if rigidly tied to its root.
+ */
+export function surfaceAnchors(cardPos: Float32Array, skin: ArrayLike<number>, normals?: ArrayLike<number>, d?: DecodedLod): Uint32Array {
+  const n = cardPos.length / 3
+  let lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity]
+  for (let i = 0; i < n; i++) {
+    for (let k = 0; k < 3; k++) {
+      lo[k] = Math.min(lo[k]!, cardPos[i * 3 + k]!)
+      hi[k] = Math.max(hi[k]!, cardPos[i * 3 + k]!)
+    }
+  }
+  const pad = 0.03
+  lo = lo.map((v) => v - pad)
+  hi = hi.map((v) => v + pad)
+  const C = 0.01
+  const grid = new Map<number, number[]>()
+  const key = (x: number, y: number, z: number): number => (Math.floor(x / C) + 1000) * 4000000 + (Math.floor(y / C) + 1000) * 2000 + (Math.floor(z / C) + 1000)
+  const nv = skin.length / 3
+  for (let v = 0; v < nv; v++) {
+    const x = skin[v * 3]!, y = skin[v * 3 + 1]!, z = skin[v * 3 + 2]!
+    if (x < lo[0]! || y < lo[1]! || z < lo[2]! || x > hi[0]! || y > hi[1]! || z > hi[2]!) continue
+    const k = key(x, y, z)
+    const l = grid.get(k)
+    if (l) l.push(v)
+    else grid.set(k, [v])
+  }
+  // 只取与根同一面的皮肤顶点（法线与根的法线夹角小于 60°）：腋窝里臂和胸壁的皮肤贴在一起，最近的顶点可能在对面
+  // only skin vertices on the root's side (normal within 60° of the root's): in the axilla the arm and chest skin lie together, and the nearest vertex can be on the opposite side
+  const per = d ? d.rings * 2 : 0
+  const rootN = new Float64Array(3)
+  const out = new Uint32Array(n)
+  for (let i = 0; i < n; i++) {
+    const x = cardPos[i * 3]!, y = cardPos[i * 3 + 1]!, z = cardPos[i * 3 + 2]!
+    let best = d ? dominantVertex(d, Math.floor(i / per)) : 0, bd = Infinity
+    if (normals && d) {
+      rootN.fill(0)
+      const c = Math.floor(i / per)
+      for (let k = 0; k < 3; k++) for (let j = 0; j < 3; j++) rootN[j] = rootN[j]! + normals[d.rootVerts[c * 3 + k]! * 3 + j]! * d.rootBary[c * 3 + k]!
+    }
+    for (let r = 1; r <= 3 && bd === Infinity; r++) {
+      for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) for (let dz = -r; dz <= r; dz++) {
+        const l = grid.get(key(x + dx * C, y + dy * C, z + dz * C))
+        if (!l) continue
+        for (const v of l) {
+          if (normals && d && normals[v * 3]! * rootN[0]! + normals[v * 3 + 1]! * rootN[1]! + normals[v * 3 + 2]! * rootN[2]! < 0.5 * Math.hypot(rootN[0]!, rootN[1]!, rootN[2]!)) continue
+          const e = (skin[v * 3]! - x) ** 2 + (skin[v * 3 + 1]! - y) ** 2 + (skin[v * 3 + 2]! - z) ** 2
+          if (e < bd) (bd = e), (best = v)
+        }
+      }
+    }
+    out[i] = best
+  }
+  return out
+}
