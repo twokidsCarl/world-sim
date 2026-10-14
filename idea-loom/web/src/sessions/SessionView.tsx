@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router'
 import { type SessionMeta, api } from '../api'
 import { type Attached, MAX_IMAGES, fromFile, imagesIn } from '../assistant/images'
 import { Markdown } from '../assistant/Markdown'
@@ -65,6 +66,22 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
   useEffect(() => {
     if (stick.current && log.current) log.current.scrollTop = log.current.scrollHeight
   }, [view.items.length, view.status])
+
+  // 从列表上点了一个子 Agent（地址是 #step-<编号>）：那一步一出现就翻过去、展开，并闪一下。每次点击只翻一次。
+  // A subagent was clicked in the list (the address ends in #step-<id>): once that step appears, scroll to it, open it and flash it. Once per click.
+  const location = useLocation()
+  const jumped = useRef('')
+  useEffect(() => {
+    if (!location.hash.startsWith('#step-') || jumped.current === location.key) return
+    const target = document.getElementById(decodeURIComponent(location.hash.slice(1)))
+    if (!target) return // 还没读到那一步，读到了再来 / not read yet; try again when it arrives
+    jumped.current = location.key
+    stick.current = false
+    for (let d: HTMLDetailsElement | null = target as HTMLDetailsElement; d; d = d.parentElement?.closest('details') ?? null) d.open = true
+    target.scrollIntoView({ block: 'center' })
+    target.classList.add('session-jump')
+    setTimeout(() => target.classList.remove('session-jump'), 1600)
+  }, [location.key, location.hash, view.items])
 
   const act = async (run: () => Promise<unknown>) => {
     setError(null)
@@ -273,7 +290,7 @@ function ItemView({ item, live, onAnswer }: { item: Item; live: boolean; onAnswe
     // 子 Agent 报步数；放到后台跑的命令只说在跑还是做完了。 / A subagent reports its steps; a command run in the background only says running or done.
     const agent = item.name === 'Agent' || item.name === 'Task'
     return (
-      <details className={`session-step ${state}`} open={!!task && task.state !== 'done' ? true : undefined}>
+      <details id={`step-${item.id}`} className={`session-step ${state}`} open={!!task && task.state !== 'done' ? true : undefined}>
         <summary>
           <span aria-hidden="true" className={state === 'running' ? 'spin' : undefined}>{state === 'running' ? '◌' : state === 'failed' ? '×' : '✓'}</span> {item.label}
           {task && (

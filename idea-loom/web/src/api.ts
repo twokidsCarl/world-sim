@@ -47,7 +47,9 @@ export type WorkerStatus = {
 export type AgentToken = { id: string; name: string; scopes: string[]; created_at: number; revoked: boolean; token?: string }
 // 会话、作业用掉的 token，四项和 Claude Code 的 usage 同名。 / Tokens used by a session or job; the four names are those of Claude Code's usage.
 export type TokenUsage = { input_tokens?: number; output_tokens?: number; cache_read_input_tokens?: number; cache_creation_input_tokens?: number }
-export type SessionMeta = { id: string; title: string; wish_id: string | null; mode: string; model: string; effort: string; model_used: string | null; status: 'idle' | 'running' | 'waiting' | 'closed' | 'error'; cost_usd: number; tokens?: TokenUsage; turns: number; waiting_for: string | null; created_at: number; updated_at: number; live: boolean; stale?: boolean; pid?: number | null }
+export type SessionMeta = { id: string; title: string; wish_id: string | null; mode: string; model: string; effort: string; model_used: string | null; status: 'idle' | 'running' | 'waiting' | 'closed' | 'error'; cost_usd: number; tokens?: TokenUsage; turns: number; waiting_for: string | null; created_at: number; updated_at: number; live: boolean; stale?: boolean; pid?: number | null; agents?: Subagent[] }
+// 列表里会话下面的一个子 Agent。 / A subagent under its session in the list.
+export type Subagent = { id: string; label: string; state: 'running' | 'done' | 'failed' | 'stopped' }
 export type SessionList = { sessions: SessionMeta[]; unavailable: string | null; billing: 'subscription' | 'api_key'; modes: string[]; models: string[]; efforts: string[]; default_model: string }
 export type GenTarget = { level?: string; thread?: string; kernel?: string; like?: string; text?: string }
 export type Proposals = { proposals: Proposal[]; open: number; model_ready: boolean }
