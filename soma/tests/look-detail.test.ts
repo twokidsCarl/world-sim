@@ -108,7 +108,7 @@ for (const body of ['male', 'female']) {
         expect(mm).toBeLessThanOrEqual(d.thicknessMaxMm)
         expect(kappa).toBeLessThanOrEqual(d.kappaMax)
         thick.push(mm)
-        // 手掌、足底（部位贴图 B 高）应是皮嵴类型 / palms and soles (high B in the region map) should be of ridge type
+        // 手掌、足底（部位贴图 B 接近 255）应是皮嵴类型 / palms and soles (B near 255 in the region map) should be of ridge type
         if (reg.data[o + 2]! > 230) {
           palm++
           if (type > 0.8) palmRidges++
@@ -132,4 +132,37 @@ for (const body of ['male', 'female']) {
 
 function data(body: string): SkinColourData {
   return JSON.parse(readFileSync(look(body, 'skin-colour.json'), 'utf8')) as SkinColourData
+}
+
+for (const body of ['male', 'female']) {
+  const present = existsSync(look(body, 'skin-pads.png')) && existsSync(look(body, 'skin-lut-lip.bin'))
+  describe.skipIf(!present)(`${body}: finger pads and the vermilion table`, () => {
+    it('the pad map marks the finger pads with distances inside its range', async () => {
+      const d = data(body)
+      const img = await decodePngRgba(new Uint8Array(readFileSync(look(body, d.pads!.file))))
+      expect(img.width).toBe(d.pads!.size)
+      let pads = 0, core = 0
+      for (let i = 0; i < img.width * img.height; i++) {
+        if (img.data[i * 4 + 1]! > 128) {
+          pads++
+          if ((img.data[i * 4]! / 255) * d.pads!.rhoMaxMm < 2) core++
+        }
+      }
+      // 十个指腹各占一小块，每块都有涡心附近的点 / ten finger pads, each a small patch with texels near its core
+      expect(pads).toBeGreaterThan(200)
+      expect(core).toBeGreaterThan(10)
+    })
+
+    it('the vermilion table is redder than the skin table at the same melanin and blood', () => {
+      const d = data(body)
+      const half = (f: string) => new Uint16Array(new Uint8Array(readFileSync(look(body, f))).slice().buffer)
+      const skin = half(d.lut.file), lip = half(d.lut.lipFile!)
+      expect(lip.length).toBe(skin.length)
+      const n = d.lut.size
+      const at = (t: Uint16Array, u: number, v: number, c: number) => DataUtils.fromHalfFloat(t[(v * n + u) * 4 + c]!)
+      // 中等黑色素、较多血：唇红表的 R/G 更高 / moderate melanin, more blood: the vermilion table has a higher R/G
+      const u = Math.round(n * 0.25), v = Math.round(n * 0.7)
+      expect(at(lip, u, v, 0) / at(lip, u, v, 1)).toBeGreaterThan(at(skin, u, v, 0) / at(skin, u, v, 1))
+    })
+  })
 }

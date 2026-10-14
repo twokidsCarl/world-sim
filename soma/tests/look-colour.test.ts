@@ -115,17 +115,21 @@ describe.skipIf(!curatedPresent)('skin colour calibration (data/curated/look/ski
       const at = (i: number): [number, number, number, number] => {
         const x = Math.min(S - 1, Math.floor(uv.uv[i * 2]! * S)), y = Math.min(S - 1, Math.floor(uv.uv[i * 2 + 1]! * S))
         const o = (y * S + x) * 4
-        return [2 ** ((map.data[o]! - 128) / k), 2 ** ((map.data[o + 1]! - 128) / k), map.data[o + 2]! / 255, map.data[o + 3]! / 255]
+        // B = 128 + 127·(手足掌 − 唇红) / B = 128 + 127·(palmoplantar − vermilion)
+        return [2 ** ((map.data[o]! - 128) / k), 2 ** ((map.data[o + 1]! - 128) / k), (map.data[o + 2]! - 128) / 127, map.data[o + 3]! / 255]
       }
       const bloodPerSkinVertex = new Float64Array(uvData.skinVertexCount)
       let palm = 0
+      const lipW = new Float64Array(uvData.skinVertexCount)
       for (let i = 0; i < uvData.vertexCount; i++) {
         const [m, b, p, r] = at(i)
         expect(m).toBeGreaterThan(0.1)
         expect(m).toBeLessThan(4)
         expect(b).toBeGreaterThan(0.5)
         expect(b).toBeLessThan(12)
-        expect(p).toBeGreaterThanOrEqual(0)
+        expect(p).toBeGreaterThanOrEqual(-1.01)
+        expect(p).toBeLessThanOrEqual(1.01)
+        lipW[uv.skinVertex[i]!] = Math.max(0, -p)
         expect(r).toBeGreaterThan(0.25)
         expect(r).toBeLessThan(0.7)
         bloodPerSkinVertex[uv.skinVertex[i]!] = b
@@ -136,6 +140,9 @@ describe.skipIf(!curatedPresent)('skin colour calibration (data/curated/look/ski
       const lip = [...openings.margins.upperLip!, ...openings.margins.lowerLip!].map((v) => bloodPerSkinVertex[v]!)
       const all = [...bloodPerSkinVertex].sort((a, b) => a - b)
       expect(lip.reduce((a, b) => a + b, 0) / lip.length).toBeGreaterThan(3 * all[all.length >> 1]!)
+      // 唇缘用唇红自己的表 / the lip margins use the vermilion's own table
+      const lipMargin = [...openings.margins.upperLip!, ...openings.margins.lowerLip!].map((v) => lipW[v]!)
+      expect(lipMargin.reduce((a, b) => a + b, 0) / lipMargin.length).toBeGreaterThan(0.8)
       expect(palm).toBeGreaterThan(500)
     })
   }

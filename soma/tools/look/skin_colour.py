@@ -63,7 +63,8 @@ WL_XYZ = np.arange(379, 782, 3, dtype=float)
 
 # ── 固定的常数（有出处）/ fixed constants (sourced) ──────────────────────────────────────────────
 GAMMA = 0.7          # 血氧饱和度（Donner 等 2008）/ oxygen saturation (Donner et al. 2008)
-D_EPI = 0.25         # 表皮厚度 mm（Donner 等 2008：含部分乳头层真皮）/ epidermis thickness mm (Donner et al. 2008; includes part of the papillary dermis)
+D_EPI = 0.057        # 含黑色素的活表皮厚度 mm（Sandby-Møller 等 2003：前臂背侧 56.6 µm）/ thickness of the melanin-bearing viable epidermis, mm (Sandby-Møller et al. 2003: dorsal forearm 56.6 µm)
+BETA_M = 0.74        # 真黑素在黑色素中的比例，各种肤色都约 74%（Del Bino 等 2015、2022）/ eumelanin share of melanin, about 74% in every skin tone (Del Bino et al. 2015, 2022)
 N_SKIN = 1.4         # 折射率（Donner 等 2008）/ refractive index (Donner et al. 2008)
 HB_GPL = 150.0       # 全血血红蛋白 g/L（Prahl 的常用值）/ whole-blood haemoglobin g/L (Prahl's usual value)
 HB_MW = 64500.0      # 血红蛋白摩尔质量 g/mol（Prahl）/ haemoglobin molar mass g/mol (Prahl)
@@ -160,13 +161,15 @@ G_NOTES = {
     'caroteneMuA451': ('β-胡萝卜素在 451 nm 的吸收系数 mm⁻¹', 'β-carotene absorption at 451 nm, mm⁻¹'),
     'vesselRadiusMm': ('血管包装效应的等效血管半径 mm', 'effective vessel radius of the packaging effect, mm'),
 }
-G0 = np.array([0.7, 4.6, 1.4, 0.1, 0.05, 0.01])
-G_LO = np.array([0.0, 0.5, 0.0, 0.0, 0.0, 0.0005])
-G_HI = np.array([1.0, 30.0, 4.0, 0.5, 2.0, 0.1])
+# βm 固定为文献值（下界上界相同），其余拟合 / βm is fixed at the literature value (equal bounds); the rest are fitted
+G0 = np.array([BETA_M, 4.6, 1.4, 0.1, 0.05, 0.01])
+G_LO = np.array([BETA_M - 1e-9, 0.5, 0.0, 0.0, 0.0, 0.0005])
+G_HI = np.array([BETA_M + 1e-9, 30.0, 4.0, 0.5, 2.0, 0.1])
 
 
-def body_reflectance(sp, cm, chd, g):
-    """表面以下的漫反射（已含表面透射和内反射，不含外反射 rs），可以广播 / Reflectance below the surface (surface transmission and internal reflection included, external rs not); broadcasts."""
+def body_reflectance(sp, cm, chd, g, d=None):
+    """表面以下的漫反射（已含表面透射和内反射，不含外反射 rs），可以广播；d 是表皮厚度（缺省 D_EPI）
+    Reflectance below the surface (surface transmission and internal reflection included, external rs not); broadcasts; d is the epidermis thickness (default D_EPI)."""
     beta, sa, sb, rhe, bc, rv = g
     cm = np.asarray(cm, float)[..., None]
     chd = np.asarray(chd, float)[..., None]
@@ -180,7 +183,7 @@ def body_reflectance(sp, cm, chd, g):
     mua_d = chd * blood + (1 - chd) * sp.base
     se = 0.75 * sa * (sp.wl / 500.0) ** -sb
     sd = 0.5 * se
-    re, te = km_layer(2 * mua_e, se, D_EPI)
+    re, te = km_layer(2 * mua_e, se, D_EPI if d is None else d)
     a = 1 + 2 * mua_d / sd
     rd = a - np.sqrt(a * a - 1)
     rb = re + te * te * rd / (1 - re * rd)
@@ -188,8 +191,8 @@ def body_reflectance(sp, cm, chd, g):
     return (1 - RI) * rb / (1 - RI * rb)
 
 
-def total_reflectance(sp, cm, chd, g):
-    return RS + (1 - RS) * body_reflectance(sp, cm, chd, g)
+def total_reflectance(sp, cm, chd, g, d=None):
+    return RS + (1 - RS) * body_reflectance(sp, cm, chd, g, d)
 
 
 # ── 颜色 / colour ────────────────────────────────────────────────────────────────────────────
@@ -431,12 +434,28 @@ def main():
     cmc, chc, ec = invert_lab(sp_xyz, col, g, lab_cheek, (med_cm, med_chd), med_cm)
     # 唇红：黑色素取颊部的 0.7（Sun 等 2025 综述：唇红黑素细胞较少；深肤色的唇也有色素，倍数是假设），只反推血量
     # vermilion: melanin 0.7 of the cheek's (Sun et al. 2025 review: fewer melanocytes in the vermilion; deep-toned lips are pigmented too; the factor is assumed), only blood is inverted
-    cml, chl, el = invert_lab(sp_xyz, col, g, lab_cheek + np.array(LIP_STUDY['vermilion']) - np.array(LIP_STUDY['cheek']), (cmc, chc), 0.7 * cmc)
-    regions['lips'] = {'melanin': r4(cml / med_cm, 3), 'blood': r4(chl / med_chd, 3), 'roughness': 0.35,
+    lab_lip = lab_cheek + np.array(LIP_STUDY['vermilion']) - np.array(LIP_STUDY['cheek'])
+    cml, chl, el = invert_lab(sp_xyz, col, g, lab_lip, (cmc, chc), 0.7 * cmc)
+    # 唇红自己的结构：唇红的角质层薄、真皮乳头里的毛细血管离表面近，等效成更薄的表皮；厚度和血量一起反推。
+    # 试过更小的血管半径（更弱的包装效应），色差反而变大，所以包装效应不变。
+    # the vermilion's own structure: a thin stratum corneum and capillary loops in dermal papillae close to the surface,
+    # modelled as a thinner epidermis whose thickness is inverted together with the blood. A smaller vessel radius
+    # (weaker packaging) was tried and made the difference larger, so the packaging stays as it is.
+    def lip_resid(x):
+        return col.lab(total_reflectance(sp_xyz, 0.7 * cmc, np.exp(x[0]), g, x[1])) - lab_lip
+    rl = least_squares(lip_resid, [np.log(chl), D_EPI], bounds=([np.log(1e-4), 0.015], [np.log(CHD_MAX), D_EPI]))
+    chl2, d_lip = float(np.exp(rl.x[0])), float(rl.x[1])
+    el2 = float(de2000(lab_lip, col.lab(total_reflectance(sp_xyz, 0.7 * cmc, chl2, g, d_lip))))
+    regions['lips'] = {'melanin': r4(0.7 * cmc / med_cm, 3), 'blood': r4(chl2 / med_chd, 3), 'roughness': 0.35, 'epidermisMm': r4(d_lip, 4),
                        'source': 'Chinese Journal of Tissue Engineering Research, WPRIM wpr-698623 (abstract): vermilion vs cheek, n=202; cheek vs inner arm from Xiao et al. 2017',
-                       'fit': {'cheek': {'dE2000': r4(ec, 2)}, 'vermilion': {'dE2000': r4(el, 2)}},
-                       'provenance': 'computed (blood) / assumed (melanin, roughness)',
-                       'note': {'zh': '颊部相对上臂内侧取 Xiao 等 2017 四个人群的平均差，唇红相对颊部取摘要里的差，加到 NIST 中位数的颜色上，只反推血量；黑色素取颊部的 0.7（Sun 等 2025 综述：唇红黑素细胞较少，倍数是假设），粗糙度 0.35 是假设', 'en': 'cheek vs inner arm: the mean difference over the four groups of Xiao et al. 2017; vermilion vs cheek: the difference in the abstract; added to the colour of the NIST median, only blood inverted; melanin 0.7 of the cheek\'s (Sun et al. 2025 review: fewer melanocytes in the vermilion; the factor is assumed), roughness 0.35 assumed'}}
+                       'fit': {'cheek': {'dE2000': r4(ec, 2)}, 'vermilion': {'dE2000': r4(el2, 2), 'dE2000WithSkinEpidermis': r4(el, 2)}},
+                       'provenance': 'computed (blood, epidermis) / assumed (melanin, roughness)',
+                       'note': {'zh': '颊部相对上臂内侧取 Xiao 等 2017 四个人群的平均差，唇红相对颊部取摘要里的差，加到 NIST 中位数的颜色上，反推血量和唇红自己的等效表皮厚度（唇红用自己的查找表 skin-lut-lip.bin）；黑色素取颊部的 0.7（Sun 等 2025 综述：唇红黑素细胞较少，倍数是假设），粗糙度 0.35 是假设', 'en': 'cheek vs inner arm: the mean difference over the four groups of Xiao et al. 2017; vermilion vs cheek: the difference in the abstract; added to the colour of the NIST median, with the blood and the vermilion\'s own effective epidermis thickness inverted (the vermilion uses its own table, skin-lut-lip.bin); melanin 0.7 of the cheek\'s (Sun et al. 2025 review: fewer melanocytes in the vermilion; the factor is assumed), roughness 0.35 assumed'}}
+    body_lip = body_reflectance(sp_xyz, (CM_MAX * u ** 2)[None, :], (CHD_MAX * u ** 2)[:, None], g, d_lip)
+    lut_lip = np.ones((LUT_N, LUT_N, 4))
+    lut_lip[..., :3] = np.clip(col.lin_rgb(body_lip), 0, 1)
+    for b in BODIES:
+        open(f'public/anatomy/{b}/look/skin-lut-lip.bin', 'wb').write(half(lut_lip).tobytes())
     # 手掌：Cm 取使 L* = 60.8 的值（血量取 NIST 中位数 × 1.2）/ palm: the Cm that gives L* = 60.8 (blood: NIST median × 1.2)
     palm_blood = ASSUMED_REGIONS['palmsSoles']['blood']
 
@@ -492,7 +511,8 @@ def main():
         'model': {
             'fixed': {
                 'oxygenSaturation': {'value': GAMMA, 'provenance': 'sourced', 'source': 'Donner et al. 2008'},
-                'epidermisThicknessMm': {'value': D_EPI, 'provenance': 'sourced', 'source': 'Donner et al. 2008'},
+                'epidermisThicknessMm': {'value': D_EPI, 'provenance': 'sourced', 'source': 'Sandby-Møller J, Poulsen T, Wulf HC (2003) Acta Derm Venereol 83:410 — viable epidermis of the dorsal forearm 56.6 µm'},
+                'eumelaninFraction': {'value': BETA_M, 'provenance': 'sourced', 'source': 'Del Bino S et al. (2015) Pigment Cell Melanoma Res 28:707; Del Bino S et al. (2022) Pigment Cell Melanoma Res 35:622 — about 74% eumelanin, 26% pheomelanin regardless of pigmentation'},
                 'refractiveIndex': {'value': N_SKIN, 'provenance': 'sourced', 'source': 'Donner et al. 2008'},
                 'surfaceReflection': {'value': r4(RS, 5), 'provenance': 'computed', 'note': {'zh': 'n = 1.4、8° 入射的菲涅尔反射率', 'en': 'Fresnel reflectance at 8° incidence for n = 1.4'}},
                 'internalReflection': {'value': r4(RI, 5), 'provenance': 'computed', 'note': {'zh': 'n = 1.4 的半球平均菲涅尔反射率（Saunderson 修正用）', 'en': 'hemispherically averaged Fresnel reflectance for n = 1.4 (for Saunderson\'s correction)'}},
@@ -501,13 +521,13 @@ def main():
                 'haemoglobinSpectra': {'value': 'Gratzer/Kollias molar extinction compiled by Prahl (OMLC); used locally, not committed', 'provenance': 'sourced'},
             },
             'fitted': {k: {'value': r4(v, 5), 'provenance': 'computed', 'lowerBound': float(G_LO[i]), 'upperBound': float(G_HI[i]),
-                           'atBound': bool(v <= G_LO[i] + 1e-6 or v >= G_HI[i] - 1e-6), 'note': {'zh': G_NOTES[k][0], 'en': G_NOTES[k][1]}} for i, (k, v) in enumerate(zip(G_NAMES, g))},
+                           'atBound': bool(v <= G_LO[i] + 1e-6 or v >= G_HI[i] - 1e-6), 'note': {'zh': G_NOTES[k][0], 'en': G_NOTES[k][1]}} for i, (k, v) in enumerate(zip(G_NAMES, g)) if k != 'betaM'},
             'fittedNote': {
-                'zh': '共用参数是使 100 条光谱整体残差最小的"等效值"，不是各自的生理测量：βm 落到 0（拟合要比真黑素更陡的吸收谱），散射幂律指数很小（比 Jacques 2013 的 1.4 平得多）。把它们固定到文献值会让平均色差从约 1 升到 2–3 ΔE00。查找表只在 NIST 的范围内是标定过的。',
-                'en': 'The shared parameters are the "effective" values that minimise the residual over all 100 spectra, not physiological measurements each: βm goes to 0 (the fit wants an absorption steeper than eumelanin\'s) and the scattering power is small (much flatter than Jacques 2013\'s 1.4). Pinning them to literature values raises the mean colour difference from about 1 to 2–3 ΔE00. The table is calibrated only within the NIST range.',
+                'zh': '真黑素比例 βm 固定为文献值 0.74（Del Bino 等 2015、2022），表皮取前臂背侧活表皮的厚度 0.057 mm（Sandby-Møller 等 2003），其余五个共用参数拟合。第一版让 βm 自由、表皮 0.25 mm（Donner 等 2008）：βm 落到 0（全是褐黑素），深肤色因此偏橙；平均色差 1.09。现在的平均色差 1.06，ITA° < 28 的九人从 1.38 升到约 1.6。散射幂律指数仍偏小（0.36，Jacques 2013 的皮肤平均是 1.4），是等效值。查找表只在 NIST 的范围内是标定过的。',
+                'en': 'The eumelanin share βm is fixed at the literature value 0.74 (Del Bino et al. 2015, 2022), the epidermis at the dorsal-forearm viable epidermis of 0.057 mm (Sandby-Møller et al. 2003), and the other five shared parameters are fitted. The first version let βm run free with a 0.25 mm epidermis (Donner et al. 2008): βm went to 0 (all pheomelanin), which made deep tones lean orange; its mean colour difference was 1.09. Now the mean is 1.06, while the nine subjects with ITA° < 28 rise from 1.38 to about 1.6. The scattering power is still small (0.36, against Jacques 2013\'s skin average of 1.4) and is an effective value. The table is calibrated only within the NIST range.',
             },
         },
-        'lut': {'file': 'skin-lut.bin', 'size': LUT_N, 'format': 'RGBA half-float, row v (blood) by column u (melanin), linear sRGB, alpha 1',
+        'lut': {'file': 'skin-lut.bin', 'lipFile': 'skin-lut-lip.bin', 'size': LUT_N, 'format': 'RGBA half-float, row v (blood) by column u (melanin), linear sRGB, alpha 1',
                 'cmMax': CM_MAX, 'chdMax': CHD_MAX, 'axes': 'Cm = cmMax·u², Chd = chdMax·v²', 'content': 'diffuse reflectance below the surface (rs removed), D65, CIE 1931 2°'},
         'colorimetry': {
             'rgbToXyz': [[r4(v, 7) for v in row] for row in np.linalg.inv(col.m)], 'whiteXyz': [r4(v, 7) for v in col.white],
@@ -535,6 +555,8 @@ def main():
             'Measurement and correlation analysis of vermilion and facial skin color. Chinese Journal of Tissue Engineering Research (WPRIM wpr-698623; abstract)',
             'Phan T et al. (2022) Quantifying the confounding effect of pigmentation on measured skin tissue optical properties. J Biomed Opt 27:036002. doi:10.1117/1.JBO.27.3.036002',
             'Sun F, Liu Y, Zhang T (2025) Aging of the human lip. J Cosmet Dermatol 24:e70310. doi:10.1111/jocd.70310',
+            'Del Bino S, Ito S, Sok J et al. (2015) Chemical analysis of constitutive pigmentation of human epidermis reveals constant eumelanin to pheomelanin ratio. Pigment Cell Melanoma Res 28:707; Del Bino S, Ito S, Sok J, Wakamatsu K (2022) Pigment Cell Melanoma Res 35:622 (PMC9804219)',
+            'Sandby-Møller J, Poulsen T, Wulf HC (2003) Epidermal thickness at different body sites. Acta Derm Venereol 83:410',
             'Lee EJ et al. (2024) Skin color analysis of various body parts in 53 Korean women. J Clin Med 13:2500. doi:10.3390/jcm13092500',
             'Alaluf S et al. (2002) Ethnic variation in melanin content and composition in photoexposed and photoprotected human skin. Pigment Cell Res 15:112',
             'Pawson IG, Petrakis NL (1975) Comparisons of breast pigmentation among women of different racial groups. Hum Biol 47:441; Silva PC et al. (2020) Melanin index in the skin of preterm newborns. Skin Res Technol 26:356',
