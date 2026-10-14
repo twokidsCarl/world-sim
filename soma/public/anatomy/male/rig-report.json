@@ -2,16 +2,16 @@
  "schema": 1,
  "body": "male",
  "inputs": {
-  "anatomy.json#parts": "74fcb600010e0000",
+  "anatomy.json#parts": "27663cc5c9a38766",
   "integumentary.glb": "13ec5fdbb9708dcb",
   "muscular.glb": "67ee781f73e8cccc",
   "skeletal.glb": "153a069e1df5416c",
   "cardiovascular.glb": "04f3e71541f78153",
   "nervous.glb": "ac75dc5662c86f4e",
   "respiratory.glb": "fa5fd49f2140ec67",
-  "digestive.glb": "bd3e5fc3fd262ee9",
-  "urinary.glb": "42d0cfcccc3c7951",
-  "reproductive.glb": "1dcaaf6e6dfc0c8b",
+  "digestive.glb": "ca66b930c985564f",
+  "urinary.glb": "5dd34e5a5992c682",
+  "reproductive.glb": "7324ce8d9ce6ec20",
   "endocrine.glb": "e2b8ff856931a867",
   "lymphatic.glb": "af8ad72d72e9f60f",
   "nerves.json": "32355c17e310b4dd",
@@ -27,7 +27,7 @@
   "data/raw/bodyshape/out/male-skin-open/skin.obj": "3a73b3dccf48c1f8",
   "data/raw/bodyshape/out/male-skin-open/manifest.json#package": "21b32d11e24d8baf"
  },
- "binBytes": 12234576,
+ "binBytes": 12701664,
  "joints": [
   {
    "id": "pelvis",
@@ -3486,7 +3486,7 @@
   "labelledVoxels": 563926,
   "meanLabels": 8,
   "leaked": false,
-  "buildMs": 6835
+  "buildMs": 8976
  },
  "bindings": {
   "field": {
@@ -3523,6 +3523,11 @@
    "parts": 405,
    "vertices": 157883,
    "rigid": 39
+  },
+  "wall": {
+   "parts": 19,
+   "vertices": 38924,
+   "rigid": 0
   }
  },
  "muscles": {
@@ -33385,7 +33390,8 @@
   "tpip2_R \"flexion / extension\": the rest pose (-0.6° in the anatomical convention) lies outside the normal range −0…35°; range widened to include the rest pose",
   "tpip3_R \"flexion / extension\": the rest pose (-5.8° in the anatomical convention) lies outside the normal range −0…35°; range widened to include the rest pose",
   "tpip4_R \"flexion / extension\": the rest pose (-5.4° in the anatomical convention) lies outside the normal range −0…35°; range widened to include the rest pose",
-  "FJ2810 \"Skin\": bound with external weights from data/raw/bodyshape/out/male-skin-open, taken by package vertex index (skin-source.u32); 1261 chest vertices handed part of their thoracic weight to the ribs; 2456 vertices blended with distance-field weights (generic: ^(cmc1|mcp[1-5]|pip[2-5]|dip[2-5]|ip1)_[LR]$)"
+  "FJ2810 \"Skin\": bound with external weights from data/raw/bodyshape/out/male-skin-open, taken by package vertex index (skin-source.u32); 1261 chest vertices handed part of their thoracic weight to the ribs; 2456 vertices blended with distance-field weights (generic: ^(cmc1|mcp[1-5]|pip[2-5]|dip[2-5]|ip1)_[LR]$)",
+  "19 lumen parts follow their walls (weights at the closest point of 123 wall parts; 16 lumina matched to wall parts by name, 3 to neighbouring parts; farthest lumen vertex from a wall surface 38.8 mm, in LUMEN_stomach)"
  ],
  "validation": {
   "rest": {
@@ -34716,8 +34722,8 @@
       "worst": "Third ventricle"
      },
      "space": {
-      "p99": 1.05,
-      "p999": 1.23,
+      "p99": 1.01,
+      "p999": 1.01,
       "over2Pct": 0,
       "max": 1.36,
       "worst": "Cavity of right atrium"
@@ -34932,8 +34938,8 @@
       "worst": "Third ventricle"
      },
      "space": {
-      "p99": 1.09,
-      "p999": 1.37,
+      "p99": 1.01,
+      "p999": 1.01,
       "over2Pct": 0,
       "max": 1.66,
       "worst": "Cavity of left atrium"
@@ -35157,11 +35163,11 @@
       "worst": "Third ventricle"
      },
      "space": {
-      "p99": 1.01,
-      "p999": 1.01,
-      "over2Pct": 0,
-      "max": 1,
-      "worst": "Interventricular foramen"
+      "p99": 1.49,
+      "p999": 5.11,
+      "over2Pct": 0.51,
+      "max": 21.28,
+      "worst": "Lumen of ileum"
      },
      "gland": {
       "p99": 1.85,
@@ -36714,11 +36720,11 @@
       "worst": "Medulla oblongata"
      },
      "space": {
-      "p99": 1.01,
-      "p999": 1.01,
-      "over2Pct": 0,
-      "max": 1,
-      "worst": "Interventricular foramen"
+      "p99": 1.75,
+      "p999": 13.57,
+      "over2Pct": 0.86,
+      "max": 32.53,
+      "worst": "Cavity of pharynx"
      },
      "gland": {
       "p99": 1.07,
@@ -37038,11 +37044,11 @@
       "worst": "Spinal cord"
      },
      "space": {
-      "p99": 1.13,
-      "p999": 1.43,
-      "over2Pct": 0.03,
-      "max": 3.17,
-      "worst": "Cavity of right ventricle"
+      "p99": 2.31,
+      "p999": 6.05,
+      "over2Pct": 1.33,
+      "max": 16.54,
+      "worst": "Lumen of jejunum"
      },
      "gland": {
       "p99": 1.01,
@@ -37299,11 +37305,11 @@
       "worst": "Spinal cord"
      },
      "space": {
-      "p99": 1.01,
-      "p999": 1.01,
-      "over2Pct": 0,
-      "max": 1,
-      "worst": "Interventricular foramen"
+      "p99": 2.57,
+      "p999": 8.75,
+      "over2Pct": 1.69,
+      "max": 26.88,
+      "worst": "Lumen of ileum"
      },
      "gland": {
       "p99": 2.07,
@@ -37542,11 +37548,11 @@
       "worst": "Third ventricle"
      },
      "space": {
-      "p99": 1.01,
-      "p999": 1.01,
-      "over2Pct": 0,
-      "max": 1,
-      "worst": "Interventricular foramen"
+      "p99": 1.95,
+      "p999": 6.93,
+      "over2Pct": 0.95,
+      "max": 21.28,
+      "worst": "Lumen of ileum"
      },
      "gland": {
       "p99": 1.77,
@@ -37776,11 +37782,11 @@
       "worst": "Anterior horn of spinal cord"
      },
      "space": {
-      "p99": 3.09,
-      "p999": 6.59,
-      "over2Pct": 5.72,
-      "max": 7.15,
-      "worst": "Cavity of right ventricle"
+      "p99": 2.09,
+      "p999": 4.81,
+      "over2Pct": 1.09,
+      "max": 24.34,
+      "worst": "Cavity of stomach"
      },
      "gland": {
       "p99": 1.09,

@@ -234,7 +234,15 @@
     "source": "openstax_23_4",
     "note": "the empty stomach deflates inward and its lining falls into rugae",
     "filling": 0,
-    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (sourced)"
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (sourced)",
+    "shape": {
+     "kind": "slit",
+     "halfThicknessMm": 3,
+     "source": null,
+     "assumption": true,
+     "note": "collapsed shape used by the model: a slit flattened across the axis (roughly antero-posteriorly) that runs from the axis to the lesser curvature, with the area of a circle of the tabled collapsed calibre. No source was opened for this shape; OpenStax 23.4 states only that the empty stomach collapses inward into rugae.",
+     "zh": "模型用的塌陷形状：一条贴着小弯、大致前后向压扁的缝，面积等于表里塌陷口径的圆面积。这个形状没有打开过出处，是假设；OpenStax 23.4 只说空胃向内塌陷、黏膜成皱襞。"
+    }
    },
    "regions": {
     "cardia": {

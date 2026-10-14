@@ -22,6 +22,8 @@ import { capHoles, envelopeOf } from './derive.ts'
 import { checkSkinFit, closeShippedSkin, edgeTopology, faceAgainstSkin, FACE_MUSCLE_NAME, FACE_REGION_RADIUS, faceRegionOfSkin, internalsKey, notFittedAgainstSkin, selectSkinPackage, simplifySkinKeepingFace, skinPackageDirFor, skinLockMask, skinResolution, type SkinPackage } from './skinPackage.ts'
 import { thinOutsideRegion, thinStructuresOutsideSkin, type ThinOutside } from './thinOutside.ts'
 import { loadThinReference, settleThinParts, THIN_DEFAULTS, THIN_RULES, THIN_TISSUES, type ThinPartsResult } from './thinParts.ts'
+import { FILLING_FILE, FILLING_INDEX_FILE, fillingSidecar, lumenStage, type LumenStagePart } from './lumenStage.ts'
+import { readGlbParts } from '../skinmaps/io.ts'
 import { expandRetiredLipIds, LIP_HALVES, LIP_PARENT_FMA, lipPartIds, splitLip, WHOLE_LIP_NAME } from './lipSplit.ts'
 import { DEEP_LIP_NAME, DISPLAY_FILE, displayJson, openedSkinCautions, openedSkinProvenance, openedSkinReport, SKIN_PIECES_FILE, SKIN_SOURCE_FILE, skinPieces, skinSourceSidecar, toeStretch, type OpenedSkinReport, type SkinComponent, TOE_GRAFT_FAULTS } from './skinOpened.ts'
 import { correctShoulderGirdle, SHOULDER_DEFAULTS } from './shoulderTissue.ts'
@@ -239,6 +241,8 @@ interface Element {
    * geometry was built to measure (nerve tubes): do not run the simplifier over it
    */
   keepGeometry?: boolean
+  /** 腔部件（见 lumenStage.ts）：它的构成和充盈位移场 / a lumen part (see lumenStage.ts): what it is made of and its filling displacement field */
+  lumen?: LumenStagePart
   /**
    * 简化时必须原样保留的顶点（1 = 保留）；用于装入的皮肤的面部区域，见 skinPackage.ts
    * vertices the simplifier must leave as they are (1 = keep): the face region of an installed skin, see skinPackage.ts
@@ -1467,6 +1471,41 @@ async function main() {
     lap(`derived ${derived.length} parts`)
   }
 
+  // ── 3e. 空腔器官的腔 / 3e. The lumina of the hollow organs ───────────────────────────────────────────────
+  // 见 lumenStage.ts：由器官外表面和文献壁厚推出的内表面，消化道从口到肛门接成一条。部件表到这里已经定了（唇已切开、
+  // 薄结构已收回、派生的壳和脂肪已加入）；这一步只读别的部件、只加新部件（tissue 为 space，系统随它的壁），不动骨，
+  // 所以骨架指纹不变。腔的网格不过简化器（充盈位移场按顶点给）。SOMA_LUMEN=0 关闭，那时输出里什么也不多。
+  // See lumenStage.ts: inner surfaces derived from the organs' outer surfaces and literature wall
+  // thicknesses, the alimentary canal joined from mouth to anus. The part list is final here (lips split,
+  // thin structures settled, derived shells and fat added); this stage only reads other parts and only
+  // adds new ones (tissue `space`, the system of their wall) and moves no bone, so the skeleton
+  // fingerprint is unchanged. Lumen meshes skip the simplifier (the filling field is per vertex).
+  // SOMA_LUMEN=0 switches it off, and then nothing at all is added to the output.
+  const lumenParts: Element[] = []
+  // 腔的位置取 16 位：塌陷处两壁只相距零点几毫米，按 14 位量化会把它们挤到一起 / lumen positions take 16 bits: where a lumen is collapsed its walls are a few tenths of a millimetre apart and 14-bit quantisation presses them together
+  const LUMEN_POSITION_BITS = 16
+  let lumenCautionList: { zh: string; en: string }[] = []
+  if (process.env.SOMA_LUMEN !== '0') {
+    const fmaNames = loadFmaNames()
+    const isaIdByName = new Map<string, string>()
+    for (const [id, n] of tables.isa.name) if (!isaIdByName.has(n)) isaIdByName.set(n, id)
+    const meshById = new Map(kept.map((e) => [e.id, e.mesh]))
+    const res = await lumenStage('male', {
+      parts: kept.map((e) => ({ id: e.id, name: e.name, fma: e.fma, system: e.cls.system, tissue: e.cls.tissue, bbox: e.stats.bbox, provenance: e.provenance, ...(e.source ? { source: e.source } : {}), triangles: e.mesh.indices.length / 3 })) as unknown as Part[],
+      mesh: (id) => meshById.get(id),
+      defaultSource: SOURCE.name,
+    })
+    for (const q of res.parts) {
+      const isa = isaPathFromFma(q.fma, q.fmaLabel, (c) => fmaNames?.parents.get(c), (c) => fmaNames?.label.get(c), (c) => tables.isa.name.has(c), isaIdByName.get('organ component') ?? null)
+      lumenParts.push({ id: q.id, name: q.name, fma: q.fma, mesh: q.mesh, stats: measure(q.mesh), sourceTriangles: q.mesh.indices.length / 3, cls: { system: q.system, tissue: 'space', rule: 'derived', signal: 'none' }, isa: [], partOf: [], provenance: 'curated', source: q.source, tree: { isa, partOf: null }, keepGeometry: true, lumen: q })
+    }
+    kept.push(...lumenParts)
+    lumenCautionList = res.cautions
+    report.lumen = { applied: true, parts: res.parts.map((q) => ({ id: q.id, name: q.name, fma: q.fma, system: q.system, walls: q.walls.length > 3 ? `${q.walls.length} parts` : q.walls, triangles: q.mesh.indices.length / 3, vertices: q.mesh.positions.length / 3, fillingRest: q.filling.rest, composition: q.composition.map((c) => ({ provenance: c.provenance, vertices: c.vertices })) })), ...res.report }
+    console.log(`\nLumina: ${res.parts.length} parts (${res.parts.map((q) => q.id.replace(/^LUMEN_/, '')).join(', ')}); not offered: ${res.notOffered.map((n) => n.id).join(', ') || 'none'}`)
+    lap(`lumina ${lumenParts.length} parts`)
+  }
+
   // ── 4. 分类报告 / 4. Classification report ────────────────────────────────────────────────────────────────
   {
     const table = new Map<string, number>()
@@ -1706,12 +1745,14 @@ async function main() {
       adjacent: neighbours[i]!.map((j) => kept[j]!.id),
       // 开口后的皮肤：它由哪几样东西构成（拟合的体表、移植片、构造物） / an opened skin: what it is made of (fitted surface, grafts, construction aids)
       ...(e.opened && skinComposition ? { composition: skinComposition } : {}),
+      // 腔部件：哪些顶点由壁推出、以真实部件为界、或是构造的 / a lumen part: which vertices are derived from a wall, bounded by real parts or constructed
+      ...(e.lumen ? { composition: e.lumen.composition as unknown as SkinComponent[] } : {}),
     }
     parts.push(part)
     let list = glbParts.get(e.cls.system)
     if (!list) glbParts.set(e.cls.system, (list = []))
     // 法线只按索引累加，不按位置合并顶点；开口后的皮肤位置取 16 位（见 glb.ts） / normals are accumulated by index only, never merging vertices by position; an opened skin takes 16-bit positions (see glb.ts)
-    list.push({ id: e.id, positions: mesh.positions, normals: computeNormals(mesh), indices: mesh.indices, ...(e.opened && shippedOpenedSkin?.id === e.id ? { positionBits: OPENED_SKIN_POSITION_BITS } : {}) })
+    list.push({ id: e.id, positions: mesh.positions, normals: computeNormals(mesh), indices: mesh.indices, ...(e.opened && shippedOpenedSkin?.id === e.id ? { positionBits: OPENED_SKIN_POSITION_BITS } : {}), ...(e.lumen ? { positionBits: LUMEN_POSITION_BITS } : {}) })
   }
   lap(`simplified ${simplifiedCount} of ${kept.length} parts`)
   const keptSourceTriangles = kept.reduce((s, e) => s + (e.opened && !e.keepGeometry ? e.opened.mesh : e.mesh).indices.length / 3, 0)
@@ -1769,7 +1810,7 @@ async function main() {
     }
     // 来自 Z-Anatomy 包的部件：创建其路径上缺失的概念，子概念在前
     // parts from the Z-Anatomy package: create the missing concepts of their path, child first
-    for (const e of [...importedZa, ...derived, ...splitParts]) {
+    for (const e of [...importedZa, ...derived, ...splitParts, ...lumenParts]) {
       const t = which === 'isa' ? e.tree!.isa : e.tree!.partOf
       if (!t) continue
       const anchor = t.anchor ?? (which === 'isa' ? onto.root : null)
@@ -1854,7 +1895,19 @@ async function main() {
     console.log(`\nConcept audit: ${audit.conceptsSharedByLeftAndRightParts} concepts are shared by left and right parts (${audit.partsUnderThem} parts, ${audit.ofWhichFromBodyParts3D} of them BodyParts3D's own unlateralised concepts); ${audit.conceptsWithDifferentlyNamedPartsOnOneSide} concepts carry differently named parts on one side, e.g. ${audit.examples.slice(0, 4).map((e) => `${e.concept}: ${e.names.join(' / ')}`).join('; ')}`)
     report.conceptAudit = audit
   }
-  const cautions = maleCautions(report, imported.length, importedZa.length)
+  // 充盈位移场：按 GLB 顶点次序，写在 anatomy.json 旁边；写之前读回各系统的 GLB 核对每个腔部件的顶点数
+  // the filling displacement field, in GLB vertex order, next to anatomy.json; the systems' GLBs are read back first and the vertex count of every lumen part checked
+  if (lumenParts.length) {
+    const side = await fillingSidecar(lumenParts.map((e) => ({ id: e.id, mesh: e.mesh, filling: e.lumen!.filling })))
+    const back = new Map<string, number>()
+    for (const sys of new Set(lumenParts.map((e) => e.cls.system))) for (const [id, m] of await readGlbParts(join(stage, `${sys}.glb`), new Set(lumenParts.map((e) => e.id)))) back.set(id, m.positions.length / 3)
+    for (const row of side.index.parts) if (back.get(row.part) !== row.vertices) throw new Error(`lumen filling: ${row.part} has ${back.get(row.part)} vertices in its GLB but ${row.vertices} in the field`)
+    writeFileSync(join(stage, FILLING_FILE), side.bin)
+    writeFileSync(join(stage, FILLING_INDEX_FILE), JSON.stringify(side.index))
+    Object.assign(report.lumen as Record<string, unknown>, { fillingFile: { file: FILLING_FILE, index: FILLING_INDEX_FILE, bytes: side.bin.byteLength, parts: side.index.parts.length, checkedAgainstGlb: true } })
+    console.log(`  ${FILLING_FILE}: ${side.bin.byteLength} bytes for ${side.index.parts.length} lumen parts, vertex counts equal to the GLBs read back`)
+  }
+  const cautions = [...maleCautions(report, imported.length, importedZa.length), ...lumenCautionList]
   const data: AnatomyData = {
     schema: 1,
     body: 'male',
@@ -1905,7 +1958,7 @@ async function main() {
   writeFileSync(join(stage, 'pipeline-report.json'), JSON.stringify(report, null, 1))
   const staged = readdirSync(stage).sort((a, b) => Number(a === 'anatomy.json') - Number(b === 'anatomy.json') || a.localeCompare(b))
   for (const f of staged) renameSync(join(stage, f), join(outDir, f))
-  for (const f of readdirSync(outDir)) if ((f.endsWith('.glb') || f === 'nerves.json' || f === SKIN_SOURCE_FILE || f === SKIN_PIECES_FILE) && !staged.includes(f)) rmSync(join(outDir, f))
+  for (const f of readdirSync(outDir)) if ((f.endsWith('.glb') || f === 'nerves.json' || f === SKIN_SOURCE_FILE || f === SKIN_PIECES_FILE || f === FILLING_FILE || f === FILLING_INDEX_FILE) && !staged.includes(f)) rmSync(join(outDir, f))
   rmSync(stage, { recursive: true, force: true })
   if (!existsSync(join(outDir, 'anatomy.json'))) throw new Error('output missing')
   lap('done')
