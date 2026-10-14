@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Idea } from '../src/contract'
 import { detectLang, label, pick, plural, tr } from '../src/i18n'
 import { NO_FILTERS, matches } from '../src/state/derive'
-import { compact, duration } from '../src/ui/viz'
+import { compact, duration, usageLine } from '../src/ui/viz'
 
 describe('i18n helpers', () => {
   it('tr chooses by language', () => {
@@ -52,6 +52,12 @@ describe('number and duration formats', () => {
   it('has English forms', () => {
     expect([compact(999, 'en'), compact(12_300, 'en'), compact(1_200_000, 'en'), compact(3_400_000_000, 'en')]).toEqual(['999', '12.3k', '1.2M', '3.4B'])
     expect([duration(30, 'en'), duration(840, 'en'), duration(9000, 'en')]).toEqual(['30 s', '14 min', '2.5 h'])
+  })
+  it('writes token usage on one line, cache read and write together, nothing when empty', () => {
+    const tokens = { input_tokens: 12_300, output_tokens: 4_100, cache_read_input_tokens: 200_000, cache_creation_input_tokens: 10_000 }
+    expect(usageLine(tokens, 'en')).toBe('in 12.3k · out 4.1k · cache 210k')
+    expect(usageLine(tokens, 'zh')).toBe('输入 1.2 万 · 输出 4,100 · 缓存 21 万')
+    expect([usageLine({}, 'en'), usageLine(null, 'zh')]).toEqual(['', ''])
   })
 })
 

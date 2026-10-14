@@ -533,3 +533,65 @@ def test_subagents_are_followed_after_the_turn_ends_and_their_steps_are_kept_apa
         assert await sessions._gone(meta.id, 3)                                                  # 做完了才歇 / it rests only once all is done
 
     asyncio.run(main())
+
+
+def test_tokens_are_counted_per_session_live_and_logged(fake):
+    """token 按会话累计；干活时有一个估计；每轮记进 runs/llm.jsonl，带着 Claude Code 的会话编号。
+
+    Tokens add up per session; there is an estimate while it works; each turn goes into runs/llm.jsonl with Claude Code's session id.
+    """
+    from idea_loom import llm, store
+
+    def reply(mid, out):
+        return AssistantMessage(content=[TextBlock(text="…")], message_id=mid, usage={"input_tokens": 3, "output_tokens": out, "cache_read_input_tokens": 1000, "cache_creation_input_tokens": 20})
+
+    def result(inp, out, read, write):
+        return ResultMessage(session_id="sdk-1", total_cost_usd=0.01, is_error=False, subtype="success", usage={"input_tokens": 3, "output_tokens": 10},
+                             model_usage={"claude-opus-5-5": {"inputTokens": inp, "outputTokens": out, "cacheReadInputTokens": read, "cacheCreationInputTokens": write}})
+
+    async def main():
+        # 一条回复拆成两条消息，用量递增：只算一次，取大的。 / One reply split in two messages with growing usage: counted once, the larger figures.
+        fake.script = [[reply("m1", 5), reply("m1", 8), reply("m2", 4), result(10, 40, 3000, 60)],
+                       [result(25, 90, 7000, 100)]]
+        meta = await sessions.start(sessions.NewSession(text="干活", mode="plan"))
+        meta = await until(meta.id, "idle")
+        live = [e["tokens"] for e in sessions.events(meta.id) if e["type"] == "usage"]
+        assert [t["output_tokens"] for t in live] == [5, 8, 12] and live[-1]["cache_read_input_tokens"] == 2000
+        assert meta.tokens == {"input_tokens": 10, "output_tokens": 40, "cache_read_input_tokens": 3000, "cache_creation_input_tokens": 60}
+        await sessions.say(meta.id, "继续")
+        meta = await until(meta.id, "idle")
+        # modelUsage 是累计的：第二轮报的就是总数。 / modelUsage is cumulative: the second turn reports the total.
+        assert meta.tokens == {"input_tokens": 25, "output_tokens": 90, "cache_read_input_tokens": 7000, "cache_creation_input_tokens": 100}
+        assert [e for e in sessions.events(meta.id) if e["type"] == "result"][-1]["tokens"] == meta.tokens
+        # 进程换了，新进程从零记：加在以前的上面。 / A new process counts from zero: added on top of what came before.
+        await kill(meta.id)
+        fake.script = [[result(5, 30, 1000, 0)]]
+        await sessions.say(meta.id, "还在吗")
+        meta = await until(meta.id, "idle")
+        assert meta.tokens == {"input_tokens": 30, "output_tokens": 120, "cache_read_input_tokens": 8000, "cache_creation_input_tokens": 100}
+        rows = [r for r in store.read_lines(llm.runs_dir() / "llm.jsonl")[0] if r["purpose"] == "session"]
+        assert [(r["session"], r["output_tokens"], r["cache_read_input_tokens"]) for r in rows] == [("sdk-1", 40, 3000), ("sdk-1", 50, 4000), ("sdk-1", 30, 1000)]
+        await sessions.close(meta.id)
+
+    asyncio.run(main())
+
+
+def test_a_resumed_process_that_carries_on_the_total_is_not_counted_twice(fake):
+    """续上的会话有时从记录里的总数接着记：那就不再加以前的。 / A resumed session sometimes carries on from the total in its transcript: then nothing is added."""
+
+    def result(out, turn_out):
+        return ResultMessage(session_id="sdk-1", total_cost_usd=0.01, is_error=False, subtype="success", usage={"output_tokens": turn_out},
+                             model_usage={"m": {"inputTokens": 0, "outputTokens": out, "cacheReadInputTokens": 0, "cacheCreationInputTokens": 0}})
+
+    async def main():
+        fake.script = [[result(40, 40)]]
+        meta = await sessions.start(sessions.NewSession(text="干活", mode="plan"))
+        await until(meta.id, "idle")
+        await kill(meta.id)
+        fake.script = [[result(70, 30)]]
+        await sessions.say(meta.id, "还在吗")
+        meta = await until(meta.id, "idle")
+        assert meta.tokens["output_tokens"] == 70
+        await sessions.close(meta.id)
+
+    asyncio.run(main())

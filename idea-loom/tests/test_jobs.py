@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import fake_claude as fc
-from idea_loom import jobs, tasks, wishes
+from idea_loom import jobs, llm, store, tasks, wishes
 from idea_loom.server import app
 
 client = TestClient(app)
@@ -103,6 +103,10 @@ def test_approve_executes_tests_submits_and_reports_back(repo, wish):
     job = jobs.get(job.job_id)
     assert (job.phase, job.pr, job.restart_needed) == ("merged", 12, True)
     assert sorted(job.changed) == ["idea-loom/src/a.py", "idea-loom/src/b.py"]
+    # 出方案和动手两次调用的 token 加在一起。 / The tokens of the two calls, planning and executing, add up.
+    assert job.tokens == {"input_tokens": 0, "output_tokens": 80, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0}
+    rows = [r for r in store.read_lines(llm.runs_dir() / "llm.jsonl")[0] if r["purpose"] == "job"]
+    assert [r["output_tokens"] for r in rows] == [40, 40] and all("cache_read_input_tokens" in r for r in rows)
     argv = fc.calls(repo.parent / "calls.jsonl")[1]["argv"]
     allowed = argv[argv.index("--allowedTools") + 1:argv.index("--permission-mode")]
     assert "Edit(idea-loom/**)" in allowed and not any(a.startswith(("Bash(git", "Bash(gh")) for a in allowed)

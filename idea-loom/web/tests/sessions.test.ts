@@ -8,13 +8,21 @@ describe('session view', () => {
     const events = [
       ev(1, 'user', { text: '/wishes 3b30', images: 1 }), ev(2, 'status', { status: 'running' }), ev(3, 'text', { text: '我先读代码。' }), ev(4, 'text', { text: '再看测试。' }),
       ev(5, 'tool', { id: 't1', name: 'Read', label: '在读 a.py', input: { file_path: 'a.py' } }), ev(6, 'tool_result', { id: 't1', error: false, text: 'x = 1' }),
-      ev(7, 'result', { is_error: false, cost_usd: 0.12 }), ev(8, 'status', { status: 'idle' }),
+      ev(7, 'result', { is_error: false, cost_usd: 0.12, tokens: { input_tokens: 10, output_tokens: 40 } }), ev(8, 'status', { status: 'idle' }),
     ]
     const view = fold(fold(emptyView(), events.slice(0, 5)), events.slice(3)) // 续传时重复的不算两次 / repeats on resume are not counted twice
     expect(view.items.map((i) => i.kind)).toEqual(['user', 'text', 'tool'])
     expect(view.items[1]).toMatchObject({ text: '我先读代码。\n\n再看测试。' })
     expect(view.items[2]).toMatchObject({ state: 'done', result: 'x = 1', label: '在读 a.py' })
-    expect([view.status, view.cost, view.lastSeq]).toEqual(['idle', 0.12, 8])
+    expect([view.status, view.tokens, view.lastSeq]).toEqual(['idle', { input_tokens: 10, output_tokens: 40 }, 8])
+  })
+
+  it('follows the running token estimate and settles on the figure in the result', () => {
+    const working = fold(emptyView(), [ev(1, 'usage', { tokens: { output_tokens: 5 }, estimate: true }), ev(2, 'usage', { tokens: { output_tokens: 9 }, estimate: true })])
+    expect(working.tokens).toEqual({ output_tokens: 9 })
+    expect(fold(working, [ev(3, 'result', { is_error: false, tokens: { output_tokens: 12 } })]).tokens).toEqual({ output_tokens: 12 })
+    // 旧的结果事件没有 token：留着手上的。 / An old result event has no tokens: keep what is there.
+    expect(fold(working, [ev(3, 'result', { is_error: false, cost_usd: 0.1 })]).tokens).toEqual({ output_tokens: 9 })
   })
 
   it('shows the card that awaits an answer and clears it once answered', () => {

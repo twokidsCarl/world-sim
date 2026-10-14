@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { type SessionMeta, api } from '../api'
 import { type Attached, MAX_IMAGES, fromFile, imagesIn } from '../assistant/images'
 import { Markdown } from '../assistant/Markdown'
-import { useT } from '../state/store'
+import { useLang, useT } from '../state/store'
+import { usageLine, usageTitle } from '../ui/viz'
 import { useRestartNeeded } from '../version'
 import { useDraft } from './drafts'
 import { mark, tell } from './notify'
@@ -17,6 +18,7 @@ const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max']
 // your answer (a plan, a permission, its question) and your input box.
 export function SessionView({ id, onChange }: { id: string; onChange?: (meta: SessionMeta) => void }) {
   const t = useT()
+  const lang = useLang()
   const [view, setView] = useState<View>(emptyView)
   const [meta, setMeta] = useState<SessionMeta | null>(null)
   // 草稿每个会话一份，换会话、刷新都还在。 / One draft per session, surviving a switch and a reload.
@@ -76,6 +78,9 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
   const alive = !!meta?.live && status !== 'closed' && status !== 'error'
   const waiting = alive ? pending(view) : []
   const busy = status === 'running' || status === 'waiting'
+  // 干活时用事件里边干边加的数，闲下来以会话记下的准数为准。 / While it works use the running figure from the events; once idle the session's recorded figure wins.
+  const tokens = busy ? (view.tokens ?? meta?.tokens) : (meta?.tokens ?? view.tokens)
+  const usage = usageLine(tokens, lang)
   const send = () => {
     if ((!draft.trim() && attached.length === 0) || busy) return
     const text = draft.trim() || t('看这张图。', 'Look at this image.')
@@ -172,7 +177,7 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
             )}
           </span>
         )}
-        <span className="muted small num">{meta ? `$${meta.cost_usd.toFixed(2)}` : ''}</span>
+        {usage && <span className="muted small num" title={usageTitle(tokens, lang)}>{usage}</span>}
         {status === 'running' && <button onClick={() => void act(() => api.sessionInterrupt(id))}>{t('打断', 'Interrupt')}</button>}
         {status !== 'closed' && !busy && <button onClick={() => void act(() => api.sessionClose(id))}>{t('结束会话', 'End session')}</button>}
       </div>
@@ -189,7 +194,7 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
           <ItemView key={item.seq} item={item} live={waiting.some((w) => w.seq === item.seq)} onAnswer={(decision, note, answers) => void act(() => api.sessionAnswer(id, (item as { request_id: string }).request_id, decision, note, answers))} />
         ))}
         {waiting.length > 1 && <p className="session-needs small">{t(`上面有 ${waiting.length} 张卡片在等你回答。`, `${waiting.length} cards above are waiting for your answer.`)}</p>}
-        {status === 'running' && waiting.length === 0 && <p className="muted small"><span className="spin" aria-hidden="true">◌</span> {t('它在干活…', 'It is working…')}</p>}
+        {status === 'running' && waiting.length === 0 && <p className="muted small"><span className="spin" aria-hidden="true">◌</span> {t('它在干活…', 'It is working…')}{usage && <span className="num" title={usageTitle(tokens, lang)}> · {usage}</span>}</p>}
       </div>
 
       {error && <div className="notice bad" role="alert">{error}</div>}
