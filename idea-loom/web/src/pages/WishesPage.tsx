@@ -59,7 +59,13 @@ export function WishesPage() {
   const lang = useLang()
   const t = useT()
 
-  const load = () => api.wishes(status, group).then(setList, (e: Error) => setError(e.message))
+  // 列表里本来就带着各状态的数：顺手把左侧栏的待处理数对上。 / The list carries the per-status counts anyway, so the nav's pending count is brought in line with it.
+  const setPending = useAssistant((s) => s.setPendingWishes)
+  const load = () =>
+    api.wishes(status, group).then(
+      (l) => (setList(l), setPending(groupCount('pending', l.counts, l.groups && Object.keys(l.groups).length > 0 ? l.groups : DEFAULT_GROUPS))),
+      (e: Error) => setError(e.message),
+    )
   useEffect(() => {
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps

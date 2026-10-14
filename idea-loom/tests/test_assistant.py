@@ -167,6 +167,12 @@ def test_wish_and_trail_endpoints(data):
     assert client.post(f"/api/wishes/{wid}/withdraw").status_code == 409
     assert client.post(f"/api/wishes/{wid}/restore").json()["status"] == "open"
     assert client.get("/api/wishes/nope").status_code == 404
+    # 左侧的数是待处理那一组：未处理加已采纳，撤销的不算。 / The nav count is the pending group: open plus accepted, withdrawn excluded.
+    other = wishes.record(title="丙", kind="missing", stuck="s", suggestion="g")
+    wishes.set_status(other, "accepted")
+    assert client.get("/api/assistant").json()["pending_wishes"] == 2
+    client.post(f"/api/wishes/{wid}/withdraw")
+    assert client.get("/api/assistant").json()["pending_wishes"] == 1
     r = client.post("/api/trail", json={"actions": [{"at": "2026-10-11T08:00:00+07:00", "kind": "dwell", "url": "/ideas/1.2", "text": "1.2 沙堆", "seconds": 42.5, "idea": "1.2"}]})
     assert r.json() == {"saved": 1}
 

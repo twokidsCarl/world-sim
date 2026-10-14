@@ -58,7 +58,6 @@ export function AssistantDock() {
 
   useEffect(() => {
     install()
-    void a.refresh()
     if (a.conversationId) void a.openConversation(a.conversationId)
     const onResize = () => setFloating(window.innerWidth < FLOAT_BELOW)
     window.addEventListener('resize', onResize)
@@ -219,8 +218,8 @@ export function AssistantDock() {
           <button aria-label={t('新对话', 'New conversation')} title={t('新对话', 'New conversation')} disabled={a.running} onClick={() => (a.newConversation(), setShowHistory(false))}>
             ＋
           </button>
-          <Link to="/wishes" className="a-wishes" title={t('许愿池', 'Wish pool')} aria-label={t(`许愿池，${a.openWishes} 条未处理`, `Wish pool, ${a.openWishes} open`)}>
-            ✧{a.openWishes > 0 && <span className="num">{a.openWishes}</span>}
+          <Link to="/wishes" className="a-wishes" title={t('许愿池', 'Wish pool')} aria-label={t(`许愿池，${a.pendingWishes} 条待处理`, `Wish pool, ${a.pendingWishes} to handle`)}>
+            ✧{a.pendingWishes > 0 && <span className="num">{a.pendingWishes}</span>}
           </Link>
           <button aria-label={t('收起', 'Collapse')} title={t('收起', 'Collapse')} onClick={() => a.setOpen(false)}>
             ⌄

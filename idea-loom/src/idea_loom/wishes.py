@@ -219,6 +219,14 @@ def listing(status: Optional[str] = None, group: Optional[str] = None) -> WishLi
                     statuses=STATUS_LABELS, kind_labels=KIND_LABELS, groups={k: list(v) for k, v in GROUPS.items()}, unreadable=bad)
 
 
+def pending_count() -> int:
+    """待处理（未处理加已采纳）的愿望有几条，和许愿池页面默认那一组的数一样。
+
+    How many wishes are pending (open plus accepted): the same number as the wish pool page's default group.
+    """
+    return sum(w.status in GROUPS["pending"] for w in load()[0].values())
+
+
 def get(wish_id: str) -> WishDetail:
     wish = load()[0].get(wish_id)
     if wish is None:

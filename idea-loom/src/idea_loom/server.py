@@ -388,7 +388,7 @@ def post_trail(body: TrailBody, request: Request) -> dict[str, int]:
 def assistant_status() -> dict[str, object]:
     ready = llm.available()
     return {"ready": ready, "not_ready_reason": None if ready else "这台机器上找不到 claude 命令",
-            "open_wishes": wishes.listing().counts["open"]}
+            "pending_wishes": wishes.pending_count()}
 
 
 @app.get("/api/assistant/conversations")
