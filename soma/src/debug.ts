@@ -6,10 +6,13 @@ import { lastSaySample, sayClip, sayTime, seekSay } from './face/say.ts'
 import { lastSpeechSample, speechTrack } from './face/speech.ts'
 import { applyStimulus, seekStimulus, stimClock } from './pain/stim.ts'
 import { useApp } from './state/store.ts'
+import { useLumen } from './lumen/state.ts'
 import type { BenchResult, Viewer, ViewerStats } from './viewer/Viewer.ts'
 
 export interface SomaDebug {
   store: typeof useApp
+  /** "腔"显示的状态（模式、充盈、漫游）/ The state of the lumina display (mode, filling, fly-through). */
+  lumen: typeof useLumen
   graph: AnatomyGraph | null
   viewer: Viewer | null
   /** 对照视图打开时的第二个渲染器。 */
@@ -42,6 +45,7 @@ declare global {
 
 export const debug: SomaDebug = {
   store: useApp,
+  lumen: useLumen,
   graph: null,
   viewer: null,
   compareViewer: null,

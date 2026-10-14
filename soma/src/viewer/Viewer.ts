@@ -87,6 +87,10 @@ import { PAIN_COLORS, PainOverlay, PathVisuals, bindPath, boundPositions, resamp
 import { applyStimulus, registerStimHost, releaseStimulus, stimFrame, type ActiveStim, type StimFrame } from '../pain/stim.ts'
 import type { ResolvedSite } from '../pain/stimulus.ts'
 import { layerWeights, type LoadedDetail } from '../pain/detail.ts'
+import { LumenLayer } from './lumenLayer.ts'
+import { ORIGIN_BOUNDED, ORIGIN_CONSTRUCTION, ORIGIN_MIXED, applyFilling, buildCanalPath, pathPoint, radiusAt, ringStations, ringsOf, segmentAt, widenRings, type CanalPath, type PathSegmentInput, type RingMesh, type V3 } from '../lumen/core.ts'
+import { LUMEN_COLOR } from '../lumen/colors.ts'
+import { FLY_MIN_FILL, FLY_MIN_RADIUS, FLY_SPEED, displacementOf, ensureLumenData, fillingOf, lumenCandidates, registerLumenGeometry, reportFly, segmentIds, showCanal, useLumen, type LumenData, type LumenState } from '../lumen/state.ts'
 
 const LEGACY_SORT = typeof location !== 'undefined' && new URLSearchParams(location.search).get('sort') === 'origin'
 const GHOST_RGB = new Color('#8d99a6')
@@ -348,6 +352,37 @@ export class Viewer {
   private prewarmVersion = -1
   private prewarmNext = 0
   private skinLayerPart = -1
+  // —— 腔（见 syncLumen / stepLumen / stepFly）/ the lumina (see syncLumen / stepLumen / stepFly) ——
+  /** 默认藏起来的腔部件（有充盈数据的那些；数据没到之前按"组织为 space 且带 composition"）/ Lumen parts hidden by default (those with filling data; before it arrives, "tissue space with a composition"). */
+  private lumenHide = new Set<number>()
+  /** "腔"模式下画成腔的全部部件，和它们的壁 / Every part drawn as a lumen in the lumina mode, and their walls. */
+  private lumenAll = new Set<number>()
+  private lumenWalls = new Set<number>()
+  private lumenColor = new Map<number, Color>()
+  private lumenData: LumenData | null = null
+  private lumenRequested = false
+  private lumenLayer: LumenLayer | null = null
+  private lumenLayerStale = false
+  private lumenLayerOn = false
+  private lumenRings = new Map<number, RingMesh | null>()
+  /** 已写进顶点缓冲的充盈状态（每个部件一个键）/ The filling state written into the vertex buffers (a key per part). */
+  private lumenApplied = new Map<number, string>()
+  private lumenVersion = 0
+  private lumenDirty = false
+  private lumenPrev: LumenState | null = null
+  private lumenWallsOn = false
+  private unsubLumen: (() => void) | null = null
+  private fly: {
+    path: CanalPath | null
+    key: string
+    s: number
+    lastT: number
+    seekNonce: number
+    started: boolean
+    reported: number
+    up: Vector3
+    saved: { position: Vector3; target: Vector3; fov: number; near: number; far: number }
+  } | null = null
 
   /** 关节纹理最多容纳的行数（关节数 + 1）和肌肉作用线数 / Capacity of the joint texture (joints + 1) and of the muscle texture. */
   private static readonly MAX_JOINT_ROWS = 512
@@ -570,6 +605,13 @@ export class Viewer {
       this.unsubscribe = useApp.subscribe(() => {
         this.syncNeeded = true
       })
+      // 腔的状态在它自己的 store 里；位置等高频的报告不触发同步 / the lumina have a store of their own; high-rate reports (position…) do not trigger a sync
+      this.unsubLumen = useLumen.subscribe((a, b) => {
+        if (a.mode !== b.mode || a.fill !== b.fill || a.overrides !== b.overrides || a.fly !== b.fly || a.data !== b.data || a.seek !== b.seek) {
+          this.syncNeeded = true
+          this.dirty = true
+        }
+      })
     }
     if (this.pauseReasons.size === 0) this.raf = requestAnimationFrame(this.tick)
     else this.pausedAt = performance.now()
@@ -600,6 +642,7 @@ export class Viewer {
     if (this.tween) this.tween.t0 += dt
     if (this.poseTween) this.poseTween.t0 += dt
     this.breathT0 += dt
+    if (this.fly) this.fly.lastT = 0
     this.lastFrameT = 0
     this.dirty = true
     this.raf = requestAnimationFrame(this.tick)
@@ -649,6 +692,8 @@ export class Viewer {
     this.skinning.dispose()
     this.unsubActivity?.()
     this.activityLayer?.dispose()
+    this.unsubLumen?.()
+    this.lumenLayer?.dispose()
     this.renderer.dispose()
     el.remove()
   }
@@ -720,6 +765,25 @@ export class Viewer {
     this.faceAUs = {}
     this.faceChannels = {}
     this.faceJaw = 0
+    if (this.lumenLayer) {
+      this.root.remove(this.lumenLayer.mesh)
+      this.lumenLayer.dispose()
+      this.lumenLayer = null
+    }
+    this.lumenLayerOn = false
+    this.lumenData = null
+    this.lumenRequested = false
+    this.lumenRings = new Map()
+    this.lumenApplied = new Map()
+    this.lumenColor = new Map()
+    this.lumenWalls = new Set()
+    this.lumenAll = new Set()
+    this.lumenPrev = null
+    this.lumenDirty = true
+    // 数据没到之前：组织为 space 且带 composition 的部件先按腔处理（默认藏起来）
+    // before the data arrives, parts with tissue `space` and a `composition` are treated as lumina (hidden by default)
+    this.lumenHide = new Set(lumenCandidates(this.graph).map((id) => this.graph.indexOf(id)))
+    if (this.fly) this.endFly()
   }
 
   /**
@@ -854,6 +918,7 @@ export class Viewer {
           // with a rig already applied, late parts get their influences now (after checking this GLB is the one the rig was built from)
           if (this.appliedRig && this.poseRt && !this.rigIsStale(this.appliedRig)) this.writeRigParts(this.appliedRig, fresh)
           this.shapeForce = true
+          this.lumenLayerStale = true
           this.faceForce = true // 新到的部件也要套上当前的表情 / parts that just arrived take the current expression too
           this.forceFull = true
           this.syncNeeded = true
@@ -1005,8 +1070,12 @@ export class Viewer {
     this.focusNonce = s.focusRequest.nonce
     this.homeNonce = s.homeRequest
 
+    const lumen = this.source === useApp.getState ? this.syncLumen(s) : null
     const displayChanged =
       !p ||
+      this.lumenDirty ||
+      p.section.enabled !== s.section.enabled ||
+      p.explode !== s.explode ||
       p.systems !== s.systems ||
       p.peel !== s.peel ||
       p.hidden !== s.hidden ||
@@ -1021,6 +1090,7 @@ export class Viewer {
       skinDrawnOpaque(p, this.mainSkin) !== skinDrawnOpaque(s, this.mainSkin) ||
       p.selection !== s.selection
     this.stimDirty = false
+    this.lumenDirty = false
     const explodeChanged =
       !p ||
       p.explode !== s.explode ||
@@ -1120,7 +1190,9 @@ export class Viewer {
         },
         this.display,
       )
+      this.applyLumenDisplay(s, lumen)
       for (let i = 0; i < parts.length; i++) this.applyPart(i, parts[i]!, s)
+      this.updateLumenLayer(s)
       this.updateDetail()
       this.updatePouch(s)
     } else if (hoverChanged) {
@@ -1129,6 +1201,7 @@ export class Viewer {
         const i = this.graph.indexOf(id)
         if (i >= 0) this.applyPart(i, this.graph.parts[i]!, s)
       }
+      this.updateLumenLayer(s)
     }
     // 相机请求放在最后，这样能用上刚应用的显示状态和爆炸位移
     // camera requests last, so they see the display state and explode offsets just applied
@@ -1245,6 +1318,8 @@ export class Viewer {
       if (line !== undefined) b.aux.fill(-(line + 1))
     }
     batches.flushSkinAttributes()
+    this.lumenLayerStale = true
+    this.syncNeeded = true
     for (const f of this.followers) this.applyRigToFollower(f.patch)
   }
 
@@ -1834,6 +1909,7 @@ export class Viewer {
       this.skinMode = mode
       this.batches?.setSkinning(mode)
       this.skinLayer?.setSkinning(mode)
+      this.lumenLayer?.setSkinning(mode)
       for (const f of this.followers) f.setSkinning(mode)
     }
     if (this.posed !== active) {
@@ -2257,6 +2333,11 @@ export class Viewer {
     if (s.skinOpaque && this.brows.has(part.id)) opacity = 1
     // 冲动沿神经传上去的那一小段时间里，皮肤让开 / while the volley travels up the nerve, the skin steps aside
     if (this.stimSee && part.id === this.mainSkin) opacity = Math.min(opacity, 0.22)
+    // 腔：用它自己的颜色画成不透明（它只在该看的时候才显示）；"腔"模式下壁画成半透明，剖切时除外（切口本身就露出腔）
+    // a lumen is drawn opaque in its own colour (it only shows when it is meant to be looked at); in the lumina mode walls go see-through, except under a section (the cut shows the lumen anyway)
+    const lumenColor = this.lumenColor.get(i)
+    if (lumenColor && (this.lumenHide.has(i) || this.lumenWallsOn)) opacity = 1
+    else if (this.lumenWallsOn && this.lumenWalls.has(i) && !s.section.enabled) opacity = Math.min(opacity, LUMEN_COLOR.wallOpacity)
     const inPath = this.stimParts.has(part.id)
     if (selected || inPath) opacity = 1 // a selected part is shown solid so it can be found
     this.pickable[i] = id >= 0 && d === NORMAL && opacity >= PICK_OPACITY ? 1 : 0
@@ -2272,13 +2353,21 @@ export class Viewer {
       this.solid[i] = this.skinPickable ? 1 : 0
       return
     }
-    if (d === HIDDEN) {
+    if (d === NORMAL && this.lumenLayerOn && this.lumenLayer?.has(i)) {
+      // "腔"图层来画；部件自己的几何仍用于拾取 / the lumina layer draws it; the part's own geometry still serves picking
+      batches.setState(id, MODE_HIDDEN, 0, 0, 0, 0)
+      const c = this.tmpColor.copy(lumenColor ?? this.baseColor[i]!)
+      if (selected) c.lerp(ACCENT_RGB, 0.6)
+      else if (s.hover === part.id) c.lerp(WHITE, 0.32)
+      this.lumenLayer.setColor(i, c.r, c.g, c.b)
+      this.solid[i] = 0
+    } else if (d === HIDDEN) {
       batches.setState(id, MODE_HIDDEN, 0, 0, 0, 0)
     } else if (d === GHOST) {
       batches.setState(id, MODE_BLEND, GHOST_RGB.r, GHOST_RGB.g, GHOST_RGB.b, GHOST_OPACITY)
     } else {
       // 肌肉活动的颜色取代肌肉的底色；选中、悬停的提示照常叠在上面 / the muscle-activity colour replaces the muscle's base colour; selection and hover tints go on top as usual
-      const c = this.tmpColor.copy(this.activityLayer?.tint.get(i) ?? this.baseColor[i]!)
+      const c = this.tmpColor.copy(this.activityLayer?.tint.get(i) ?? (lumenColor && (this.lumenHide.has(i) || this.lumenWallsOn) ? lumenColor : this.baseColor[i]!))
       if (selected) c.lerp(ACCENT_RGB, 0.6)
       else if (inPath) c.lerp(PATH_RGB, 0.8)
       else if (s.hover === part.id) c.lerp(WHITE, 0.32)
@@ -2287,6 +2376,384 @@ export class Viewer {
     // 被选中的部件还会透过遮挡物画一层淡淡的颜色
     // selected parts also get a faint tint drawn through whatever covers them
     batches.setXray(id, d !== HIDDEN && ((selected && s.selection.ids.length <= XRAY_MAX) || inPath))
+  }
+
+  // ------------------------------------------------------------ 腔 / lumina
+
+  /**
+   * 把"腔"的状态同步到场景：按需取数据，定出哪些部件是腔、哪些是壁，状态变了就让显示重算。只在主视图上。
+   * Mirror the lumina state into the scene: fetch the data when needed, settle which parts are lumina and
+   * which are walls, and have the display recomputed when the state changed. Main view only.
+   */
+  private syncLumen(s: ViewState): LumenState {
+    const L = useLumen.getState()
+    const p = this.lumenPrev
+    this.lumenPrev = L
+    if (!p || p.mode !== L.mode || !p.fly !== !L.fly || p.data !== L.data) this.lumenDirty = true
+    // 数据：打开模式、漫游、动过充盈，或者有腔部件要显示（被选中、被隔离、系统调成半透明）时才取
+    // the data is fetched once the mode or the fly-through is on, the filling was touched, or a lumen part is to be shown (selected, isolated, its system made see-through)
+    if (!this.lumenRequested) {
+      let want = L.mode || !!L.fly || L.fill > 0 || Object.keys(L.overrides).length > 0 || this.lumenHide.size === 0
+      if (!want) for (const i of this.lumenHide) if (this.lumenShownByUser(i, s)) want = true
+      if (want) {
+        this.lumenRequested = true
+        const token = this.bodyToken
+        void ensureLumenData(this.graph, useApp.getState().dataset, this.baseUrl).then((data) => {
+          if (this.disposed || token !== this.bodyToken) return
+          this.setLumenData(data)
+        })
+      }
+    }
+    const wallsOn = L.mode || !!L.fly
+    if (wallsOn && this.lumenLayerStale) this.lumenDirty = true
+    if (wallsOn !== this.lumenWallsOn) {
+      this.lumenWallsOn = wallsOn
+      this.lumenDirty = true
+    }
+    return L
+  }
+
+  private setLumenData(data: LumenData | null): void {
+    this.lumenData = data
+    const idx = (id: string): number => this.graph.indexOf(id)
+    this.lumenWalls = new Set()
+    this.lumenAll = new Set()
+    this.lumenColor = new Map()
+    if (data) {
+      this.lumenHide = new Set(data.derived.map(idx).filter((i) => i >= 0))
+      for (const id of [...data.derived, ...data.real]) {
+        const i = idx(id)
+        if (i < 0) continue
+        this.lumenAll.add(i)
+        const kind = data.origin.get(id)?.kind
+        this.lumenColor.set(i, new Color(kind === ORIGIN_CONSTRUCTION ? LUMEN_COLOR.construction : kind === ORIGIN_MIXED ? LUMEN_COLOR.mixed : kind === ORIGIN_BOUNDED ? LUMEN_COLOR.bounded : LUMEN_COLOR.derived))
+      }
+      for (const id of data.walls) if (idx(id) >= 0) this.lumenWalls.add(idx(id))
+      if (!data.path && data.real.length) {
+        // 没有壁的清单（女性现在如此）：腔所在系统里的器官都当作壁 / no wall list (the female at present): the organs of the lumina's systems count as walls
+        const systems = new Set(data.real.map((id) => this.graph.part(id)!.system))
+        this.graph.parts.forEach((part, i) => {
+          if (systems.has(part.system) && part.tissue === 'organ') this.lumenWalls.add(i)
+        })
+      }
+    }
+    this.lumenApplied = new Map()
+    this.lumenLayerStale = true
+    this.lumenDirty = true
+    this.syncNeeded = true
+    this.dirty = true
+    // 链接要求"只看消化道"：数据到了才知道是哪些部件 / a link asked for the canal alone: which parts that is, is known only now
+    if (data && useLumen.getState().canalPending) showCanal(this.graph, data)
+  }
+
+  /** 用户自己要看这个腔：选中了它、隔离了它，或者把它所在的系统调成了半透明 / The user asked to see this lumen: selected it, isolated it, or made its system see-through. */
+  private lumenShownByUser(i: number, s: ViewState): boolean {
+    const part = this.graph.parts[i]!
+    if (s.selection.set.has(part.id) || s.isolated?.has(part.id)) return true
+    return !s.isolated && (s.systems[part.system]?.opacity ?? 1) < 0.999
+  }
+
+  /**
+   * 腔的默认可见性：壁不透明时它在壁里面，画了也看不见，只添绘制量和深度冲突，所以藏起来；打开"腔"模式、
+   * 把系统调成半透明、或者选中 / 隔离它时才显示。在 computeDisplay 之后调用。
+   * Default visibility of the lumina: inside an opaque wall a lumen cannot be seen and only adds draws and
+   * depth fighting, so it is hidden; it shows with the lumina mode on, with its system made see-through, or
+   * when selected or isolated. Called after computeDisplay.
+   */
+  private applyLumenDisplay(s: ViewState, L: LumenState | null): void {
+    const on = !!L && (L.mode || !!L.fly)
+    for (const i of this.lumenHide) {
+      if (this.display[i] === HIDDEN || on) continue
+      if (!this.lumenShownByUser(i, s)) this.display[i] = HIDDEN
+    }
+    // 漫游时不画壁：从腔里面本来就看不到壁，而每片器官的网格两端是封住的，封盖会像隔膜一样横在腔里
+    // no walls in the fly-through: from inside the lumen they cannot be seen anyway, and every organ piece is a mesh closed at both ends, whose caps would lie across the lumen like septa
+    if (L?.fly) for (const i of this.lumenWalls) if (!s.selection.set.has(this.graph.parts[i]!.id)) this.display[i] = HIDDEN
+  }
+
+  /** "腔"图层的有无和内容：模式开着、没有爆炸位移时由它来画腔 / Whether the lumina layer is in use and what it draws: with the mode on and no explode offsets it draws the lumina. */
+  private updateLumenLayer(s: ViewState): void {
+    const batches = this.batches
+    const want = this.lumenWallsOn && !!this.lumenData && !!batches && s.explode === 0 && this.source === useApp.getState
+    if (want && batches && (!this.lumenLayer || this.lumenLayerStale)) {
+      this.lumenLayerStale = false
+      const parts = [...this.lumenAll].filter((i) => this.inst[i]! >= 0).sort((a, b) => a - b)
+      if (!this.lumenLayer || this.lumenLayer.parts.join(',') !== parts.join(',') || this.appliedRig) {
+        if (this.lumenLayer) {
+          this.root.remove(this.lumenLayer.mesh)
+          this.lumenLayer.dispose()
+        }
+        this.lumenLayer = parts.length ? new LumenLayer(this.skinning, parts.map((i) => ({ part: i, buffers: batches.partBuffers(this.inst[i]!) }))) : null
+        if (this.lumenLayer) {
+          this.lumenLayer.setSkinning(this.skinMode)
+          this.root.add(this.lumenLayer.mesh)
+        }
+      }
+    }
+    const on = want && !!this.lumenLayer
+    if (on !== this.lumenLayerOn) {
+      // 交接：腔部件改由图层（或改回由部件自己）来画 / hand-over: the lumen parts go to the layer (or back to their own draws)
+      this.lumenLayerOn = on
+      for (const i of this.lumenAll) this.applyPart(i, this.graph.parts[i]!, s)
+    } else if (on) for (const i of this.lumenLayer!.parts) if (this.display[i] === NORMAL) this.applyPart(i, this.graph.parts[i]!, s)
+    this.lumenLayer?.setShown(on ? this.lumenLayer.parts.filter((i) => this.display[i] === NORMAL) : [])
+    this.dirty = true
+  }
+
+  /** 腔部件的顶点圈（按连接关系分出来，缓存）；不是成圈结构时为 null / A lumen part's rings (from connectivity, cached); null when it is not built of rings. */
+  private ringsFor(i: number, buf: PartBuffers): RingMesh | null {
+    let r = this.lumenRings.get(i)
+    if (r === undefined) this.lumenRings.set(i, (r = ringsOf(buf.index, buf.position.length / 3, buf.indexBase)))
+    return r
+  }
+
+  /**
+   * 充盈：position(f) = GLB 位置 + (f − rest)·D，在蒙皮之前写进顶点缓冲，所以和姿势叠加。改写过的部件重算
+   * 法线（按面积加权，和表情那条路一样）和包围盒，建在旧几何上的拾取结构作废。漫游时消化道各段的充盈度
+   * 不低于 FLY_MIN_FILL，仍然太窄的圈再撑开到 FLY_MIN_RADIUS（只为看得见）。
+   * Filling: position(f) = GLB position + (f − rest)·D, written into the vertex buffers before skinning, so
+   * it composes with poses. Rewritten parts get recomputed normals (area-weighted, as on the expression path)
+   * and bounds, and pick structures on the old geometry are dropped. In the fly-through the canal's segments
+   * are filled to at least FLY_MIN_FILL, and rings still too narrow are widened to FLY_MIN_RADIUS (only so
+   * that they can be seen).
+   */
+  private stepLumen(): void {
+    const data = this.lumenData
+    const batches = this.batches
+    if (!data || !batches || data.entries.size === 0) return
+    const L = useLumen.getState()
+    const canal = L.fly && data.path ? new Set(data.path.canal) : null
+    let changed = false
+    for (const [partId, entry] of data.entries) {
+      const i = this.graph.indexOf(partId)
+      const id = i >= 0 ? this.inst[i]! : -1
+      if (id < 0) continue
+      const buf = batches.partBuffers(id)
+      if (buf.position.length !== entry.vertices * 3) {
+        if (!this.lumenApplied.has(i)) {
+          console.warn(`[soma] lumen filling ignored: ${partId} has ${buf.position.length / 3} vertices, lumen-filling.json says ${entry.vertices}`)
+          this.lumenApplied.set(i, 'mismatch')
+        }
+        continue
+      }
+      const widen = !!canal?.has(partId)
+      const f = widen ? Math.max(fillingOf(L, entry), FLY_MIN_FILL) : fillingOf(L, entry)
+      const key = `${f}:${widen ? 1 : 0}`
+      if (this.lumenApplied.get(i) === key) continue
+      const first = !this.lumenApplied.has(i)
+      this.lumenApplied.set(i, key)
+      const orig = this.origOf(i, buf)
+      if (first) registerLumenGeometry(partId, orig.position, Uint32Array.from(buf.index, (v) => v - buf.indexBase))
+      const rings = widen ? this.ringsFor(i, buf) : null
+      if (f === entry.rest && !rings) {
+        if (first) continue
+        buf.position.set(orig.position)
+        buf.normal.set(orig.normal)
+        this.boxOverride.delete(i)
+      } else {
+        applyFilling(orig.position, displacementOf(data, partId)!, f, entry.rest, buf.position)
+        if (rings) widenRings(buf.position, rings.rings, FLY_MIN_RADIUS)
+        recomputeNormals(buf.position, buf.index, buf.indexBase, buf.normal)
+        this.boxOverride.set(i, boundsOf(buf.position))
+      }
+      batches.markPositions(id)
+      this.lumenLayer?.setPositions(i, buf.position, buf.normal)
+      if (this.bvh[i]) {
+        this.bvh[i] = null
+        this.bvhBuilt = Math.max(0, this.bvhBuilt - 1)
+      }
+      changed = true
+    }
+    if (changed) {
+      this.poseRt?.invalidate()
+      this.restVersion++
+      this.lumenVersion++
+      this.prewarmNext = 0
+      this.dirty = true
+    }
+  }
+
+  /** 漫游路径：各段的圈心连起来（摆了姿势就用变形后的顶点），口腔和咽用引导线 / The fly-through path: ring centres of every segment joined (posed vertices when posed), guide lines for mouth and pharynx. */
+  private buildFlyPath(): CanalPath | null {
+    const data = this.lumenData
+    const batches = this.batches
+    if (!data?.path || !batches) return null
+    const inputs: PathSegmentInput[] = []
+    for (const partId of data.path.canal) {
+      const i = this.graph.indexOf(partId)
+      const id = i >= 0 ? this.inst[i]! : -1
+      if (id < 0) return null // 几何还没到齐 / geometry not all here yet
+      const buf = batches.partBuffers(id)
+      const posed = this.posed && this.poseRt ? this.poseRt.positions(i) : null
+      const position = posed ?? buf.position
+      const guide = data.path.guides[partId]
+      if (guide) {
+        // 引导线在静止空间里；摆了姿势时，每个点跟着离它最近的那个顶点走
+        // the guide is in rest space; when posed each point moves with the vertex nearest to it
+        inputs.push({
+          id: partId,
+          guide: guide.map((g) => {
+            const q: V3 = [g[0] / 1000, g[1] / 1000, g[2] / 1000]
+            if (!posed) return q
+            let best = Infinity
+            let at = 0
+            for (let v = 0; v < buf.position.length; v += 3) {
+              const d = (buf.position[v]! - q[0]) ** 2 + (buf.position[v + 1]! - q[1]) ** 2 + (buf.position[v + 2]! - q[2]) ** 2
+              if (d < best) {
+                best = d
+                at = v
+              }
+            }
+            return [q[0] + posed[at]! - buf.position[at]!, q[1] + posed[at + 1]! - buf.position[at + 1]!, q[2] + posed[at + 2]! - buf.position[at + 2]!]
+          }),
+        })
+        continue
+      }
+      const rings = this.ringsFor(i, buf)
+      if (!rings) continue
+      inputs.push({ id: partId, stations: ringStations(rings.rings, position), poleStart: rings.poleStart !== null, poleEnd: rings.poleEnd !== null })
+    }
+    return buildCanalPath(inputs)
+  }
+
+  private endFly(): void {
+    const fly = this.fly
+    if (!fly) return
+    this.fly = null
+    this.camera.fov = fly.saved.fov
+    this.camera.near = fly.saved.near
+    this.camera.far = fly.saved.far
+    this.camera.up.set(0, 1, 0)
+    this.camera.updateProjectionMatrix()
+    this.camera.position.copy(fly.saved.position)
+    this.controls.target.copy(fly.saved.target)
+    this.controls.enabled = true
+    this.controls.update()
+    this.dirty = true
+  }
+
+  /**
+   * 内镜漫游：相机沿消化道的中心线在腔里面走，朝前看。视角 80°、近平面 0.4 毫米（食管只有约 4 毫米宽）。
+   * 位置取前后各 2 毫米的平均、视线指向前方 8 毫米处，所以拐角被抹圆了一些。
+   * The fly-through: the camera travels inside the lumen along the canal's centreline, looking forward.
+   * Field of view 80°, near plane 0.4 mm (the oesophagus is only about 4 mm wide). The position averages
+   * 2 mm either side and the view aims 8 mm ahead, which rounds the corners a little.
+   */
+  private stepFly(t: number): void {
+    const L = useLumen.getState()
+    if (!L.fly || !this.lumenData?.path) {
+      if (this.fly) this.endFly()
+      return
+    }
+    if (!this.fly) {
+      this.tween = null
+      this.fly = {
+        path: null,
+        key: '',
+        s: 0,
+        lastT: 0,
+        seekNonce: L.seek.nonce,
+        started: false,
+        reported: 0,
+        up: new Vector3(0, 0, 1),
+        saved: { position: this.camera.position.clone(), target: this.controls.target.clone(), fov: this.camera.fov, near: this.camera.near, far: this.camera.far },
+      }
+      this.controls.enabled = false
+      this.camera.fov = 80
+      this.camera.near = 0.0004
+      this.camera.far = 4
+      this.camera.updateProjectionMatrix()
+    }
+    const fly = this.fly
+    const key = `${this.lumenVersion}:${this.posed && this.poseRt ? this.poseRt.version : -1}:${this.attachedObjects}`
+    if (key !== fly.key || !fly.path) {
+      const length = fly.path?.length
+      fly.key = key
+      fly.path = this.buildFlyPath()
+      this.dirty = true
+      // 路径变长或变短时（充盈改了圈心）按比例留在原处 / when the path changes length (filling moves ring centres) keep the place proportionally
+      if (fly.path && length) fly.s *= fly.path.length / length
+    }
+    const path = fly.path
+    if (!path) return
+    const segId = (k: number): string => path.segments[k]!.id
+    if (!fly.started) {
+      fly.started = true
+      const at = L.flyStart
+      if (typeof at === 'number') fly.s = at / 1000
+      else if (at) {
+        const id = segmentIds(this.graph, this.lumenData).get(at.toLowerCase().replace(/^oesophagus$/, 'esophagus')) ?? at
+        const seg = path.segments.find((x) => x.id === id)
+        if (seg) fly.s = seg.start + seg.bridged
+        else console.warn(`[soma] URL: fly: 没有这一段 / no such segment "${at}"`)
+      }
+    }
+    if (L.seek.nonce !== fly.seekNonce) {
+      fly.seekNonce = L.seek.nonce
+      if (L.seek.s >= 0) fly.s = L.seek.s
+      else fly.started = false
+      this.dirty = true
+      if (!fly.started) return
+    }
+    const dt = fly.lastT ? Math.min(0.1, (t - fly.lastT) / 1000) : 0
+    fly.lastT = t
+    const dir = L.fly.reverse ? -1 : 1
+    let ended = false
+    if (L.fly.playing) {
+      fly.s += dir * FLY_SPEED * L.fly.speed * dt
+      if (fly.s >= path.length || fly.s <= 0) ended = true
+      this.dirty = true
+    }
+    fly.s = Math.min(path.length, Math.max(0, fly.s))
+    const a: V3 = [0, 0, 0], b: V3 = [0, 0, 0], c: V3 = [0, 0, 0]
+    pathPoint(path, fly.s - 0.002, a)
+    pathPoint(path, fly.s, b)
+    pathPoint(path, fly.s + 0.002, c)
+    const pos = this.camera.position.set((a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3)
+    // 朝行进方向看；快到头时用身后的一点定方向 / look the way of travel; near the end the direction comes from a point behind
+    const ahead = fly.s + dir * 0.008
+    const view = new Vector3()
+    if (ahead >= 0 && ahead <= path.length) {
+      pathPoint(path, ahead, a)
+      view.set(a[0] - pos.x, a[1] - pos.y, a[2] - pos.z)
+    } else {
+      pathPoint(path, fly.s - dir * 0.008, a)
+      view.set(pos.x - a[0], pos.y - a[1], pos.z - a[2])
+    }
+    if (view.lengthSq() < 1e-12) view.set(0, -1, 0)
+    view.normalize()
+    // "上"沿路径平移：去掉沿视线的分量；退化时换一个垂直方向 / "up" is transported along the path: drop its component along the view; pick another perpendicular when degenerate
+    fly.up.addScaledVector(view, -fly.up.dot(view))
+    if (fly.up.lengthSq() < 1e-6) fly.up.set(Math.abs(view.z) < 0.9 ? 0 : 1, 0, Math.abs(view.z) < 0.9 ? 1 : 0).addScaledVector(view, -(Math.abs(view.z) < 0.9 ? view.z : view.x))
+    fly.up.normalize()
+    this.camera.up.copy(fly.up)
+    this.camera.lookAt(pos.x + view.x, pos.y + view.y, pos.z + view.z)
+    this.camera.updateMatrixWorld()
+    this.tween = null
+    // 位置每隔 120 毫秒报告一次（界面上的读数和进度条），到头时立即报告 / the position is reported every 120 ms (readout and scrubber), and at once at either end
+    if (ended || t - fly.reported > 120) {
+      const id = segId(segmentAt(path, fly.s))
+      const radius = radiusAt(path, fly.s)
+      if (ended || Math.abs(L.flyS - fly.s) > 1e-6 || L.flyTotal !== path.length || L.flySegment !== id || L.flyRadius !== radius) {
+        fly.reported = t
+        reportFly(fly.s, path.length, id, radius, ended)
+      }
+    }
+  }
+
+  /** 腔显示的现状（验证用）/ The state of the lumina display (verification). */
+  lumenInfo(): { data: boolean; derived: number; real: number; walls: number; layer: boolean; layerParts: number; rewritten: number; fly: { s: number; length: number; segment: string; segments: { id: string; start: number; end: number; bridged: number }[] } | null } {
+    const path = this.fly?.path
+    return {
+      data: !!this.lumenData,
+      derived: this.lumenData?.derived.length ?? 0,
+      real: this.lumenData?.real.length ?? 0,
+      walls: this.lumenWalls.size,
+      layer: this.lumenLayerOn,
+      layerParts: this.lumenLayerOn && this.lumenLayer ? this.lumenLayer.parts.filter((i) => this.display[i] === NORMAL).length : 0,
+      rewritten: [...this.lumenApplied.values()].filter((k) => k !== 'mismatch').length,
+      fly: this.fly && path ? { s: this.fly.s, length: path.length, segment: path.segments[segmentAt(path, this.fly.s)]!.id, segments: path.segments } : null,
+    }
   }
 
   // ------------------------------------------------------------ 拾取 / picking
@@ -2510,7 +2977,9 @@ export class Viewer {
       this.localRay.direction.copy(d)
       // 剖切时，不透明部件的背面会被绘制（填充的切面），因此可拾取
       // with a section on, an opaque part's back faces are drawn (the filled cut), so they are pickable
-      const h = this.bvhFor(i).raycastFirst(this.localRay, capped && this.solid[i] ? DoubleSide : FrontSide, near, Math.min(far, best))
+      // "腔"图层是双面画的（漫游时从里面看），拾取也按双面 / the lumina layer is drawn double-sided (seen from inside in the fly-through), so it is picked double-sided too
+      const both = (capped && this.solid[i]) || (this.lumenLayerOn && !!this.lumenLayer?.has(i))
+      const h = this.bvhFor(i).raycastFirst(this.localRay, both ? DoubleSide : FrontSide, near, Math.min(far, best))
       if (h && h.distance < best) {
         best = h.distance
         bestPart = i
@@ -2842,8 +3311,13 @@ export class Viewer {
       }
       this.dirty = true
     }
-    this.controls.update()
+    // 漫游时相机由路径带着走，环绕控制器不参与 / in the fly-through the path drives the camera and the orbit controls stay out of it
+    if (!this.fly) this.controls.update()
     if (this.syncNeeded) this.sync()
+    if (this.source === useApp.getState) {
+      this.stepLumen()
+      this.stepFly(t)
+    }
     // 刺激先取样：它给表情一个强度、给姿势一个反射增量 / the stimulus is sampled first: it gives the face a level and the pose a reflex increment
     const stimulating = this.source === useApp.getState ? this.stepStim(stimFrame(t)) : false
     const facing = this.stepFace(t)

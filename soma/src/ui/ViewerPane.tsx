@@ -9,6 +9,7 @@ import { EmbedControls } from './EmbedControls.tsx'
 import { StimMonitor } from './StimMonitor.tsx'
 import { Icon } from './Icon.tsx'
 import { ActivityLegend } from './ActivityLegend.tsx'
+import { LumenOverlay } from './LumenOverlay.tsx'
 
 function bodyUrl(dataset: string): string {
   return `${import.meta.env.BASE_URL}anatomy/${dataset}/`
@@ -263,6 +264,7 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
       )}
 
       <ActivityLegend />
+      <LumenOverlay graph={graph} />
 
       <div className="viewer-footer">
         <span>仅供教学使用，非临床依据</span>

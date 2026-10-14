@@ -529,6 +529,42 @@
         "en": "The pathway runs from the sole through the tibial and sciatic nerves to the lumbosacral cord; set the magnitude below threshold and trigger again: nothing happens. A computational model — the simulated body has no subjective experience; numbers marked “assumption” are not measurements; sound is off by default"
       },
       "url": "/?body=female&sys=int,ske,ner&stim=pinch,20,1@sole_L"
+    },
+    {
+      "id": "lumen-canal",
+      "title": {
+        "zh": "消化道的腔：从口到肛门连成一条",
+        "en": "The alimentary lumen: one channel from mouth to anus"
+      },
+      "hint": {
+        "zh": "壁画成半透明，腔用蓝色。腔不是扫描的：由器官外表面向内缩一个文献壁厚推出来，构造的部分另用颜色标出。拖“充盈”看腔从静止（食管和胃塌陷、小肠很细）撑到壁允许的最大；壁不跟着动",
+        "en": "Walls are see-through and the lumina blue. They are not scanned: each is the organ’s outer surface moved inward by a literature wall thickness, with construction coloured apart. Drag “充盈” (filling) from rest (oesophagus and stomach collapsed, small bowel thin) to as full as the wall allows; the walls do not move"
+      },
+      "url": "/?lumen=canal"
+    },
+    {
+      "id": "lumen-stomach",
+      "title": {
+        "zh": "胃的充盈：从塌陷到撑满",
+        "en": "Filling the stomach: from collapsed to distended"
+      },
+      "hint": {
+        "zh": "只留胃和它的腔。拖“充盈”滑块：静止时约 20 cm³，撑满约 440 cm³（由网格算出的近似值）。胃静止时的形状是假设；胃壁在模型里不随充盈移动",
+        "en": "The stomach and its cavity alone. Drag the “充盈” (filling) slider: about 20 cm³ at rest and about 440 cm³ full (approximations computed from the mesh). The resting shape is an assumption, and the wall does not move with filling in this model"
+      },
+      "url": "/?lumen=1&iso=FJ2564,LUMEN_stomach&focus=1"
+    },
+    {
+      "id": "lumen-fly",
+      "title": {
+        "zh": "内镜漫游：从食管一路走下去",
+        "en": "Fly-through: down the canal from the oesophagus"
+      },
+      "hint": {
+        "zh": "相机在腔里面沿中心线前进，底下显示所在的段和已走的距离；可以暂停、反向、调速、拖动位置。漫游时各段至少充盈到 0.5，窄于 6 毫米处被撑开（只为看得见，不是数据）；食管入胃、回肠入升结肠处相机会离开腔走一小段，小肠的急弯处会擦出腔外",
+        "en": "The camera travels inside the lumen along its centreline; the strip below names the segment and the distance covered, with pause, reverse, speed and a scrubber. While flying every segment is filled to at least 0.5 and anything narrower than 6 mm is widened (only to be visible; not data); where the oesophagus enters the stomach and the ileum the colon the camera leaves the lumen briefly, and it grazes outside at sharp bends of the small bowel"
+      },
+      "url": "/?lumen=canal&fly=esophagus"
     }
   ],
   "agent": {

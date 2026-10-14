@@ -82,6 +82,17 @@
 
 数据由 `bun tools/activity/build.ts male`（female 同理）生成到 `public/anatomy/<人体>/activity.json`，参数和出处在 `data/curated/activity/`；绑定或几何重新生成之后要重跑，否则界面只显示长度变化。
 
+### 腔
+
+"显示"页的"腔"一节（男性）。空腔器官的腔是 19 个部件：消化道从口到肛门连成一条（口腔、咽、食管、胃、十二指肠、空肠、回肠、升 / 横 / 降结肠、直肠、肛管），另有膀胱、输尿管、输精管和精囊的腔。
+
+- **怎么来的。** 不是扫描出来的：由器官外表面向内缩一个文献（或假设）的壁厚推出来；口腔和咽是周围真实部件之间剩下的空间。构造的部分（从唇到牙的一段、腭帆、肛管末段、器官之间的衔接）另用颜色标出。数据里现在只有每个部件各类顶点的个数，没有逐顶点的标记，所以着色按整个部件：全是构造的画成构造色，构造占一成以上的（口腔、咽）画成"部分构造"的中间色。
+- **什么时候看得见。** 壁不透明时腔藏在里面不画。打开"显示空腔器官的腔"后，壁画成半透明、腔用单独的颜色；把所在系统调成半透明，或在结构树、搜索里选中一个腔，它也会显示。"只看消化道"隔离消化道的腔和壁并对准相机。
+- **充盈。** 滑块 0–1：0 是出厂的静止状态（食管和胃塌陷、小肠很细、升结肠和横结肠充气），1 是壁允许的最大；每个腔的充盈度 f = 静止值 + 滑块 ×（1 − 静止值），选中一个腔可以单独调。位移在蒙皮之前加到顶点上（位置 = GLB 位置 + (f − 静止值) × 位移），所以和姿势叠加；法线按面积加权重算。**器官的壁不随充盈移动。** 口腔、咽、食管和输精管没有位移。选中一个腔时详情里给出此刻的体积：由网格的有符号体积算出，两端开口的管用端圈的质心扇形虚拟封口，是近似值（胃：静止约 21 cm³、充满约 440 cm³；管线报告为 20 / 420）。
+- **内镜漫游。** 相机在腔里面沿消化道的中心线从口走到肛门，朝前看（视角 80°，近平面 0.4 毫米），底下显示所在的段、已走的距离和该处腔的直径；可以播放 / 暂停、反向、调速、拖动位置、跳到某一段。中心线由界面从网格算出：管线造的腔每站一圈 16 个顶点，按连接关系把顶点分成一圈一圈，取各圈的质心；口腔和咽是体素等值面，没有顶点圈，用 `lumen-path.json` 里的引导线。规则：漫游时消化道各段的充盈度至少取 0.5（整条一起）；仍窄于 6 毫米的地方按圈心撑开到 6 毫米——**只为看得见，不是数据**；漫游时不画壁（各片器官网格两端的封盖会横在腔里）。
+- **已知的不足。** 咽腔在食管上方约 20 毫米处就止住了，食管从侧面进胃、回肠从侧面进升结肠，这三处相机会离开腔走一小段（约 14、49、26 毫米）；小肠的急弯处中心线会擦出腔外；口腔和咽里的引导线只是大致的中线。女性还没有推导出来的腔：模式里只显示标本自己的直肠腔和子宫阴道腔，没有充盈和漫游。其余局限见"已知的缺口"。
+- **数据。** `lumen-filling.json` / `.bin`（管线生成）给出各部件的静止充盈度和逐顶点位移；`lumen-path.json`（几 kB）由 `bun tools/lumenview/extract.ts male` 从 `pipeline-report.json` 取出：各段的次序、每个腔的壁部件、口腔和咽的引导线。重新生成几何之后要重跑它。
+
 ### 标定对照
 
 "数据来源与声明"对话框里的"查看对照表"打开一个只读视图：`data/curated/calibration/` 下的十张表（节段比例、活动范围、肱骨角度、肌肉附着点和力臂、器官体积、表情位移、面部控制的覆盖、量具自检）。每张表先给出容差内外各多少行、差得最多的几行，以及参照的名称、版本、许可和网址，可按人体筛选，整张表点开才显示。这些表（合计近 1 MB）是单独的代码块，打开时才下载。**它们是把外部的开放模型和已发表的统计当作量具所做的对照，不是临床人员的审核**；参照本身也是模型或群体平均，不是真值，容差是本项目定的。
@@ -146,6 +157,9 @@ cd .. && SOMA_API_PORT=<端口> bun run dev                              # 开�
 | `act` | `len`、`load` | 肌肉活动：`len` 作用线长度变化（几何），`load` 抵抗重力所需的激活度（估计） |
 | `load` | `2`、`2L`、`2R` | `act=load` 时手持的重物（千克）；`L` / `R` 只一只手，省略为两手各持 |
 | `grav` | `supine`、`prone` | `act=load` 时的重力方向：仰卧、俯卧；省略为站立 |
+| `lumen` | `1`、`canal` | "腔"显示：壁半透明、腔单独着色；`canal` 同时只看消化道（它的腔和壁，其余隐藏） |
+| `fill` | `0.5`、`0.5,LUMEN_stomach:1` | 充盈：全局滑块 0–1（0 = 静止），后面可跟"部件 id:充盈度"单独设定某个腔 |
+| `fly` | `esophagus`、`420` | 内镜漫游：段名（`oral_cavity pharynx esophagus stomach duodenum jejunum ileum ascending_colon transverse_colon descending_colon rectum anal_canal`）或部件 id，从那一段开始播放；或已走的毫米数，停在那里 |
 | `renderer` | `webgl` | 强制用 WebGL2 后端 |
 
 例：`/?body=male&sys=ske,ner&sel=FMA9611&focus=1`。完整定义见 `src/state/urlState.ts`。
@@ -346,6 +360,17 @@ The "Muscle activity" switch of the Pose tab has two layers of different standin
 
 The data is written by `bun tools/activity/build.ts male` (likewise female) to `public/anatomy/<body>/activity.json`, with parameters and sources under `data/curated/activity/`; rerun it after the rig or the geometry is rebuilt, otherwise the UI shows length change only.
 
+### Lumina
+
+The "Lumina" section of the Display tab (male body). The lumina of the hollow organs are 19 parts: one alimentary lumen from mouth to anus (oral cavity, pharynx, oesophagus, stomach, duodenum, jejunum, ileum, ascending / transverse / descending colon, rectum, anal canal), and the lumina of the bladder, ureters, deferent ducts and seminal vesicles.
+
+- **How they were made.** They are not scanned: each is the organ's outer surface moved inward by a wall thickness from the literature (or assumed); mouth and pharynx are the space left between the real parts around them. Construction (the stretch from lips to teeth, the velum, the end of the anal canal, the joins between organs) is coloured apart. The data at present gives only vertex counts per class for each part, not a per-vertex marking, so colouring is per part: an all-construction part takes the construction colour, and one with a tenth or more of construction (mouth, pharynx) an in-between "partly construction" colour.
+- **When they show.** Inside an opaque wall a lumen is not drawn. With "Show the lumina of the hollow organs" on, walls go see-through and lumina take a colour of their own; a lumen also shows when its system is made see-through or when it is selected from the tree or the search. "Alimentary canal" isolates the canal's lumina and walls and frames the camera.
+- **Filling.** A slider from 0 to 1: 0 is the resting state as shipped (oesophagus and stomach collapsed, small bowel thin, ascending and transverse colon gas-filled), 1 as full as the wall allows; each lumen's filling is f = rest + slider × (1 − rest), and a selected lumen can be set on its own. The displacement is added to the vertices before skinning (position = GLB position + (f − rest) × displacement), so it composes with poses; normals are recomputed, area-weighted. **The organ walls do not move with filling.** Mouth, pharynx, oesophagus and deferent ducts have no displacement. With a lumen selected the details give its volume at the current filling: the signed volume of the mesh, with open-ended tubes closed virtually by centroid fans over their end rings — an approximation (stomach: about 21 cm³ at rest and 440 cm³ full; the pipeline report says 20 / 420).
+- **Fly-through.** The camera travels inside the lumen along the canal's centreline from mouth to anus, looking forward (field of view 80°, near plane 0.4 mm); the strip below names the segment, the distance covered and the lumen's diameter there, with play / pause, reverse, speed, a scrubber and a jump to any segment. The centreline is computed in the UI from the meshes: the pipeline's lumina have a ring of 16 vertices per station, so the vertices are sorted into rings by connectivity and the ring centroids taken; mouth and pharynx are voxel isosurfaces without rings and use the guide lines in `lumen-path.json`. The rules: while flying every segment of the canal is filled to at least 0.5 (the whole canal at once); what is still narrower than 6 mm is widened about its ring centres to 6 mm — **only so that it can be seen; it is not data**; and walls are not drawn (the end caps of the organ pieces' meshes would lie across the lumen).
+- **Known shortcomings.** The pharyngeal cavity stops about 20 mm above the oesophageal lumen, the oesophagus enters the stomach from the side and the ileum the ascending colon likewise; at these three places the camera leaves the lumen for a short way (about 14, 49 and 26 mm). At sharp bends of the small bowel the centreline grazes outside the lumen, and the guide lines through mouth and pharynx are only a rough midline. The female body has no derived lumina yet: the mode shows only her specimen's own rectal and uterovaginal lumina, with no filling and no fly-through. For the other limits see "Known gaps".
+- **Data.** `lumen-filling.json` / `.bin` (written by the pipeline) hold each part's rest filling and per-vertex displacement; `lumen-path.json` (a few kB) is extracted from `pipeline-report.json` by `bun tools/lumenview/extract.ts male`: the order of the segments, the wall parts of every lumen, and the guide lines through mouth and pharynx. Rerun it after the geometry is rebuilt.
+
 ### Calibration
 
 "Open the calibration tables" in the "Attribution & disclaimer" dialog opens a read-only view of the ten tables under `data/curated/calibration/` (segment proportions, range of motion, humeral angles, muscle attachments and moment arms, organ volumes, expression displacement, coverage of facial controls, and an instrument check). Each table first shows how many rows fall within and outside tolerance, the largest disagreements, and each reference's name, version, licence and URL; rows can be filtered by body and the full table appears on demand. The tables (close to 1 MB together) are separate chunks fetched when the view opens. **They are comparisons with open external models and published statistics used as measuring instruments, not validation by a clinician**; the references are models or population averages themselves, not ground truth, and the tolerances were set by this project.
@@ -410,6 +435,9 @@ The whole view state lives in the query string, so any view can be opened by one
 | `act` | `len`, `load` | Muscle activity: `len` length change of the lines of action (geometry), `load` activation needed against gravity (an estimate) |
 | `load` | `2`, `2L`, `2R` | With `act=load`, the load held in the hand (kg); `L` / `R` one hand, both when omitted |
 | `grav` | `supine`, `prone` | With `act=load`, the gravity direction: supine, prone; standing when omitted |
+| `lumen` | `1`, `canal` | The lumina display: see-through walls and lumina in a colour of their own; `canal` also isolates the alimentary canal (its lumina and walls, everything else hidden) |
+| `fill` | `0.5`, `0.5,LUMEN_stomach:1` | Filling: the global slider 0–1 (0 = resting), optionally followed by "part id:filling" for single lumina |
+| `fly` | `esophagus`, `420` | Fly-through: a segment key (`oral_cavity pharynx esophagus stomach duodenum jejunum ileum ascending_colon transverse_colon descending_colon rectum anal_canal`) or part id to play from that segment's start; or the millimetres covered, to hold there |
 | `renderer` | `webgl` | Force the WebGL2 backend |
 
 Example: `/?body=male&sys=ske,ner&sel=FMA9611&focus=1`. The full definition is in `src/state/urlState.ts`.

@@ -1,0 +1,165 @@
+/* "腔"显示：面板一节、舞台上的图例和漫游控制条 / the lumina display: its panel section, the legend and the fly-through controls on the stage */
+
+.lumen-panel .lumen-warn,
+.lumen-legend .lumen-warn {
+  color: #f3b34c;
+}
+.lumen-panel .row-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+.lumen-panel .slider-row,
+.lumen-info .slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 2px;
+  font-size: 12px;
+}
+.lumen-panel .slider-row input,
+.lumen-info .slider-row input {
+  flex: 1;
+  min-width: 60px;
+}
+.lumen-panel .slider-row .value,
+.lumen-info .slider-row .value {
+  min-width: 34px;
+  text-align: right;
+  color: var(--text-2);
+}
+.lumen-statement {
+  margin: 8px 0 0;
+  padding-left: 16px;
+  color: var(--text-2);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.lumen-statement .en,
+.lumen-legend .en,
+.lumen-fly .en,
+.lumen-info .en {
+  color: var(--text-3);
+  font-weight: 400;
+}
+
+.lumen-legend {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  width: min(290px, calc(100% - 24px));
+  padding: 8px 10px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(21, 24, 29, 0.86);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.35;
+  pointer-events: none;
+  z-index: 3;
+}
+.lumen-legend strong {
+  display: block;
+  font-weight: 600;
+}
+.lumen-legend p {
+  margin: 4px 0 0;
+  color: var(--text-2);
+  font-size: 11px;
+}
+.lumen-keys {
+  margin: 4px 0 2px;
+  padding: 0;
+  list-style: none;
+}
+.lumen-keys li {
+  padding-left: 16px;
+  text-indent: -16px;
+}
+.lumen-keys .swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+.app-embed .lumen-legend {
+  top: 44px;
+  width: min(270px, calc(100% - 24px));
+  font-size: 11px;
+}
+.app-embed .lumen-legend p {
+  font-size: 10.5px;
+}
+
+.lumen-fly {
+  position: absolute;
+  left: 50%;
+  bottom: 34px;
+  transform: translateX(-50%);
+  width: min(620px, calc(100% - 24px));
+  padding: 8px 10px;
+  border: 1px solid rgba(62, 199, 214, 0.45);
+  border-radius: 8px;
+  background: rgba(21, 24, 29, 0.88);
+  color: var(--text);
+  font-size: 12px;
+  z-index: 4;
+}
+.lumen-fly-where {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lumen-fly-where .mono {
+  margin-left: auto;
+  color: var(--text-2);
+}
+.lumen-fly-track input {
+  width: 100%;
+  margin: 6px 0 4px;
+}
+.lumen-fly-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.lumen-fly-buttons .tool-btn.on {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.lumen-fly-rule {
+  margin: 6px 0 0;
+  color: var(--text-3);
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+.app-embed .lumen-fly {
+  bottom: 46px;
+}
+.app-embed .lumen-fly-rule {
+  display: none;
+}
+.lumen-embed-fill {
+  position: absolute;
+  left: 8px;
+  bottom: 46px;
+  z-index: 4;
+}
+
+@media (max-width: 720px) {
+  .lumen-legend {
+    top: 88px;
+    width: min(250px, calc(100% - 24px));
+    font-size: 11px;
+  }
+  .lumen-legend p:not(.lumen-warn) {
+    display: none;
+  }
+  .lumen-fly-rule {
+    display: none;
+  }
+}
