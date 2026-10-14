@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { type SessionList, api } from '../api'
 import { useDraft } from '../sessions/drafts'
+import { SESSION_SHOWS, type SessionShow, inShow, loadShow, saveShow, shownStatus, tally } from '../sessions/filter'
 import { askToNotify, notifyState } from '../sessions/notify'
 import { SessionView } from '../sessions/SessionView'
 import { useT } from '../state/store'
@@ -36,6 +37,9 @@ export function SessionsPage() {
     }
   }
   const [alerts, setAlerts] = useState(notifyState)
+  // 默认只看没结束的；选了别的就记住。 / Unfinished only by default; another choice is remembered.
+  const [show, setShow] = useState<SessionShow>(loadShow)
+  const pick = (next: SessionShow) => (setShow(next), saveShow(next))
   const [error, setError] = useState<string | null>(null)
   const load = () => api.sessions().then(setList, (e: Error) => setError(e.message))
   useEffect(() => {
@@ -55,6 +59,11 @@ export function SessionsPage() {
     }
   }
   const label: Record<string, string> = { idle: t('等你说话', 'idle'), running: t('在干活', 'working'), waiting: t('等你回答', 'needs you'), closed: t('已结束', 'closed'), error: t('出错了', 'failed') }
+  const showName: Record<SessionShow, string> = { open: t('没结束的', 'Unfinished'), closed: t('已结束', 'Finished'), all: t('全部', 'All') }
+  const sessions = list?.sessions ?? []
+  const counts = tally(sessions)
+  // 打开着的那个会话即使不在这一组里也留在列表上。 / The open session stays in the list even outside the chosen group.
+  const shown = sessions.filter((s) => s.id === id || inShow(show, shownStatus(s)))
   return (
     <Page
       title={t('自我进化', 'Self-evolution')}
@@ -89,13 +98,30 @@ export function SessionsPage() {
             {alerts === 'blocked' && <span className="muted small">{t('浏览器里把这个站点的通知禁掉了', 'Notifications for this site are blocked in the browser')}</span>}
           </div>
           {list && list.sessions.length === 0 && <Empty>{t('还没有会话。', 'No sessions yet.')}</Empty>}
+          {list && list.sessions.length > 0 && (
+            <div className="session-filter">
+              <span className="seg" role="group" aria-label={t('按状态筛选', 'Filter by status')}>
+                {SESSION_SHOWS.map((key) => (
+                  <button key={key} aria-pressed={show === key} aria-selected={show === key} onClick={() => pick(key)}>
+                    {showName[key]} <span className="num">{counts.shows[key]}</span>
+                  </button>
+                ))}
+              </span>
+              {show !== 'closed' && (
+                <span className="muted small">
+                  {(['running', 'waiting', 'idle', 'error'] as const).filter((k) => counts.statuses[k]).map((k) => `${label[k]} ${counts.statuses[k]}`).join(' · ')}
+                </span>
+              )}
+            </div>
+          )}
+          {list && list.sessions.length > 0 && shown.length === 0 && <Empty>{show === 'open' ? t('没有没结束的会话。', 'No unfinished sessions.') : t('没有结束了的会话。', 'No finished sessions.')}</Empty>}
           <ul className="plain-list">
-            {(list?.sessions ?? []).map((s) => (
+            {shown.map((s) => (
               <li key={s.id}>
                 <button className={`session-pick${s.id === id ? ' on' : ''}`} onClick={() => navigate(`/sessions/${s.id}`)}>
                   <strong>{s.title}</strong>
                   <span className={`small ${s.status === 'waiting' ? 'session-needs' : 'muted'}`}>
-                    {label[s.live || s.status === 'closed' || s.status === 'error' ? s.status : 'idle']}
+                    {label[shownStatus(s)]}
                     {s.waiting_for && ` · ${s.waiting_for}`}
                   </span>
                 </button>
