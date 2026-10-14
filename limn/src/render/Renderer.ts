@@ -455,7 +455,7 @@ export class Renderer {
       if (it.tri) continue
       // 拖动时陪衬不画：几百万个环境里的球会把拖动拖慢，而且转来转去它看上去都一样，挡住了对象本身的转动
       // decoration is skipped while dragging: millions of environment spheres slow the drag, and since it looks the same from every side it hides the subject's own turning
-      if (fast && it.decor) continue
+      if (!drawnNow(it, fast)) continue
       bindItem(p, it)
       for (const d of it.draws) {
         if (d.count <= 0 || d.opCount <= 0) continue
@@ -482,7 +482,7 @@ export class Renderer {
       gl.uniform3f(this.u(c, 'u_layer'), layers, span[0], span[1])
       gl.uniform2f(this.u(c, 'u_fogKeep'), style.fog.front, style.fog.back)
       for (const it of this.items) {
-        if (!it.seg || (fast && it.decor)) continue
+        if (!it.seg || !drawnNow(it, fast)) continue
         bindItem(c, it)
         gl.activeTexture(gl.TEXTURE5)
         gl.bindTexture(gl.TEXTURE_2D, it.seg)
@@ -660,6 +660,11 @@ export function instanceMatrix(inst: Instances, o: number): Float32Array {
  * 画出来的全部内容的包围球，以及贴合形状的一组小球（用于取景）。
  * Bounding sphere of everything drawn, plus a set of small spheres that hug the shape (for framing).
  */
+/** 这一项这一帧画不画：拖动时的快速绘制不画陪衬 / whether an item is drawn this frame: the quick drawing while dragging leaves out decoration */
+export function drawnNow(it: { decor?: boolean }, fast: boolean): boolean {
+  return !(fast && it.decor)
+}
+
 export function sceneBounds(items: RenderItem[]): Bounds {
   let radius = 0
   const placed: number[] = []
