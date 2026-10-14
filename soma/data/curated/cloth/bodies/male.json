@@ -1,0 +1,78 @@
+{
+ "schema": 1,
+ "body": "male",
+ "description": {
+  "zh": "由皮肤网格量出的 GarmentCode 人体尺寸（厘米、度），tools/cloth/measure.py 生成；定义见 GarmentCode 的 docs/Body Measurements GarmentCode.pdf。",
+  "en": "GarmentCode body measurements (cm, degrees) taken from the skin mesh by tools/cloth/measure.py; definitions as in GarmentCode docs/Body Measurements GarmentCode.pdf."
+ },
+ "garmentcode": {
+  "height": 172.23,
+  "head_l": 27.69,
+  "neck_w": 21.07,
+  "shoulder_w": 37.88,
+  "shoulder_incl": 29.64,
+  "armscye_depth": 17.8,
+  "arm_length": 57.61,
+  "arm_pose_angle": 73.52,
+  "wrist": 17.48,
+  "bust": 102.56,
+  "underbust": 87.61,
+  "bust_points": 18.46,
+  "bust_line": 23.4,
+  "vert_bust_line": 17.08,
+  "back_width": 52.54,
+  "waist": 76.67,
+  "waist_back_width": 38.98,
+  "waist_line": 38.58,
+  "waist_over_bust_line": 44.25,
+  "hips": 90.52,
+  "hip_back_width": 49.32,
+  "hips_line": 15.97,
+  "bum_points": 9.79,
+  "hip_inclination": 9.41,
+  "crotch_hip_diff": 11.76,
+  "leg_circ": 53.4
+ },
+ "levelsY": {
+  "floorY": -0.0792,
+  "armpitY": 1.1573,
+  "acromionTopY": 1.3353,
+  "sideNeckY": 1.4004,
+  "chestY": 1.1953,
+  "waistY": 0.9803,
+  "hipY": 0.8206,
+  "crotchY": 0.703
+ },
+ "compareWithCurated": [
+  {
+   "measure": "height",
+   "oursCm": 172.23,
+   "curatedCm": 171.95,
+   "diffCm": 0.28
+  },
+  {
+   "measure": "bust",
+   "oursCm": 102.56,
+   "curatedCm": 101.83,
+   "diffCm": 0.73
+  },
+  {
+   "measure": "hips",
+   "oursCm": 90.52,
+   "curatedCm": 90.74,
+   "diffCm": -0.22
+  },
+  {
+   "measure": "leg_circ",
+   "oursCm": 53.4,
+   "curatedCm": 53.63,
+   "diffCm": -0.23
+  },
+  {
+   "measure": "wrist",
+   "oursCm": 17.48,
+   "curatedCm": 17.54,
+   "diffCm": -0.06
+  }
+ ]
+}

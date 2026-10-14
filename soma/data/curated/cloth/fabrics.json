@@ -1,0 +1,67 @@
+{
+ "schema": 1,
+ "description": {
+  "zh": "衣物求解器用的面料力学参数（国际单位制）。每个数注明来源；“derived”是由文献值换算的，“assumed”是假定值。换算：1 gf·cm²/cm = 9.81×10⁻⁵ N·m（单位宽度的弯曲刚度）；1 gf/(cm·deg) = 56.2 N/m（每弧度剪切角）；KES 拉伸到 Fm = 500 gf/cm（490 N/m）时，割线膜刚度 ≈ 490 N/m ÷ EMT。",
+  "en": "Fabric mechanics for the clothing solver (SI units). Every number names its source; 'derived' values are converted from literature values, 'assumed' ones are assumptions. Conversions: 1 gf·cm²/cm = 9.81×10⁻⁵ N·m (bending rigidity per width); 1 gf/(cm·deg) = 56.2 N/m (per radian of shear angle); for a KES tensile run to Fm = 500 gf/cm (490 N/m) the secant membrane stiffness ≈ 490 N/m ÷ EMT."
+ },
+ "xpbd": {
+  "zh": "求解器（src/cloth/solver.ts）里：拉伸 / 剪切约束的柔度 α = 1 / (k·A)，k 为膜刚度（N/m），A 为三角形的裁片面积（m²）；弯曲用 Bergou 等（2006）的等距弯曲模型，每条内边的刚度 3B / (A₀ + A₁)，B 为弯曲刚度（N·m），柔度为其倒数；XPBD 中再除以子步长的平方。质量 = 面密度 × 面积，三等分到三个顶点。厚度用作与皮肤保持的碰撞距离（不小于 2 mm）和渲染时的外移量。",
+  "en": "In the solver (src/cloth/solver.ts): stretch / shear constraints have compliance α = 1 / (k·A), k the membrane stiffness (N/m), A the triangle's pattern area (m²); bending uses the isometric model of Bergou et al. (2006), stiffness 3B / (A₀ + A₁) per interior edge with B the bending rigidity (N·m), compliance its inverse; XPBD then divides by the substep squared. Mass = areal density × area, split equally over the three corners. Thickness is the collision distance kept from the skin (at least 2 mm) and the outward offset when rendering."
+ },
+ "fabrics": {
+  "cotton-jersey": {
+   "name": { "zh": "纯棉单面针织（T 恤）", "en": "Cotton single jersey (T-shirt)" },
+   "solver": { "density": 0.145, "stretchWarp": 5400, "stretchWeft": 4700, "shear": 129, "bending": 5.9e-6, "thickness": 0.00056, "friction": 0.4 },
+   "sources": {
+    "density": { "value": "144.6 g/m²", "kind": "table", "ref": "tang2018", "note": { "zh": "60/40 涤棉单面针织，作为棉单面针织的近似", "en": "a 60/40 polyester/cotton single jersey, standing in for cotton jersey" } },
+    "thickness": { "value": "0.56 mm", "kind": "table", "ref": "tang2018" },
+    "stretch": { "value": "EMT 8.7–9.3 % (wale), 9.8–10.8 % (course) → 490 N/m ÷ EMT", "kind": "derived from figures", "ref": "assefa2024", "note": { "zh": "从图上读出；原文的 WT 与 Fm = 500 gf/cm 对不上，针织布的初始模量其实更低，只取数量级", "en": "read from figures; the paper's WT does not fit Fm = 500 gf/cm and a knit's initial modulus is really lower, so order of magnitude only" } },
+    "shear": { "value": "G 2.0–3.0 gf/cm·deg → 2.3 × 56.2 N/m", "kind": "derived from figures", "ref": "assefa2024" },
+    "bending": { "value": "B 0.02–0.15 gf·cm²/cm → 0.06 × 9.81e-5 N·m", "kind": "derived from figures", "ref": "assefa2024" },
+    "friction": { "value": "0.4", "kind": "assumed", "ref": "derler2012", "note": { "zh": "干燥皮肤上一般 0.2 以上、典型约 0.5（综述摘要）；针织取 0.4", "en": "dry skin is usually above 0.2, typically about 0.5 (review abstract); 0.4 taken for the knit" } }
+   },
+   "drape": { "range": [0.3, 0.98], "ref": "cusick1968", "note": { "zh": "没有找到可核实的棉单面针织垂坠系数；检查用 Cusick 垂坠仪对一般服用面料给出的全范围 30–98 %，并要求比斜纹低", "en": "no verifiable drape coefficient for cotton jersey was found; the check uses the full 30–98 % range of the Cusick tester for apparel fabrics and requires it to be below the twill" } }
+  },
+  "cotton-twill": {
+   "name": { "zh": "纯棉斜纹 / 牛仔类机织（长裤、裙）", "en": "Cotton twill / denim-like woven (trousers, skirt)" },
+   "solver": { "density": 0.354, "stretchWarp": 5800, "stretchWeft": 5800, "shear": 197, "bending": 2.68e-5, "thickness": 0.0008, "friction": 0.35 },
+   "sources": {
+    "density": { "value": "353.6 g/m²", "kind": "table", "ref": "soni2021" },
+    "thickness": { "value": "0.803 mm", "kind": "table", "ref": "soni2021" },
+    "stretch": { "value": "LT 0.749, WT 15.8 gf·cm/cm² → EMT ≈ 2·WT / (LT·Fm) ≈ 8.4 % → 490 N/m ÷ 0.084", "kind": "derived", "ref": "soni2021", "note": { "zh": "经纬向平均值，所以两向取同一个数", "en": "warp/weft averages, so both directions take the same number" } },
+    "shear": { "value": "G 3.51 gf/cm·deg × 56.2", "kind": "derived", "ref": "soni2021" },
+    "bending": { "value": "B 0.273 gf·cm²/cm × 9.81e-5", "kind": "derived", "ref": "soni2021" },
+    "friction": { "value": "0.35", "kind": "assumed", "ref": "derler2012" }
+   },
+   "drape": { "range": [0.6, 0.98], "ref": "ozkan2025", "note": { "zh": "Özkan 等测得 410–430 g/m² 弹力牛仔布 DC 89.8–94.2 %（TS 9663）；我们的布更轻、无弹性纱，下限假定为 60 %，上限取 Cusick 全范围的 98 %", "en": "Özkan et al. measured DC 89.8–94.2 % for 410–430 g/m² stretch denim (TS 9663); ours is lighter and has no elastane, so the lower bound is an assumed 60 % and the upper one Cusick's 98 %" } }
+  },
+  "poly-elastane": {
+   "name": { "zh": "涤纶 / 氨纶针织（压缩运动服）", "en": "Polyester–elastane knit (compression sportswear)" },
+   "solver": { "density": 0.21, "stretchWarp": 250, "stretchWeft": 200, "shear": 22, "bending": 3e-6, "thickness": 0.00053, "friction": 0.5 },
+   "sources": {
+    "density": { "value": "209.6 g/m²", "kind": "table", "ref": "potocic2024", "note": { "zh": "78/22 涤纶 / 氨纶泳衣针织", "en": "a 78/22 polyester/elastane swimwear knit" } },
+    "thickness": { "value": "0.527 mm", "kind": "table", "ref": "potocic2024" },
+    "stretch": { "value": "secant to the elastic limit: wale 171–334 N/m, course 127–281 N/m", "kind": "derived", "ref": "jovanovic2022", "note": { "zh": "锦纶 / 氨纶添纱单面针织（不是涤纶）的条样拉伸，Table 5 换算", "en": "strip tests of plated polyamide–elastane single jersey (not polyester), converted from Table 5" } },
+    "shear": { "value": "≈ 0.4 gf/cm·deg", "kind": "assumed", "note": { "zh": "没有找到可核实的 KES 剪切值", "en": "no verifiable KES shear value was found" } },
+    "bending": { "value": "≈ 0.03 gf·cm²/cm", "kind": "assumed", "note": { "zh": "没有找到可核实的 KES 弯曲值；取软针织的低端", "en": "no verifiable KES bending value was found; the low end of soft knits" } },
+    "friction": { "value": "0.5", "kind": "assumed", "ref": "derler2012" }
+   },
+   "drape": { "range": [0.3, 0.98], "ref": "cusick1968", "note": { "zh": "没有找到这类面料的垂坠系数；用 Cusick 全范围，并要求比斜纹低", "en": "no drape coefficient for this class was found; Cusick's full range, and below the twill" } }
+  }
+ },
+ "references": {
+  "cusick1968": "Cusick G.E. (1968) The measurement of fabric drape. J. Textile Inst. 59(6):253–260. doi:10.1080/00405006808659985 (30 cm specimen on an 18 cm disc; DC 30–98 % from limp to stiff fabrics as summarised by later reviews)",
+  "kawabata1980": "Kawabata S. (1980) The Standardization and Analysis of Hand Evaluation, 2nd ed. Textile Machinery Society of Japan, Osaka",
+  "peirce1930": "Peirce F.T. (1930) The 'handle' of cloth as a measurable quantity. J. Textile Inst. Trans. 21(9):T377–T416. doi:10.1080/19447023008661529",
+  "assefa2024": "Assefa A., Govindan N. (2024) Indian J. Fibre Text. Res. 49:63–71. doi:10.56042/ijftr.v49i1.9540 (Figs 1–3)",
+  "tang2018": "Tang K.-P.M. et al. (2018) R. Soc. Open Sci. 5:180860. doi:10.1098/rsos.180860 (Table 1)",
+  "soni2021": "Soni S.K., Kolhatkar A.W., Laddha P.O. (2021) Fiber Fabric & Fashion Res. J. 1(2):10–14. https://li05.tci-thaijo.org/index.php/Textile/article/view/1056 (Table 3)",
+  "ozkan2025": "Özkan E.T. et al. (2025) Sci. Rep. 15:16713. doi:10.1038/s41598-025-01818-1 (Table 3)",
+  "jovanovic2022": "Jovanović T., Penava Ž., Vrljičak Z. (2022) Materials 15:6512. doi:10.3390/ma15196512 (Tables 2, 5)",
+  "potocic2024": "Potočić Matković V.M. et al. (2024) Polymers 16:3050. doi:10.3390/polym16213050 (Table 1)",
+  "derler2012": "Derler S., Gerhardt L.-C. (2012) Tribology of skin: review and analysis of experimental results for the friction coefficient of human skin. Tribol. Lett. 45:1–27. doi:10.1007/s11249-011-9854-y",
+  "bergou2006": "Bergou M., Wardetzky M., Harmon D., Zorin D., Grinspun E. (2006) A quadratic bending model for inextensible surfaces. Eurographics SGP",
+  "macklin2016": "Macklin M., Müller M., Chentanez N. (2016) XPBD: position-based simulation of compliant constrained dynamics. MIG",
+  "macklin2019": "Macklin M., Storey K., Lu M., Terdiman P., Chentanez N., Jeschke S., Müller M. (2019) Small steps in physics simulation. SCA"
+ }
+}

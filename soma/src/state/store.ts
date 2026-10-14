@@ -16,6 +16,8 @@ import { type LoadedSkinUv, loadSkinUv } from '../look/load.ts'
 import { DEFAULT_IRIS, type GazeSetting, type IrisName } from '../look/types.ts'
 import type { HairStyle } from '../look/types.ts'
 import { DEFAULT_HAIR_COLOUR, type HairColour } from '../hair/colour.ts'
+import type { GarmentId } from '../cloth/garments.ts'
+import { type LoadedCloth, loadCloth } from '../cloth/load.ts'
 import { loadFace, type AUs, type LoadedFace } from '../pain/face.ts'
 import { loadSkinMaps, regionParts, regionsForParts, type LoadedSkinMaps, type SkinMapId } from '../anatomy/skinmaps.ts'
 import type { Provenance, SystemId } from '../anatomy/types.ts'
@@ -257,6 +259,10 @@ export interface AppState {
   hairStyle: HairStyle | null
   /** 写实模式的发色 / The lifelike hair colour. */
   hairColor: HairColour
+  /** 穿着的衣服（缺省不穿）/ The garments worn (none by default). */
+  wear: GarmentId[]
+  /** 已加载的衣服数据（这副人体的）/ Loaded garment data (for this body). */
+  clothes: LoadedCloth[]
   selection: Selection
   hover: string | null
   explode: number
@@ -323,6 +329,8 @@ export interface AppState {
   setBlink(on: boolean): void
   setHairStyle(style: HairStyle | null): void
   setHairColor(colour: HairColour): void
+  /** 换衣服：按需加载这副人体的衣服数据 / Change clothes: loads this body's garment data on demand. */
+  setWear(ids: GarmentId[]): void
   ensureSkinReport(): void
   setStimSettings(patch: Partial<StimSettings>): void
   setStimArmed(on: boolean): void
@@ -415,6 +423,26 @@ let skinUvTried: AnatomyGraph | null = null
 let pendingSkinUv: Promise<LoadedSkinUv | null> = Promise.resolve(null)
 let reportTried: AnatomyGraph | null = null
 let pendingDetail: Promise<LoadedDetail | null> = Promise.resolve(null)
+const clothTried = new Map<string, Promise<LoadedCloth | null>>()
+
+/** 加载 wear 里还没有的衣服（每副人体每件只取一次）/ Load the worn garments not loaded yet (each once per body). */
+async function loadWorn(get: () => AppState, set: (p: Partial<AppState>) => void): Promise<void> {
+  const { wear, dataset } = get()
+  for (const g of wear) {
+    const key = `${dataset}/${g}`
+    if (!clothTried.has(key)) {
+      clothTried.set(key, loadCloth(dataset, g).catch((err: unknown) => {
+        // 衣服是附加的：没有或坏了就不画 / clothes are an extra: absent or broken, they are simply not drawn
+        console.warn(`[soma] garment ${g} failed to load`, err)
+        return null
+      }))
+    }
+    const loaded = await clothTried.get(key)!
+    const now = get()
+    if (!loaded || now.dataset !== dataset || now.clothes.some((c) => c.data.garment === g)) continue
+    set({ clothes: [...now.clothes, loaded] })
+  }
+}
 /** 测试用：替换细节层的加载方式 / For tests: replace how the detail layer is loaded. */
 export function setDetailLoader(loader: typeof detailLoader): void {
   detailLoader = loader
@@ -509,6 +537,8 @@ export const useApp = create<AppState>()((set, get) => ({
   blink: true,
   hairStyle: null,
   hairColor: DEFAULT_HAIR_COLOUR,
+  wear: [],
+  clothes: [],
   rig: null,
   rigStatus: 'idle',
   rigMessage: '',
@@ -618,6 +648,8 @@ export const useApp = create<AppState>()((set, get) => ({
       skinHide: undefined,
       faceDetail: null,
       skinUv: null,
+      // 衣服数据属于具体人体：换人体后按同样的 wear 重新加载 / garment data belongs to one body: reloaded for the same wear after a switch
+      clothes: [],
       faceStatus: 'idle',
       stim: null,
       stimNow: null,
@@ -641,6 +673,7 @@ export const useApp = create<AppState>()((set, get) => ({
     if (get().leftTab === 'pain' || get().leftTab === 'expr' || get().pain.hold || Object.keys(get().aus).length > 0 || get().expr || get().viseme || get().say.status === 'playing') void get().ensureFace()
     // 表情和口形要张口时靠下颌关节 / an expression or mouth shape that opens the mouth needs the jaw joint
     if (get().expr || get().viseme || get().say.status === 'playing') void get().ensureRig()
+    if (get().wear.length) void loadWorn(get, set)
   },
 
   switchBody: (body) => {
@@ -849,6 +882,10 @@ export const useApp = create<AppState>()((set, get) => ({
   setBlink: (blink) => set({ blink }),
   setHairStyle: (hairStyle) => set({ hairStyle }),
   setHairColor: (hairColor) => set({ hairColor }),
+  setWear: (ids) => {
+    set({ wear: ids })
+    void loadWorn(get, set)
+  },
   rejectFace: (message) => set({ face: null, faceStatus: 'error', faceMessage: message }),
   setStimSettings: (patch) =>
     set((s) => {
