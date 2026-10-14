@@ -96,3 +96,72 @@ export const IRIS_LABELS: Record<IrisName, { zh: string; en: string }> = {
  * body's left (the viewer's right when facing it), positive pitch = up.
  */
 export type GazeSetting = 'camera' | { yaw: number; pitch: number }
+/** 头发造型 / scalp hair styles */
+export type HairStyle = 'none' | 'short' | 'long'
+/** 发片的种类 / kinds of hair piece */
+export type HairPieceId = 'short' | 'long' | 'brows' | 'lashes'
+
+/**
+ * 一个细节层次（LOD）的发片，在发片 .bin 里从 `offset` 起，依次（每段补齐到 4 字节）：
+ *   u32 rootVerts[cards * 3]       根所在皮肤三角形的三个顶点（发布皮肤的顶点下标）
+ *   u16 rootBary[cards * 2]        重心坐标 w1、w2，按 1/65535 量化；w0 = 1 − w1 − w2
+ *   i16 offset[vertices * 3]       顶点相对根的位移，单位 offsetUnit 米
+ *   i8  tangent[vertices * 4]      发丝走向（×127）和层（0 贴头皮 … 127 最外）
+ *   u16 uv[vertices * 2]           贴图集坐标，按 1/65535 量化；v 向下（图像的行序）
+ * 每张发片 segments + 1 个环、每环两个顶点（左、右），顶点数 = cards × (segments + 1) × 2；三角形由加载器按带子生成。
+ *
+ * One level of detail of a hair piece, in the piece's .bin from `offset`, in order (each block padded to 4 bytes):
+ *   u32 rootVerts[cards * 3]       the three vertices of the root's skin triangle (shipped skin vertex indices)
+ *   u16 rootBary[cards * 2]        barycentric w1, w2 quantised by 1/65535; w0 = 1 − w1 − w2
+ *   i16 offset[vertices * 3]       vertex offset from the root in units of offsetUnit metres
+ *   i8  tangent[vertices * 4]      strand direction (×127) and layer (0 against the scalp … 127 outermost)
+ *   u16 uv[vertices * 2]           atlas coordinates quantised by 1/65535; v down (image row order)
+ * Each card has segments + 1 rings of two vertices (left, right), so vertices = cards × (segments + 1) × 2; the loader
+ * builds the strip triangles.
+ */
+export interface HairLod {
+  cards: number
+  segments: number
+  /** 相机离头这么远（米）以内用这一层 / used while the camera is within this distance of the head (m) */
+  maxDistance: number
+  offset: number
+}
+
+export interface HairPiece {
+  id: HairPieceId
+  file: string
+  bytes: number
+  lods: HairLod[]
+  /** 生成统计（只供阅读和测试）/ generation statistics (for reading and tests) */
+  stats: Record<string, number>
+}
+
+/**
+ * public/anatomy/<body>/hair/hair.json：这个人体的毛发（tools/hair/build.ts 生成）。
+ * public/anatomy/<body>/hair/hair.json: this body's hair (built by tools/hair/build.ts).
+ */
+export interface HairData {
+  schema: 1
+  skin: string
+  skinVertexCount: number
+  /** 顶点位移的量化单位（米）/ quantisation step of vertex offsets (m) */
+  offsetUnit: number
+  /** 贴图集：a = RGBA（覆盖率、根→梢、随机数、深度；后三项预乘覆盖率），b = 灰度（偏角，预乘）/ the atlas: a = RGBA (coverage, root → tip, random, depth; the last three premultiplied by coverage), b = grey (angle, premultiplied) */
+  atlas: { a: string; b: string; size: number; depthRange: Record<string, number> }
+  defaultStyle: Exclude<HairStyle, 'none'>
+  /** 写实模式下被毛发替换、要藏起来的外壳部件 / shell parts replaced by the hair in lifelike mode and hidden */
+  hides: string[]
+  pieces: HairPiece[]
+  /**
+   * 头皮底色（游戏里常用的做法：头发下面的头皮画成深一些、带发色）。文件布局：u32 皮肤顶点[vertices]（升序），
+   * i8 离头皮边界的带符号距离[vertices]（毫米，正 = 在头皮里，夹到 ±127）。三角形取三个顶点都在表里的皮肤三角形。
+   * The scalp tint (a common game technique: the scalp under the hair drawn darker and hair-coloured). File layout:
+   * u32 skin vertices[vertices] (ascending), i8 signed distance from the scalp border[vertices] (mm, positive = inside the
+   * scalp, clamped to ±127). Triangles are the skin triangles whose three vertices are all listed.
+   */
+  scalp: { file: string; vertices: number }
+  /** 遮盖率检查（tools/hair/coverage.ts）：每种发型、每个视角被遮住的头皮点比例 / the coverage check (tools/hair/coverage.ts): per style and view, the share of scalp points covered */
+  coverage: Record<string, Record<string, number>>
+  inputs: Record<string, string>
+  source: { zh: string; en: string }
+}

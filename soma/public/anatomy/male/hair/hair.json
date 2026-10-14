@@ -1,0 +1,192 @@
+{
+ "schema": 1,
+ "skin": "FJ2810",
+ "skinVertexCount": 53576,
+ "offsetUnit": 0.00002,
+ "atlas": {
+  "a": "atlas-a.png",
+  "b": "atlas-b.png",
+  "size": 1024,
+  "depthRange": {
+   "long": 0.004,
+   "short": 0.003,
+   "brow": 0.0004,
+   "lash": 0.0004
+  }
+ },
+ "defaultStyle": "short",
+ "hides": [
+  "FJ2813",
+  "FJ2812"
+ ],
+ "pieces": [
+  {
+   "id": "short",
+   "file": "short.cards.bin",
+   "bytes": 534712,
+   "lods": [
+    {
+     "cards": 2263,
+     "segments": 5,
+     "maxDistance": 1.2,
+     "offset": 0
+    },
+    {
+     "cards": 715,
+     "segments": 3,
+     "maxDistance": 3,
+     "offset": 416392
+    },
+    {
+     "cards": 268,
+     "segments": 2,
+     "maxDistance": 1000,
+     "offset": 507912
+    }
+   ],
+   "stats": {
+    "strands": 5956,
+    "lengthMmP10": 16.795,
+    "lengthMmP50": 39.584,
+    "lengthMmP90": 50.541,
+    "follicles": 148080,
+    "units": 72779,
+    "scalpAreaCm2": 755,
+    "densityPerCm2": 196,
+    "density_vertex": 223,
+    "density_occipital": 218,
+    "density_frontal": 206,
+    "density_temporal": 180
+   }
+  },
+  {
+   "id": "long",
+   "file": "long.cards.bin",
+   "bytes": 1294580,
+   "lods": [
+    {
+     "cards": 2371,
+     "segments": 14,
+     "maxDistance": 1.2,
+     "offset": 0
+    },
+    {
+     "cards": 770,
+     "segments": 8,
+     "maxDistance": 3,
+     "offset": 1033756
+    },
+    {
+     "cards": 296,
+     "segments": 5,
+     "maxDistance": 1000,
+     "offset": 1240116
+    }
+   ],
+   "stats": {
+    "strands": 5929,
+    "lengthMmP10": 191.813,
+    "lengthMmP50": 296.088,
+    "lengthMmP90": 401.12,
+    "follicles": 148080,
+    "units": 72779,
+    "scalpAreaCm2": 755,
+    "densityPerCm2": 196,
+    "density_vertex": 223,
+    "density_occipital": 218,
+    "density_frontal": 206,
+    "density_temporal": 180
+   }
+  },
+  {
+   "id": "brows",
+   "file": "brows.cards.bin",
+   "bytes": 31168,
+   "lods": [
+    {
+     "cards": 181,
+     "segments": 3,
+     "maxDistance": 1.5,
+     "offset": 0
+    },
+    {
+     "cards": 80,
+     "segments": 2,
+     "maxDistance": 1000,
+     "offset": 23168
+    }
+   ],
+   "stats": {
+    "strands": 533,
+    "lengthMmP10": 5.688,
+    "lengthMmP50": 7.463,
+    "lengthMmP90": 9.253,
+    "perSide": 267,
+    "areaCm2PerSide": 2.265
+   }
+  },
+  {
+   "id": "lashes",
+   "file": "lashes.cards.bin",
+   "bytes": 28216,
+   "lods": [
+    {
+     "cards": 136,
+     "segments": 4,
+     "maxDistance": 1.5,
+     "offset": 0
+    },
+    {
+     "cards": 70,
+     "segments": 2,
+     "maxDistance": 1000,
+     "offset": 21216
+    }
+   ],
+   "stats": {
+    "strands": 394,
+    "lengthMmP10": 4.79,
+    "lengthMmP50": 6.427,
+    "lengthMmP90": 8.87,
+    "upperPerLid": 120,
+    "lowerPerLid": 77,
+    "upperLengthMm": 7.491,
+    "lowerLengthMm": 5.566
+   }
+  }
+ ],
+ "scalp": {
+  "file": "scalp.bin",
+  "vertices": 1738
+ },
+ "coverage": {
+  "short": {
+   "all": 0.979,
+   "front": 0.966,
+   "threeQuarterL": 0.973,
+   "threeQuarterR": 0.976,
+   "sideL": 0.965,
+   "sideR": 0.97,
+   "top": 0.992,
+   "back": 0.996
+  },
+  "long": {
+   "all": 0.995,
+   "front": 0.991,
+   "threeQuarterL": 0.995,
+   "threeQuarterR": 0.995,
+   "sideL": 0.998,
+   "sideR": 0.998,
+   "top": 0.997,
+   "back": 0.992
+  }
+ },
+ "inputs": {
+  "integumentary.glb": "13ec5fdbb9708dcb",
+  "hair.json (curated)": "12241d3570a4cf1c"
+ },
+ "source": {
+  "zh": "程序化生成（tools/hair/build.ts）：发际线、密度、纤维直径、睫毛和眉毛的根数与长度取自 data/curated/hair/hair.json 所列文献（标明了哪些是假设）；发片和贴图集由本项目自己的发丝画成，随项目数据以 CC BY-SA 4.0 发布。",
+  "en": "Generated procedurally (tools/hair/build.ts): hairline, density, fibre diameter, and the counts and lengths of eyelashes and eyebrow hairs come from the literature listed in data/curated/hair/hair.json (assumptions are marked there); the cards and the atlas are drawn from this project's own strands and published with the project data under CC BY-SA 4.0."
+ }
+}

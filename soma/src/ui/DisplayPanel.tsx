@@ -7,6 +7,7 @@ import { Icon } from './Icon.tsx'
 import { SkinMapPanel } from './SkinMapPanel.tsx'
 import { LumenPanel } from './LumenPanel.tsx'
 import { IRIS_LABELS, IRIS_NAMES, type IrisName } from '../look/types.ts'
+import { HairPanel } from './HairPanel.tsx'
 
 const AXES: { id: SectionAxis; zh: string; en: string }[] = [
   { id: 'axial', zh: '横断面', en: 'Axial' },
@@ -171,6 +172,7 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
                 </label>
               </div>
             )}
+            {skinOpaque && look && <HairPanel />}
             {opaqueNow && hiddenNames.length > 0 && (
               <p className="hint">
                 皮肤不透明时暂时隐藏：{hiddenNames.map((n) => n.zh).join('、')}。

@@ -10,6 +10,7 @@ import { prepareSoftFromUrl, registerSoftUrlWriter, startSoftFromUrl } from '../
 import { nonDefaultControls } from '../anatomy/shape.ts'
 import type { SystemId } from '../anatomy/types.ts'
 import type { SystemState } from './display.ts'
+import { DEFAULT_HAIR_COLOUR } from '../hair/colour.ts'
 import { useApp, type AppState } from './store.ts'
 import { MAX_URL_DOFS, MAX_URL_IDS, formatUrl, parseUrl, poseDofCount, type UrlState } from './urlState.ts'
 
@@ -124,6 +125,8 @@ export function snapshot(s: AppState): UrlState {
   if (s.iris !== 'brown') out.iris = s.iris
   if (s.gaze !== 'camera') out.gaze = { ...s.gaze }
   if (!s.blink) out.blink = false
+  if (s.hairStyle) out.hair = s.hairStyle
+  if (s.hairColor !== DEFAULT_HAIR_COLOUR) out.hc = s.hairColor
   if (s.stim) out.stim = { settings: s.stim.settings, site: s.stim.siteRef }
   if (Object.keys(s.shapeControls).length) out.shape = s.shape ? nonDefaultControls(s.shape.data, s.shapeControls) : { ...s.shapeControls }
   if (s.colorMode === 'source') out.src = true
@@ -205,6 +208,8 @@ export async function restoreFromUrl(state: UrlState): Promise<string[]> {
   if (state.iris) app.setIris(state.iris)
   if (state.gaze) app.setGaze(state.gaze)
   if (state.blink === false) app.setBlink(false)
+  if (state.hair) app.setHairStyle(state.hair)
+  if (state.hc) app.setHairColor(state.hc)
   if (state.pain !== undefined || state.au) {
     // 只恢复表情（保持在给定强度）；声音必须由用户手势触发，这里绝不出声
     // only the expression is restored (held at the given level); sound needs a user gesture and is never started here
