@@ -9,6 +9,7 @@ import { formatTime } from '../state/derive'
 import { useLang, useT } from '../state/store'
 import { SessionView } from '../sessions/SessionView'
 import { whereLabel } from '../ui/nav'
+import { DEFAULT_GROUPS, WISH_GROUPS, type WishGroup, groupCount, readFilter, writeFilter } from './wishFilter'
 import { Empty, Page, Section } from '../ui/Page'
 
 const TONE: Record<string, string> = { open: 'w-open', accepted: 'w-accepted', done: 'w-done', declined: 'w-quiet', withdrawn: 'w-quiet' }
@@ -51,16 +52,20 @@ function JobStage({ wish }: { wish: Wish }) {
 
 export function WishesPage() {
   const [params, setParams] = useSearchParams()
-  const status = params.get('status') ?? ''
+  const { group, status } = readFilter(params)
   const [list, setList] = useState<WishList | null>(null)
   const [error, setError] = useState<string | null>(null)
   const restored = params.get('withdrawn')
   const lang = useLang()
   const t = useT()
 
+  const load = () => api.wishes(status, group).then(setList, (e: Error) => setError(e.message))
   useEffect(() => {
-    api.wishes(status).then(setList, (e: Error) => setError(e.message))
-  }, [status, restored])
+    void load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, group, restored])
+  const groups = (list?.groups && Object.keys(list.groups).length > 0 ? list.groups : DEFAULT_GROUPS) as Record<WishGroup, readonly string[]>
+  const groupName: Record<WishGroup, string> = { pending: t('待处理', 'To handle'), closed: t('已完结', 'Closed'), all: t('全部', 'All') }
 
   const total = list ? Object.values(list.counts).reduce((a, b) => a + b, 0) : 0
   return (
@@ -75,27 +80,36 @@ export function WishesPage() {
       {restored && (
         <div className="notice good" role="status">
           {t('已撤销。', 'Withdrawn.')}{' '}
-          <button onClick={() => void api.restoreWish(restored).then(() => setParams({}))}>{t('恢复', 'Restore')}</button>{' '}
-          <button onClick={() => setParams({})}>{t('知道了', 'Got it')}</button>
+          <button onClick={() => void api.restoreWish(restored).then(() => setParams(writeFilter({ group, status })))}>{t('恢复', 'Restore')}</button>{' '}
+          <button onClick={() => setParams(writeFilter({ group, status }))}>{t('知道了', 'Got it')}</button>
         </div>
       )}
       <HandleAll />
-      <VisitorQueue onAccepted={() => api.wishes(status).then(setList, () => undefined)} />
-      <Review onRecorded={() => api.wishes(status).then(setList, () => undefined)} />
+      <VisitorQueue onAccepted={() => void load()} />
+      <Review onRecorded={() => void load()} />
       {list && (
         <>
-          <div className="wish-counts" role="group" aria-label={t('按状态筛选', 'Filter by status')}>
-            <button aria-pressed={status === ''} onClick={() => setParams({})}>
-              {t('待处理', 'To handle')} <span className="num">{(list.counts.open ?? 0) + (list.counts.accepted ?? 0)}</span>
-            </button>
-            {Object.entries(list.statuses).map(([key, text]) => (
-              <button key={key} aria-pressed={status === key} onClick={() => setParams({ status: key })}>
-                <span aria-hidden="true">{MARK[key]}</span> {label(lang, 'wishStatus', key, text)} <span className="num">{list.counts[key] ?? 0}</span>
-              </button>
-            ))}
+          {/* 第一层是合计，第二层是它的组成部分：样式不同，上下两行。 / The first tier is the totals and the second their parts: different styles, on two rows. */}
+          <div className="wish-filter">
+            <span className="seg" role="group" aria-label={t('按组筛选', 'Filter by group')}>
+              {WISH_GROUPS.map((g) => (
+                <button key={g} aria-pressed={group === g} aria-selected={group === g} onClick={() => setParams(writeFilter({ group: g, status: '' }))}>
+                  {groupName[g]} <span className="num">{groupCount(g, list.counts, groups)}</span>
+                </button>
+              ))}
+            </span>
+            <div className="wish-counts" role="group" aria-label={t(`「${groupName[group]}」里按状态筛选`, `Filter by status within "${groupName[group]}"`)}>
+              <span className="muted small">{t('其中', 'Of which')}</span>
+              {groups[group].map((key) => (
+                <button key={key} aria-pressed={status === key} onClick={() => setParams(writeFilter({ group, status: status === key ? '' : key }))}>
+                  <span aria-hidden="true">{MARK[key]}</span> {label(lang, 'wishStatus', key, list.statuses[key] ?? key)} <span className="num">{list.counts[key] ?? 0}</span>
+                </button>
+              ))}
+            </div>
           </div>
           {list.wishes.length > 0 && (
-            <div className="wish-kinds" aria-label={t('按种类', 'By kind')}>
+            <div className="wish-kinds" role="group" aria-label={t('下面这些按种类分', 'The wishes below, by kind')}>
+              <div className="muted small wish-kinds-head">{t(`下面这 ${list.wishes.length} 条按种类分`, `The ${plural(list.wishes.length, 'wish', 'wishes')} below, by kind`)}</div>
               {Object.entries(list.kind_labels)
                 .filter(([key]) => (list.kinds[key] ?? 0) > 0)
                 .map(([key, text]) => (
@@ -114,7 +128,7 @@ export function WishesPage() {
             <Empty>
               {total === 0
                 ? t('还没有愿望。打开右下角的小助手，问它点什么，或者告诉它哪里不顺手。', 'No wishes yet. Open the assistant in the bottom right corner and ask it something, or tell it what gets in your way.')
-                : t('这个状态下没有愿望。', 'No wishes with this status.')}
+                : t('这个筛选下没有愿望。', 'No wishes under this filter.')}
             </Empty>
           ) : (
             <table className="table">
