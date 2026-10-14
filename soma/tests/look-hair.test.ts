@@ -15,6 +15,7 @@ import { formatUrl, parseUrl } from '../src/state/urlState.ts'
 import { readGlbParts } from '../tools/skinmaps/io.ts'
 import { Surface, type V3, dot, sub } from '../tools/hair/geom.ts'
 import { styleCoverage } from '../tools/hair/coverage.ts'
+import { buildStrands, decodeGuides, smoothGuides, strandBytes } from '../src/hair/strands.ts'
 import { headFrame } from '../tools/hair/frame.ts'
 import { decodePng } from '../tools/hair/png.ts'
 import { loadParams, makeScalp } from '../tools/hair/scalp.ts'
@@ -145,6 +146,48 @@ for (const body of ['male', 'female']) {
       }
       // 头皮底色的数据长度 / the scalp tint data length
       expect(readFileSync(resolve(dir, 'hair', meta.scalp.file)).length).toBe(meta.scalp.vertices * 5)
+    }, 120000)
+
+    it('close-up strands: guide roots on skin triangles, no guide point inside the skin, render strands well formed, small download', async () => {
+      const skin = await skinMesh()
+      const tri = new Set<string>()
+      for (let t = 0; t < skin.indices.length; t += 3) tri.add([skin.indices[t]!, skin.indices[t + 1]!, skin.indices[t + 2]!].sort((a, b) => a - b).join())
+      const surface = new Surface(skin.positions, skin.indices)
+      for (const style of ['short', 'long'] as const) {
+        const info = meta.pieces.find((p) => p.id === style)!.strands!
+        expect(info, style).toBeTruthy()
+        const bin = new Uint8Array(readFileSync(resolve(dir, 'hair', info.file)))
+        expect(bin.length).toBe(info.bytes)
+        expect(strandBytes(info)).toBe(info.bytes)
+        // 每种发型的发丝数据不超过 3 MB / at most 3 MB of strand data per style
+        expect(info.bytes).toBeLessThan(3e6)
+        const d = decodeGuides(bin, info, meta.offsetUnit, meta.skinVertexCount)
+        const P = info.points
+        let worst = Infinity
+        for (let g = 0; g < info.guides; g++) {
+          expect(tri.has(Array.from(d.rootVerts.subarray(g * 3, g * 3 + 3)).sort((a, b) => a - b).join())).toBe(true)
+          const root = [0, 0, 0]
+          for (let k = 0; k < 3; k++) for (let c = 0; c < 3; c++) root[c]! += skin.positions[d.rootVerts[g * 3 + k]! * 3 + c]! * d.rootBary[g * 3 + k]!
+          if (g % 7) continue // 抽查 / a sample
+          for (let k = 1; k < P; k++) {
+            const q: V3 = [root[0]! + d.offset[(g * P + k) * 3]!, root[1]! + d.offset[(g * P + k) * 3 + 1]!, root[2]! + d.offset[(g * P + k) * 3 + 2]!]
+            const h = surface.closest(q, 0.005)
+            if (h && h.distance <= 0.005) worst = Math.min(worst, dot(sub(q, h.point), h.normal))
+          }
+        }
+        expect(worst, style).toBeGreaterThan(-0.0005)
+        // 细分保住两端；渲染发丝的三角形下标都有效 / subdivision keeps both ends; render-strand indices are all valid
+        const sm = smoothGuides(d, 2)
+        expect(sm.info.points).toBe((P - 1) * 2 + 1)
+        expect(sm.offset[(sm.info.points - 1) * 3]).toBeCloseTo(d.offset[(P - 1) * 3]!, 6)
+        const built = buildStrands(d, 7, style === 'long' ? 2 : 1)
+        const V = built.geometry.getAttribute('position').count
+        expect(built.strands).toBe(info.guides * info.children)
+        const index = built.geometry.index!.array
+        let max = 0
+        for (let i = 0; i < index.length; i++) max = Math.max(max, index[i]!)
+        expect(max).toBe(V - 1)
+      }
     }, 120000)
 
     it('generation statistics agree with the curated literature table', () => {

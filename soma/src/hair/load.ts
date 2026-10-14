@@ -29,6 +29,12 @@ export async function loadAtlasImage(base: string, file: string): Promise<ImageB
   return createImageBitmap(await res.blob(), { premultiplyAlpha: 'none', colorSpaceConversion: 'none' })
 }
 
+/** 近景真发丝的引导发丝文件 / the guide-strand file for close-up strands */
+export async function loadStrandFile(base: string, file: string): Promise<Uint8Array | null> {
+  const res = await fetch(`${base}${file}`)
+  return res.ok ? new Uint8Array(await res.arrayBuffer()) : null
+}
+
 /** 头皮底色的数据：顶点和离头皮边界的带符号距离（毫米）/ the scalp tint data: vertices and signed distance from the scalp border (mm) */
 export async function loadScalp(base: string, data: HairData): Promise<{ vertices: Uint32Array; distance: Int8Array } | null> {
   const res = await fetch(`${base}${data.scalp.file}`)

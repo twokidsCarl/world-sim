@@ -136,6 +136,33 @@ export interface HairPiece {
   lods: HairLod[]
   /** 生成统计（只供阅读和测试）/ generation statistics (for reading and tests) */
   stats: Record<string, number>
+  /** 近景真发丝（只有头发；WebGPU 用）/ close-up real strands (scalp hair only; used on WebGPU) */
+  strands?: HairStrandsInfo
+}
+
+/**
+ * <style>.strands.bin：引导发丝。布局（每段补齐到 4 字节）：u32 rootVerts[G*3]、u16 rootBary[G*2]、
+ * i16 offset[G*P*3]（相对根，单位 offsetUnit 米）、u8 occlusion[G*P]（0–255）、u8 layer[G]。
+ * 运行时每根引导发丝插值出 `children` 根渲染发丝：根在引导根周围 `spread` 米内，向梢按 `clump` 收拢。
+ * <style>.strands.bin: guide strands. Layout (each block padded to 4 bytes): u32 rootVerts[G*3], u16 rootBary[G*2],
+ * i16 offset[G*P*3] (relative to the root, in offsetUnit metres), u8 occlusion[G*P] (0–255), u8 layer[G].
+ * At run time each guide yields `children` render strands: roots within `spread` metres of the guide's root, gathering
+ * towards the tip by `clump`.
+ */
+export interface HairStrandsInfo {
+  file: string
+  bytes: number
+  guides: number
+  points: number
+  children: number
+  spread: number
+  clump: number
+  /** 一根渲染发丝代表几根头发（画的宽度按它放大）/ hairs one render strand stands for (its drawn width is scaled by it) */
+  hairsPerStrand: number
+  /** 纤维直径（米）/ fibre diameter (m) */
+  diameter: number
+  /** 用到这个距离（米）为止，再远换发片 / used within this distance (m); farther away the cards take over */
+  maxDistance: number
 }
 
 /**

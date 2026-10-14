@@ -8,12 +8,13 @@
 // from the root triangle's highest-weight skin vertex, so in a pose the whole card moves rigidly with the head (or that
 // patch of skin).
 
-import { BufferAttribute, BufferGeometry, Group, LinearFilter, LinearMipmapLinearFilter, LOD, Mesh, NoColorSpace, Texture, Vector3, type MeshLambertNodeMaterial, type MeshStandardNodeMaterial } from 'three/webgpu'
-import type { HairData, HairPieceId, HairStyle } from '../look/types.ts'
+import { BufferAttribute, BufferGeometry, type DataTexture, Group, LinearFilter, LinearMipmapLinearFilter, LOD, Mesh, NoColorSpace, Texture, Vector3, type MeshLambertNodeMaterial, type MeshStandardNodeMaterial } from 'three/webgpu'
+import type { HairData, HairPieceId, HairStrandsInfo, HairStyle } from '../look/types.ts'
 import { positionNodeFor, type SkinningData, type SkinningMode } from '../viewer/skinning.ts'
 import { type DecodedLod, decodeLod, dominantVertex, placeVertices } from './cards.ts'
 import type { HairColour } from './colour.ts'
-import { loadAtlasImage, loadHairData, loadPiece, loadScalp } from './load.ts'
+import { loadAtlasImage, loadHairData, loadPiece, loadScalp, loadStrandFile } from './load.ts'
+import { buildStrands, type DecodedGuides, decodeGuides, makeStrandMaterial, placeRoots, rootTexture, type StrandGeometry } from './strands.ts'
 import { HairLook, makeHairMaterial, makeScalpTintMaterial, type HairMaterialOptions } from './material.ts'
 import { SkinPatch } from '../viewer/skinPatch.ts'
 import type { SkinGeometry } from '../viewer/skinLayer.ts'
@@ -33,6 +34,8 @@ interface Piece {
   id: HairPieceId
   lod: LOD
   levels: { d: DecodedLod; geometry: BufferGeometry; mesh: Mesh }[]
+  /** 近景真发丝（只在 WebGPU 上）/ close-up real strands (WebGPU only) */
+  strands?: { d: DecodedGuides; built: StrandGeometry; mesh: Mesh; roots: DataTexture; setSkinning: (s: SkinningData, m: SkinningMode) => void }
 }
 
 export interface HairSettings {
@@ -77,6 +80,8 @@ export class HairLayer {
     private readonly skinning: SkinningData,
     /** 有东西变了（数据到了、可见性变了）：要重画，被藏的外壳也可能变了 / something changed (data arrived, visibility changed): redraw; the hidden shells may have changed too */
     private readonly onChange: () => void,
+    /** 近景用真发丝（WebGPU）/ real strands for close-ups (WebGPU) */
+    private readonly strandsEnabled = false,
   ) {
     this.group.name = 'lifelike-hair'
     this.group.matrixAutoUpdate = false
@@ -87,12 +92,18 @@ export class HairLayer {
         this.skinPos = p
         this.skinNormal = n
         this.placeTint()
-        for (const piece of this.pieces.values()) for (const l of piece.levels) this.place(l)
+        for (const piece of this.pieces.values()) {
+          for (const l of piece.levels) this.place(l)
+          if (piece.strands) placeRoots(piece.strands.d, p, piece.strands.roots)
+        }
       },
       setInfluences: (index, weight) => {
         this.influence = { index, weight }
         this.tint?.patch.setInfluences(index, weight)
-        for (const piece of this.pieces.values()) for (const l of piece.levels) this.influence_(l)
+        for (const piece of this.pieces.values()) {
+          for (const l of piece.levels) this.influence_(l)
+          if (piece.strands) this.strandInfluence(piece.strands)
+        }
       },
       setOffset: (x, y, z) => {
         this.group.matrix.makeTranslation(x, y, z)
@@ -123,10 +134,10 @@ export class HairLayer {
   }
 
   /** 统计（验证用）/ statistics (verification) */
-  info(): { show: boolean; style: HairStyle | null; colour: HairColour; pieces: Record<string, { level: number; cards: number[]; triangles: number[] }>; covers: string[]; failed: boolean } {
-    const pieces: Record<string, { level: number; cards: number[]; triangles: number[] }> = {}
+  info(): { show: boolean; style: HairStyle | null; colour: HairColour; pieces: Record<string, { level: number; cards: number[]; triangles: number[]; strands?: number; strandTriangles?: number }>; covers: string[]; failed: boolean } {
+    const pieces: Record<string, { level: number; cards: number[]; triangles: number[]; strands?: number; strandTriangles?: number }> = {}
     for (const p of this.pieces.values()) {
-      pieces[p.id] = { level: p.lod.getCurrentLevel(), cards: p.levels.map((l) => l.d.cards), triangles: p.levels.map((l) => l.d.index.length / 3) }
+      pieces[p.id] = { level: p.lod.getCurrentLevel(), cards: p.levels.map((l) => l.d.cards), triangles: p.levels.map((l) => l.d.index.length / 3), ...(p.strands ? { strands: p.strands.built.strands, strandTriangles: p.strands.built.geometry.index!.count / 3 } : {}) }
     }
     return { show: this.settings.show, style: this.style(), colour: this.settings.colour, pieces, covers: this.covers(), failed: this.failed }
   }
@@ -154,6 +165,7 @@ export class HairLayer {
       m.positionNode = positionNodeFor(this.skinning, mode, false) as typeof m.positionNode
       m.needsUpdate = true
     }
+    for (const p of this.pieces.values()) p.strands?.setSkinning(this.skinning, mode)
   }
 
   private wanted(): HairPieceId[] {
@@ -306,10 +318,55 @@ export class HairLayer {
     const c = this.rootCentre(levels[0]!.d)
     lod.position.copy(c)
     for (const l of levels) l.mesh.position.copy(c).multiplyScalar(-1)
-    this.pieces.set(id, { id, lod, levels })
+    const piece: Piece = { id, lod, levels }
+    this.pieces.set(id, piece)
     this.group.add(lod)
     this.updateVisibility()
     this.onChange()
+    if (this.strandsEnabled && spec.strands) void this.loadStrands(piece, spec.strands, c)
+  }
+
+  /** 近景真发丝：发片之后再取，到了就插到 LOD 的最近一级 / close-up strands: fetched after the cards and inserted as the nearest LOD level once they arrive */
+  private async loadStrands(piece: Piece, info: HairStrandsInfo, centre: Vector3): Promise<void> {
+    const bin = await loadStrandFile(this.base, info.file)
+    if (!bin || this.disposed || !this.data) return
+    const d = decodeGuides(bin, info, this.data.offsetUnit, this.skinVertexCount)
+    const built = buildStrands(d, 7, piece.id === 'long' ? 2 : 1)
+    const roots = rootTexture(info.guides)
+    if (this.skinPos) placeRoots(d, this.skinPos, roots)
+    const { material, setSkinning } = makeStrandMaterial(this.look, MATERIAL[KIND_OF[piece.id]], roots, info.diameter * info.hairsPerStrand)
+    setSkinning(this.skinning, this.mode)
+    const mesh = new Mesh(built.geometry, material)
+    mesh.frustumCulled = false
+    mesh.name = `hair-${piece.id}-strands`
+    mesh.position.copy(centre).multiplyScalar(-1)
+    piece.strands = { d, built, mesh, roots, setSkinning }
+    this.strandInfluence(piece.strands)
+    // 发片的第 0 级从发丝的最远距离开始 / the cards' level 0 starts where the strands stop
+    piece.lod.levels[0]!.distance = info.maxDistance
+    piece.lod.addLevel(mesh, 0)
+    this.onChange()
+  }
+
+  private strandInfluence(s: NonNullable<Piece['strands']>): void {
+    if (!this.influence) return
+    const { index, weight } = this.influence
+    const g = s.built.geometry
+    const si = g.getAttribute('skinIndex') as BufferAttribute, sw = g.getAttribute('skinWeight') as BufferAttribute
+    const di = si.array as Uint16Array, dw = sw.array as Uint8Array
+    const per = (s.built.geometry.getAttribute('aSide').count / s.d.info.guides) | 0
+    for (let gi = 0; gi < s.d.info.guides; gi++) {
+      const v = s.built.dominant[gi]!
+      for (let j = 0; j < per; j++) {
+        const o = (gi * per + j) * 4
+        for (let k = 0; k < 4; k++) {
+          di[o + k] = index[v * 4 + k]!
+          dw[o + k] = weight[v * 4 + k]!
+        }
+      }
+    }
+    si.needsUpdate = true
+    sw.needsUpdate = true
   }
 
   private rootCentre(d: DecodedLod): Vector3 {
@@ -350,7 +407,14 @@ export class HairLayer {
 
   dispose(): void {
     this.disposed = true
-    for (const p of this.pieces.values()) for (const l of p.levels) l.geometry.dispose()
+    for (const p of this.pieces.values()) {
+      for (const l of p.levels) l.geometry.dispose()
+      if (p.strands) {
+        p.strands.built.geometry.dispose()
+        ;(p.strands.mesh.material as MeshStandardNodeMaterial).dispose()
+        p.strands.roots.dispose()
+      }
+    }
     for (const m of this.materials.values()) m.dispose()
     this.tint?.patch.dispose()
     this.tint?.material.dispose()

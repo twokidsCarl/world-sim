@@ -1834,7 +1834,7 @@ export class Viewer {
     const s = this.source()
     if (!this.hair) {
       const base = new URL('hair/', new URL(this.baseUrl, location.href)).href
-      this.hair = new HairLayer(base, this.skinGeometry.get(i)!, this.skinning, () => this.hairChanged())
+      this.hair = new HairLayer(base, this.skinGeometry.get(i)!, this.skinning, () => this.hairChanged(), this.backend === 'webgpu')
       this.addFollower(this.hair)
     }
     this.hair.set({ show, style: s.hairStyle, colour: s.hairColor })
