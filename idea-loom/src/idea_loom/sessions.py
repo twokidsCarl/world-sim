@@ -83,12 +83,10 @@ def code_stamp() -> float:
     return max(stamps, default=0.0)
 
 # 先出计划 / 每次问我 / 改文件不用问 / 自动。没有"全部放行"。
-# 自动：Claude Code 自己的安全分类器替主人判断每一步，常规的直接做。实测它防的是"擅自做没被要求的事"，
-# 主人明说要做的危险事它会放行，所以另有一张"每次都问"的单子（见 always_ask），自动模式下也照样出卡片。
+# 自动就是 Claude Code 原样的自动模式：它自己的安全分类器判断每一步。这里不在它上面另加规则——主人说要做的事，不由我们再怀疑一遍。
 # plan first / ask every time / edits without asking / auto. There is no "allow everything".
-# Auto: Claude Code's own safety classifier judges each step for the owner and routine ones just happen. Tried for
-# real, it guards against doing things nobody asked for and lets through dangerous things the owner asked for, so
-# a separate "always ask" list (see always_ask) still raises a card even in auto mode.
+# Auto is Claude Code's auto mode as it is: its own safety classifier judges each step. No rules are added on top of it here:
+# what the owner asked for is not second-guessed by us.
 MODES = ("plan", "default", "acceptEdits", "auto")
 Mode = Literal["plan", "default", "acceptEdits", "auto"]
 MODELS = ("claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5", "claude-fable-5-1")
@@ -116,6 +114,7 @@ class Meta(BaseModel):
     sdk_session: Optional[str] = None  # SDK 的会话编号，重启后靠它接上 / the SDK's session id, used to pick up after a restart
     cost_usd: float = 0
     turns: int = 0
+    tasks: int = 0  # 后台还在跑的任务（子 Agent、后台命令）有几个 / how many background tasks (subagents, background commands) are still running
     waiting_for: Optional[str] = None  # 在等你回答什么，一句话 / what awaits your answer, in a sentence
     created_at: float
     updated_at: float
@@ -142,6 +141,11 @@ class _Live:
         self.closing = False  # 主人点了"结束"；否则退出只是歇着，状态仍是闲着 / the owner closed it; otherwise an exit is only a rest and the state stays idle
         self.idle_since = time.monotonic()
         self.started = time.time()
+        self.tasks: dict[str, str] = {}  # 后台还在跑的任务：编号 → 一句话 / background tasks still running: id → one line
+        self.task_steps: dict[str, Optional[str]] = {}  # 任务属于哪一步（派它的工具调用）/ the step (launching tool call) each task belongs to
+        self.turn_done = asyncio.Event()
+        self.turn_started = time.monotonic()
+        self.reader: Optional[asyncio.Task[None]] = None
 
 
 # 只在测试里用：没有真的子进程时，会话"进程"是当前事件循环里的一个任务。
@@ -289,20 +293,9 @@ async def _ask(live: _Live, kind: str, tool: str, tool_input: dict[str, Any], ct
 # ---------- 一条命令算哪一类 / what kind a command is ----------
 
 TWO_WORD = {"git", "uv", "bun", "bunx", "npm", "npx", "pnpm", "yarn", "gh", "docker", "cargo", "go", "pip", "brew", "kubectl", "make"}
-# 每次都问的：会删东西、会往外发、会改系统、或者把下载来的东西交给 shell 执行。自动模式和"以后都允许"都绕不过去。
-# Always asked about: what deletes, sends outward, changes the system, or hands a download to a shell. Neither auto mode nor "always allow" gets past it.
-# 只动仓库里的东西时不必每次问的：删除、改权限。目标在仓库外才问（见 _outside）。
-# Not asked about every time while they touch only the repository: deleting and changing permissions. Asked only when a target lies outside it (see _outside).
-PATH_PROGRAMS = {"rm", "rmdir", "chmod", "chown", "mv", "cp", "tee"}
-TEMP_DIRS = ("/tmp/", "/private/tmp/", "/var/folders/", "/private/var/folders/")
-ASK_PROGRAMS = {"sudo", "su", "dd", "mkfs", "kill", "killall", "pkill", "shutdown", "reboot", "launchctl", "osascript", "crontab", "scp", "rsync", "ssh", "nc", "eval"}
-ASK_KINDS = {"git push", "git reset", "git clean", "git checkout", "git restore", "git rebase", "git branch", "git stash", "gh repo", "gh secret", "gh auth", "gh release",
-             "npm publish", "docker rm", "docker rmi", "docker system", "brew uninstall", "pip uninstall"}
 VALUE_FLAGS = {"-C", "-c", "--project", "--cwd", "--directory", "-R", "--repo", "--git-dir", "--work-tree", "--prefix", "-f", "--file"}
-SHELLS = {"sh", "bash", "zsh", "fish", "python", "python3", "node", "perl", "ruby"}
-FETCHERS = {"curl", "wget"}
-# shell 的关键字和只是"带着别的命令跑"的程序：真正要看的是它们后面那条命令。
-# Shell keywords and programs that merely run another command: what matters is the command after them.
+# shell 的关键字和只是"带着别的命令跑"的程序：算哪一类，看的是它们后面那条命令。
+# Shell keywords and programs that merely run another command: the kind is that of the command after them.
 KEYWORDS = {"do", "then", "else", "if", "elif", "while", "until", "!", "time", "{", "("}
 WRAPPERS = {"xargs", "nohup", "command", "exec", "env", "nice", "timeout"}
 
@@ -332,18 +325,6 @@ def heredocs(command: str) -> tuple[str, list[tuple[str, str]]]:
             waiting.append((match.group(2), line, []))
     found += [(opener, "\n".join(body)) for _, opener, body in waiting]  # 没写结束标记的 / one never closed
     return "\n".join(kept), found
-
-
-def _outside(word: str) -> bool:
-    """这个路径是不是在仓库和临时目录之外，或者说不清在哪（带变量）。 / Whether a path lies outside the repository and the temp directories, or cannot be told (it has a variable)."""
-    word = word.strip("'\"")
-    if not word or word in ("/dev/null", "/dev/stdout", "/dev/stderr", "-"):
-        return False
-    if "$" in word or "`" in word or word.startswith("~") or ".." in word.split("/"):
-        return True
-    if word.startswith("/"):
-        return not (word.startswith(str(store.repo_root()) + "/") or word.startswith(TEMP_DIRS))
-    return False
 
 
 def segments(command: str) -> list[str]:
@@ -400,19 +381,6 @@ def _words(segment: str) -> list[str]:
     return words
 
 
-def _runs_stdin(words: list[str]) -> bool:
-    """这个解释器会不会把标准输入当代码执行。`sh`、`bash -s`、`python3 -` 会；`python3 -c "…"`、`bash x.sh`
-    不会——它们执行的是自己带的代码，管道里来的只是数据。
-
-    Whether this interpreter executes its standard input as code. `sh`, `bash -s` and `python3 -` do;
-    `python3 -c "…"` and `bash x.sh` do not: they run the code they were given and the pipe is only data.
-    """
-    args = words[1:]
-    if "-s" in args or "-" in args:
-        return True
-    return not any(a in ("-c", "-e", "-m") or not a.startswith("-") for a in args)
-
-
 def kind_of(segment: str) -> str:
     """这一段算哪一类：程序名，像 git、uv 这种再加上子命令。 / The kind of a segment: the program, plus the subcommand for tools like git and uv."""
     words = _words(segment)
@@ -433,59 +401,6 @@ def kind_of(segment: str) -> str:
                 break
         return f"{program} {sub}".strip()
     return program
-
-
-def always_ask(command: str) -> Optional[str]:
-    """这条命令里有没有每次都得问主人的东西；有就返回原因。 / Whether the command contains something the owner must always be asked about; the reason if so."""
-    import re
-
-    # $(…) 和反引号里的也是命令，一样要查。 / What sits inside $(…) and backticks is a command too and is checked alike.
-    for inner in re.findall(r"\$\(([^()]*)\)", command) + re.findall(r"`([^`]*)`", command):
-        reason = always_ask(inner)
-        if reason:
-            return reason
-    # heredoc 喂给 shell 的，正文就是命令，要查；喂给别的程序的（cat > 文件 <<EOF）只是内容。
-    # A heredoc fed to a shell is commands and is checked; fed to anything else (cat > file <<EOF) it is only content.
-    for opener, body in heredocs(command)[1]:
-        if any(kind_of(part).split(" ")[0] in ("sh", "bash", "zsh") for part in segments(opener)):
-            reason = always_ask(body)
-            if reason:
-                return reason
-    parts = segments(command)
-    for n, part in enumerate(parts):
-        kind, words = kind_of(part), _words(part)
-        program = kind.split(" ")[0]
-        if program in ASK_PROGRAMS or kind in ASK_KINDS:
-            return f"`{kind}` 每次都要你确认"
-        # 删除、改权限、复制、移动、tee：只动仓库里（和临时目录里）的东西时，交给 Claude Code 自己的判断；
-        # 碰到仓库外的、或者整个仓库和 .git，才每次都问。
-        # Deleting, changing permissions, copying, moving, tee: while only things inside the repository (and the temp
-        # directories) are touched, Claude Code's own judgement decides; only what reaches outside, or the whole
-        # repository or .git, is asked about every time.
-        if program in PATH_PROGRAMS:
-            targets = [w for w in words[1:] if not w.startswith("-")]
-            if any(_outside(w) for w in targets):
-                return f"`{program}` 涉及仓库外的路径，每次都要你确认"
-            if program in ("rm", "rmdir") and not targets:
-                return f"`{program}` 要删什么看不出来（由别的命令给出），每次都要你确认"
-            if program in ("rm", "rmdir") and any(w.rstrip("/") in (".", "*", "", ".git", str(store.repo_root())) or w.startswith(".git/") for w in targets):
-                return f"`{program}` 要删的是整个目录或 .git，每次都要你确认"
-        if program in SHELLS and n > 0 and kind_of(parts[n - 1]).split(" ")[0] in FETCHERS and _runs_stdin(words):
-            return "把下载来的东西直接交给解释器执行，每次都要你确认"
-        # sh -c "…"：引号里的那条命令也要查。 / sh -c "…": the command inside the quotes is checked as well.
-        if program in ("sh", "bash", "zsh") and "-c" in words and words.index("-c") + 1 < len(words):
-            reason = always_ask(words[words.index("-c") + 1])
-            if reason:
-                return reason
-        # 重定向写到仓库外的文件。写仓库里的文件和它用编辑工具写是一回事，不在这里拦。
-        # Redirecting into a file outside the repository. Writing one inside it is the same as its edit tool doing so and is not stopped here.
-        bare = re.sub(r"'[^']*'|\"[^\"]*\"", "", part)
-        for target in re.findall(r"(?<![0-9&<])>>?\s*([^\s&|;><]+)", bare) + re.findall(r"&>>?\s*([^\s&|;><]+)", bare):
-            if target not in ("&1", "&2") and _outside(target):
-                return f"用重定向写仓库外的文件 `{target}`，每次都要你确认"
-        if program == "find" and ("-delete" in words or "-exec" in words):
-            return "`find` 带 -delete 或 -exec，每次都要你确认"
-    return None
 
 
 def _kinds(tool: str, tool_input: dict[str, Any]) -> list[str]:
@@ -534,14 +449,13 @@ def _permission_callback(live: _Live) -> Callable[[str, dict[str, Any], Any], An
                 asyncio.get_running_loop().create_task(live.client.set_permission_mode(after))
             return PermissionResultAllow(updated_input=tool_input)
         kinds = _kinds(tool, tool_input)
-        risky = always_ask(str(tool_input.get("command") or "")) if tool == "Bash" else None
-        # 每一段都允许过、而且里面没有"每次都问"的东西，才不再问。 / Not asked again only when every segment was allowed before and nothing in it is on the always-ask list.
-        if not risky and all(k in live.always for k in kinds):
+        # 每一段都允许过，才不再问。 / Not asked again only when every segment was allowed before.
+        if all(k in live.always for k in kinds):
             return PermissionResultAllow(updated_input=tool_input)
         summary = step_label(tool, tool_input, str(store.repo_root()))
-        extra = {"risky": risky, "segments": _breakdown(live, tool_input)} if tool == "Bash" else {}
-        answer = await _ask(live, "permission", tool, tool_input, ctx, summary, key="|".join(sorted(kinds)) if not risky else "", extra=extra)
-        if answer.get("decision") == "allow_always" and not risky:
+        extra = {"segments": _breakdown(live, tool_input)} if tool == "Bash" else {}
+        answer = await _ask(live, "permission", tool, tool_input, ctx, summary, key="|".join(sorted(kinds)), extra=extra)
+        if answer.get("decision") == "allow_always":
             live.always.update(kinds)
             # 同时在等的请求里，现在每一段都允许了的，一并放行：说了"这一类以后都允许"，就不该再为它们各点一次。
             # Among the requests waiting at the same moment, those whose every segment is now allowed go through with it: having said "always allow this kind", one should not have to click once for each.
@@ -558,35 +472,18 @@ def _permission_callback(live: _Live) -> Callable[[str, dict[str, Any], Any], An
 # ---------- 会话的循环 / the session loop ----------
 
 
-async def _guard(input_data: dict[str, Any], tool_use_id: Any, context: Any) -> dict[str, Any]:
-    """命令执行之前的钩子："每次都问"的那些，不管什么模式都交回给主人确认。
-
-    实测过：自动模式下常规命令不会来问宿主，主人明说要做的危险命令也会被放行；这个钩子返回 ask 之后，
-    它们会照常走权限回调，出一张卡片。
-
-    The hook before a command runs: what is on the always-ask list goes back to the owner whatever the mode.
-    Tried for real: in auto mode routine commands never reach the host and dangerous ones the owner asked for
-    are let through; once this hook returns "ask" they go through the permission callback and raise a card.
-    """
-    reason = always_ask(str((input_data.get("tool_input") or {}).get("command") or ""))
-    if reason is None:
-        return {}
-    return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask", "permissionDecisionReason": reason}}
-
-
 def _client(live: _Live) -> Any:
     callback = _permission_callback(live)
     model, effort = live.meta.model or default_model(), live.meta.effort if live.meta.effort in EFFORTS else "high"
     if client_factory is not None:
         return client_factory(cwd=str(store.repo_root()), mode=live.meta.mode, resume=live.meta.sdk_session, can_use_tool=callback, model=model, effort=effort)
-    from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient, HookMatcher
+    from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
 
     # 配置得和终端里一样：读用户、项目、本机三处设置；工具不砍。模型和努力程度由主人在界面上选。
     # Configured as in a terminal: user, project and local settings are read; no tool is removed. The model and the effort are the owner's choice in the UI.
     return ClaudeSDKClient(options=ClaudeAgentOptions(
         cwd=str(store.repo_root()), setting_sources=["user", "project", "local"], permission_mode=live.meta.mode,
         resume=live.meta.sdk_session, can_use_tool=callback, model=model, effort=effort,  # type: ignore[arg-type]
-        hooks={"PreToolUse": [HookMatcher(matcher="Bash", hooks=[_guard])]},
     ))
 
 
@@ -612,18 +509,24 @@ def _convert(live: _Live, message: Any) -> None:
             live.meta.model_used, live.meta.sdk_session = used or live.meta.model_used, session or live.meta.sdk_session
             _save(live.meta)
             _emit(live, {"type": "init", "model": live.meta.model_used, "effort": live.meta.effort})
+    elif kind in ("TaskStartedMessage", "TaskProgressMessage", "TaskNotificationMessage", "TaskUpdatedMessage"):
+        _task(live, kind, message)
     elif kind == "AssistantMessage":
+        # 子 Agent 的每一步都带着派它的那次工具调用的编号；界面按它把这一步放到那个子 Agent 下面。
+        # Each step of a subagent carries the id of the tool call that launched it; the UI uses it to put the step under that subagent.
+        parent = {"parent": message.parent_tool_use_id} if getattr(message, "parent_tool_use_id", None) else {}
         for block in message.content:
             name = type(block).__name__
             if name == "TextBlock" and block.text.strip():
-                _emit(live, {"type": "text", "text": block.text})
+                _emit(live, {"type": "text", "text": block.text, **parent})
             elif name == "ToolUseBlock" and block.name not in ("AskUserQuestion", "ExitPlanMode"):
-                _emit(live, {"type": "tool", "id": block.id, "name": block.name, "label": step_label(block.name, block.input or {}, repo), "input": _clip(block.input or {}, 1500)})
+                _emit(live, {"type": "tool", "id": block.id, "name": block.name, "label": step_label(block.name, block.input or {}, repo), "input": _clip(block.input or {}, 1500), **parent})
     elif kind == "UserMessage" and isinstance(message.content, list):
+        parent = {"parent": message.parent_tool_use_id} if getattr(message, "parent_tool_use_id", None) else {}
         for block in message.content:
             if type(block).__name__ == "ToolResultBlock":
                 text = block.content if isinstance(block.content, str) else " ".join(str(c.get("text", "")) for c in block.content or [] if isinstance(c, dict))
-                _emit(live, {"type": "tool_result", "id": block.tool_use_id, "error": bool(block.is_error), "text": _clip(text, 1500)})
+                _emit(live, {"type": "tool_result", "id": block.tool_use_id, "error": bool(block.is_error), "text": _clip(text, 1500), **parent})
     elif kind == "ResultMessage":
         live.meta.sdk_session = message.session_id or live.meta.sdk_session
         live.meta.cost_usd = round(float(message.total_cost_usd or live.meta.cost_usd), 4)  # 这是整个会话累计的 / cumulative for the whole session
@@ -635,26 +538,107 @@ def _convert(live: _Live, message: Any) -> None:
         gates.note_usage({"status": getattr(info, "status", ""), "resetsAt": resets, "unifiedWindows": {str(name): {"utilization": used, "resetsAt": resets}} if name else {}})
 
 
+TERMINAL = {"completed", "failed", "stopped", "killed"}
+
+
+def _task(live: _Live, kind: str, message: Any) -> None:
+    """后台任务（子 Agent、后台命令）开始、进展、结束。记下还有几个在跑，并告诉界面。
+
+    A background task (a subagent, a background command) starts, progresses or ends. Keep count of those still running and tell the UI.
+    """
+    task_id = str(getattr(message, "task_id", "") or "")
+    status = str(getattr(message, "status", None) or (getattr(message, "patch", None) or {}).get("status") or "")
+    # 有的消息不带"属于哪一步"，按开始时记下的补上。 / Some messages do not say which step they belong to; fill it in from the start.
+    tool_use_id = getattr(message, "tool_use_id", None) or live.task_steps.get(task_id)
+    if kind == "TaskStartedMessage":
+        live.tasks[task_id] = str(getattr(message, "description", "") or "")
+        live.task_steps[task_id] = tool_use_id
+        state = "started"
+    elif status in TERMINAL:
+        # 结束常报两次：先是状态更新，再是带结论的通知。两次都转给界面，由它合并。
+        # An end is often reported twice: a state update, then a notification with the conclusion. Both go to the UI, which merges them.
+        live.tasks.pop(task_id, None)
+        state = "done"
+    elif kind == "TaskProgressMessage":
+        state = "progress"
+    else:
+        return
+    usage = getattr(message, "usage", None) or {}
+    _emit(live, {"type": "task", "task_id": task_id, "tool_use_id": tool_use_id, "state": state, "status": status or None,
+                 "task_type": getattr(message, "task_type", None), "description": str(getattr(message, "description", "") or ""),
+                 "last_tool": getattr(message, "last_tool_name", None), "summary": _clip(str(getattr(message, "summary", "") or ""), 1500),
+                 "tool_uses": usage.get("tool_uses") if isinstance(usage, dict) else None})
+    if len(live.tasks) != live.meta.tasks:
+        live.meta.tasks = len(live.tasks)
+        _save(live.meta)
+
+
+def _begin(live: _Live, by_itself: bool) -> None:
+    live.busy, live.turn_started = True, time.monotonic()
+    live.turn_done.clear()
+    if by_itself:
+        # 没人说话它自己开了一轮：后台的子 Agent 做完了，Claude Code 收到通知接着做。
+        # A turn began with nobody speaking: a background subagent finished and Claude Code carries on after its notification.
+        _emit(live, {"type": "resumed", "tasks": len(live.tasks)})
+    _set(live, "running")
+
+
+def _end(live: _Live) -> None:
+    llm.log_call("session", "claude-code", time.monotonic() - live.turn_started, {"cost_usd": None}, ok=True)
+    _set(live, "idle")
+    live.busy, live.idle_since = False, time.monotonic()
+    live.turn_done.set()
+    # 自动模式下人多半不在：一轮做完了也说一声。 / In auto mode the owner is probably away: say so when a turn is done, too.
+    notify.send("Claude Code 做完了一轮", live.meta.title[:200], url=f"/sessions/{live.meta.id}", tag=live.meta.id)
+
+
+async def _read(live: _Live, client: Any) -> None:
+    """一直读 Claude Code 的输出，不按轮停。一轮说完后，后台的子 Agent 还在干活、做完了还会让 Claude Code
+    自己再开一轮——这些都要读到，否则它们会积在缓冲里，混进你下一句话的那一轮。
+
+    Read Claude Code's output continuously instead of turn by turn. After a turn ends, background subagents keep
+    working, and when they finish Claude Code opens another turn by itself; all of that must be read, or it piles
+    up in the buffer and gets mixed into the turn of your next message.
+    """
+    async for item in client.receive_messages():
+        kind = type(item).__name__
+        top = kind == "AssistantMessage" and not getattr(item, "parent_tool_use_id", None)
+        if not live.busy and (top or (kind == "SystemMessage" and getattr(item, "subtype", "") == "init")):
+            _begin(live, by_itself=True)
+        _convert(live, item)
+        if kind == "ResultMessage" and live.busy:
+            _end(live)
+
+
+async def _either(live: _Live, awaitable: Any) -> Any:
+    """等一件事，但读输出的那个任务先没了就报它的错。 / Wait for something, but report the reader's error if it ends first."""
+    waiter = asyncio.ensure_future(awaitable)
+    assert live.reader is not None
+    done, _ = await asyncio.wait({waiter, live.reader}, return_when=asyncio.FIRST_COMPLETED)
+    if waiter in done:
+        return waiter.result()
+    waiter.cancel()
+    live.reader.result()
+    raise RuntimeError("Claude Code 的输出断了 / Claude Code's output ended")
+
+
 async def _run(live: _Live) -> None:
     try:
         live.client = _client(live)
         async with live.client as client:
-            while True:
-                message = await live.inbox.get()
-                if message is None:
-                    break
-                live.busy = True
-                _emit(live, {"type": "user", "text": message["text"], "images": len(message.get("images") or [])})
-                _set(live, "running")
-                started = time.monotonic()
-                await client.query(_prompt(message) if message.get("images") else message["text"])
-                async for item in client.receive_response():
-                    _convert(live, item)
-                llm.log_call("session", "claude-code", time.monotonic() - started, {"cost_usd": None}, ok=True)
-                _set(live, "idle")
-                live.busy, live.idle_since = False, time.monotonic()
-                # 自动模式下人多半不在：一轮做完了也说一声。 / In auto mode the owner is probably away: say so when a turn is done, too.
-                notify.send("Claude Code 做完了一轮", live.meta.title[:200], url=f"/sessions/{live.meta.id}", tag=live.meta.id)
+            live.reader = asyncio.get_running_loop().create_task(_read(live, client), name=f"session-read-{live.meta.id}")
+            try:
+                while True:
+                    message = await _either(live, live.inbox.get())
+                    if message is None:
+                        break
+                    _emit(live, {"type": "user", "text": message["text"], "images": len(message.get("images") or [])})
+                    _begin(live, by_itself=False)
+                    await client.query(_prompt(message) if message.get("images") else message["text"])
+                    await _either(live, live.turn_done.wait())
+            finally:
+                live.reader.cancel()
+                await asyncio.gather(live.reader, return_exceptions=True)
         # 只有主人点了"结束"才算结束；闲置超时、换代码、换模型的退出只是歇着，下一句话会接上。
         # Only the owner's "close" closes it; exits for idleness, new code or a model change are a rest, and the next message picks it up.
         if live.meta.status != "error":
@@ -761,7 +745,9 @@ async def _watch(live: _Live) -> None:
                 _emit(live, {"type": "error", "message": f"这一步没做成：{e}"[:500]})
             finally:
                 path.unlink(missing_ok=True)
-        if not live.busy and live.inbox.empty() and not _commands(session_id):
+        # 后台还有子 Agent 在跑时不歇：它们做完了，Claude Code 会自己接着做一轮。
+        # No rest while subagents still run in the background: when they finish, Claude Code carries on with a turn by itself.
+        if not live.busy and not live.tasks and live.inbox.empty() and not _commands(session_id):
             now = time.monotonic()
             stale = False
             if now - checked > 2:
@@ -794,6 +780,7 @@ async def _main(session_id: str) -> None:
             await asyncio.sleep(0.05)
     try:
         live = _Live(Meta.model_validate(store.read_json(_dir(session_id) / "meta.json", None)))
+        live.meta.tasks = 0  # 上一个进程的后台任务跟着它走了 / the previous process's background tasks went with it
         store.write_json(_dir(session_id) / "runner.json", {"pid": os.getpid(), "code": code_stamp(), "started": live.started})
         live.task = asyncio.get_running_loop().create_task(_run(live), name=f"session-{session_id}")
         watcher = asyncio.get_running_loop().create_task(_watch(live), name=f"session-inbox-{session_id}")

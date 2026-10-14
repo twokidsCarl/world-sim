@@ -52,3 +52,38 @@ describe('session view', () => {
     expect([first!.risky, second!.risky]).toEqual([null, '`rm` 每次都要你确认'])
   })
 })
+
+describe('subagents', () => {
+  it('puts each subagent step under the step that launched it and follows the task to its end', () => {
+    const launch = [
+      ev(1, 'tool', { id: 'ag1', name: 'Agent', label: '派了一个子 Agent：查代码', input: { description: '查代码' } }),
+      ev(2, 'task', { task_id: 't1', tool_use_id: 'ag1', state: 'started', status: null, summary: '' }),
+      ev(3, 'tool_result', { id: 'ag1', error: false, text: 'Async agent launched' }),
+      ev(4, 'tool', { id: 'b1', name: 'Bash', label: '在跑 ls', input: { command: 'ls' }, parent: 'ag1' }),
+      ev(5, 'task', { task_id: 't1', tool_use_id: 'ag1', state: 'progress', last_tool: 'Bash', summary: '' }),
+      ev(6, 'text', { text: '派出去了' }),
+    ]
+    const running = fold(emptyView(), launch)
+    expect(running.items.map((i) => i.kind)).toEqual(['tool', 'text'])                       // 子 Agent 的一步不在最外层 / the subagent's step is not at the top
+    const agent = running.items[0] as Extract<(typeof running.items)[number], { kind: 'tool' }>
+    expect(agent.children.map((c) => (c.kind === 'tool' ? c.id : c.kind))).toEqual(['b1'])
+    expect(agent.task).toMatchObject({ state: 'progress', lastTool: 'Bash' })
+    const done = fold(running, [
+      ev(7, 'tool_result', { id: 'b1', error: false, text: 'a b', parent: 'ag1' }),
+      ev(8, 'text', { text: '看完了', parent: 'ag1' }), ev(9, 'text', { text: '两个文件', parent: 'ag1' }),
+      ev(10, 'task', { task_id: 't1', tool_use_id: 'ag1', state: 'done', status: 'completed', summary: '看完了：两个文件' }),
+      ev(10.5, 'task', { task_id: 't1', tool_use_id: 'ag1', state: 'done', status: 'completed', summary: '' }),   // 结束报两次，结论不丢 / an end reported twice keeps its conclusion
+      ev(11, 'resumed'), ev(12, 'text', { text: '子 Agent 回来了' }), ev(13, 'result', { is_error: false }),
+      ev(14, 'resumed'), ev(15, 'result', { is_error: false }),   // 什么都没说的一轮不留提示 / a turn that said nothing leaves no note
+    ])
+    const finished = done.items[0] as Extract<(typeof done.items)[number], { kind: 'tool' }>
+    expect(finished.children).toMatchObject([{ kind: 'tool', id: 'b1', state: 'done', result: 'a b' }, { kind: 'text', text: '看完了\n\n两个文件' }])
+    expect(finished.task).toMatchObject({ state: 'done', status: 'completed', summary: '看完了：两个文件', lastTool: 'Bash' })   // 做完时仍记得最近用过的工具 / the last tool is kept at the end
+    expect(done.items.map((i) => (i.kind === 'note' ? i.code : i.kind))).toEqual(['tool', 'text', 'resumed', 'text'])
+  })
+
+  it('keeps a step whose parent is unknown at the top instead of dropping it', () => {
+    const view = fold(emptyView(), [ev(1, 'tool', { id: 'x', name: 'Read', label: '在读 a', input: {}, parent: 'gone' })])
+    expect(view.items).toMatchObject([{ kind: 'tool', id: 'x' }])
+  })
+})

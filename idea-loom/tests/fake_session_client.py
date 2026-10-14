@@ -22,7 +22,7 @@ TextBlock, ToolResultBlock = kind("TextBlock"), kind("ToolResultBlock")
 
 class Client:
     def __init__(self, cwd, mode, resume, can_use_tool, model="", effort=""):
-        self.can_use_tool, self.resume, self.text = can_use_tool, resume, ""
+        self.can_use_tool, self.resume, self.queries = can_use_tool, resume, asyncio.Queue()
 
     async def __aenter__(self):
         return self
@@ -31,20 +31,23 @@ class Client:
         return False
 
     async def query(self, prompt):
-        self.text = prompt if isinstance(prompt, str) else ""
+        await self.queries.put(prompt if isinstance(prompt, str) else "")
 
-    async def receive_response(self):
-        yield SystemMessage(subtype="init", data={"model": "fake-model", "session_id": self.resume or "sdk-fake"})
-        if "问" in self.text:
-            result = await self.can_use_tool("Bash", {"command": "uv run pytest -q"}, SimpleNamespace(title="", description=""))
-            denied = type(result).__name__ == "PermissionResultDeny"
-            yield UserMessage(content=[ToolResultBlock(tool_use_id="t", is_error=denied, content="denied" if denied else "ok")])
-        if "慢" in self.text:
-            for n in range(6):
-                yield AssistantMessage(content=[TextBlock(text=f"第 {n} 步")])
-                await asyncio.sleep(0.25)
-        yield AssistantMessage(content=[TextBlock(text=f"做完了（接着 {self.resume}）" if self.resume else "做完了")])
-        yield ResultMessage(session_id=self.resume or "sdk-fake", total_cost_usd=0.01, is_error=False, subtype="success")
+    async def receive_messages(self):
+        # 和真的一样一直往下给，不按轮停。 / Like the real one, it keeps yielding rather than stopping per turn.
+        while True:
+            text = await self.queries.get()
+            yield SystemMessage(subtype="init", data={"model": "fake-model", "session_id": self.resume or "sdk-fake"})
+            if "问" in text:
+                result = await self.can_use_tool("Bash", {"command": "uv run pytest -q"}, SimpleNamespace(title="", description=""))
+                denied = type(result).__name__ == "PermissionResultDeny"
+                yield UserMessage(content=[ToolResultBlock(tool_use_id="t", is_error=denied, content="denied" if denied else "ok")])
+            if "慢" in text:
+                for n in range(6):
+                    yield AssistantMessage(content=[TextBlock(text=f"第 {n} 步")])
+                    await asyncio.sleep(0.25)
+            yield AssistantMessage(content=[TextBlock(text=f"做完了（接着 {self.resume}）" if self.resume else "做完了")])
+            yield ResultMessage(session_id=self.resume or "sdk-fake", total_cost_usd=0.01, is_error=False, subtype="success")
 
     async def interrupt(self):
         pass

@@ -96,11 +96,12 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
   // 会话是不是独立的进程（后端报了 stale 这一项就是）：是的话重启后端不影响它。
   // Whether sessions are their own processes (the backend reports `stale` when they are): if so a backend restart leaves them alone.
   const detached = !!meta && meta.stale !== undefined
+  const backgroundTasks = (meta as { tasks?: number } | null)?.tasks ?? 0
   const modes: [string, string, string, string, string][] = [
     ['plan', '先出计划', 'Plan first', '只调研、写计划，不动手；计划等你批准', 'It only investigates and plans; the plan waits for your approval'],
     ['default', '每次问我', 'Ask every time', '改文件、跑命令都先问你', 'File edits and commands all ask you first'],
     ['acceptEdits', '改文件不用问', 'Edits without asking', '改文件直接做，跑命令仍然问', 'File edits just happen; commands still ask'],
-    ['auto', '自动', 'Auto', '常规的事直接做，不停下来；碰到仓库外面的删除和写入、sudo、推送这类仍然每次问你，它有问题要问你时也会停', 'Routine steps just happen without stopping; deleting or writing outside the repository, sudo, pushing and the like still ask every time, and it stops when it has a question for you'],
+    ['auto', '自动', 'Auto', 'Claude Code 原样的自动模式：它自己的安全分类器判断每一步，常规的事直接做，不停下来；它有问题要问你、交计划时会停', 'The auto mode of Claude Code as it is: its own safety classifier judges each step and routine ones just happen without stopping; it stops when it has a question for you or a plan to hand in'],
   ]
   // 需要你、或者做完了：不在这一页时通知，并在标签页标题上做记号。 / Needs you, or done: notify when you are elsewhere and mark the tab title.
   const was = useRef<string>('')
@@ -137,6 +138,12 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
           {status === 'running' && <span className="spin" aria-hidden="true">◌</span>}{' '}
           {{ idle: t('等你说话', 'Waiting for you to speak'), running: t('在干活', 'Working'), waiting: t('等你回答', 'Waiting for your answer'), closed: t('已结束', 'Closed'), error: t('出错了', 'Failed') }[status]}
         </span>
+        {/* 这一轮说完了，后台的子 Agent 还在跑：它们做完后 Claude Code 会自己接着做。 / The turn is over but background subagents still run; when they finish Claude Code carries on by itself. */}
+        {meta?.live && backgroundTasks > 0 && (
+          <span className="badge" title={t('它们做完后，Claude Code 会自己接着做一轮', 'When they finish, Claude Code carries on with a turn by itself')}>
+            <span className="spin" aria-hidden="true">◌</span> {t(`后台 ${backgroundTasks} 个任务在跑`, `${backgroundTasks} background task${backgroundTasks === 1 ? '' : 's'} running`)}
+          </span>
+        )}
         <span className="seg" role="group" aria-label={t('模式', 'Mode')}>
           {modes.map(([key, zh, en, hintZh, hintEn]) => (
             <button key={key} title={t(hintZh, hintEn)} aria-pressed={mode === key} aria-selected={mode === key} disabled={status === 'closed' || (oldBackend && key === 'auto')} onClick={() => void act(() => api.sessionMode(id, key))}>
@@ -242,17 +249,42 @@ function ItemView({ item, live, onAnswer }: { item: Item; live: boolean; onAnswe
   }
   if (item.kind === 'text') return <Markdown text={item.text} />
   if (item.kind === 'note') {
-    const text = { interrupted: t('被你打断了。', 'Interrupted by you.'), failed: t(`这一轮没有正常结束（${item.message}）。`, `This turn did not end normally (${item.message}).`), error: item.message }[item.code]
+    const text = { resumed: t('后台的任务做完了，Claude Code 接着做。', 'A background task finished and Claude Code carries on.'), interrupted: t('被你打断了。', 'Interrupted by you.'), failed: t(`这一轮没有正常结束（${item.message}）。`, `This turn did not end normally (${item.message}).`), error: item.message }[item.code]
     return <p className={item.tone === 'bad' ? 'err small' : 'muted small'}>{text}</p>
   }
   if (item.kind === 'tool') {
+    // 子 Agent 在后台跑时，派它的那一步早就"返回"了，要看的是它自己的近况。
+    // While a subagent runs in the background the step that launched it has long "returned"; what counts is how the subagent itself is doing.
+    const task = item.task
+    const state = task ? (task.state !== 'done' ? 'running' : task.status === 'completed' ? 'done' : 'failed') : item.state
+    const steps = item.children.filter((c) => c.kind === 'tool').length
+    // 子 Agent 报步数；放到后台跑的命令只说在跑还是做完了。 / A subagent reports its steps; a command run in the background only says running or done.
+    const agent = item.name === 'Agent' || item.name === 'Task'
     return (
-      <details className={`session-step ${item.state}`}>
+      <details className={`session-step ${state}`} open={!!task && task.state !== 'done' ? true : undefined}>
         <summary>
-          <span aria-hidden="true">{item.state === 'running' ? '◌' : item.state === 'failed' ? '×' : '✓'}</span> {item.label}
+          <span aria-hidden="true" className={state === 'running' ? 'spin' : undefined}>{state === 'running' ? '◌' : state === 'failed' ? '×' : '✓'}</span> {item.label}
+          {task && (
+            <span className="muted small">
+              {' · '}
+              {!agent
+                ? task.state === 'done' ? t('后台跑完了', 'finished in the background') : t('在后台跑', 'running in the background')
+                : task.state === 'done'
+                  ? t(`做完了，${steps} 步`, `done, ${steps} step${steps === 1 ? '' : 's'}`)
+                  : task.lastTool
+                    ? t(`在跑，最近在用 ${task.lastTool}，${steps} 步`, `running, last used ${task.lastTool}, ${steps} step${steps === 1 ? '' : 's'}`)
+                    : t('在跑', 'running')}
+            </span>
+          )}
         </summary>
         <ToolInput tool={item.name} input={item.input} />
-        {item.result && <pre className="rich-raw">{item.result}</pre>}
+        {item.children.length > 0 && (
+          <div style={{ borderLeft: '2px solid var(--line)', paddingLeft: 12, margin: '6px 0 6px 4px', display: 'grid', gap: 4 }}>
+            {item.children.map((child) => <ItemView key={child.seq} item={child} live={false} onAnswer={onAnswer} />)}
+          </div>
+        )}
+        {/* 在后台跑的，派出去时的返回只是一段给模型看的说明；要看的是它做完时的结论。 / For background work the launch result is only a note meant for the model; what matters is its conclusion at the end. */}
+        {task ? task.state === 'done' && agent && task.summary && <Markdown text={task.summary} /> : item.result && <pre className="rich-raw">{item.result}</pre>}
       </details>
     )
   }
@@ -359,7 +391,6 @@ function RequestCard({ item, live, onAnswer }: { item: Extract<Item, { kind: 're
       <h4>{t('它要做这件事，等你确认', 'It wants to do this and awaits your confirmation')}</h4>
       <p className="small">{item.summary}</p>
       <ToolInput tool={item.tool} input={item.input} />
-      {item.risky && <p className="small session-risky">{t(`这一类每次都问，「以后都允许」和自动模式都不会放过：${item.risky}`, `This kind is always asked about; neither "always allow" nor auto mode lets it through: ${item.risky}`)}</p>}
       {item.segments.length > 1 && (
         <p className="small muted">
           {t('这条命令分成几段：', 'This command has several parts: ')}
@@ -373,7 +404,7 @@ function RequestCard({ item, live, onAnswer }: { item: Extract<Item, { kind: 're
           <input value={note} placeholder={t('拒绝的话，可以写一句为什么', 'If you decline, you may say why')} onChange={(e) => setNote(e.target.value)} />
           <div className="row">
             <button className="primary" onClick={() => onAnswer('allow')}>{t('允许', 'Allow')}</button>
-            {!item.risky && <button onClick={() => onAnswer('allow_always')} title={t('这个会话里，同一类操作以后不再问。命令按每一段的程序和子命令算（比如 git status、uv run），每一段都允许过才不再问', 'Within this session the same kind of action is no longer asked about. A command goes by the program and subcommand of each part (git status, uv run…) and is skipped only when every part was allowed before')}>{t('这一类以后都允许', 'Always allow this kind')}</button>}
+            {<button onClick={() => onAnswer('allow_always')} title={t('这个会话里，同一类操作以后不再问。命令按每一段的程序和子命令算（比如 git status、uv run），每一段都允许过才不再问', 'Within this session the same kind of action is no longer asked about. A command goes by the program and subcommand of each part (git status, uv run…) and is skipped only when every part was allowed before')}>{t('这一类以后都允许', 'Always allow this kind')}</button>}
             <button onClick={() => onAnswer('deny', note)}>{t('拒绝', 'Decline')}</button>
           </div>
         </>
