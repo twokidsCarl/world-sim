@@ -14,6 +14,8 @@ import { positionNodeFor, type SkinningData, type SkinningMode } from '../viewer
 import { type DecodedLod, decodeLod, dominantVertex, placeVertices } from './cards.ts'
 import type { HairColour } from './colour.ts'
 import { loadAtlasImage, loadHairData, loadPiece, loadScalp, loadStrandFile } from './load.ts'
+import { HairDynamics } from './dynamicsHost.ts'
+import { Fn, attribute as tslAttribute, positionGeometry, positionLocal } from 'three/tsl'
 import { buildStrands, type DecodedGuides, decodeGuides, makeStrandMaterial, placeRoots, rootTexture, type StrandGeometry } from './strands.ts'
 import { HairLook, makeHairMaterial, makeScalpTintMaterial, type HairMaterialOptions } from './material.ts'
 import { SkinPatch } from '../viewer/skinPatch.ts'
@@ -35,7 +37,8 @@ interface Piece {
   lod: LOD
   levels: { d: DecodedLod; geometry: BufferGeometry; mesh: Mesh }[]
   /** 近景真发丝（只在 WebGPU 上）/ close-up real strands (WebGPU only) */
-  strands?: { d: DecodedGuides; built: StrandGeometry; mesh: Mesh; roots: DataTexture; setSkinning: (s: SkinningData, m: SkinningMode) => void }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  strands?: { d: DecodedGuides; built: StrandGeometry; mesh: Mesh; roots: DataTexture; setSkinning: (s: SkinningData, m: SkinningMode, disp?: ((along: any, sim: any) => any) | null) => void }
 }
 
 export interface HairSettings {
@@ -96,6 +99,7 @@ export class HairLayer {
           for (const l of piece.levels) this.place(l)
           if (piece.strands) placeRoots(piece.strands.d, p, piece.strands.roots)
         }
+        this.dyn?.host.setRest(p)
       },
       setInfluences: (index, weight) => {
         this.influence = { index, weight }
@@ -103,6 +107,12 @@ export class HairLayer {
         for (const piece of this.pieces.values()) {
           for (const l of piece.levels) this.influence_(l)
           if (piece.strands) this.strandInfluence(piece.strands)
+        }
+        // 关节行要从影响里取：动力学按新的影响重建 / joint rows come from the influences: rebuild the dynamics with the new ones
+        if (this.dyn) {
+          const piece = this.pieces.get(this.dyn.piece)
+          this.dropDynamics()
+          if (piece) void this.ensureDynamics(piece)
         }
       },
       setOffset: (x, y, z) => {
@@ -161,11 +171,115 @@ export class HairLayer {
       this.tint.material.positionNode = positionNodeFor(this.skinning, mode, false) as typeof this.tint.material.positionNode
       this.tint.material.needsUpdate = true
     }
-    for (const m of this.materials.values()) {
-      m.positionNode = positionNodeFor(this.skinning, mode, false) as typeof m.positionNode
+    this.refreshPositionNodes()
+  }
+
+  /** 发片和真发丝的顶点位置节点（长发带动力学位移）/ the vertex position nodes of cards and strands (long hair with the dynamics displacement) */
+  private refreshPositionNodes(): void {
+    for (const [kind, m] of this.materials) {
+      m.positionNode = this.cardPositionNode(kind) as typeof m.positionNode
       m.needsUpdate = true
     }
-    for (const p of this.pieces.values()) p.strands?.setSkinning(this.skinning, mode)
+    for (const p of this.pieces.values()) p.strands?.setSkinning(this.skinning, this.mode, this.dyn && this.dyn.piece === p.id ? (along, sim) => this.dyn!.host.node(along, sim) : null)
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private cardPositionNode(kind: MaterialKind): any {
+    const skinned = positionNodeFor(this.skinning, this.mode, false)
+    const dyn = this.dyn
+    if (!dyn || KIND_OF[dyn.piece] !== kind) return skinned
+    // 位移（静止空间）加在蒙皮之前 / the displacement (rest space) goes on before skinning
+    return Fn(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const card: any = tslAttribute('aCard', 'vec4')
+      ;(positionLocal as any).assign((positionGeometry as any).add(dyn.host.node(card.w, card.z)))
+      return skinned
+    })()
+  }
+
+  // ---- 长发动力学 / long-hair dynamics ----
+  private dyn: { piece: HairPieceId; host: HairDynamics } | null = null
+  private dynLoad = false
+  private guideFiles = new Map<HairPieceId, Promise<DecodedGuides | null>>()
+
+  private guidesOf(id: HairPieceId, info: HairStrandsInfo): Promise<DecodedGuides | null> {
+    let p = this.guideFiles.get(id)
+    if (!p) {
+      p = loadStrandFile(this.base, info.file).then((bin) => (bin && this.data ? decodeGuides(bin, info, this.data.offsetUnit, this.skinVertexCount) : null))
+      this.guideFiles.set(id, p)
+    }
+    return p
+  }
+
+  /** 长发的动力学：引导发丝到了、皮肤位置也有了就开始 / long-hair dynamics: starts once the guides and the skin positions are there */
+  private async ensureDynamics(piece: Piece): Promise<void> {
+    const info = this.data?.pieces.find((p) => p.id === piece.id)?.strands
+    if (piece.id !== 'long' || !info || this.dyn || this.dynLoad) return
+    this.dynLoad = true
+    const d = await this.guidesOf(piece.id, info)
+    this.dynLoad = false
+    if (!d || this.disposed || !this.skinPos || !this.skinNormal || this.dyn) return
+    const inf = this.influence
+    const rowOf = (v: number): number => {
+      if (!inf) return 0
+      let best = 0
+      for (let k = 1; k < 4; k++) if (inf.weight[v * 4 + k]! > inf.weight[v * 4 + best]!) best = k
+      return inf.index[v * 4 + best]!
+    }
+    const host = new HairDynamics(d, this.skinPos, this.skinNormal, rowOf, () => this.onChange())
+    this.dyn = { piece: piece.id, host }
+    // 每个发片顶点、发丝顶点跟哪根模拟发丝 / which simulated strand each card and strand vertex follows
+    for (const l of piece.levels) {
+      const per = l.d.rings * 2
+      const sim = new Float32Array(l.d.cards * per), along = new Float32Array(l.d.cards * per)
+      const tmp = new Float32Array(l.d.offset.length)
+      placeVertices(l.d, this.skinPos, tmp)
+      for (let c = 0; c < l.d.cards; c++) {
+        // 发片的根（第一个环的中点）/ the card's root (middle of the first ring)
+        const i = c * per * 3
+        const s = host.nearest((tmp[i]! + tmp[i + 3]!) / 2, (tmp[i + 1]! + tmp[i + 4]!) / 2, (tmp[i + 2]! + tmp[i + 5]!) / 2)
+        for (let j = 0; j < per; j++) {
+          sim[c * per + j] = s
+          along[c * per + j] = Math.floor(j / 2) / (l.d.rings - 1)
+        }
+      }
+      const cardAttr = l.geometry.getAttribute('aCard') as BufferAttribute
+      const ca = cardAttr.array as Float32Array
+      for (let v = 0; v < sim.length; v++) {
+        ca[v * 4 + 2] = sim[v]!
+        ca[v * 4 + 3] = along[v]!
+      }
+      cardAttr.needsUpdate = true
+    }
+    if (piece.strands) this.strandSim(piece.strands)
+    this.refreshPositionNodes()
+  }
+
+  private strandSim(s: NonNullable<Piece['strands']>): void {
+    if (!this.dyn) return
+    const g = s.built.geometry
+    const attr = g.getAttribute('aRef') as BufferAttribute
+    const ref = attr.array as Float32Array
+    for (let v = 0; v < attr.count; v++) ref[v * 3 + 2] = this.dyn.host.simOfGuide[ref[v * 3 + 1]!]!
+    attr.needsUpdate = true
+  }
+
+  private dropDynamics(): void {
+    this.dyn?.host.dispose()
+    this.dyn = null
+    this.refreshPositionNodes()
+  }
+
+  /**
+   * 每帧调一次（Viewer 的渲染循环）：长发显示着就推进动力学；新的位移到了会通过 onChange 要求重画。
+   * Called once per frame (the Viewer's render loop): while long hair shows, advance the dynamics; a new displacement
+   * asks for a redraw through onChange.
+   */
+  tickDynamics(t: number): void {
+    const d = this.dyn
+    if (!d || !this.settings.show || this.style() !== d.piece) return
+    d.host.tick(t, this.mode === 'off' ? null : (this.skinning.joints.image.data as Float32Array), this.mode)
   }
 
   private wanted(): HairPieceId[] {
@@ -240,8 +354,8 @@ export class HairLayer {
     let m = this.materials.get(kind)
     if (!m) {
       m = makeHairMaterial(this.look, this.atlas!.a, this.atlas!.b, this.data!.atlas.size, MATERIAL[kind])
-      m.positionNode = positionNodeFor(this.skinning, this.mode, false) as typeof m.positionNode
       this.materials.set(kind, m)
+      m.positionNode = this.cardPositionNode(kind) as typeof m.positionNode
     }
     return m
   }
@@ -300,8 +414,13 @@ export class HairLayer {
       // "法线"属性里放发丝走向：蒙皮按法线旋转它 / the "normal" attribute holds the strand direction: skinning rotates it like a normal
       geometry.setAttribute('normal', new BufferAttribute(d.tangent, 3))
       geometry.setAttribute('uv', new BufferAttribute(d.uv, 2))
-      geometry.setAttribute('aLayer', new BufferAttribute(d.layer, 1))
-      geometry.setAttribute('aRandom', new BufferAttribute(d.random, 1))
+      // aCard = (层, 随机数, 模拟发丝, 根→梢)；后两项在动力学就绪时填 / aCard = (layer, random, simulated strand, root → tip); the last two are filled once the dynamics are ready
+      const card = new Float32Array(d.layer.length * 4)
+      for (let v = 0; v < d.layer.length; v++) {
+        card[v * 4] = d.layer[v]!
+        card[v * 4 + 1] = d.random[v]!
+      }
+      geometry.setAttribute('aCard', new BufferAttribute(card, 4))
       geometry.setAttribute('skinIndex', new BufferAttribute(new Uint16Array(V * 4), 4, true))
       geometry.setAttribute('skinWeight', new BufferAttribute(new Uint8Array(V * 4), 4, true))
       geometry.setIndex(new BufferAttribute(d.index, 1))
@@ -324,13 +443,13 @@ export class HairLayer {
     this.updateVisibility()
     this.onChange()
     if (this.strandsEnabled && spec.strands) void this.loadStrands(piece, spec.strands, c)
+    if (id === 'long') void this.ensureDynamics(piece)
   }
 
   /** 近景真发丝：发片之后再取，到了就插到 LOD 的最近一级 / close-up strands: fetched after the cards and inserted as the nearest LOD level once they arrive */
   private async loadStrands(piece: Piece, info: HairStrandsInfo, centre: Vector3): Promise<void> {
-    const bin = await loadStrandFile(this.base, info.file)
-    if (!bin || this.disposed || !this.data) return
-    const d = decodeGuides(bin, info, this.data.offsetUnit, this.skinVertexCount)
+    const d = await this.guidesOf(piece.id, info)
+    if (!d || this.disposed || !this.data) return
     const built = buildStrands(d, 7, piece.id === 'long' ? 2 : 1)
     const roots = rootTexture(info.guides)
     if (this.skinPos) placeRoots(d, this.skinPos, roots)
@@ -341,6 +460,10 @@ export class HairLayer {
     mesh.name = `hair-${piece.id}-strands`
     mesh.position.copy(centre).multiplyScalar(-1)
     piece.strands = { d, built, mesh, roots, setSkinning }
+    if (this.dyn?.piece === piece.id) {
+      this.strandSim(piece.strands)
+      setSkinning(this.skinning, this.mode, (along, sim) => this.dyn!.host.node(along, sim))
+    }
     this.strandInfluence(piece.strands)
     // 发片的第 0 级从发丝的最远距离开始 / the cards' level 0 starts where the strands stop
     piece.lod.levels[0]!.distance = info.maxDistance
@@ -354,7 +477,7 @@ export class HairLayer {
     const g = s.built.geometry
     const si = g.getAttribute('skinIndex') as BufferAttribute, sw = g.getAttribute('skinWeight') as BufferAttribute
     const di = si.array as Uint16Array, dw = sw.array as Uint8Array
-    const per = (s.built.geometry.getAttribute('aSide').count / s.d.info.guides) | 0
+    const per = (s.built.geometry.getAttribute('aRef').count / s.d.info.guides) | 0
     for (let gi = 0; gi < s.d.info.guides; gi++) {
       const v = s.built.dominant[gi]!
       for (let j = 0; j < per; j++) {
@@ -417,6 +540,7 @@ export class HairLayer {
     }
     for (const m of this.materials.values()) m.dispose()
     this.tint?.patch.dispose()
+    this.dyn?.host.dispose()
     this.tint?.material.dispose()
     this.atlas?.a.dispose()
     this.atlas?.b.dispose()

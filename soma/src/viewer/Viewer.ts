@@ -3799,6 +3799,8 @@ export class Viewer {
     this.stepEyes(t)
     const facing = this.stepFace(t)
     const posing = this.stepPose(t) || facing || stimulating
+    // 长发动力学（工作线程里算，新的位移到了才要求重画）/ long-hair dynamics (computed in a worker; a redraw is asked for only when a new displacement arrives)
+    this.hair?.tickDynamics(t)
     if (this.stimEval) this.placeStimPath()
     if (this.gizmoJoint) this.updateGizmo()
 

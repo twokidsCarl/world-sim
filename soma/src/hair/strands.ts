@@ -165,12 +165,16 @@ export function buildStrands(d0: DecodedGuides, seed = 1, subdivide = 1): Strand
   geometry.setAttribute('position', new BufferAttribute(position, 3))
   // "法线"属性里放发丝走向：蒙皮按法线旋转它 / the "normal" attribute holds the strand direction: skinning rotates it like a normal
   geometry.setAttribute('normal', new BufferAttribute(tangent, 3))
-  geometry.setAttribute('aSide', new BufferAttribute(side, 1))
-  geometry.setAttribute('aRoot', new BufferAttribute(root, 1))
-  geometry.setAttribute('aAlong', new BufferAttribute(along, 1))
-  geometry.setAttribute('aId', new BufferAttribute(id, 1))
-  geometry.setAttribute('aOcc', new BufferAttribute(occ, 1))
-  geometry.setAttribute('aLayer', new BufferAttribute(layer, 1))
+  // 合成两个属性（WebGPU 每个管线最多 8 个顶点缓冲）：aRef = (边, 引导发丝, 模拟发丝)，aStrand = (根→梢, 随机数, 自遮挡, 层)
+  // packed into two attributes (WebGPU allows at most 8 vertex buffers per pipeline): aRef = (side, guide, simulated strand), aStrand = (root → tip, random, occlusion, layer)
+  const ref = new Float32Array(V * 3), strand = new Float32Array(V * 4)
+  for (let v = 0; v < V; v++) {
+    ref[v * 3] = side[v]!
+    ref[v * 3 + 1] = root[v]!
+    strand.set([along[v]!, id[v]!, occ[v]!, layer[v]!], v * 4)
+  }
+  geometry.setAttribute('aRef', new BufferAttribute(ref, 3))
+  geometry.setAttribute('aStrand', new BufferAttribute(strand, 4))
   geometry.setAttribute('skinIndex', new BufferAttribute(new Uint16Array(V * 4), 4, true))
   geometry.setAttribute('skinWeight', new BufferAttribute(new Uint8Array(V * 4), 4, true))
   geometry.setIndex(new BufferAttribute(index, 1))
@@ -241,11 +245,13 @@ export function placeRoots(d: DecodedGuides, skin: ArrayLike<number>, tex: DataT
  * 发丝材质。`width` = 画出来的宽度（米，纤维直径 × 每根渲染发丝代表的根数）。
  * The strand material. `width` = the drawn width (m: fibre diameter × hairs per render strand).
  */
-export function makeStrandMaterial(look: HairLook, o: HairMaterialOptions, roots: DataTexture, width: number): { material: MeshStandardNodeMaterial; setSkinning: (skinning: SkinningData, mode: SkinningMode) => void } {
-  const along: N = attribute('aAlong', 'float')
-  const id: N = attribute('aId', 'float')
-  const occ: N = attribute('aOcc', 'float')
-  const layer: N = attribute('aLayer', 'float')
+export function makeStrandMaterial(look: HairLook, o: HairMaterialOptions, roots: DataTexture, width: number): { material: MeshStandardNodeMaterial; setSkinning: (skinning: SkinningData, mode: SkinningMode, disp?: ((along: N, sim: N) => N) | null) => void } {
+  const ref: N = attribute('aRef', 'vec3')
+  const st: N = attribute('aStrand', 'vec4')
+  const along: N = st.x
+  const id: N = st.y
+  const occ: N = st.z
+  const layer: N = st.w
   const w0 = uniform(width)
   const T: N = normalize(normalViewGeometry).toVar('strandTangent')
   const { C, albedo } = fibreColour(look, o, id, float(0.5))
@@ -256,13 +262,15 @@ export function makeStrandMaterial(look: HairLook, o: HairMaterialOptions, roots
   const m = hairMaterial(T, C, albedo, ao, id, o)
   // 覆盖率在顶点着色器里算好传下来 / coverage is computed in the vertex shader and passed down
   const coverage: N = varyingProperty('float', 'vStrandCoverage')
-  const setSkinning = (skinning: SkinningData, mode: SkinningMode): void => {
+  const setSkinning = (skinning: SkinningData, mode: SkinningMode, disp: ((along: N, sim: N) => N) | null = null): void => {
     const skinned: N = positionNodeFor(skinning, mode, false)
     const out = Fn(() => {
       // 根的位置 + 相对根的点，再交给蒙皮 / root position + the point relative to it, then handed to skinning
-      const g: N = int(attribute('aRoot', 'float'))
+      const g: N = int(ref.y)
       const rootPos: N = textureLoad(roots, (ivec2 as N)(g.mod(ROOT_COLS), g.div(ROOT_COLS))).xyz
-      ;(positionLocal as N).assign(rootPos.add(positionGeometry))
+      // 动力学的位移（静止空间）加在蒙皮之前 / the dynamics displacement (rest space) is added before skinning
+      const base: N = rootPos.add(positionGeometry)
+      ;(positionLocal as N).assign(disp ? base.add(disp(along, ref.z)) : base)
       const p: N = (skinned as N).toVar()
       // 朝相机展开；宽度不小于一个像素 / spread towards the camera; at least a pixel wide
       const cam: N = (modelWorldMatrixInverse as N).mul((vec4 as N)(cameraPosition, 1)).xyz
@@ -276,7 +284,7 @@ export function makeStrandMaterial(look: HairLook, o: HairMaterialOptions, roots
       const wTrue: N = w0.mul(taper)
       const w: N = max(wTrue, pixel)
       coverage.assign(clamp(wTrue.div(w), 0, 1))
-      return p.add(sideDir.mul(attribute('aSide', 'float').mul(w.mul(0.5))))
+      return p.add(sideDir.mul(ref.x.mul(w.mul(0.5))))
     })()
     m.positionNode = out
     m.opacityNode = coverage as N
