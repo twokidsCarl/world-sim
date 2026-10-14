@@ -8,6 +8,7 @@ import { usageLine, usageTitle } from '../ui/viz'
 import { useDraft } from './drafts'
 import { mark, tell } from './notify'
 import { type Item, QUIET, type Question, type SessionEvent, type View, doing, emptyView, fold, pending, span } from './view'
+import { useWaiting } from './waiting'
 
 const MODEL_NAMES: Record<string, string> = { 'claude-opus-5-5': 'Opus 5.5', 'claude-sonnet-5-5': 'Sonnet 5.5', 'claude-haiku-5-5': 'Haiku 5.5', 'claude-fable-5-1': 'Fable 5.1' }
 const MODELS = Object.keys(MODEL_NAMES)
@@ -27,7 +28,11 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
   const log = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
 
-  const refresh = () => api.session(id).then((m) => (setMeta(m), onChange?.(m)), () => undefined)
+  const updateWaiting = useWaiting((w) => w.update)
+  const enter = useWaiting((w) => w.enter)
+  const refresh = () => api.session(id).then((m) => (setMeta(m), updateWaiting(m), onChange?.(m)), () => undefined)
+  // 这个会话的视图开着，它就不用再弹气泡提醒。 / While this session's view is open it needs no reminder bubble.
+  useEffect(() => enter(id), [id, enter])
 
   useEffect(() => {
     setView(emptyView())

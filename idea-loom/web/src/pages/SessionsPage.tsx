@@ -5,6 +5,7 @@ import { useDraft } from '../sessions/drafts'
 import { SESSION_SHOWS, type SessionShow, inShow, loadShow, saveShow, shownStatus, tally } from '../sessions/filter'
 import { askToNotify, notifyState } from '../sessions/notify'
 import { SessionView } from '../sessions/SessionView'
+import { useWaiting } from '../sessions/waiting'
 import { useT } from '../state/store'
 import { Empty, Page } from '../ui/Page'
 
@@ -41,7 +42,9 @@ export function SessionsPage() {
   const [show, setShow] = useState<SessionShow>(loadShow)
   const pick = (next: SessionShow) => (setShow(next), saveShow(next))
   const [error, setError] = useState<string | null>(null)
-  const load = () => api.sessions().then(setList, (e: Error) => setError(e.message))
+  // 读到的列表也给全局的「在等回答」用，回答完左侧的数和气泡马上跟上。 / The list also feeds the global waiting state, so the nav count and bubbles follow an answer at once.
+  const takeWaiting = useWaiting((w) => w.take)
+  const load = () => api.sessions().then((l) => (setList(l), takeWaiting(l.sessions)), (e: Error) => setError(e.message))
   useEffect(() => {
     void load()
     const timer = setInterval(load, 5000)
