@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { type SessionEvent, emptyView, fold, pending } from '../src/sessions/view'
+import { type SessionEvent, doing, emptyView, fold, pending, span } from '../src/sessions/view'
 
 const ev = (seq: number, type: string, more: Record<string, unknown> = {}): SessionEvent => ({ seq, type, ...more })
 
@@ -93,5 +93,49 @@ describe('subagents', () => {
   it('keeps a step whose parent is unknown at the top instead of dropping it', () => {
     const view = fold(emptyView(), [ev(1, 'tool', { id: 'x', name: 'Read', label: '在读 a', input: {}, parent: 'gone' })])
     expect(view.items).toMatchObject([{ kind: 'tool', id: 'x' }])
+  })
+})
+
+describe('the working line', () => {
+  const at = (seq: number, type: string, when: number, more: Record<string, unknown> = {}) => ev(seq, type, { at: when, ...more })
+
+  it('names the latest unfinished step, inside a subagent too, with the subagent that launched it', () => {
+    const view = fold(emptyView(), [
+      at(1, 'user', 100, { text: '查一下' }), at(2, 'status', 100, { status: 'running' }),
+      at(3, 'tool', 101, { id: 'ag', name: 'Agent', label: '派了一个子 Agent：查代码', input: {} }),
+      at(4, 'tool', 102, { id: 'r', name: 'Read', label: '在读 a.py', input: {}, parent: 'ag' }),
+      at(5, 'tool_result', 103, { id: 'r', error: false, text: '', parent: 'ag' }),
+      at(6, 'tool', 104, { id: 'g', name: 'Grep', label: '在搜 x', input: {}, parent: 'ag' }),
+    ])
+    expect(doing(view)).toEqual({ label: '在搜 x', under: '派了一个子 Agent：查代码', lastTool: null, since: 104 })
+    // 子 Agent 那一步做完了，就轮到它自己（还没返回）。 / Once that step is done, the subagent itself (not yet returned) is what runs.
+    const after = fold(view, [at(7, 'tool_result', 105, { id: 'g', error: false, text: '', parent: 'ag' })])
+    expect(doing(after)).toMatchObject({ label: '派了一个子 Agent：查代码', under: null, since: 101 })
+    expect(doing(fold(after, [at(8, 'tool_result', 106, { id: 'ag', error: false, text: '好了' })]))).toBe(null) // 只是在想 / only thinking
+  })
+
+  it('follows a background subagent by its task, not by the launch result', () => {
+    const view = fold(emptyView(), [
+      at(1, 'tool', 10, { id: 'ag', name: 'Agent', label: '后台子 Agent', input: {} }),
+      at(2, 'task', 11, { task_id: 't', tool_use_id: 'ag', state: 'started' }),
+      at(3, 'tool_result', 12, { id: 'ag', error: false, text: 'Async agent launched' }),
+      at(4, 'task', 20, { task_id: 't', tool_use_id: 'ag', state: 'progress', last_tool: 'Bash' }),
+    ])
+    expect(doing(view)).toMatchObject({ label: '后台子 Agent', lastTool: 'Bash' })
+    expect(view.lastAt).toBe(20)
+  })
+
+  it('starts the turn clock when it goes from idle to running, not when an answer lets it go on', () => {
+    const view = fold(emptyView(), [
+      at(1, 'status', 50, { status: 'running' }), at(2, 'request', 60, { request_id: 'r', kind: 'permission' }), at(3, 'status', 60, { status: 'waiting' }),
+      at(4, 'resolved', 90, { request_id: 'r', decision: 'allow' }), at(5, 'status', 90, { status: 'running' }),
+    ])
+    expect([view.turnStart, view.lastAt]).toEqual([50, 90])
+    const next = fold(view, [at(6, 'status', 95, { status: 'idle' }), at(7, 'status', 200, { status: 'running' })])
+    expect(next.turnStart).toBe(200)
+  })
+
+  it('writes durations as briefly as a terminal', () => {
+    expect([span(7), span(65), span(3725), span(-3)]).toEqual([['7秒', '7s'], ['1分05秒', '1m 05s'], ['1小时02分', '1h 02m'], ['0秒', '0s']])
   })
 })

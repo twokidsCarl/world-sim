@@ -294,6 +294,11 @@ a.button.inline { display: inline-block; }
 .session-card .chip { margin-left: 4px; }
 .session-card .chip.unseen { border-color: var(--accent); color: var(--accent); }
 .session-compose { border-top: 0; padding: 0; }
+/* 在干活的那一行：一段段并排，以后可以再加一段用量 / the working line: parts side by side, room for usage later */
+.session-working { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; padding: 0 4px; font-size: 13px; }
+.session-working > span { white-space: nowrap; }
+.session-working > .session-doing { flex: 1 1 260px; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.session-quiet { color: var(--warn); font-weight: 600; }
 @media (max-width: 720px) {
   .sessions { grid-template-columns: minmax(0, 1fr); }
   .session-log { max-height: none; }

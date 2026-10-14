@@ -17,7 +17,7 @@ export type Item =
   | { kind: 'text'; seq: number; text: string }
   // 派子 Agent 的那一步，下面挂着子 Agent 自己的每一步（children）和它的近况（task）。
   // The step that launched a subagent holds the subagent's own steps (children) and how it is doing (task).
-  | { kind: 'tool'; seq: number; id: string; name: string; label: string; input: Record<string, unknown>; state: 'running' | 'done' | 'failed'; result: string; children: Item[]; task: Task | null }
+  | { kind: 'tool'; seq: number; at: number | null; id: string; name: string; label: string; input: Record<string, unknown>; state: 'running' | 'done' | 'failed'; result: string; children: Item[]; task: Task | null }
   | { kind: 'request'; seq: number; request_id: string; what: 'permission' | 'question' | 'plan'; tool: string; input: Record<string, unknown>; summary: string; decision: string | null; note: string; risky: string | null; segments: Segment[] }
   | { kind: 'note'; seq: number; tone: 'muted' | 'bad'; code: 'interrupted' | 'error' | 'failed' | 'resumed'; message: string }
 
@@ -29,9 +29,11 @@ export type View = {
   // 用掉的 token：一轮说完时是准数，干活时是边干边加的估计。 / Tokens used: exact when a turn ends, a running estimate while it works.
   tokens: TokenUsage | null
   lastSeq: number
+  turnStart: number | null // 这一轮从什么时候开始（秒）/ when this turn began (seconds)
+  lastAt: number | null // 最近一件事发生在什么时候（秒）/ when anything last happened (seconds)
 }
 
-export const emptyView = (): View => ({ items: [], status: 'idle', waitingFor: null, mode: null, tokens: null, lastSeq: 0 })
+export const emptyView = (): View => ({ items: [], status: 'idle', waitingFor: null, mode: null, tokens: null, lastSeq: 0, turnStart: null, lastAt: null })
 
 function lastIndex(items: Item[], test: (item: Item) => boolean): number {
   for (let i = items.length - 1; i >= 0; i--) if (test(items[i]!)) return i
@@ -64,6 +66,8 @@ export function fold(view: View, events: SessionEvent[]): View {
   for (const e of events) {
     if (e.seq <= next.lastSeq) continue // 续传时可能重复 / may repeat on resume
     next.lastSeq = e.seq
+    const at = typeof e.at === 'number' ? e.at : null
+    if (at !== null) next.lastAt = Math.max(next.lastAt ?? 0, at)
     // 子 Agent 的一步放到派它的那一步下面；那一步不在（比如只拿到了后半段事件）就放在最外层。
     // A subagent's step goes under the step that launched it; when that step is absent (say only later events arrived) it goes at the top.
     const placed = (item: Item) => {
@@ -74,7 +78,7 @@ export function fold(view: View, events: SessionEvent[]): View {
     if (e.type === 'user') next.items.push({ kind: 'user', seq: e.seq, text: String(e.text ?? ''), images: Number(e.images ?? 0) })
     else if (e.type === 'text') placed({ kind: 'text', seq: e.seq, text: String(e.text ?? '') })
     else if (e.type === 'tool') {
-      placed({ kind: 'tool', seq: e.seq, id: String(e.id ?? ''), name: String(e.name ?? ''), label: String(e.label ?? ''), input: (e.input as Record<string, unknown>) ?? {}, state: 'running', result: '', children: [], task: null })
+      placed({ kind: 'tool', seq: e.seq, at, id: String(e.id ?? ''), name: String(e.name ?? ''), label: String(e.label ?? ''), input: (e.input as Record<string, unknown>) ?? {}, state: 'running', result: '', children: [], task: null })
     } else if (e.type === 'tool_result') {
       next.items = updateTool(next.items, String(e.id ?? ''), (x) => ({ ...x, state: e.error ? 'failed' : 'done', result: String(e.text ?? '') })) ?? next.items
     } else if (e.type === 'task') {
@@ -101,6 +105,8 @@ export function fold(view: View, events: SessionEvent[]): View {
     } else if (e.type === 'usage') next.tokens = (e.tokens as TokenUsage | undefined) ?? next.tokens
     else if (e.type === 'error') next.items.push({ kind: 'note', seq: e.seq, tone: 'bad', code: 'error', message: String(e.message ?? '') })
     else if (e.type === 'status') {
+      // 从闲着到在跑，是新的一轮；从等你回答回到在跑，还是同一轮。 / From idle to running is a new turn; from waiting back to running is the same one.
+      if (e.status === 'running' && next.status !== 'running' && next.status !== 'waiting') next.turnStart = at
       next.status = e.status as View['status']
       next.waitingFor = (e.waiting_for as string | null) ?? null
     } else if (e.type === 'mode') next.mode = String(e.mode)
@@ -115,3 +121,33 @@ export function fold(view: View, events: SessionEvent[]): View {
 export function pending(view: View): Extract<Item, { kind: 'request' }>[] {
   return view.items.filter((x): x is Extract<Item, { kind: 'request' }> => x.kind === 'request' && x.decision === null)
 }
+
+// 它现在在做的那一步：最近开始、还没做完的一步，子 Agent 里的也算；连着派它的那个子 Agent 一起给出。
+// What it is doing now: the most recently started step that has not finished, inside subagents too, given with the subagent that launched it.
+export type Doing = { label: string; under: string | null; lastTool: string | null; since: number | null }
+
+export function doing(view: View): Doing | null {
+  const running: { item: Extract<Item, { kind: 'tool' }>; under: string | null }[] = []
+  const walk = (items: Item[], under: string | null) => {
+    for (const item of items) {
+      if (item.kind !== 'tool') continue
+      if (item.task ? item.task.state !== 'done' : item.state === 'running') running.push({ item, under })
+      walk(item.children, item.label)
+    }
+  }
+  walk(view.items, null)
+  const latest = running.reduce<(typeof running)[number] | null>((a, b) => (a && a.item.seq > b.item.seq ? a : b), null)
+  return latest && { label: latest.item.label, under: latest.under, lastTool: latest.item.task?.lastTool ?? null, since: latest.item.at }
+}
+
+// 一段时长，写成终端里那样短的样子：[中文, 英文]。 / A duration, written as briefly as a terminal would: [Chinese, English].
+export function span(seconds: number): [string, string] {
+  const s = Math.max(0, Math.floor(seconds))
+  if (s < 60) return [`${s}秒`, `${s}s`]
+  const pad = (n: number) => String(n).padStart(2, '0')
+  if (s < 3600) return [`${Math.floor(s / 60)}分${pad(s % 60)}秒`, `${Math.floor(s / 60)}m ${pad(s % 60)}s`]
+  return [`${Math.floor(s / 3600)}小时${pad(Math.floor(s / 60) % 60)}分`, `${Math.floor(s / 3600)}h ${pad(Math.floor(s / 60) % 60)}m`]
+}
+
+// 多久没有动静就提醒一下：可能只是一条命令跑得久，也可能卡住了。 / How long without a sign of life before it is flagged: a long command, or stuck.
+export const QUIET = 90
