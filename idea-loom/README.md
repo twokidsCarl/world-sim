@@ -164,9 +164,16 @@ generated from it.
 - **推进 / Advance**：在开发页对一个子项目点"推进"，模型读它的 README 和最近的 PR，提议下一个里程碑，建成一个待开工的任务。
   Press "advance" on a subproject and the model reads its README and recent PRs, proposes
   the next milestone and files it as a todo task.
-- **回看 / Review**：在许愿池页点"回看我最近的使用"，模型读一遍操作轨迹，提出最多三条愿望，由你决定记不记。
-  Press "review my recent use" on the wish page and the model reads the action trail and
-  proposes up to three wishes for you to keep or drop.
+- **回看 / Review**：每攒够 300 条操作，后台就自己回看一次（记操作的接口顺手检查，最多一分钟查一次，不让请求等；同一时间只跑一次；没有模型可用时不跑，失败了一小时后再试）。模型读一遍操作轨迹，提出最多五条愿望，给每条打 1–5 分的重要程度和一句理由；4 分及以上的直接记进许愿池（来源 review），其余的丢掉。它会拿到许愿池里已有的全部标题和以前丢掉的，免得重复。每次回看记在 `runs/reviews.jsonl`，许愿池页列出最近十次：记了什么、丢了什么、为什么；丢掉的点"还是记进许愿池"就能捞回来。页上的"现在回看"立刻在后台跑一次。
+  Every 300 actions the backend reviews by itself (the trail route checks along the way, at
+  most once a minute, without making the request wait; one review at a time; none without
+  a model, and an hour's pause after a failure). The model reads the action trail, proposes
+  up to five wishes and gives each an importance from 1 to 5 with a one-line reason; those
+  at 4 or above go straight into the wish pool (source "review") and the rest are dropped.
+  It is given every title already in the pool and the earlier dropped ones, so it does not
+  repeat them. Each review is logged in `runs/reviews.jsonl` and the wish page lists the
+  last ten: what was recorded, what was dropped and why; "Record it anyway" rescues a
+  dropped one. "Review now" on the page runs one in the background straight away.
 
 ## 运行 / Run
 
@@ -302,16 +309,16 @@ the world-sim git history and skips itself without it.
 | `data/tasks.jsonl` | 开发任务的事件 / development task events |
 | `data/play/*.json` | 还没有自己的 `sim.json` 的项目的临时名片（现在是空的：五个项目都有自己的了）/ interim card files for projects without their own `sim.json` (empty now: all five have their own) |
 
-`runs/`（不进 git）里是模型的提议 `proposals.jsonl`、每次调用的用量 `llm.jsonl`、操作轨迹 `trail.jsonl`、小助手的对话 `assistant/` 和作业 `jobs/`。
+`runs/`（不进 git）里是模型的提议 `proposals.jsonl`、每次调用的用量 `llm.jsonl`、操作轨迹 `trail.jsonl`、回看记录 `reviews.jsonl`、小助手的对话 `assistant/` 和作业 `jobs/`。
 
 `runs/` (not in git) holds the model's proposals in `proposals.jsonl`, the usage of
-every call in `llm.jsonl`, the action trail in `trail.jsonl`, the assistant's
+every call in `llm.jsonl`, the action trail in `trail.jsonl`, the review log in `reviews.jsonl`, the assistant's
 conversations under `assistant/` and the jobs under `jobs/`.
 
-以上是本地的存法。设了 `IDEA_LOOM_DB`（云端）之后，`ideas`、`wishes`、`tasks`、`trail`、`proposals`、`llm` 这六条日志改存进一个 SQLite 文件的事件表，读写的接口不变（`store.py`）；仓库里的文件变成导出的记录。`uv run idea-loom db import` 把现有的文件并进数据库（可以反复做，不会重复），`db export <目录>` 导出成和原来逐字节相同的文件，`db status` 看每条日志有多少事件。
+以上是本地的存法。设了 `IDEA_LOOM_DB`（云端）之后，`ideas`、`wishes`、`tasks`、`trail`、`proposals`、`llm`、`suggestions`、`reviews` 这八条日志改存进一个 SQLite 文件的事件表，读写的接口不变（`store.py`）；仓库里的文件变成导出的记录。`uv run idea-loom db import` 把现有的文件并进数据库（可以反复做，不会重复），`db export <目录>` 导出成和原来逐字节相同的文件，`db status` 看每条日志有多少事件。
 
-That is how things are stored locally. With `IDEA_LOOM_DB` set (the cloud), the six logs
-`ideas`, `wishes`, `tasks`, `trail`, `proposals` and `llm` go into an event table in one
+That is how things are stored locally. With `IDEA_LOOM_DB` set (the cloud), the eight logs
+`ideas`, `wishes`, `tasks`, `trail`, `proposals`, `llm`, `suggestions` and `reviews` go into an event table in one
 SQLite file instead, behind the same read and write interface (`store.py`), and the files
 in the repository become an exported record. `uv run idea-loom db import` merges the
 existing files into the database (repeatable, never duplicating), `db export <dir>` writes

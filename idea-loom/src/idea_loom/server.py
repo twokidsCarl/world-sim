@@ -29,6 +29,9 @@ async def _lifespan(_app: FastAPI):
         import threading as _threading
 
         _threading.Thread(target=lambda: stats.cached(), daemon=True, name="stats-warm").start()
+        # 上次关掉时已经攒够了的话，启动后就回看一次。 / If enough actions had piled up before the last shutdown, review once on start.
+        if config.serves_hub():
+            _threading.Thread(target=review.maybe_start, daemon=True, name="review-check").start()
     if config.role() == "play":
         from . import cloud
         from .play import keeper
@@ -378,7 +381,11 @@ def post_trail(body: TrailBody, request: Request) -> dict[str, int]:
     user = current_user(request)
     for action in body.actions:
         action.user = "" if user.role == "owner" else user.login  # 以登录的身份为准，不信请求里带的 / trust the session, not the request body
-    return {"saved": trail.append(body.actions)}
+    saved = trail.append(body.actions)
+    if user.role == "owner":
+        # 主人的操作攒够了就在后台自己回看一次；这里不等它。 / Once enough of the owner's actions pile up, review in the background; this request does not wait.
+        review.maybe_start()
+    return {"saved": saved}
 
 
 # ---------- 小助手 / assistant ----------
@@ -639,31 +646,29 @@ def revert_job(job_id: str) -> dict[str, list[str]]:
 # ---------- 回看与推进 / review and advance ----------
 
 
-class WishFromReview(BaseModel):
-    title: str
-    kind: str
-    stuck: str = ""
-    suggestion: str = ""
-
-
 @app.get("/api/review", response_model=review.ReviewStatus)
 def review_status() -> review.ReviewStatus:
+    """攒了多少操作、是不是正在回看，和最近几次回看的记录。 / How many actions have piled up, whether a review is running, and the recent review log."""
     return review.status()
 
 
-@app.post("/api/review", response_model=list[review.Suggestion])
-def review_run() -> list[review.Suggestion]:
+@app.post("/api/review", response_model=review.ReviewStatus)
+def review_run() -> review.ReviewStatus:
+    """现在回看：在后台开始，立刻返回；界面看 running 等它做完。 / Review now: starts in the background and returns at once; the UI watches running."""
     try:
-        return _do(review.run)
-    except ValueError as e:
+        review.start()
+    except review.ReviewError as e:
         raise HTTPException(409, str(e))
+    return review.status()
 
 
-@app.post("/api/wishes", response_model=wishes.WishDetail)
-def record_wish_from_review(body: WishFromReview) -> wishes.WishDetail:
-    """只给"回看"用：把一条你接受了的提议记进许愿池。 / For the review only: record a suggestion you accepted."""
-    wish_id = _do(wishes.record, title=body.title, kind=body.kind, stuck=body.stuck, suggestion=body.suggestion, by="review",
-                  question="（回看操作轨迹时提出的）")
+@app.post("/api/review/{run_id}/rescue/{index}", response_model=wishes.WishDetail)
+def rescue_review_finding(run_id: str, index: int) -> wishes.WishDetail:
+    """把回看时丢掉的一条捞回来，记进许愿池。 / Rescue a finding a review dropped and record it in the wish pool."""
+    try:
+        wish_id = _do(review.rescue, run_id, index)
+    except review.ReviewError as e:
+        raise HTTPException(409, str(e))
     return wishes.get(wish_id)
 
 

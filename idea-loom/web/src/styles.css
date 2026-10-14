@@ -552,6 +552,11 @@ a.button.inline { display: inline-block; }
 .job-events { gap: 2px; margin-top: 8px; }
 .job-pre { margin: 8px 0 0; padding: 10px 12px; max-height: 260px; overflow: auto; background: var(--sunken); border-radius: 6px; font: 12px/1.5 'SF Mono', Menlo, monospace; white-space: pre-wrap; }
 .review { display: grid; gap: 10px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+/* 回看记录：每次一行，展开看每条发现；丢掉的淡一点 / the review log: one line per review, opened for its findings; dropped ones are faded */
+.review-log { display: grid; gap: 4px; }
+.review-run summary { cursor: pointer; color: var(--ink-2); font-size: 12.5px; }
+.review-findings { list-style: none; margin: 6px 0 4px; padding: 0 0 0 14px; display: grid; gap: 8px; }
+.review-findings li.dropped > :not(button) { opacity: 0.65; }
 
 /* 玩：单列卡片流 / play: the single-column feed */
 .play { display: grid; grid-template-columns: minmax(0, 1fr) 64px; grid-template-rows: minmax(0, 1fr) auto; gap: 10px 12px; height: calc(100vh - 210px); min-height: 420px; }
