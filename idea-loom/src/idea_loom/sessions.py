@@ -128,6 +128,9 @@ class Meta(BaseModel):
     # Tokens used by the whole session so far (input, output, cache read, cache write), updated as each turn ends.
     tokens: dict[str, int] = Field(default_factory=dict)
     turns: int = 0
+    # 做完了的时刻：一轮结束、后台没有任务在跑。和"停下来等你说话"分开，界面据此显示"做完了"。再开一轮就清掉。
+    # When it finished: a turn ended with no background task running. Kept apart from "stopped to let you speak" so the UI can say "done"; cleared when another turn begins.
+    done_at: Optional[float] = None
     tasks: int = 0  # 后台还在跑的任务（子 Agent、后台命令）有几个 / how many background tasks (subagents, background commands) are still running
     waiting_for: Optional[str] = None  # 在等你回答什么，一句话 / what awaits your answer, in a sentence
     created_at: float
@@ -693,6 +696,7 @@ def _task(live: _Live, kind: str, message: Any) -> None:
 def _begin(live: _Live, by_itself: bool) -> None:
     live.busy, live.turn_started = True, time.monotonic()
     live.turn_done.clear()
+    live.meta.done_at = None
     if by_itself:
         # 没人说话它自己开了一轮：后台的子 Agent 做完了，Claude Code 收到通知接着做。
         # A turn began with nobody speaking: a background subagent finished and Claude Code carries on after its notification.
@@ -706,11 +710,16 @@ def _end(live: _Live) -> None:
     spent = {k: v - int(live.logged.get(k) or 0) for k, v in llm.add_tokens(live.meta.tokens).items()}
     live.logged = dict(live.meta.tokens)
     llm.log_call("session", "claude-code", time.monotonic() - live.turn_started, {"cost_usd": None, "session": live.meta.sdk_session, **spent}, ok=True)
+    # 后台还有子 Agent 在跑，这一轮说完了也不算做完：它们回来后 Claude Code 会自己接着做。
+    # With subagents still running in the background, the end of a turn is not the end of the work: when they return Claude Code carries on by itself.
+    done = not live.tasks
+    live.meta.done_at = time.time() if done else None
     _set(live, "idle")
     live.busy, live.idle_since = False, time.monotonic()
     live.turn_done.set()
-    # 自动模式下人多半不在：一轮做完了也说一声。 / In auto mode the owner is probably away: say so when a turn is done, too.
-    notify.send("Claude Code 做完了一轮", live.meta.title[:200], url=f"/sessions/{live.meta.id}", tag=live.meta.id)
+    # 只在真的做完时说一声：自己往下推的时候中间那些轮不打扰人。 / Say so only when it is really done; the turns in between while it carries on by itself do not disturb anyone.
+    if done:
+        notify.send("Claude Code 做完了", live.meta.title[:200], url=f"/sessions/{live.meta.id}", tag=live.meta.id)
 
 
 async def _read(live: _Live, client: Any) -> None:
@@ -822,7 +831,7 @@ async def _handle(live: _Live, command: dict[str, Any]) -> None:
         # 一收到就算"在跑"：否则界面在它真正开始之前的那一瞬间会以为它闲着，可以再发一条。
         # It counts as running the moment the message arrives; otherwise, in the instant before it really starts, the UI would think it idle and allow another message.
         live.busy = True
-        live.meta.status = "running"
+        live.meta.status, live.meta.done_at = "running", None
         _save(live.meta)
         await live.inbox.put({"text": str(command.get("text") or "").strip(), "images": list(command.get("images") or [])[:4]})
     elif kind == "answer":

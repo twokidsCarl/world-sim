@@ -354,7 +354,7 @@ def test_auto_mode_model_and_effort(fake, monkeypatch):
         await sessions.answer(meta.id, plan["request_id"], "approve_auto")
         meta = await until(meta.id, "idle")
         await asyncio.sleep(0.05)
-        assert meta.mode == "auto" and fake.made[0].modes == ["auto"] and "Claude Code 做完了一轮" in sent
+        assert meta.mode == "auto" and fake.made[0].modes == ["auto"] and "Claude Code 做完了" in sent
         with pytest.raises(sessions.SessionError, match="模型只能是"):
             await sessions.set_engine(meta.id, "gpt", "high")
         with pytest.raises(sessions.SessionError, match="努力程度只能是"):
@@ -494,6 +494,8 @@ def test_subagents_are_followed_after_the_turn_ends_and_their_steps_are_kept_apa
     when it is done Claude Code opens another turn by itself. All of that must be read, and each subagent step must
     say whose it is.
     """
+    sent = []
+    monkeypatch.setattr(sessions.notify, "send", lambda title, body="", **k: sent.append(title) or 0)
     monkeypatch.setenv("IDEA_LOOM_SESSION_IDLE", "0.01")   # 闲一点点就会歇——除非还有后台任务 / it would rest almost at once, unless background tasks remain
     monkeypatch.setattr(sessions, "POLL", 0.01)
     Started, Progress, Notified = kind("TaskStartedMessage"), kind("TaskProgressMessage"), kind("TaskNotificationMessage")
@@ -513,7 +515,7 @@ def test_subagents_are_followed_after_the_turn_ends_and_their_steps_are_kept_apa
                                         System(subtype="init", data={}), say("子 Agent 回来了：两个文件"), done(0.03)])]]
         meta = await sessions.start(sessions.NewSession(text="派个子 Agent 去查", mode="auto"))
         first = await until(meta.id, "idle")
-        assert first.tasks == 1 and first.live                                                   # 这一轮说完了，子 Agent 还在跑 / the turn is over, the subagent still runs
+        assert first.tasks == 1 and first.live and first.done_at is None                         # 这一轮说完了，子 Agent 还在跑：不算做完 / the turn is over but the subagent still runs: not done
         await asyncio.sleep(0.1)
         assert sessions.get(meta.id).live                                                        # 有后台任务，不歇 / background work keeps it from resting
         for _ in range(300):                                                                     # 等 Claude Code 自己开的那一轮做完 / wait for the turn Claude Code opens by itself
@@ -522,7 +524,7 @@ def test_subagents_are_followed_after_the_turn_ends_and_their_steps_are_kept_apa
             await asyncio.sleep(0.01)
         last = await until(meta.id, "idle")
         assert [e["status"] for e in sessions.events(meta.id) if e["type"] == "status"][-2:] == ["running", "idle"]
-        assert last.tasks == 0 and last.turns == 2 and last.cost_usd == 0.03
+        assert last.tasks == 0 and last.turns == 2 and last.cost_usd == 0.03 and last.done_at   # 子 Agent 回来、那一轮也说完了，才算做完 / done only once the subagent is back and that turn is over
         events = sessions.events(meta.id)
         assert [(e["type"], e.get("parent")) for e in events if e["type"] in ("tool", "tool_result", "text")] == [
             ("tool", None), ("tool_result", None), ("tool", "ag1"), ("text", None), ("tool_result", "ag1"), ("text", "ag1"), ("text", None)]
@@ -531,6 +533,14 @@ def test_subagents_are_followed_after_the_turn_ends_and_their_steps_are_kept_apa
         assert tasks[-1]["summary"] == "看完了：两个文件"
         assert [e["type"] for e in events].count("resumed") == 1 and fake.made[0].prompts == ["派个子 Agent 去查"]
         assert await sessions._gone(meta.id, 3)                                                  # 做完了才歇 / it rests only once all is done
+        assert sent == ["Claude Code 做完了"] and sessions.get(meta.id).done_at                 # 中间那一轮不通知；歇下了也还是"做完了" / no notice for the turn in between; still done after resting
+        fake.script = [[("ask", "Bash", {"command": "ls"}), done()]]
+        await sessions.say(meta.id, "再查一个")
+        await until(meta.id, "waiting")
+        assert sessions.get(meta.id).done_at is None                                             # 再说话就不算做完了，停下来问你也不算 / speaking again means it is no longer done, and stopping to ask is not done either
+        (request,) = sessions._open_requests(meta.id)
+        await sessions.answer(meta.id, request, "allow")
+        assert (await until(meta.id, "idle")).done_at
 
     asyncio.run(main())
 

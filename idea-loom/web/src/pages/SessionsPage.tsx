@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { type SessionList, type Subagent, api } from '../api'
 import { useDraft } from '../sessions/drafts'
-import { SESSION_SHOWS, type SessionShow, inShow, loadShow, saveShow, shownStatus, tally } from '../sessions/filter'
+import { SESSION_SHOWS, type SessionShow, doneAt, inShow, loadShow, saveShow, shownStatus, tally } from '../sessions/filter'
 import { askToNotify, notifyState } from '../sessions/notify'
 import { SessionView } from '../sessions/SessionView'
 import { useWaiting } from '../sessions/waiting'
@@ -61,7 +61,7 @@ export function SessionsPage() {
       setError(e instanceof Error ? e.message : String(e))
     }
   }
-  const label: Record<string, string> = { idle: t('等你说话', 'idle'), running: t('在干活', 'working'), waiting: t('等你回答', 'needs you'), closed: t('已结束', 'closed'), error: t('出错了', 'failed') }
+  const label: Record<string, string> = { done: t('做完了', 'done'), idle: t('等你说话', 'idle'), running: t('在干活', 'working'), waiting: t('等你回答', 'needs you'), closed: t('已结束', 'closed'), error: t('出错了', 'failed') }
   const agentState: Record<Subagent['state'], string> = { running: t('在跑', 'running'), done: t('回来了', 'back'), failed: t('失败了', 'failed'), stopped: t('没做完', 'stopped') }
   const showName: Record<SessionShow, string> = { open: t('没结束的', 'Unfinished'), closed: t('已结束', 'Finished'), all: t('全部', 'All') }
   const sessions = list?.sessions ?? []
@@ -113,7 +113,7 @@ export function SessionsPage() {
               </span>
               {show !== 'closed' && (
                 <span className="muted small">
-                  {(['running', 'waiting', 'idle', 'error'] as const).filter((k) => counts.statuses[k]).map((k) => `${label[k]} ${counts.statuses[k]}`).join(' · ')}
+                  {(['running', 'waiting', 'done', 'idle', 'error'] as const).filter((k) => counts.statuses[k]).map((k) => `${label[k]} ${counts.statuses[k]}`).join(' · ')}
                 </span>
               )}
             </div>
@@ -125,7 +125,9 @@ export function SessionsPage() {
                 <button className={`session-pick${s.id === id ? ' on' : ''}`} onClick={() => navigate(`/sessions/${s.id}`)}>
                   <strong>{s.title}</strong>
                   <span className={`small ${s.status === 'waiting' ? 'session-needs' : 'muted'}`}>
+                    {shownStatus(s) === 'done' && '✓ '}
                     {label[shownStatus(s)]}
+                    {shownStatus(s) === 'done' && s.done_at && ` · ${doneAt(s.done_at)}`}
                     {s.waiting_for && ` · ${s.waiting_for}`}
                   </span>
                 </button>

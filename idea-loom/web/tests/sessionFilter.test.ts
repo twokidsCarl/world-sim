@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { inShow, readShow, shownStatus, tally } from '../src/sessions/filter'
+import { doneAt, inShow, readShow, shownStatus, tally } from '../src/sessions/filter'
 
 const s = (status: 'idle' | 'running' | 'waiting' | 'closed' | 'error', live = true) => ({ status, live })
 
@@ -24,5 +24,21 @@ describe('session filter', () => {
 
   it('reads a remembered choice and falls back to unfinished', () => {
     expect([readShow('all'), readShow('closed'), readShow(null), readShow('nonsense')]).toEqual(['all', 'closed', 'open', 'open'])
+  })
+
+  it('tells done apart from plain idle, and only while it is idle', () => {
+    expect(shownStatus({ status: 'idle', live: true, done_at: 100 })).toBe('done')
+    expect(shownStatus({ status: 'idle', live: false, done_at: 100 })).toBe('done')       // 歇下了也还是做完了 / still done after resting
+    expect(shownStatus({ status: 'idle', live: true, done_at: null })).toBe('idle')       // 后台还有任务，或者停下来等你说话 / background work remains, or it stopped for you to speak
+    expect(shownStatus({ status: 'running', live: true, done_at: 100 })).toBe('running')
+    expect(shownStatus({ status: 'closed', live: false, done_at: 100 })).toBe('closed')
+    const { shows, statuses } = tally([{ status: 'idle', live: true, done_at: 1 }, s('idle'), s('closed', false)])
+    expect([shows.open, statuses.done, statuses.idle]).toEqual([2, 1, 1])                  // 做完了的仍算没结束 / done still counts as unfinished
+  })
+
+  it('writes the time it finished, with the date when not today', () => {
+    const now = new Date(2026, 9, 14, 17, 0)
+    expect(doneAt(new Date(2026, 9, 14, 16, 37).getTime() / 1000, now)).toBe('16:37')
+    expect(doneAt(new Date(2026, 9, 13, 9, 5).getTime() / 1000, now)).toBe('10/13 09:05')
   })
 })

@@ -7,6 +7,7 @@ import { useLang, useT } from '../state/store'
 import { RestartNotice } from '../ui/RestartNotice'
 import { usageLine, usageTitle } from '../ui/viz'
 import { useDraft } from './drafts'
+import { doneAt, shownStatus } from './filter'
 import { mark, tell } from './notify'
 import { type Item, QUIET, type Question, type SessionEvent, type View, doing, emptyView, fold, pending, span } from './view'
 import { useWaiting } from './waiting'
@@ -98,6 +99,8 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
   // 进程还在的时候，每一张没回答的卡片都能回答；进程不在了（重启过、结束了），它们才算"没有回答"。
   // While the process is up every unanswered card can be answered; only when it is gone (restarted, closed) do they count as "not answered".
   const alive = !!meta?.live && status !== 'closed' && status !== 'error'
+  // 顶部显示的：闲着里分出"做完了"。 / What the top shows: "done" is told apart from plain idle.
+  const shown = meta ? shownStatus(meta) : status
   const waiting = alive ? pending(view) : []
   const busy = status === 'running' || status === 'waiting'
   // 干活时用事件里边干边加的数，闲下来以会话记下的准数为准。 / While it works use the running figure from the events; once idle the session's recorded figure wins.
@@ -132,14 +135,16 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
   ]
   // 需要你、或者做完了：不在这一页时通知，并在标签页标题上做记号。 / Needs you, or done: notify when you are elsewhere and mark the tab title.
   const was = useRef<string>('')
-  const now = waiting.length ? 'waiting' : status
+  // 只在真的做完时说"做完了"：后台还有子 Agent 在跑时这一轮说完了，并不需要你。
+  // "Done" only when it really is: a turn ending while subagents still run in the background does not need you.
+  const now = waiting.length ? 'waiting' : shown
   useEffect(() => {
     if (was.current && was.current !== now) {
       if (now === 'waiting') tell(t('Claude Code 在等你', 'Claude Code needs you'), meta?.waiting_for ?? meta?.title ?? '', id)
-      else if (now === 'idle') tell(t('Claude Code 做完了一轮', 'Claude Code finished a turn'), meta?.title ?? '', id)
+      else if (now === 'done') tell(t('Claude Code 做完了', 'Claude Code is done'), meta?.title ?? '', id)
     }
     was.current = now
-    mark(now === 'waiting' ? '●' : now === 'idle' && document.visibilityState !== 'visible' ? '✓' : null)
+    mark(now === 'waiting' ? '●' : now === 'done' && document.visibilityState !== 'visible' ? '✓' : null)
     const clear = () => {
       if (document.visibilityState === 'visible' && now !== 'waiting') mark(null)
     }
@@ -163,9 +168,11 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
         />
       )}
       <div className="session-bar">
-        <span className={`badge session-status ${status}`}>
-          {status === 'running' && <span className="spin" aria-hidden="true">◌</span>}{' '}
-          {{ idle: t('等你说话', 'Waiting for you to speak'), running: t('在干活', 'Working'), waiting: t('等你回答', 'Waiting for your answer'), closed: t('已结束', 'Closed'), error: t('出错了', 'Failed') }[status]}
+        <span className={`badge session-status ${shown}`} title={shown === 'done' ? t('这一轮说完了，后台也没有任务在跑。接着说话就继续。', 'The turn is over and nothing runs in the background. Say something to carry on.') : undefined}>
+          {status === 'running' && <span className="spin" aria-hidden="true">◌</span>}
+          {shown === 'done' && '✓'}{' '}
+          {{ done: t('做完了', 'Done'), idle: t('等你说话', 'Waiting for you to speak'), running: t('在干活', 'Working'), waiting: t('等你回答', 'Waiting for your answer'), closed: t('已结束', 'Closed'), error: t('出错了', 'Failed') }[shown]}
+          {shown === 'done' && meta?.done_at ? ` · ${doneAt(meta.done_at)}` : ''}
         </span>
         {/* 这一轮说完了，后台的子 Agent 还在跑：它们做完后 Claude Code 会自己接着做。 / The turn is over but background subagents still run; when they finish Claude Code carries on by itself. */}
         {meta?.live && backgroundTasks > 0 && (
