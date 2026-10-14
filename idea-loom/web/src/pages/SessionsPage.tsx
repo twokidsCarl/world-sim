@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { type SessionList, api } from '../api'
+import { useDraft } from '../sessions/drafts'
 import { askToNotify, notifyState } from '../sessions/notify'
 import { SessionView } from '../sessions/SessionView'
 import { useT } from '../state/store'
@@ -13,7 +14,8 @@ export function SessionsPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [list, setList] = useState<SessionList | null>(null)
-  const [draft, setDraft] = useState('')
+  // 新开会话那一框的草稿，刷新也还在。 / The draft in the start box, kept across a reload.
+  const { text: draft, setText: setDraft } = useDraft('session:new')
   // 起始的模式、模型、努力程度，记住上次选的。 / The starting mode, model and effort, remembered from last time.
   const [choice, setChoice] = useState(() => {
     let saved: { mode?: string; model?: string; effort?: string } = {}

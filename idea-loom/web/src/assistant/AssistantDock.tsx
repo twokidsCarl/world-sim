@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { type Attached, MAX_IMAGES, canCapture, captureTab, fromFile, imagesIn } from './images'
 import { Link, useLocation } from 'react-router'
 import { api } from '../api'
+import { useDraft } from '../sessions/drafts'
 import { plural } from '../i18n'
 import { formatTime } from '../state/derive'
 import { useStore, useT } from '../state/store'
@@ -46,7 +47,8 @@ export function AssistantDock() {
   const { page, load } = useStore()
   const t = useT()
   const location = useLocation()
-  const [draft, setDraft] = useState('')
+  // 草稿存起来，刷新页面也还在。 / The draft is stored and survives a page reload.
+  const { text: draft, setText: setDraft, images: attached, setImages: setAttached } = useDraft('assistant')
   const [floating, setFloating] = useState(typeof window !== 'undefined' && window.innerWidth < FLOAT_BELOW)
   const [showHistory, setShowHistory] = useState(false)
   const log = useRef<HTMLDivElement>(null)
@@ -109,7 +111,6 @@ export function AssistantDock() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastStatus, a.turns.length])
 
-  const [attached, setAttached] = useState<Attached[]>([])
   const [imageNote, setImageNote] = useState<string | null>(null)
   const picker = useRef<HTMLInputElement>(null)
   const addImages = async (files: File[]) => {
