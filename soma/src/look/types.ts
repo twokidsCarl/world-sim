@@ -67,3 +67,25 @@ export interface SkinColourData {
 
 /** 色调滑块的缺省值（与 skin-colour.json 的 tone.default 相同；数据到之前用它）/ the tone slider's default (equal to tone.default in skin-colour.json; used until the data arrive) */
 export const DEFAULT_TONE = 12
+// —— 写实的眼 / the lifelike eyes ——
+
+/** 虹膜颜色的预设（颜色见 src/look/eyes.ts 的 IRIS_COLOURS）/ The iris colour presets (colours in IRIS_COLOURS of src/look/eyes.ts). */
+export const IRIS_NAMES = ['brown', 'dark', 'hazel', 'green', 'blue', 'grey'] as const
+export type IrisName = (typeof IRIS_NAMES)[number]
+export const DEFAULT_IRIS: IrisName = 'brown'
+/** 预设的名字 / the presets' names */
+export const IRIS_LABELS: Record<IrisName, { zh: string; en: string }> = {
+  brown: { zh: '棕', en: 'brown' },
+  dark: { zh: '深棕', en: 'dark brown' },
+  hazel: { zh: '榛色', en: 'hazel' },
+  green: { zh: '绿', en: 'green' },
+  blue: { zh: '蓝', en: 'blue' },
+  grey: { zh: '灰', en: 'grey' },
+}
+
+/**
+ * 注视：'camera' 看着相机（缺省）；或者固定的角度（度，头部坐标）：yaw 正 = 向人体左侧（迎面看是观看者的右边），pitch 正 = 向上。
+ * Gaze: 'camera' looks at the camera (default); or fixed angles (degrees, head frame): positive yaw = towards the
+ * body's left (the viewer's right when facing it), positive pitch = up.
+ */
+export type GazeSetting = 'camera' | { yaw: number; pitch: number }

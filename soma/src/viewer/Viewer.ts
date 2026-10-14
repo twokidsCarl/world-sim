@@ -74,7 +74,7 @@ import {
   type Scales,
 } from '../anatomy/rig.ts'
 import { clampPose, mergePoses } from '../../tools/rig/pose.ts'
-import { faceFrame, setFacePaused } from '../face/driver.ts'
+import { addLidGaze, faceFrame, lidGazeChannels, setFacePaused } from '../face/driver.ts'
 import { displacePart, sameAUs, type AUs, type Activations, type LoadedFace } from '../pain/face.ts'
 import { Shaper } from '../../tools/rig/shape.ts'
 import { shapeIsDefault, type LoadedShape, type ShapeControls } from '../anatomy/shape.ts'
@@ -98,6 +98,8 @@ import { LookSkin } from '../look/lookSkin.ts'
 import { LookEnvironment } from '../look/environment.ts'
 import { SkinLook } from '../look/skinMaterial.ts'
 import type { LoadedSkinUv } from '../look/load.ts'
+import { EyeLook, LookEyes } from '../look/eyes.ts'
+import { fitEye, type EyeFit, type M3 } from '../look/eyesFit.ts'
 import { FLY_MIN_FILL, FLY_MIN_RADIUS, FLY_SPEED, displacementOf, ensureLumenData, fillingOf, lumenCandidates, registerLumenGeometry, reportFly, segmentIds, showCanal, useLumen, type LumenData, type LumenState } from '../lumen/state.ts'
 
 const LEGACY_SORT = typeof location !== 'undefined' && new URLSearchParams(location.search).get('sort') === 'origin'
@@ -207,6 +209,8 @@ export type ViewState = Pick<
   | 'skinOpaque'
   | 'look'
   | 'tone'
+  | 'iris'
+  | 'gaze'
   | 'skinUv'
   | 'shape'
   | 'shapeControls'
@@ -348,6 +352,12 @@ export class Viewer {
   private lookWanted = true
   /** 每个皮肤顶点的写实 UV（给皱纹层），按 appliedSkinUv 缓存 / the lifelike UV per skin vertex (for the wrinkle layer), cached for appliedSkinUv */
   private lookUvPerSkin: Float32Array | null = null
+  /** 写实的眼（src/look/eyes.ts）、扫描眼球部件的下标（写实的眼显示时藏起来）/ the lifelike eyes (src/look/eyes.ts) and the scanned eyeball parts (hidden while they show) */
+  private lookEyes: LookEyes | null = null
+  private readonly eyeLook = new EyeLook()
+  private eyeParts: { L: number[]; R: number[]; sclera: number[] } = { L: [], R: [], sclera: [] }
+  private eyesDirty = false
+  private eyesT = 0
   private readonly detailWeights: number[] = []
   /** 被改写过静止几何的部件：原始的位置与法线 / Parts whose rest geometry was rewritten: their original positions and normals. */
   private restOrig = new Map<number, { position: Float32Array; normal: Float32Array }>()
@@ -812,6 +822,8 @@ export class Viewer {
     this.lookSkin = null
     this.appliedSkinUv = null
     this.lookUvPerSkin = null
+    this.lookEyes = null
+    this.eyeParts = { L: [], R: [], sclera: [] }
     this.painOverlay = null
     this.dispOverlay = null
     this.clearStim()
@@ -1160,6 +1172,7 @@ export class Viewer {
       p.provenanceHidden !== s.provenanceHidden ||
       p.colorMode !== s.colorMode ||
       this.stimDirty ||
+      this.eyesDirty ||
       p.skinHide !== s.skinHide ||
       p.peel !== s.peel ||
       p.skinOpaque !== s.skinOpaque ||
@@ -1169,6 +1182,7 @@ export class Viewer {
       p.selection !== s.selection
     this.stimDirty = false
     this.lumenDirty = false
+    this.eyesDirty = false
     const explodeChanged =
       !p ||
       p.explode !== s.explode ||
@@ -1179,6 +1193,7 @@ export class Viewer {
     const boostChanged = !p || p.nerveBoost !== s.nerveBoost
     this.syncDetail(s)
     this.syncLook(s)
+    this.syncEyes(s)
     // 写实外观：皮肤画成不透明时才去取 UV 网格 / lifelike look: the UV mesh is fetched only once the skin is drawn opaque
     if (this.source === useApp.getState && s.look && !s.skinUv && skinDrawnOpaque(s, this.mainSkin)) void useApp.getState().ensureSkinUv()
     // 皮肤不透明时要藏哪些部件，写在管线报告里：第一次用到时去取 / which parts to hide under an opaque skin is in the pipeline report: fetched on first use
@@ -1271,6 +1286,7 @@ export class Viewer {
         },
         this.display,
       )
+      this.hideScannedEyes(s)
       this.applyLumenDisplay(s, lumen)
       for (let i = 0; i < parts.length; i++) this.applyPart(i, parts[i]!, s)
       this.updateLumenLayer(s)
@@ -1607,6 +1623,96 @@ export class Viewer {
     this.updateDetail()
   }
 
+  /**
+   * 写实的眼：写实外观要了、皮肤开口和扫描的巩膜都到了，就按扫描的巩膜和角膜拟合出两只眼并挂到皮肤上（泪液线是皮肤的跟随层）。
+   * The lifelike eyes: once the lifelike look is wanted and the skin openings and the scanned sclerae have arrived, two eyes are
+   * fitted to the scanned sclera and cornea and attached to the skin (the tear line is a skin follower).
+   */
+  private syncEyes(s: ViewState): void {
+    if (this.eyeLook.setIris(s.iris)) this.dirty = true
+    const i = this.mainSkinIndex()
+    if (!this.lookEyes && s.look && this.lookSkin && this.openings && i >= 0 && this.batches) {
+      const parts = this.graph.parts
+      const named = /^(left|right) (sclera|cornea|iris|lens|choroid|vitreous body)$|^optic part of (left|right) retina$|^anterior chamber of (left|right) eyeball$/i
+      const eyeParts: { L: number[]; R: number[]; sclera: number[] } = { L: [], R: [], sclera: [] }
+      const fits: EyeFit[] = []
+      for (const side of ['L', 'R'] as const) {
+        const own = parts.map((p, k) => ({ p, k })).filter(({ p }) => p.side === side && named.test(p.name))
+        eyeParts[side] = own.map(({ k }) => k)
+        const sclera = own.find(({ p }) => /sclera$/i.test(p.name))
+        const cornea = own.find(({ p }) => /cornea$/i.test(p.name))
+        if (!sclera || this.inst[sclera.k]! < 0) return // 巩膜还没加载，下次再来 / the sclera is not loaded yet; try again later
+        const pos = this.batches.partBuffers(this.inst[sclera.k]!).position.slice()
+        const cpos = cornea && this.inst[cornea.k]! >= 0 ? this.batches.partBuffers(this.inst[cornea.k]!).position.slice() : null
+        fits.push(fitEye(side, pos, cpos))
+        eyeParts.sclera.push(sclera.k)
+      }
+      this.eyeParts = eyeParts
+      const eyes = new LookEyes(fits, this.eyeLook, this.skinning, this.skinGeometry.get(i)!, this.openings)
+      this.lookEyes = eyes
+      this.root.add(eyes.group)
+      if (eyes.follower) this.addFollower(eyes.follower)
+      else eyes.setSkinning(this.skinMode)
+      this.eyesDirty = true
+      this.syncNeeded = true
+    }
+    // 睑随注视要用表情数据 / the lid coupling needs the face data
+    if (this.source === useApp.getState && this.lookEyes?.visible && !s.face) void useApp.getState().ensureFace()
+  }
+
+  /** 哪一侧有扫描的眼球部件被选中：那一侧画解剖部件、不画写实的眼 / Which sides have a scanned eyeball part selected: that side shows the anatomical parts, not the lifelike eye. */
+  private eyeSidesSelected(s: ViewState): { L: boolean; R: boolean } {
+    const sel = s.selection.set
+    const parts = this.graph.parts
+    return { L: this.eyeParts.L.some((k) => sel.has(parts[k]!.id)), R: this.eyeParts.R.some((k) => sel.has(parts[k]!.id)) }
+  }
+
+  /** 写实的眼要显示时，扫描的眼球部件不画（选中的那一侧除外）；它们仍在结构树里 / While the lifelike eyes show, the scanned eyeball parts are not drawn (except on a selected side); they stay in the tree. */
+  private hideScannedEyes(s: ViewState): void {
+    const i = this.mainSkinIndex()
+    if (!this.lookEyes || !s.look || !this.lookSkin || i < 0 || i === this.skinIndex || this.display[i] !== NORMAL || !skinDrawnOpaque(s, this.mainSkin)) return
+    const sel = this.eyeSidesSelected(s)
+    for (const side of ['L', 'R'] as const) {
+      if (sel[side]) continue
+      for (const k of this.eyeParts[side]) this.display[k] = HIDDEN
+    }
+  }
+
+  /** 推进注视（看相机或固定角度）；转动时重画 / Advance the gaze (camera or fixed angles); redraw while it turns. */
+  private stepEyes(t: number): void {
+    const eyes = this.lookEyes
+    if (!eyes?.visible) {
+      this.eyesT = 0
+      return
+    }
+    const dt = this.eyesT ? Math.min(0.1, Math.max(0, (t - this.eyesT) / 1000)) : 0
+    this.eyesT = t
+    let skull: { rigid: M3; t: [number, number, number] } | null = null
+    const k = this.eyeParts.sclera[0]
+    if (this.skinMode !== 'off' && this.poseRt && this.batches && k !== undefined && this.inst[k]! >= 0) {
+      // 头骨关节的行：取扫描巩膜第一个顶点的绑定 / the skull joint's row: the binding of the scanned sclera's first vertex
+      const row = this.batches.partBuffers(this.inst[k]!).skinIndex[0]!
+      eyes.setJointRow(row)
+      const rigid = this.poseRt.frames.rigid[row], full = this.poseRt.frames.xfs[row]
+      if (rigid && full) skull = { rigid: rigid.r as M3, t: full.t as [number, number, number] }
+    }
+    const c = this.camera.position
+    if (eyes.step(dt, [c.x, c.y, c.z], this.source().gaze, skull)) this.dirty = true
+  }
+
+  /** 睑随注视：各眼此刻的垂直注视角（取到 0.5°，免得相机一动就重算皮肤）/ Lid coupling: each eye's current vertical gaze (to 0.5°, so the skin is not recomputed on every camera nudge). */
+  private lidGaze(): { side: 'L' | 'R'; pitch: number; pupilDistance: number }[] | null {
+    const eyes = this.lookEyes
+    if (!eyes?.visible) return null
+    return eyes.angles().map((a) => ({ side: a.side, pitch: Math.round(a.pitch * 2) / 2, pupilDistance: eyes.pupilDistance(a.side) }))
+  }
+
+  /** 写实的眼的状态（验证用）/ State of the lifelike eyes (verification). */
+  eyesState(): { built: boolean; visible: boolean; fits: EyeFit[]; angles: { side: string; yaw: number; pitch: number }[] } {
+    const e = this.lookEyes
+    return { built: !!e, visible: !!e?.visible, fits: e ? e.eyes.map((x) => x.fit) : [], angles: e ? e.angles() : [] }
+  }
+
   /** 写实外观是否正在显示：要了写实、有数据、皮肤画成不透明（不是体表图）/ Whether the lifelike look is showing: wanted, with data, and the skin drawn opaque (not as a skin map). */
   private lookShowing(): boolean {
     const i = this.mainSkinIndex()
@@ -1621,6 +1727,10 @@ export class Viewer {
       this.dirty = true
     }
     if (this.lookEnv.set(show)) this.dirty = true
+    if (this.lookEyes) {
+      const sel = this.eyeSidesSelected(this.source())
+      if (this.lookEyes.setVisible(show, { L: !sel.L, R: !sel.R })) this.dirty = true
+    }
     if (show && !this.lookUvPerSkin && this.appliedSkinUv) this.lookUvPerSkin = LookSkin.uvPerSkinVertex(this.appliedSkinUv)
     this.detailLayer?.useLook(show ? this.skinLook : null, show ? this.lookUvPerSkin : null)
   }
@@ -2250,6 +2360,9 @@ export class Viewer {
       cornerNow = Math.min(1, Math.max(0, shown / Math.max(1e-6, max)))
       if (cornerNow > 0) act.channels[corner] = Math.max(act.channels[corner] ?? 0, cornerNow)
     }
+    // 写实的眼转动时，上下睑跟着垂直注视走（src/face/driver.ts 的 lidGazeChannels）/ while the lifelike eyes turn, the lids follow vertical gaze (lidGazeChannels of src/face/driver.ts)
+    const lids = face ? this.lidGaze() : null
+    if (face && lids) addLidGaze(act.channels, lidGazeChannels(face.data, lids))
     // "差不多相同"不能挡住最后一步：表情已经完全放松而上次应用的还剩一点点时，必须真的归零，
     // 否则顶点留着亚微米的位移、姿势模式也回不到静止
     // "near enough" must not swallow the last step: when the expression has fully relaxed but a trace is
@@ -3546,6 +3659,7 @@ export class Viewer {
     }
     // 刺激先取样：它给表情一个强度、给姿势一个反射增量 / the stimulus is sampled first: it gives the face a level and the pose a reflex increment
     const stimulating = this.source === useApp.getState ? this.stepStim(stimFrame(t)) : false
+    this.stepEyes(t)
     const facing = this.stepFace(t)
     const posing = this.stepPose(t) || facing || stimulating
     if (this.stimEval) this.placeStimPath()

@@ -171,6 +171,8 @@ export function ComparePane({ graph, dataset, system }: { graph: AnatomyGraph; d
             skinUv: null,
             look: false,
             tone: null,
+            iris: s.iris,
+            gaze: s.gaze,
             skinHide: assets.hide ?? null,
             skinOpaque: s.skinOpaque,
             shape: assets.shape ?? null,

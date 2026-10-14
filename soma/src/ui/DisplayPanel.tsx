@@ -6,6 +6,7 @@ import { DEFAULT_TONE } from '../look/types.ts'
 import { Icon } from './Icon.tsx'
 import { SkinMapPanel } from './SkinMapPanel.tsx'
 import { LumenPanel } from './LumenPanel.tsx'
+import { IRIS_LABELS, IRIS_NAMES, type IrisName } from '../look/types.ts'
 
 const AXES: { id: SectionAxis; zh: string; en: string }[] = [
   { id: 'axial', zh: '横断面', en: 'Axial' },
@@ -28,6 +29,8 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
   const tone = useApp((s) => s.tone)
   const toneData = useApp((s) => s.skinUv?.colour?.data.tone)
   const toneDefault = toneData?.default ?? DEFAULT_TONE
+  const iris = useApp((s) => s.iris)
+  const gaze = useApp((s) => s.gaze)
   const mainSkin = graph.mainSkinId()
   const opaqueNow = useApp((s) => skinDrawnOpaque(s, mainSkin))
   const skinHide = useApp((s) => s.skinHide)
@@ -136,6 +139,32 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
                 比 NIST 数据里最深的肤色还深：这一段是模型外推的。
                 <span className="en"> Deeper than the deepest skin in the NIST data: this part is extrapolated by the model.</span>
               </p>
+            )}
+            {skinOpaque && look && openings && (
+              <div className="row" title="The lifelike eyes are constructed for display, not anatomy">
+                <label>
+                  虹膜 <span className="en">Iris</span>{' '}
+                  <select value={iris} onChange={(e) => app.setIris(e.target.value as IrisName)}>
+                    {IRIS_NAMES.map((n) => (
+                      <option key={n} value={n}>
+                        {IRIS_LABELS[n].zh} {IRIS_LABELS[n].en}
+                      </option>
+                    ))}
+                  </select>
+                </label>{' '}
+                <label>
+                  注视 <span className="en">Gaze</span>{' '}
+                  <select value={gaze === 'camera' ? 'camera' : gaze.yaw === 0 && gaze.pitch === 0 ? 'ahead' : 'fixed'} onChange={(e) => app.setGaze(e.target.value === 'ahead' ? { yaw: 0, pitch: 0 } : 'camera')}>
+                    <option value="camera">看着相机 Follow the camera</option>
+                    <option value="ahead">正前方 Straight ahead</option>
+                    {gaze !== 'camera' && (gaze.yaw !== 0 || gaze.pitch !== 0) && (
+                      <option value="fixed">
+                        固定 Fixed {gaze.yaw}°, {gaze.pitch}°
+                      </option>
+                    )}
+                  </select>
+                </label>
+              </div>
             )}
             {opaqueNow && hiddenNames.length > 0 && (
               <p className="hint">
