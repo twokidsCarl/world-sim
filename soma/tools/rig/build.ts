@@ -13,6 +13,7 @@ import { type Body, hashInput, inputFile } from './io.ts'
 import { type BuiltJoint, type JointExt, type JointFile, type Override, type RomEntry, type Skeleton, blendRadius, buildJoints, expandJointDefs, toContract } from './joints.ts'
 import { BYTES_PER_VERTEX } from './pose.ts'
 import { type ViaReportRow, VIA_FILE, placeVias, readViaFile } from './via.ts'
+import { bakeViaPush, withZeroPush } from './viapush.ts'
 import { openedSkinPackageDir, skinPackageDir } from '../pipeline/skinPackageDir.ts'
 
 export const CURATED = join(import.meta.dirname, '..', '..', 'data', 'curated', 'rig')
@@ -60,8 +61,8 @@ const CAUTIONS: { zh: string; en: string }[] = [
     en: 'Muscles only change length with the bones at their ends and are thickened or thinned to keep their volume; there is no bulge from active contraction and no distinction between belly and tendon (real tendons hardly change length).',
   },
   {
-    zh: '肌肉作用线多数是起点到止点的直线：绕过骨或关节的肌肉（三角肌、臀大肌、髂腰肌等）在大角度时长度和体积修正都不准。膝周的肌肉（腘绳肌、股薄肌、缝匠肌、腓肠肌、经髌骨的股四头肌）有经过点，长度、力臂和肌肉活动按这条折线算，网格不随它变形（仍按蒙皮，所以深屈时腘绳肌等仍会贴近或穿进股骨髁）；经过点是按本模型的骨面放的近似（股骨髁后面的几个点，不是真正的缠绕曲面），膝关节又是定轴转动、没有股骨后滚，所以股二头肌等的力臂在屈膝中段偏大。',
-    en: 'Most lines of action are the straight line from origin to insertion: for muscles that wrap around bone or a joint (deltoid, gluteus maximus, iliopsoas …) both the length and the volume correction are wrong at large angles. The muscles round the knee (hamstrings, gracilis, sartorius, gastrocnemius, the quadriceps through the patella) have via points, and their lengths, moment arms and activity follow that polyline, but their meshes do not (they keep their skinning, so in deep flexion the hamstrings and others still hug or pass into the femoral condyles); the via points are an approximation placed on this model’s bone surfaces (a few points behind the femoral condyles, not a true wrapping surface), and the knee turns about a fixed axis without femoral rollback, so the moment arms of biceps femoris and others read high in mid-flexion.',
+    zh: '肌肉作用线多数是起点到止点的直线：绕过骨或关节的肌肉（三角肌、臀大肌、髂腰肌等）在大角度时长度和体积修正都不准。膝周的肌肉（腘绳肌、股薄肌、缝匠肌、腓肠肌、经髌骨的股四头肌）有经过点，长度、力臂和肌肉活动按这条折线算；其中一部分肌肉的网格按横截面蒙皮，并按构建时烘焙的表推出膝周骨（只随膝屈伸，不随髋、踝和胫骨旋转，也不是接触模型，深屈时仍有网格在骨里），其余照旧普通蒙皮（见 data/curated/rig/via.json 的 meshPlain）；经过点是按本模型的骨面放的近似（股骨髁后面的几个点，不是真正的缠绕曲面），膝关节又是定轴转动、没有股骨后滚，所以股二头肌等的力臂在屈膝中段偏大。',
+    en: 'Most lines of action are the straight line from origin to insertion: for muscles that wrap around bone or a joint (deltoid, gluteus maximus, iliopsoas …) both the length and the volume correction are wrong at large angles. The muscles round the knee (hamstrings, gracilis, sartorius, gastrocnemius, the quadriceps through the patella) have via points, and their lengths, moment arms and activity follow that polyline; the meshes of some of them are skinned by cross-section and pushed out of the knee bones by a table baked when the rig is built (it follows knee flexion only, not the hip, the ankle or tibial rotation, and it is not a contact model, so some mesh still lies inside the bones in deep flexion), and the rest stay plainly skinned (see meshPlain in data/curated/rig/via.json); the via points are an approximation placed on this model’s bone surfaces (a few points behind the femoral condyles, not a true wrapping surface), and the knee turns about a fixed axis without femoral rollback, so the moment arms of biceps femoris and others read high in mid-flexion.',
   },
   {
     zh: '所有关节轴都是固定的。真实的膝关节有滚动和滑动，颞下颌关节张口时下颌头前移，拇指腕掌关节两轴不相交，脊柱各节段的瞬时轴会移动——这些都没有建模。',
@@ -219,14 +220,30 @@ export function buildRig(body: Body, log: (m: string) => void = () => {}, opts: 
   if (external.length) cautions.splice(1, 0, EXTERNAL_SKIN_CAUTION)
   const rig: RigExt = { joints, bindings, muscles: res.muscles, shape: [], cautions }
   const allLines = [...res.muscles]
-  // 经过点在体积标定之前加上；体积标定按直线长度拟合（网格不随折线变形）/ via points are added before the volume calibration, which fits against the straight-line length (the mesh does not follow the polyline)
-  const placed = placeVias(rig, body, readViaFile())
+  // 经过点在体积标定之前加上；有经过点的肌肉网格从此按横截面蒙皮（viaPush 先全为 0），体积标定量的就是这种网格，
+  // 仍按起止点直线的长度拟合。标定之后再烘焙推出骨面的表（它要用标定出的 gain 做体积修正）。
+  // via points are added before the volume calibration; from here on the meshes of muscles with via points are skinned
+  // by cross-section (viaPush all zero at first), which is the mesh the calibration measures, still fitted against the
+  // straight-line length. The push out of the bones is baked after the calibration (it needs the calibrated gain for the
+  // volume correction).
+  const viaFile = readViaFile()
+  const placed = placeVias(rig, body, viaFile)
   rig.muscles = placed.muscles
+  rig.muscles = withZeroPush(rig, body, viaFile)
   cur.hashes['data/curated/rig/via.json#data'] = hashInput('data/curated/rig/via.json#data', VIA_FILE)
   log(`via points: ${placed.report.length} lines, ${placed.report.reduce((n, r) => n + r.points.length, 0)} points`)
   const t2 = performance.now()
   const calibration = calibrateMuscles(rig, bin, body)
   log(`muscle lines: ${res.muscles.length} established, ${rig.muscles.length} kept after volume calibration in ${Math.round(performance.now() - t2)} ms`)
+  const t3 = performance.now()
+  const pushed = bakeViaPush(rig, bin, body)
+  rig.muscles = pushed.muscles
+  const pushOf = new Map(pushed.report.map((r) => [r.part, r]))
+  for (const row of placed.report) {
+    const p = pushOf.get(row.part)
+    if (p) (row.pushMaxMm = p.maxMm), (row.pushAtDeg = p.atDeg)
+  }
+  log(`via push: ${pushed.report.length} lines baked in ${Math.round(performance.now() - t3)} ms, largest ${Math.max(0, ...pushed.report.map((r) => r.maxMm))} mm`)
   return {
     rig, bin, built, skeleton, field, calibration, allLines, skinOpen: external.some((w) => w.byIndexFor), external: external.map((w) => ({ dir: w.dir, source: w.sourceName, vertices: w.vertexCount, mapping: w.mapped })), fieldStats: field.stats, bound: res.parts, attach: res.attach, byMethod: res.byMethod,
     notes: [...romNotes, ...res.notes, ...external.flatMap((w) => w.notes), ...built.flatMap((j) => j.warnings.map((w) => `${j.def.id}: ${w}`))],

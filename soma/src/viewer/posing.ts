@@ -13,7 +13,7 @@
 import { BufferAttribute, BufferGeometry } from 'three/webgpu'
 import { MeshBVH } from 'three-mesh-bvh'
 import { Poser, type JointFrames } from '../../tools/rig/pose.ts'
-import { jointFrames, packJoints, packMuscles, partJoints, posedBox, type LoadedRig, type Pose, type Scales } from '../anatomy/rig.ts'
+import { jointFrames, packJoints, packMuscles, packVia, partJoints, posedBox, type LoadedRig, type Pose, type Scales } from '../anatomy/rig.ts'
 import type { PartBuffers } from './batches.ts'
 
 type Box = [number, number, number, number, number, number]
@@ -33,6 +33,7 @@ export class PoseRuntime {
   scales: Scales | null = null
   private jointData: Float32Array | undefined
   private muscleData: Float32Array | undefined
+  private viaData: Float32Array | undefined
   private readonly joints = new Map<number, number[]>()
   private readonly localIndex = new Map<number, Uint32Array>()
   private readonly posed = new Map<number, PosedPart>()
@@ -48,7 +49,7 @@ export class PoseRuntime {
   }
 
   /** 设定显示的姿势；返回要写入着色器纹理的数据 / Set the displayed pose; returns the data for the shader textures. */
-  set(pose: Pose, scales: Scales | null): { joints: Float32Array; muscles: Float32Array } {
+  set(pose: Pose, scales: Scales | null): { joints: Float32Array; muscles: Float32Array; via: Float32Array } {
     this.pose = pose
     this.scales = scales
     this.frames = jointFrames(this.rig.rig.joints, pose, scales ?? undefined)
@@ -56,10 +57,11 @@ export class PoseRuntime {
     this.version++
     this.jointData = packJoints(this.frames, this.jointData)
     this.muscleData = packMuscles(this.rig, this.frames, this.muscleData)
+    this.viaData = packVia(this.rig, this.frames, this.viaData)
     // 旧版本的缓存整体丢弃，免得内存随姿势变化累积
     // drop caches of older versions wholesale so memory does not grow with every pose
     this.posed.clear()
-    return { joints: this.jointData, muscles: this.muscleData }
+    return { joints: this.jointData, muscles: this.muscleData, via: this.viaData }
   }
 
   /** 静止几何被改写（面部表情）之后调用：丢弃按旧几何算出的缓存 / Call after the rest geometry was rewritten (facial expression): drops caches computed from the old one. */

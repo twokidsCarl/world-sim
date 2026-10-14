@@ -14,13 +14,18 @@
 //     scales are blended linearly in rest space first.
 //   · 肌肉体积修正（tapered）在蒙皮之后做：`aThin` 属性为负数时表示 −(作用线下标 + 1)。
 //     The muscle volume correction (tapered) follows skinning: a negative `aThin` attribute means −(line index + 1).
+//   · 有经过点（viaPush）的肌肉：顶点属性里已是横截面权重（src/anatomy/rig.ts 的 writeInfluences），aThin 再减 ¼·(½ + ½·s)；
+//     体积修正之后加上经过点纹理里两侧样本平移按 s 的插值（与 tools/rig/musclepath.ts 的 applyViaPush 相同）。
+//     Muscles with via points (viaPush): the vertex attributes already hold the cross-section weights (writeInfluences in
+//     src/anatomy/rig.ts) and aThin further subtracts ¼·(½ + ½·s); after the volume correction the translations of the
+//     samples either side, from the via texture, are added interpolated by s (as applyViaPush in tools/rig/musclepath.ts).
 //   · 静止姿势下不使用这些节点：材质换回原来的位置节点，渲染结果与未摆姿势的路径逐位相同、没有额外开销。
 //     At rest none of this is used: materials switch back to the original position node, so the
 //     output is bit-for-bit the unposed path at no extra cost.
 
 import { DataTexture, FloatType, NearestFilter, RGBAFormat } from 'three/webgpu'
-import { Fn, If, attribute, cameraPosition, cross, dot, float, int, ivec2, length, normalLocal, positionLocal, select, textureLoad, uniform, vec3, vec4 } from 'three/tsl'
-import { JOINT_TEXELS, MUSCLE_TEXELS } from '../anatomy/rig.ts'
+import { Fn, If, attribute, cameraPosition, cross, dot, float, int, ivec2, length, min, mix, normalLocal, positionLocal, select, textureLoad, uniform, vec3, vec4 } from 'three/tsl'
+import { JOINT_TEXELS, MUSCLE_TEXELS, VIA_ROWS, VIA_SAMPLES } from '../anatomy/rig.ts'
 
 /** `aThin` 的取值：≥ 0 为可加粗的管半径；这个值表示"不加粗"；负数表示肌肉作用线。 */
 /** `aThin` values: ≥ 0 a boostable tube radius; this value means "never boosted"; negative = a muscle line. */
@@ -53,6 +58,8 @@ export class SkinningData {
    * Kept apart from the volume correction so that the packing of the muscle texture is unchanged.
    */
   readonly bulge: DataTexture
+  /** 有经过点的作用线各样本的平移（src/anatomy/rig.ts 的 packVia）/ The per-sample translations of the lines with via points (packVia in src/anatomy/rig.ts). */
+  readonly via: DataTexture
   /** 加粗神经：每米距离保证的世界半径；0 为关闭 / Nerve aid: world radius guaranteed per metre of distance; 0 = off. */
   readonly boost = uniform(0)
 
@@ -60,6 +67,7 @@ export class SkinningData {
     this.joints = dataTexture(JOINT_TEXELS, Math.max(1, jointRows))
     this.muscles = dataTexture(MUSCLE_TEXELS, Math.max(1, muscleRows))
     this.bulge = dataTexture(1, Math.max(1, muscleRows))
+    this.via = dataTexture(VIA_SAMPLES, VIA_ROWS)
   }
 
   /** 写入每条作用线的增粗量（长度不超过行数）/ Write the thickening of every line (no longer than the row count). */
@@ -71,17 +79,22 @@ export class SkinningData {
   }
 
   /** 写入打包好的数据（长度必须与纹理一致）/ Write packed data (lengths must match the textures). */
-  update(joints: Float32Array, muscles: Float32Array): void {
+  update(joints: Float32Array, muscles: Float32Array, via?: Float32Array): void {
     ;(this.joints.image.data as Float32Array).set(joints)
     ;(this.muscles.image.data as Float32Array).set(muscles)
     this.joints.needsUpdate = true
     this.muscles.needsUpdate = true
+    if (via) {
+      ;(this.via.image.data as Float32Array).set(via)
+      this.via.needsUpdate = true
+    }
   }
 
   dispose(): void {
     this.joints.dispose()
     this.muscles.dispose()
     this.bulge.dispose()
+    this.via.dispose()
   }
 }
 
@@ -168,6 +181,22 @@ export function positionNodeFor(data: SkinningData, mode: SkinningMode, hasThin 
         const s: N = float(1).add(m1.w.mul(u)).add(b.mul(5).mul(u).mul(u.sub(0.8)))
         const foot = m1.xyz.mul(t)
         pos.assign(m0.xyz.add(foot).add(rel.sub(foot).mul(s)))
+        // 推出骨面：aThin 的小数部分 fr = ½ + ½·s（没有 viaPush 时为 0），肌肉纹理纹素 2 是经过点纹理的行 + 1
+        // push out of the bone: the fraction of aThin is fr = ½ + ½·s (0 without viaPush); texel 2 of the muscle texture is the row in the via texture + 1
+        const fr: N = thin.negate().sub(float(line).add(1)).mul(4)
+        const m2: N = textureLoad(data.muscles, (ivec2 as N)(int(2), line))
+        If(fr.greaterThan(0.25), () => {
+          If(m2.x.greaterThan(0.5), () => {
+            const row = int(m2.x.sub(0.5))
+            const sv: N = fr.mul(2).sub(1).clamp(0, 1)
+            const fk: N = sv.mul(VIA_SAMPLES - 1)
+            const i0: N = (min as N)(int(fk.floor()), int(VIA_SAMPLES - 2))
+            const a: N = fk.sub(float(i0))
+            const d0: N = textureLoad(data.via, (ivec2 as N)(i0, row)).xyz
+            const d1: N = textureLoad(data.via, (ivec2 as N)(i0.add(1), row)).xyz
+            pos.addAssign((mix as N)(d0, d1, a))
+          })
+        })
       })
       ;(normalLocal as N).assign(normal)
       return pos.add(normal.mul(boostGrow(data, pos, thin)))

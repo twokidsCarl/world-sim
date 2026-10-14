@@ -43,6 +43,14 @@ export interface ViaRule {
 
 export interface ViaFile {
   rules: ViaRule[]
+  /**
+   * 网格不随路径变形、照旧普通蒙皮的肌肉（经过点仍用于长度、力臂和活动）：去掉左右之后的小写名称的正则，可限于某几副身体
+   * （bodies，缺省为全部），各附理由。
+   * Muscles whose meshes do not follow the path and stay plainly skinned (their via points still give lengths, moment
+   * arms and activity): regexes on the lower-case name without its side, optionally limited to some bodies (`bodies`,
+   * all when absent), each with its reason.
+   */
+  meshPlain?: { match: string; bodies?: string[]; why?: { zh: string; en: string } }[]
   patella: { patellaJoint: string; femurJoint: string; kneeJoint: string; backDeg: number; arcDeg?: number[]; quadriceps: string }
 }
 
@@ -101,7 +109,7 @@ export function surfaceRadius(pts: { med: number; down: number; post: number }[]
   return null
 }
 
-const bare = (name: string): string => name.toLowerCase().replace(/\b(left|right)\s+/g, '').replace(/\s+/g, ' ').trim()
+export const bare = (name: string): string => name.toLowerCase().replace(/\b(left|right)\s+/g, '').replace(/\s+/g, ' ').trim()
 const r5 = (v: number): number => Math.round(v * 1e5) / 1e5
 const r5v = (p: V3): V3 => [r5(p[0]), r5(p[1]), r5(p[2])]
 
@@ -112,6 +120,9 @@ export interface ViaReportRow {
   kind: ViaRule['kind']
   /** 每个点：极角、半径（毫米）、内外位置（毫米）、关节 / per point: polar angle, radius (mm), mediolateral position (mm), joint. */
   points: { angleDeg: number | null; radiusMm: number | null; medMm: number; joint: string; wrap: boolean }[]
+  /** 网格推出骨面的最大平移（毫米）和它所在的膝角（度），见 tools/rig/viapush.ts / The largest translation pushing the mesh out of the bones (mm) and the knee angle where it is (degrees), see tools/rig/viapush.ts. */
+  pushMaxMm?: number
+  pushAtDeg?: number
 }
 
 /** 读取规则文件 / Read the rule file. */

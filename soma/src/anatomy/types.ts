@@ -305,12 +305,33 @@ export interface MuscleVia {
 }
 
 /**
+ * 有经过点的肌肉网格怎样变形（tools/rig/viapush.ts 在构建绑定时烘焙）：网格按横截面蒙皮（同一横截面的顶点用同一组平均权重），
+ * 再把每个横截面平移 `d`，推出膝周骨。d 是按 `joint` 第 `dof` 个自由度的有效角（膝屈伸）列的表：第 i 行对应 i·stepDeg 度，
+ * 每行 `samples` 个横截面样本、各 3 个分量（米），在随 `frame` 关节（股骨）转动的坐标系里；行间、样本间都线性插值，
+ * 角度超出表的范围时取两端。第 0 行全为 0，静止姿势不变（见 tools/rig/musclepath.ts）。
+ * How the mesh of a muscle with via points deforms (baked by tools/rig/viapush.ts when the rig is built): the mesh is
+ * skinned by cross-section (every vertex of a cross-section takes the same averaged weights), then each cross-section is
+ * translated by `d`, pushing it out of the knee bones. d is a table over the effective angle of dof `dof` of `joint`
+ * (knee flexion): row i is at i·stepDeg degrees, each row has `samples` cross-section samples of 3 components (metres)
+ * in the frame turning with joint `frame` (the femur); rows and samples are interpolated linearly, and an angle outside
+ * the table takes its ends. Row 0 is all zeros, so the rest pose is unchanged (see tools/rig/musclepath.ts).
+ */
+export interface MuscleViaPush {
+  joint: string
+  dof: number
+  frame: string
+  stepDeg: number
+  samples: number
+  d: number[]
+}
+
+/**
  * A muscle's line of action, used to keep its volume when its length changes:
  * the runtime measures the current distance between the two ends and scales the
  * cross-section about the line by sqrt(restLength / length).
- * 有经过点时，作用线是 起点 → 各经过点 → 止点 的折线：长度取折线长度，肌肉网格随折线变形（见 tools/rig/musclepath.ts）。
+ * 有经过点时，作用线是 起点 → 各经过点 → 止点 的折线：长度取折线长度。体积修正仍按起止点的直线；网格按 `viaPush` 变形。
  * With via points the line of action is the polyline origin → via points → insertion: its length is the length of
- * the polyline, and the muscle mesh is deformed to follow it (see tools/rig/musclepath.ts).
+ * the polyline. The volume correction stays about the straight line between the ends; the mesh deforms by `viaPush`.
  */
 export interface MuscleLine {
   part: string
@@ -322,6 +343,12 @@ export interface MuscleLine {
    * Via points in order from origin to insertion; absent or empty = the straight line (exactly as before this field existed).
    */
   via?: MuscleVia[]
+  /**
+   * 网格的横截面蒙皮和推出骨面（只在有经过点时用）；缺省 = 网格按普通蒙皮（与没有这个字段之前完全相同）。
+   * Cross-section skinning and the push out of the bones (used only with via points); absent = the mesh is skinned
+   * plainly (exactly as before this field existed).
+   */
+  viaPush?: MuscleViaPush
   /**
    * 横截面缩放 = (静止长度 / 当前长度)^(gain / 2)；缺省为 1。按肌肉标定。
    * Cross-section scale = (restLength / length)^(gain / 2); defaults to 1. Calibrated per muscle.

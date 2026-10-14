@@ -69,6 +69,7 @@ import {
   scalesAreIdentity,
   validateRig,
   writeInfluences,
+  writeMuscleThin,
   type LoadedRig,
   type Pose,
   type Scales,
@@ -1411,11 +1412,11 @@ export class Viewer {
         this.reject('rig', `部件 ${parts[i]!.id} 的绑定与网格不符 / the binding of ${parts[i]!.id} does not match its mesh`)
         return
       }
-      writeInfluences(rig, parts[i]!.id, n, b.skinIndex, b.skinWeight, 0)
-      const line = rig.muscleOf.get(parts[i]!.id)
-      // 肌肉部件：aThin 记作 −(作用线下标 + 1)，着色器据此做体积修正
-      // muscle parts: aThin holds −(line index + 1), which the shader uses for the volume correction
-      if (line !== undefined) b.aux.fill(-(line + 1))
+      // 有经过点的肌肉按静止几何写横截面权重 / muscles with via points get cross-section weights from their rest geometry
+      writeInfluences(rig, parts[i]!.id, n, b.skinIndex, b.skinWeight, 0, b.position)
+      // 肌肉部件：aThin 记作 −(作用线下标 + 1)（有经过点时另含顶点参数 s），着色器据此做体积修正和推出骨面
+      // muscle parts: aThin holds −(line index + 1) (with via points also the vertex parameter s), which the shader uses for the volume correction and the push out of the bone
+      writeMuscleThin(rig, parts[i]!.id, n, b.aux, 0, b.position)
     }
     batches.flushSkinAttributes()
     this.lumenLayerStale = true
@@ -2172,7 +2173,7 @@ export class Viewer {
     const active = !!rt && (!poseIsRest(pose) || !scalesAreIdentity(this.poseScales) || !!activity?.wanted())
     if (rt && active) {
       const d = rt.set(pose, this.poseScales)
-      this.skinning.update(d.joints, d.muscles)
+      this.skinning.update(d.joints, d.muscles, d.via)
       this.prewarmNext = 0
     }
     if (rt && activity) {

@@ -29,7 +29,7 @@
 
 import type { Joint, JointDof, MuscleLine, Rig, RigBinding } from '../../src/anatomy/types.ts'
 import { type DualQuat, type M3, type V3, type Xf, M3_ID, XF_ID, axisAngle, dqFromXf, m3mul, norm, rotateAbout, sub, xfApply, xfFromDq, xfMul } from './math.ts'
-import { hasVia, musclePath, polylineLength, xfLookup } from './musclepath.ts'
+import { VIA_SAMPLES, applyViaPush, hasVia, hasViaPush, musclePath, polylineLength, sectionInfluences, viaParams, viaPushAt, xfLookup } from './musclepath.ts'
 
 /** 关节 id → 各自由度的角度（弧度，相对静止姿势）。缺省为 0。 Joint id → angle per dof (radians, relative to rest). Missing = 0. */
 export type Pose = Record<string, number[]>
@@ -108,6 +108,8 @@ export interface JointFrames {
   rigid: Xf[]
   /** 体型部分（仿射）：静止空间里各节段的缩放和平移；没有缩放时为 null。 The shape part (affine): scale and shift of each segment in rest space; null when nothing is scaled. */
   shape: Xf[] | null
+  /** 各自由度的有效角（含耦合），与 joints 下标对应。 Effective angle of every dof (couplings included), index-aligned with `joints`. */
+  angles: number[][]
 }
 
 /**
@@ -153,12 +155,12 @@ export function jointFrames(joints: Joint[], pose: Pose, scales?: Scales): Joint
     return xf
   }
   const P = joints.map((_, i) => visit(i, 0))
-  if (!scaled) return { xfs: P, rigid: P, shape: null }
+  if (!scaled) return { xfs: P, rigid: P, shape: null, angles }
   const A: Xf[] = joints.map((j, i) => {
     const c = j.center as V3, s = S[i]!, q = centre[i]!
     return { r: s, t: [q[0] - (s[0] * c[0] + s[1] * c[1] + s[2] * c[2]), q[1] - (s[3] * c[0] + s[4] * c[1] + s[5] * c[2]), q[2] - (s[6] * c[0] + s[7] * c[1] + s[8] * c[2])] }
   })
-  return { xfs: P.map((p, i) => xfMul(p, A[i]!)), rigid: P, shape: A }
+  return { xfs: P.map((p, i) => xfMul(p, A[i]!)), rigid: P, shape: A, angles }
 }
 
 /** 每个关节的蒙皮变换（静止 → 当前），与 joints 下标对应。 Skinning transform (rest → posed) of every joint, index-aligned with `joints`. */
@@ -289,14 +291,68 @@ export function muscleLength(line: MuscleLine, xfs: Xf[], jointIndex: Map<string
 }
 
 /**
- * 去掉经过点的作用线（起点到止点的直线）。体积修正只按它算：有经过点的肌肉网格与没有经过点时逐位相同。
+ * 去掉经过点的作用线（起点到止点的直线）。体积修正只按它算（有经过点的肌肉也一样）。
  * The line of action without its via points (the straight line from origin to insertion). The volume correction uses
- * this only, so the mesh of a muscle with via points is bit for bit the mesh without them.
+ * this only (for muscles with via points too).
  */
 export function straightLine(line: MuscleLine): MuscleLine {
-  if (!hasVia(line)) return line
-  const { via: _via, ...rest } = line
+  if (!hasVia(line) && !line.viaPush) return line
+  const { via: _via, viaPush: _push, ...rest } = line
   return rest
+}
+
+/** 一个部件对它的作用线的横截面准备数据：顶点参数 s 和横截面影响 / A part's cross-section preparation for its line: vertex parameters s and the cross-section influences. */
+export interface ViaPrep {
+  s: Float32Array
+  /** 样本的影响（VIA_SAMPLES × 12 字节）/ The samples' influences (VIA_SAMPLES × 12 bytes). */
+  samples: Uint8Array
+  /** 顶点的横截面影响（n × 12 字节，rig.bin 的格式）/ The vertices' cross-section influences (n × 12 bytes, rig.bin layout). */
+  vertices: Uint8Array
+}
+
+const viaCache = new WeakMap<object, { line: MuscleLine; bin: Uint8Array; offset: number; prep: ViaPrep }[]>()
+
+/**
+ * 有经过点（及 viaPush）的蒙皮部件的横截面准备数据，按静止几何的数组缓存；不适用时为 null（刚体部件、顶点数不符）。
+ * 运行时（src/anatomy/rig.ts 写顶点属性）和这里的 CPU 参考用同一个函数，所以两边的 s 和权重逐位相同。
+ * The cross-section preparation of a skinned part whose line has via points (and viaPush), cached by the rest-geometry
+ * array; null when it does not apply (a rigid part, a vertex-count mismatch). The runtime (src/anatomy/rig.ts, writing
+ * the vertex attributes) and the CPU reference here use this same function, so s and the weights are bit for bit the
+ * same on both sides.
+ */
+export function viaPrepFor(line: MuscleLine, rest: ArrayLike<number>, bin: Uint8Array, binding: RigBinding | undefined, jointIndex: ReadonlyMap<string, number>): ViaPrep | null {
+  if (!hasViaPush(line) || !binding || binding.joint !== undefined || binding.offset === undefined) return null
+  const n = rest.length / 3
+  if (binding.vertexCount !== undefined && binding.vertexCount !== n) return null
+  if (binding.offset + n * BYTES_PER_VERTEX > bin.length) return null
+  const key = rest as unknown as object
+  const list = viaCache.get(key) ?? []
+  const hit = list.find((e) => e.line === line && e.bin === bin && e.offset === binding.offset)
+  if (hit) return hit.prep
+  const dv = new DataView(bin.buffer, bin.byteOffset, bin.byteLength)
+  const o = binding.offset
+  const beyond = new Float32Array(n)
+  const s = viaParams(line, rest, beyond)
+  const O = line.origin.point as V3, I = line.insertion.point as V3
+  const anchor = { origin: jointIndex.get(line.origin.joint) ?? 0, insertion: jointIndex.get(line.insertion.joint) ?? 0, length: Math.hypot(I[0] - O[0], I[1] - O[1], I[2] - O[2]) }
+  const { samples, vertices } = sectionInfluences(s, (i, q) => [dv.getUint16(o + i * BYTES_PER_VERTEX + q * 2, true), bin[o + i * BYTES_PER_VERTEX + 8 + q]!], anchor, beyond)
+  const prep = { s, samples, vertices }
+  list.push({ line, bin, offset: o, prep })
+  viaCache.set(key, list)
+  return prep
+}
+
+/**
+ * 某条有 viaPush 的作用线在当前姿势下各样本的平移（VIA_SAMPLES × 3）。`angles`、`rigid` 来自 jointFrames。
+ * The per-sample translation of a line with viaPush in the current pose (VIA_SAMPLES × 3). `angles` and `rigid` come
+ * from jointFrames.
+ */
+export function viaPushFor(line: MuscleLine, angles: number[][], rigid: Xf[], jointIndex: Map<string, number>): Float64Array {
+  const p = line.viaPush
+  if (!p) return new Float64Array(VIA_SAMPLES * 3)
+  const ji = jointIndex.get(p.joint), fi = jointIndex.get(p.frame)
+  const angle = ji === undefined ? 0 : (angles[ji]?.[p.dof] ?? 0)
+  return viaPushAt(p, angle, (fi === undefined ? XF_ID : (rigid[fi] ?? XF_ID)).r)
 }
 
 /**
@@ -305,7 +361,7 @@ export function straightLine(line: MuscleLine): MuscleLine {
  * (origin → insertion). Modifies `posed` in place and returns the mid-belly scale applied.
  */
 export function correctMuscleVolume(posed: Float32Array, line: MuscleLine, xfs: Xf[], jointIndex: Map<string, number>, opts: VolumeOptions = {}): number {
-  // 长度取直线的（经过点不影响网格）/ lengths of the straight line (via points do not affect the mesh)
+  // 长度取起止点直线的（有经过点时也一样）/ lengths of the straight line between the ends (with via points too)
   const { rest, length, origin } = muscleLength(straightLine(line), xfs, jointIndex)
   if (!(rest > 1e-6) || !(length > 1e-6)) return 1
   const lo = opts.minScale ?? 0.75, hi = opts.maxScale ?? 1.4
@@ -345,6 +401,9 @@ export class Poser {
   readonly dqs: DualQuat[]
   /** 体型部分（没有缩放时为 null）。 The shape part (null when nothing is scaled). */
   readonly shape: Xf[] | null
+  /** 姿势部分（刚体）与各自由度的有效角。 The pose part (rigid) and the effective angle of every dof. */
+  readonly rigid: Xf[]
+  readonly angles: number[][]
   readonly jointIndex: Map<string, number>
   private readonly bindingOf: Map<string, RigBinding>
   private readonly lineOf: Map<string, MuscleLine>
@@ -353,6 +412,8 @@ export class Poser {
     const f = jointFrames(rig.joints, pose, scales)
     this.xfs = f.xfs
     this.shape = f.shape
+    this.rigid = f.rigid
+    this.angles = f.angles
     this.dqs = f.rigid.map(dqFromXf)
     this.jointIndex = new Map(rig.joints.map((j, i) => [j.id, i]))
     this.bindingOf = new Map(rig.bindings.map((b) => [b.part, b]))
@@ -372,10 +433,19 @@ export class Poser {
   part(partId: string, rest: Float32Array, mode: BlendMode = 'dqs', volume: VolumeOptions | false = { mode: 'uniform' }): Float32Array {
     const b = this.bindingOf.get(partId)
     if (!b) return Float32Array.from(rest)
+    const line = this.lineOf.get(partId)
+    // 有经过点（及 viaPush）：按横截面蒙皮，体积修正，再推出骨面（tools/rig/musclepath.ts）
+    // with via points (and viaPush): skinned by cross-section, volume-corrected, then pushed out of the bone (tools/rig/musclepath.ts)
+    const prep = line ? viaPrepFor(line, rest, this.bin, b, this.jointIndex) : null
+    if (line && prep) {
+      const out = skin(rest, prep.vertices, 0, this.xfs, mode, this.dqs, this.shape)
+      if (volume) correctMuscleVolume(out, line, this.xfs, this.jointIndex, volume)
+      applyViaPush(out, prep.s, viaPushFor(line, this.angles, this.rigid, this.jointIndex))
+      return out
+    }
     let out: Float32Array
     if (b.joint !== undefined) out = transformRigid(rest, this.xfs[this.jointIndex.get(b.joint)!] ?? XF_ID)
     else out = skin(rest, this.bin, b.offset!, this.xfs, mode, this.dqs, this.shape)
-    const line = this.lineOf.get(partId)
     if (line && volume) correctMuscleVolume(out, line, this.xfs, this.jointIndex, volume)
     return out
   }

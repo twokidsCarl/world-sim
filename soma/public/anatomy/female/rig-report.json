@@ -22,7 +22,7 @@
   "data/curated/rig/rom.json#data": "70e54d91f6449e27",
   "data/curated/rig/bindings.json#data": "d926f612debb3935",
   "data/curated/rig/overrides.json#data": "30eec83cd59b485a",
-  "data/curated/rig/via.json#data": "e5a14548614330a0",
+  "data/curated/rig/via.json#data": "069774741f4bab6d",
   "data/raw/bodyshape/out/female-skin-head-v3-open/weights.bin": "7681dfa749a263b5",
   "data/raw/bodyshape/out/female-skin-head-v3-open/joints.json": "7b4434c1da9bc2d3",
   "data/raw/bodyshape/out/female-skin-head-v3-open/skin.obj": "6c523ecaff6a4371",
@@ -3447,7 +3447,7 @@
   "labelledVoxels": 481484,
   "meanLabels": 8,
   "leaked": false,
-  "buildMs": 6473
+  "buildMs": 7579
  },
  "bindings": {
   "bone": {
@@ -6029,7 +6029,9 @@
       "joint": "hip_L",
       "wrap": true
      }
-    ]
+    ],
+    "pushMaxMm": 8.7,
+    "pushAtDeg": 135
    },
    {
     "part": "VD_biceps_femoris_short_right",
@@ -6065,7 +6067,9 @@
       "joint": "hip_R",
       "wrap": true
      }
-    ]
+    ],
+    "pushMaxMm": 11.4,
+    "pushAtDeg": 140
    },
    {
     "part": "VD_rectus_femoris_left",
@@ -6966,18 +6970,18 @@
   },
   {
    "part": "VD_biceps_femoris_short_left",
-   "gain": 0.4,
+   "gain": 0.43,
    "probes": 2,
-   "rmsAfterPct": 1.3,
-   "rmsBeforePct": 15.5,
+   "rmsAfterPct": 1.5,
+   "rmsBeforePct": 16.7,
    "kept": true
   },
   {
    "part": "VD_biceps_femoris_short_right",
-   "gain": 0.51,
+   "gain": 0.54,
    "probes": 2,
-   "rmsAfterPct": 1.5,
-   "rmsBeforePct": 19.4,
+   "rmsAfterPct": 1.4,
+   "rmsBeforePct": 20.1,
    "kept": true
   },
   {
@@ -36306,7 +36310,7 @@
      },
      "muscle": {
       "p99": 1.01,
-      "p999": 1.07,
+      "p999": 1.09,
       "over2Pct": 0.02,
       "max": 11.19,
       "worst": "Left plantaris"
@@ -38309,7 +38313,7 @@
      "lengthChanged": 89,
      "medianAbsErrSkinnedPct": 9.94,
      "medianAbsErrUniformPct": 4.54,
-     "medianAbsErrTaperedPct": 4.23,
+     "medianAbsErrTaperedPct": 4.29,
      "p90AbsErrSkinnedPct": 37.72,
      "p90AbsErrUniformPct": 26.87,
      "p90AbsErrTaperedPct": 25.95
@@ -38559,7 +38563,7 @@
     "volume": {
      "muscles": 332,
      "lengthChanged": 54,
-     "medianAbsErrSkinnedPct": 12.84,
+     "medianAbsErrSkinnedPct": 13.45,
      "medianAbsErrUniformPct": 6.13,
      "medianAbsErrTaperedPct": 5.2,
      "p90AbsErrSkinnedPct": 30.66,
