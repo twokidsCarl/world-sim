@@ -172,6 +172,8 @@ export const api = {
   sessionMode: (id: string, mode: string) => call<SessionMeta>(`/api/sessions/${id}/mode`, { mode }),
   sessionEngine: (id: string, model: string, effort: string) => call<SessionMeta>(`/api/sessions/${id}/engine`, { model, effort }),
   sessionClose: (id: string) => call<SessionMeta>(`/api/sessions/${id}/close`, {}),
+  // 立即重启后端（在下一个安全的时刻）。 / Restart the backend now (at the next safe moment).
+  restart: () => call<{ restarting: boolean; waiting: string | null }>('/api/restart', {}),
   worker: () => call<WorkerStatus>('/api/worker'),
   chain: (directory: string, steps: number) => call<Record<string, number>>('/api/chains', { directory, steps }),
   advance: (dir: string) => call<Task>(`/api/projects/${dir}/advance`, {}),

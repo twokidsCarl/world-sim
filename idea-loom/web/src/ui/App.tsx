@@ -35,8 +35,8 @@ export function App() {
   const { pathname } = useLocation()
   const here = navEntry(pathname)
   const view = ideaView(pathname)
-  // 后端重启过或界面重新构建过，这一页就过时了；只提示，不自己刷新，免得打断正在写的东西。
-  // After a backend restart or a UI rebuild this page is out of date; it only says so and never reloads by itself, so nothing being typed is lost.
+  // 后端重启过或界面重新构建过，这一页就过时了：没有人打字时它自己刷新；有打了字还没发出去的输入框就等着，先提示。
+  // After a backend restart or a UI rebuild this page is out of date: it reloads itself while nobody is typing; while a field holds typed text not yet sent it waits and says so.
   const stale = useStale()
   // 主人的操作轨迹由小助手装上；登录的访客没有小助手，在这里装，记的是他自己的观看和收藏。
   // The assistant installs the owner's action trail; a signed-in member has no assistant, so it is installed here and records their own watching and likes.
@@ -162,7 +162,7 @@ export function App() {
       <main className="main">
         {stale && (
           <div className="notice warn" role="status">
-            {t('工具已经更新，这一页还是旧的。', 'The tool has been updated and this page is still the old one.')}{' '}
+            {t('工具已经更新，这一页还是旧的；你写的东西发出去或清空后，它会自己刷新。', 'The tool has been updated and this page is still the old one; it reloads by itself once what you are writing is sent or cleared.')}{' '}
             <button onClick={() => location.reload()}>{t('刷新', 'Refresh')}</button>
           </div>
         )}
