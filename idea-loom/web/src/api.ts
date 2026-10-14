@@ -51,6 +51,8 @@ export type GenTarget = { level?: string; thread?: string; kernel?: string; like
 export type Proposals = { proposals: Proposal[]; open: number; model_ready: boolean }
 export type Wish = {
   wish_id: string; title: string; kind: string; kind_label: string; stuck: string; suggestion: string
+  // 按记下的先后从 1 起的序号，给人叫的名字是 wish-N。 / The sequence number in recording order, from 1; people call it wish-N.
+  number: number
   where: { url: string; title: string } | null; status: string; status_label: string; status_note: string | null
   pr: number | null; source: string; occurrences: number; created_at: string; updated_at: string
   // 正在做这条愿望的作业走到哪一步；没有作业在做时为空。

@@ -36,7 +36,7 @@ TOOLS = [
                 "kind": {"type": "string", "enum": ["unclear", "missing", "broken", "structure", "other"]},
                 "stuck": {"type": "string", "description": "用户卡在哪里"},
                 "suggestion": {"type": "string", "description": "建议怎么改"},
-                "seen": {"type": "string", "description": "已有愿望的编号；给了就是又遇到一次"},
+                "seen": {"type": "string", "description": "已有愿望的编号，写 wish-N；给了就是又遇到一次"},
                 "note": {"type": "string", "description": "给已有愿望补一句说明"},
             },
             "required": ["title", "kind", "stuck", "suggestion"],

@@ -58,6 +58,12 @@ describe('turn view', () => {
     expect(v.blocks[0]).toEqual({ kind: 'text', text: '这一页是地图。' })
     expect([v.status, v.seconds, v.lastSeq]).toEqual(['done', 4.2, 8])
   })
+  it('keeps the wish number when the event carries one, and leaves it out for older events', () => {
+    // 新的事件带序号，旧对话回放时没有。 / New events carry the number; replayed older conversations do not.
+    const card = (extra: object) => fold(emptyTurn(), [{ seq: 1, type: 'wish', wish_id: 'w1', title: 't', kind_label: 'k', occurrences: 1, new: true, ...extra }]).blocks[0]
+    expect(card({ number: 3 })).toMatchObject({ kind: 'wish', wish_id: 'w1', number: 3 })
+    expect(card({})).not.toHaveProperty('number')
+  })
   it('is the same whether fed live in pieces or replayed at once, and ignores repeats', () => {
     let live = emptyTurn()
     for (const e of events) live = fold(live, [e])

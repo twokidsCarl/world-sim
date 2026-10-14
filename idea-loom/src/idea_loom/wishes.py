@@ -13,6 +13,7 @@ Code job handling it reports progress. Stored as append-only events and folded.
 
 from __future__ import annotations
 
+import re
 import secrets
 from datetime import datetime, timezone
 from pathlib import Path
@@ -80,6 +81,9 @@ class HistoryItem(BaseModel):
 
 class Wish(BaseModel):
     wish_id: str
+    # 按记下的先后从 1 起的序号，给人叫的名字是 wish-N。只追加的记录不会改顺序，所以序号不会变；撤销了的也保留序号。
+    # The sequence number in recording order, from 1; people call the wish wish-N. The log is append-only, so the order and hence the number never change; withdrawn wishes keep theirs.
+    number: int = 0
     title: str
     kind: Kind
     kind_label: str
@@ -144,7 +148,7 @@ def fold(rows: list[dict[str, Any]]) -> dict[str, WishDetail]:
                 continue
             where = r.get("where") if isinstance(r.get("where"), dict) else None
             out[wid] = WishDetail(
-                wish_id=wid, title=_clip(r.get("title"), MAX_TITLE), kind=r["kind"], kind_label=KIND_LABELS[r["kind"]],
+                wish_id=wid, number=len(out) + 1, title=_clip(r.get("title"), MAX_TITLE), kind=r["kind"], kind_label=KIND_LABELS[r["kind"]],
                 stuck=_clip(r.get("stuck"), MAX_TEXT), suggestion=_clip(r.get("suggestion"), MAX_TEXT),
                 where=Where(**where) if where else None, source=by, created_at=at, updated_at=at, copy_text="",
                 seen=[Seen(at=at, conversation_id=r.get("conversation_id"), turn=r.get("turn"), question=_clip(r.get("question"), MAX_TEXT))],
@@ -186,7 +190,7 @@ def fold(rows: list[dict[str, Any]]) -> dict[str, WishDetail]:
     for w in out.values():
         w.status_label = STATUS_LABELS[w.status]
         w.copy_text = (
-            f"请处理 idea-loom 许愿池里的这条愿望（{w.wish_id}）：{w.title}\n卡在哪：{w.stuck}\n建议：{w.suggestion}\n"
+            f"请处理 idea-loom 许愿池里的这条愿望（{name(w)}）：{w.title}\n卡在哪：{w.stuck}\n建议：{w.suggestion}\n"
             f"先读 idea-loom/README.md 和根目录的 CLAUDE.md；建议只是当时的一个想法，不一定是最好的改法。"
         )
     return out
@@ -195,6 +199,45 @@ def fold(rows: list[dict[str, Any]]) -> dict[str, WishDetail]:
 def load() -> tuple[dict[str, WishDetail], int]:
     rows, bad = store.read_lines(path())
     return fold(rows), bad
+
+
+def name(wish: Wish) -> str:
+    """给人看、给人叫的名字：wish-N。 / The name people see and say: wish-N."""
+    return f"wish-{wish.number}"
+
+
+_NAME = re.compile(r"wish-(\d+)", re.IGNORECASE)
+
+
+def resolve(ref: str, wishes: dict[str, WishDetail]) -> WishDetail:
+    """把人写的编号认成一条愿望。依次试：wish-N、完整的编号、不超过总数的纯数字 N、旧编号的结尾几位。
+    纯数字有歧义（"1990" 可能是第 1990 条，也可能是旧编号结尾的四位），所以只有不超过总条数时才当序号。
+
+    Resolve what a person wrote to one wish. In order: wish-N, the full id, a bare number N
+    no larger than the count, then the last few characters of an old id. A bare number is
+    ambiguous ("1990" may be number 1990 or the last four of an old id), so it is taken as a
+    number only when it does not exceed the count.
+    """
+    ref = str(ref or "").strip()
+    if not ref:
+        raise WishError("要给愿望的编号，比如 wish-3")
+    by_number = {w.number: w for w in wishes.values()}
+    named = _NAME.fullmatch(ref)
+    if named:
+        hit = by_number.get(int(named.group(1)))
+        if hit is None:
+            raise WishError(f"没有 {ref}：编号从 wish-1 到 wish-{len(wishes)}")
+        return hit
+    if ref in wishes:
+        return wishes[ref]
+    if ref.isdigit() and 1 <= int(ref) <= len(wishes):
+        return by_number[int(ref)]
+    hits = [w for w in wishes.values() if w.wish_id.endswith(ref)]
+    if len(hits) == 1:
+        return hits[0]
+    if hits:
+        raise WishError(f"有好几条愿望的编号以 {ref} 结尾（{'、'.join(name(w) for w in hits)}），写 wish-N")
+    raise WishError(f"没有编号为 {ref} 的愿望。写 wish-N（从 wish-1 到 wish-{len(wishes)}），或完整的编号")
 
 
 def listing(status: Optional[str] = None, group: Optional[str] = None) -> WishList:
@@ -228,10 +271,9 @@ def pending_count() -> int:
 
 
 def get(wish_id: str) -> WishDetail:
-    wish = load()[0].get(wish_id)
-    if wish is None:
-        raise WishError(f"没有编号为 {wish_id} 的愿望")
-    return wish
+    """按人写的编号取一条愿望（wish-N、完整编号、N 或结尾几位，见 resolve）。
+    Fetch a wish by whatever a person wrote (wish-N, the full id, N or the last few characters; see resolve)."""
+    return resolve(wish_id, load()[0])
 
 
 def _append(wish_id: str, event: str, by: str, **fields: Any) -> None:
@@ -259,6 +301,7 @@ def see_again(wish_id: str, *, by: str = "assistant", title: Optional[str] = Non
     new case; once accepted only a note can be added.
     """
     wish = get(wish_id)
+    wish_id = wish.wish_id
     if wish.status not in ("open", "accepted"):
         raise WishError(f"这条愿望已经是「{wish.status_label}」，另记一条")
     _append(wish_id, "seen", by, conversation_id=conversation_id, turn=turn, question=_clip(question, MAX_TEXT))
@@ -272,6 +315,7 @@ def see_again(wish_id: str, *, by: str = "assistant", title: Optional[str] = Non
 def edit(wish_id: str, *, title: Optional[str] = None, kind: Optional[str] = None, stuck: Optional[str] = None,
          suggestion: Optional[str] = None, by: str = "human") -> None:
     wish = get(wish_id)
+    wish_id = wish.wish_id
     if wish.status != "open":
         raise WishError(f"已经是「{wish.status_label}」，不能再改写。还想改，跟处理它的 Claude 说，或者让小助手另记一条。")
     if kind is not None and kind not in KIND_LABELS:
@@ -285,13 +329,14 @@ def withdraw(wish_id: str, *, by: str = "human") -> None:
     wish = get(wish_id)
     if wish.status != "open":
         raise WishError(f"已经是「{wish.status_label}」，不能撤销")
-    _append(wish_id, "withdrawn", by)
+    _append(wish.wish_id, "withdrawn", by)
 
 
 def restore(wish_id: str, *, by: str = "human") -> None:
-    if get(wish_id).status != "withdrawn":
+    wish = get(wish_id)
+    if wish.status != "withdrawn":
         raise WishError("只有撤销了的愿望才能恢复")
-    _append(wish_id, "restored", by)
+    _append(wish.wish_id, "restored", by)
 
 
 def set_status(wish_id: str, status: str, *, note: str = "", pr: Optional[int] = None, by: str = "claude-code") -> None:
@@ -303,27 +348,27 @@ def set_status(wish_id: str, status: str, *, note: str = "", pr: Optional[int] =
         raise WishError("标为不做要写原因")
     if status == "done" and pr is None:
         raise WishError("标为已做完要带上合并请求的编号")
-    _append(wish_id, "status", by, status=status, note=_clip(note, MAX_TEXT) or None, pr=pr)
+    _append(wish.wish_id, "status", by, status=status, note=_clip(note, MAX_TEXT) or None, pr=pr)
 
 
 def add_note(wish_id: str, text: str, *, by: str = "claude-code") -> None:
-    get(wish_id)
+    wish_id = get(wish_id).wish_id
     if not text.strip():
         raise WishError("说明不能空")
     _append(wish_id, "noted", by, text=_clip(text, MAX_TEXT))
 
 
 def add_link(wish_id: str, kind: str, *, title: str = "", url: Optional[str] = None, pr: Optional[int] = None, by: str = "claude-code") -> None:
-    get(wish_id)
+    wish_id = get(wish_id).wish_id
     if kind not in ("plan", "pr", "job"):
         raise WishError("关联只能是方案、合并请求或作业")
     _append(wish_id, "linked", by, kind=kind, title=_clip(title, MAX_TITLE), url=url, pr=pr)
 
 
 def open_titles() -> list[tuple[str, str, int, str]]:
-    """未处理和已采纳的愿望：(编号, 标题, 遇到几次, 状态)。每次提问都带上，供小助手判断是不是同一个问题。
+    """未处理和已采纳的愿望：(wish-N, 标题, 遇到几次, 状态)。每次提问都带上，供小助手判断是不是同一个问题。
 
-    Open and accepted wishes as (id, title, occurrences, status), attached to every
+    Open and accepted wishes as (wish-N, title, occurrences, status), attached to every
     question so the assistant can tell whether it is the same problem.
     """
-    return [(w.wish_id, w.title, w.occurrences, w.status_label) for w in listing().wishes]
+    return [(name(w), w.title, w.occurrences, w.status_label) for w in listing().wishes]

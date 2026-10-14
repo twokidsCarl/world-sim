@@ -12,6 +12,7 @@ import { MAX_WIDTH, MIN_WIDTH, useAssistant } from './store'
 import { stuck } from './stuck'
 import { arrive, install, note, recentActions, subscribe } from './trail'
 import { type Block, type TurnView, imageUrls } from './turnView'
+import { wishName } from '../pages/wishName'
 
 // 建议的问题和"解释这一页"的那句话：[中文, 英文]。界面是英文时，发出去的也是英文。
 // The suggested questions and the canned "explain this page" question: [Chinese, English].
@@ -422,7 +423,7 @@ function BlockView({ block, active }: { block: Block; active: boolean }) {
           <strong>{block.title}</strong>
         </div>
         <div className="a-card-foot">
-          <span className="muted small">{block.kind_label}</span>
+          <span className="muted small">{[wishName(block.number), block.kind_label].filter(Boolean).join(' · ')}</span>
           <Link to={`/wishes/${block.wish_id}`}>{t('在许愿池里看', 'See it in the wish pool')}</Link>
           {block.fresh && !undone && (
             <button

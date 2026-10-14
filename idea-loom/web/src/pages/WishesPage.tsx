@@ -10,6 +10,7 @@ import { useLang, useT } from '../state/store'
 import { SessionView } from '../sessions/SessionView'
 import { whereLabel } from '../ui/nav'
 import { DEFAULT_GROUPS, WISH_GROUPS, type WishGroup, groupCount, readFilter, writeFilter } from './wishFilter'
+import { wishCommand, wishName } from './wishName'
 import { Empty, Page, Section } from '../ui/Page'
 
 const TONE: Record<string, string> = { open: 'w-open', accepted: 'w-accepted', done: 'w-done', declined: 'w-quiet', withdrawn: 'w-quiet' }
@@ -152,7 +153,7 @@ export function WishesPage() {
                 {list.wishes.map((w) => (
                   <tr key={w.wish_id}>
                     <td>
-                      <Link to={`/wishes/${w.wish_id}`}>{w.title}</Link>
+                      <span className="muted small num wish-name">{wishName(w.number)}</span> <Link to={`/wishes/${wishName(w.number) || w.wish_id}`}>{w.title}</Link>
                     </td>
                     <td className="muted">{label(lang, 'wishKind', w.kind, w.kind_label)}</td>
                     <td>{w.where?.url ? <Link to={w.where.url}>{whereLabel(w.where.url, w.where.title, lang)}</Link> : <span className="muted">—</span>}</td>
@@ -183,12 +184,12 @@ export function WishPage() {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState({ title: '', stuck: '', suggestion: '' })
   const [copied, setCopied] = useState(false)
-  const [job, setJob] = useState<Job | null>(null)
+  const [jobs, setJobs] = useState<Job[]>([])
   const [starting, setStarting] = useState(false)
   const [startError, setStartError] = useState<string | null>(null)
   const lang = useLang()
   const t = useT()
-  const loadJob = () => api.jobs().then((all) => setJob(all.find((j) => j.kind === 'wish' && j.ref === id) ?? null), () => undefined)
+  const loadJob = () => api.jobs().then(setJobs, () => undefined)
 
   const reload = () => api.wish(id).then(setWish, (e: Error) => setError(e.message))
   useEffect(() => {
@@ -201,13 +202,15 @@ export function WishPage() {
 
   if (error && !wish) return <Page title={t('愿望', 'Wish')}><div className="notice bad" role="alert">{error}</div></Page>
   if (!wish) return <Page title={t('愿望', 'Wish')}><p className="muted">{t('正在读取…', 'Loading…')}</p></Page>
+  // 地址里可以是 wish-N，作业记的是完整编号。 / The address may say wish-N; jobs record the full id.
+  const job = jobs.find((j) => j.kind === 'wish' && j.ref === wish.wish_id) ?? null
   const open = wish.status === 'open'
   const canStart = ['open', 'accepted'].includes(wish.status) && (!job || ['failed', 'cancelled', 'declined'].includes(job.phase))
 
   return (
     <Page
       title={wish.title}
-      lead={t(`${wish.kind_label} · 遇到 ${wish.occurrences} 次`, `${label(lang, 'wishKind', wish.kind, wish.kind_label)} · seen ${plural(wish.occurrences, 'time')}`)}
+      lead={[wishName(wish.number), t(`${wish.kind_label} · 遇到 ${wish.occurrences} 次`, `${label(lang, 'wishKind', wish.kind, wish.kind_label)} · seen ${plural(wish.occurrences, 'time')}`)].filter(Boolean).join(' · ')}
       actions={
         open &&
         !editing && (
@@ -332,8 +335,8 @@ export function WishPage() {
       </div>
 
       <Section title={t('在 Claude Code 里处理', 'Handle it in Claude Code')} note={t('它拿到这条愿望的数据，先出计划，你批准之后才动手', 'It fetches this wish, plans first and only acts after you approve')}>
-        <WishSession wishId={wish.wish_id} title={wish.title} />
-        <WishCommand id={wish.wish_id} />
+        <WishSession wish={wish} />
+        <WishCommand wish={wish} />
         {job ? (
           <JobPanel jobId={job.job_id} onChange={() => (void reload(), void refresh(), void loadJob())} />
         ) : null}
@@ -520,12 +523,12 @@ function ReviewEntry({ run, open, recordAt, onRescue }: { run: ReviewRun; open: 
 }
 
 
-// 主入口：在这个仓库里开着的 Claude Code 会话里运行 /wishes。编号只写结尾四位就够。
-// The main way in: run /wishes in a Claude Code session opened in this repository. The last four characters of the id are enough.
-function WishCommand({ id }: { id: string }) {
+// 主入口：在这个仓库里开着的 Claude Code 会话里运行 /wishes wish-N。
+// The main way in: run /wishes wish-N in a Claude Code session opened in this repository.
+function WishCommand({ wish }: { wish: Wish }) {
   const t = useT()
   const [copied, setCopied] = useState(false)
-  const command = `/wishes ${id.slice(-4)}`
+  const command = wishCommand(wish)
   return (
     <div className="row wish-command">
       <code className="pre">{command}</code>
@@ -547,7 +550,8 @@ function WishCommand({ id }: { id: string }) {
 // 只在本机有（它能在这台机器上执行命令）；云端这个按钮不出现。
 // Handle this wish with Claude Code right on this page: a session opens whose first message is /wishes <id>, starting in plan mode.
 // Local only (it can run commands on this machine); in the cloud the button does not appear.
-function WishSession({ wishId, title }: { wishId: string; title: string }) {
+function WishSession({ wish }: { wish: Wish }) {
+  const { wish_id: wishId, title } = wish
   const t = useT()
   const [session, setSession] = useState<string | null>(null)
   const [offered, setOffered] = useState(false)
@@ -578,7 +582,7 @@ function WishSession({ wishId, title }: { wishId: string; title: string }) {
         onClick={() => {
           setBusy(true)
           setError(null)
-          api.startSession({ text: `/wishes ${wishId.slice(-4)}`, mode: 'plan', wish_id: wishId, title: t(`愿望：${title}`, `Wish: ${title}`) }).then(
+          api.startSession({ text: wishCommand(wish), mode: 'plan', wish_id: wishId, title: t(`愿望：${title}`, `Wish: ${title}`) }).then(
             (made) => (setBusy(false), setSession(made.id)),
             (e: Error) => (setBusy(false), setError(e.message)),
           )

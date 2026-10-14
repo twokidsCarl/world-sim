@@ -103,6 +103,10 @@ wishes_app = typer.Typer(help="许愿池：给处理愿望的 Claude Code 会话
 app.add_typer(wishes_app, name="wishes")
 
 
+# 凡是要愿望编号的地方都认这几种写法。 / Every place that takes a wish id accepts these forms.
+_WISH_REF = "wish-N、N、完整编号或旧编号的结尾几位 / wish-N, N, the full id, or the last few characters of an old id"
+
+
 def _wish(fn, *args, **kw) -> None:
     try:
         fn(*args, **kw)
@@ -115,11 +119,11 @@ def _wish(fn, *args, **kw) -> None:
 def wishes_list(status: Optional[str] = typer.Option(None, help="open / accepted / done / declined / withdrawn")) -> None:
     """未处理和已采纳的愿望，遇到次数多的在前。 / Open and accepted wishes, most often met first."""
     for w in wish_store.listing(status).wishes:
-        typer.echo(f"{w.wish_id}  [{w.status_label}] ×{w.occurrences}  {w.kind_label}  {w.title}")
+        typer.echo(f"{wish_store.name(w)}  [{w.status_label}] ×{w.occurrences}  {w.kind_label}  {w.title}")
 
 
 @wishes_app.command("show")
-def wishes_show(wish_id: str) -> None:
+def wishes_show(wish_id: str = typer.Argument(..., help=_WISH_REF)) -> None:
     """一条愿望的全部内容。 / Everything about one wish."""
     try:
         w = wish_store.get(wish_id)
@@ -130,7 +134,7 @@ def wishes_show(wish_id: str) -> None:
 
 
 def _wish_text(w) -> str:
-    lines = [f"{w.wish_id}  [{w.status_label}] ×{w.occurrences}  {w.kind_label}", w.title, "", f"卡在哪：{w.stuck}", f"建议：{w.suggestion}"]
+    lines = [f"{wish_store.name(w)}  [{w.status_label}] ×{w.occurrences}  {w.kind_label}", w.title, "", f"卡在哪：{w.stuck}", f"建议：{w.suggestion}"]
     if w.where:
         lines.append(f"出在：{w.where.title} {w.where.url}")
     if w.source.startswith(("visitor:", "agent:")):
@@ -142,7 +146,7 @@ def _wish_text(w) -> str:
 
 
 @wishes_app.command("brief")
-def wishes_brief(ids: list[str] = typer.Argument(None, help="愿望的编号（可以只写结尾几位）；不给就是全部待处理的 / wish ids (the last few characters are enough); all pending ones when omitted")) -> None:
+def wishes_brief(ids: list[str] = typer.Argument(None, help="愿望的编号（wish-N、N、完整编号或旧编号的结尾几位）；不给就是全部待处理的 / wish ids (wish-N, N, the full id or the last few characters of an old id); all pending ones when omitted")) -> None:
     """给 Claude Code 的 /wishes 用：把要处理的愿望一次拿全。 / For /wishes in Claude Code: everything about the wishes to handle, in one go."""
     from . import jobs
 
@@ -154,35 +158,35 @@ def wishes_brief(ids: list[str] = typer.Argument(None, help="愿望的编号（�
         for w in pending:
             flag = f"  ⚠ 界面里有一个作业正在做它（{busy[w.wish_id].phase_label}）" if w.wish_id in busy else ""
             outside = "  [外面提的]" if w.source.startswith(("visitor:", "agent:")) else ""
-            typer.echo(f"- {w.wish_id}  [{w.status_label}] ×{w.occurrences}  {w.kind_label}{outside}{flag}\n    {w.title}\n    卡在哪：{w.stuck[:160]}")
+            typer.echo(f"- {wish_store.name(w)}  [{w.status_label}] ×{w.occurrences}  {w.kind_label}{outside}{flag}\n    {w.title}\n    卡在哪：{w.stuck[:160]}")
         if not pending:
             typer.echo("（没有待处理的愿望）")
         return
     for wanted in ids:
-        hits = [w for w in wishes.values() if w.wish_id == wanted or w.wish_id.endswith(wanted)]
-        if len(hits) != 1:
-            typer.echo(f"== {wanted}：{'没有这条愿望' if not hits else '有好几条以它结尾，写长一点'}\n")
+        try:
+            w = wish_store.resolve(wanted, wishes)
+        except wish_store.WishError as e:
+            typer.echo(f"== {wanted}：{e}\n")
             continue
-        w = hits[0]
         if w.wish_id in busy:
             typer.echo(f"⚠ 界面里有一个作业正在做这一条（{busy[w.wish_id].phase_label}），先确认要不要接手。")
         typer.echo(f"== {_wish_text(w)}\n")
 
 
 @wishes_app.command("accept")
-def wishes_accept(wish_id: str, note: str = typer.Option("", help="一句说明")) -> None:
+def wishes_accept(wish_id: str = typer.Argument(..., help=_WISH_REF), note: str = typer.Option("", help="一句说明")) -> None:
     """采纳：这条归你做了，内容从此冻结。 / Accept: it is yours now and its text is frozen."""
     _wish(wish_store.set_status, wish_id, "accepted", note=note)
 
 
 @wishes_app.command("note")
-def wishes_note(wish_id: str, text: str = typer.Option(..., help="说明的内容")) -> None:
+def wishes_note(wish_id: str = typer.Argument(..., help=_WISH_REF), text: str = typer.Option(..., help="说明的内容")) -> None:
     """加一条说明。 / Add a note."""
     _wish(wish_store.add_note, wish_id, text)
 
 
 @wishes_app.command("link")
-def wishes_link(wish_id: str, pr: Optional[int] = typer.Option(None), plan: Optional[str] = typer.Option(None, help="方案的链接"),
+def wishes_link(wish_id: str = typer.Argument(..., help=_WISH_REF), pr: Optional[int] = typer.Option(None), plan: Optional[str] = typer.Option(None, help="方案的链接"),
                 title: str = typer.Option(""), url: Optional[str] = typer.Option(None)) -> None:
     """关联一个方案或合并请求。 / Link a plan or a pull request."""
     if pr is not None:
@@ -195,13 +199,13 @@ def wishes_link(wish_id: str, pr: Optional[int] = typer.Option(None), plan: Opti
 
 
 @wishes_app.command("done")
-def wishes_done(wish_id: str, pr: int = typer.Option(..., help="合并了的 PR 编号"), note: str = typer.Option("")) -> None:
+def wishes_done(wish_id: str = typer.Argument(..., help=_WISH_REF), pr: int = typer.Option(..., help="合并了的 PR 编号"), note: str = typer.Option("")) -> None:
     """做完了。只有真的合并了才标。 / Done. Only once it is really merged."""
     _wish(wish_store.set_status, wish_id, "done", note=note, pr=pr)
 
 
 @wishes_app.command("decline")
-def wishes_decline(wish_id: str, note: str = typer.Option(..., help="为什么不做")) -> None:
+def wishes_decline(wish_id: str = typer.Argument(..., help=_WISH_REF), note: str = typer.Option(..., help="为什么不做")) -> None:
     """不做，要写原因。 / Decline, with a reason."""
     _wish(wish_store.set_status, wish_id, "declined", note=note)
 
