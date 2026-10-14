@@ -4,6 +4,7 @@ import { skinDrawnOpaque, type SectionAxis } from '../state/display.ts'
 import { isSolo, useApp } from '../state/store.ts'
 import { Icon } from './Icon.tsx'
 import { SkinMapPanel } from './SkinMapPanel.tsx'
+import { LumenPanel } from './LumenPanel.tsx'
 
 const AXES: { id: SectionAxis; zh: string; en: string }[] = [
   { id: 'axial', zh: '横断面', en: 'Axial' },
@@ -182,6 +183,7 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
       </section>
 
       <SkinMapPanel graph={graph} />
+      <LumenPanel graph={graph} />
 
       <section className="group">
         <h3>

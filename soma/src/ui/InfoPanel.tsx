@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { isFmaId, type AnatomyGraph, type DisplayName, type TreeKind } from '../anatomy/graph.ts'
 import { CONSTRUCTION_COLOR, CONSTRUCTION_LABEL, PROVENANCE_LABEL, RELATION_LABEL, SIDE_LABEL, TISSUE_LABEL, provenanceColor } from '../anatomy/labels.ts'
 import type { Concept, Part, Relation } from '../anatomy/types.ts'
+import { LumenPartInfo } from './LumenPanel.tsx'
 import { useApp } from '../state/store.ts'
 import { Icon } from './Icon.tsx'
 import { ShowSkinTerritory, SkinRegionInfo } from './SkinRegionInfo.tsx'
@@ -391,6 +392,7 @@ function PartInfo({ graph, part }: { graph: AnatomyGraph; part: Part }) {
         )}
         <dt>体积</dt>
         <dd>{part.volume !== undefined ? `${formatVolume(part.volume)} cm³` : '—'}</dd>
+        <LumenPartInfo part={part} />
         <dt>三角形</dt>
         <dd>{part.triangles.toLocaleString()}</dd>
         {wikidata && (
