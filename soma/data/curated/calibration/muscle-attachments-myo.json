@@ -26,24 +26,24 @@
  ],
  "ourState": {
   "male": {
-   "anatomy.json": "b8acc1f6aa9f",
-   "rig.json": "d6f78c4a2637",
-   "rig.bin": "c592ecf76a6d",
-   "face.json": "e5929504ad8e",
-   "face.bin": "a3fbd2d38611",
-   "muscular.glb": "34d6d4fbefac",
-   "skeletal.glb": "b0cb3b0f29f0",
-   "integumentary.glb": "a42b95e41b26"
+   "anatomy.json": "53411643e427",
+   "rig.json": "570cc04b4931",
+   "rig.bin": "d36d82938693",
+   "face.json": "9dc79d631883",
+   "face.bin": "5bae4424d792",
+   "muscular.glb": "67ee781f73e8",
+   "skeletal.glb": "153a069e1df5",
+   "integumentary.glb": "13ec5fdbb970"
   },
   "female": {
-   "anatomy.json": "03f878a6bcda",
-   "rig.json": "8b11cb7a5713",
-   "rig.bin": "f8cde8d7af4e",
-   "face.json": "7035b5bd1287",
-   "face.bin": "8689765b7261",
-   "muscular.glb": "b5bbda989a8d",
-   "skeletal.glb": "75ef5bae1128",
-   "integumentary.glb": "4d6b3ab8090c"
+   "anatomy.json": "7bb6bb8270aa",
+   "rig.json": "2b5ee6910a1a",
+   "rig.bin": "8489fc454f40",
+   "face.json": "ffb93397e009",
+   "face.bin": "e92fe3bdbe91",
+   "muscular.glb": "7f920ec10363",
+   "skeletal.glb": "368e1ca0d548",
+   "integumentary.glb": "b85a6c377ac0"
   }
  },
  "notes": [
@@ -53,12 +53,66 @@
   }
  ],
  "summary": {
-  "rows": 258,
-  "within": 147,
-  "outside": 97,
-  "notComparable": 14
+  "rows": 440,
+  "within": 240,
+  "outside": 162,
+  "notComparable": 38
  },
  "rows": [
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right flexor digitorum superficialis",
+   "part": "FJ1475",
+   "reference": [
+    "FDS2",
+    "FDS3",
+    "FDS4",
+    "FDS5"
+   ],
+   "end": "origin",
+   "ourJoint": "radioulnar_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.925,
+    0.05
+   ],
+   "ref": [
+    0.102,
+    0.042
+   ],
+   "diffMm": 211.6,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right flexor digitorum superficialis",
+   "part": "W_FJ1475",
+   "reference": [
+    "FDS2",
+    "FDS3",
+    "FDS4",
+    "FDS5"
+   ],
+   "end": "origin",
+   "ourJoint": "radioulnar_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.883,
+    0.038
+   ],
+   "ref": [
+    0.102,
+    0.042
+   ],
+   "diffMm": 177.7,
+   "verdict": "outside"
+  },
   {
    "body": "female",
    "side": "L",
@@ -270,15 +324,15 @@
    "toleranceMm": 25,
    "ours": [
     -0.1,
-    0.349,
-    -0.525
+    0.352,
+    -0.524
    ],
    "ref": [
     -0.306,
     1.061,
     -0.536
    ],
-   "diffMm": 128.7,
+   "diffMm": 128.1,
    "verdict": "outside"
   },
   {
@@ -307,15 +361,41 @@
    "toleranceMm": 25,
    "ours": [
     0.109,
-    0.352,
-    -0.518
+    0.353,
+    -0.517
    ],
    "ref": [
     0.307,
     1.061,
     -0.536
    ],
-   "diffMm": 127.8,
+   "diffMm": 127.6,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left rectus abdominis",
+   "part": "R3_FMA13378",
+   "reference": [
+    "rect_abd_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "rib5_L",
+   "ourSegment": "trunk",
+   "refSegment": "trunk",
+   "toleranceMm": 25,
+   "ours": [
+    0.196,
+    0.664,
+    0.307
+   ],
+   "ref": [
+    -0.083,
+    0.63,
+    0.197
+   ],
+   "diffMm": 122.7,
    "verdict": "outside"
   },
   {
@@ -519,6 +599,32 @@
   {
    "body": "female",
    "side": "L",
+   "muscle": "Left rectus abdominis",
+   "part": "W_R3_FMA13378",
+   "reference": [
+    "rect_abd_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "rib5_L",
+   "ourSegment": "trunk",
+   "refSegment": "trunk",
+   "toleranceMm": 25,
+   "ours": [
+    0.202,
+    0.678,
+    0.221
+   ],
+   "ref": [
+    -0.083,
+    0.63,
+    0.197
+   ],
+   "diffMm": 111.9,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "L",
    "muscle": "Left external oblique",
    "part": "W_FJ1452M",
    "reference": [
@@ -530,21 +636,21 @@
     "EO6_l"
    ],
    "end": "origin",
-   "ourJoint": "rib8_L",
+   "ourJoint": "rib7_L",
    "ourSegment": "trunk",
    "refSegment": "trunk",
    "toleranceMm": 25,
    "ours": [
-    0.35,
-    0.589,
-    0.077
+    0.337,
+    0.612,
+    0.13
    ],
    "ref": [
     0.228,
     0.354,
     0.136
    ],
-   "diffMm": 104.8,
+   "diffMm": 108.6,
    "verdict": "outside"
   },
   {
@@ -598,32 +704,51 @@
   {
    "body": "female",
    "side": "R",
-   "muscle": "Right external oblique",
-   "part": "W_FJ1452",
+   "muscle": "Right rectus abdominis",
+   "part": "W_R3_FMA13377",
    "reference": [
-    "EO1_r",
-    "EO2_r",
-    "EO3_r",
-    "EO4_r",
-    "EO5_r",
-    "EO6_r"
+    "rect_abd_r"
    ],
-   "end": "origin",
-   "ourJoint": "rib8_R",
+   "end": "insertion",
+   "ourJoint": "rib5_R",
    "ourSegment": "trunk",
    "refSegment": "trunk",
    "toleranceMm": 25,
    "ours": [
-    -0.317,
-    0.571,
-    0.08
+    -0.16,
+    0.664,
+    0.221
    ],
    "ref": [
-    -0.228,
-    0.354,
-    0.136
+    0.083,
+    0.63,
+    0.197
    ],
-   "diffMm": 93.5,
+   "diffMm": 95.4,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right tibialis posterior",
+   "part": "FJ1440",
+   "reference": [
+    "tibpost_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.557,
+    0.008
+   ],
+   "ref": [
+    0.326,
+    0.026
+   ],
+   "diffMm": 94.7,
    "verdict": "outside"
   },
   {
@@ -673,6 +798,37 @@
     0.07,
     0.608,
     -0.158
+   ],
+   "diffMm": 92.4,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right external oblique",
+   "part": "W_FJ1452",
+   "reference": [
+    "EO1_r",
+    "EO2_r",
+    "EO3_r",
+    "EO4_r",
+    "EO5_r",
+    "EO6_r"
+   ],
+   "end": "origin",
+   "ourJoint": "rib8_R",
+   "ourSegment": "trunk",
+   "refSegment": "trunk",
+   "toleranceMm": 25,
+   "ours": [
+    -0.317,
+    0.569,
+    0.082
+   ],
+   "ref": [
+    -0.228,
+    0.354,
+    0.136
    ],
    "diffMm": 92.4,
    "verdict": "outside"
@@ -729,6 +885,30 @@
    "verdict": "outside"
   },
   {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left tibialis posterior",
+   "part": "FJ1440M",
+   "reference": [
+    "tibpost_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.544,
+    0.014
+   ],
+   "ref": [
+    0.326,
+    0.026
+   ],
+   "diffMm": 89.2,
+   "verdict": "outside"
+  },
+  {
    "body": "female",
    "side": "R",
    "muscle": "Right iliocostalis lumborum",
@@ -754,7 +934,7 @@
    "toleranceMm": 25,
    "ours": [
     -0.282,
-    0.616,
+    0.615,
     -0.092
    ],
    "ref": [
@@ -762,7 +942,7 @@
     0.476,
     -0.142
    ],
-   "diffMm": 88.3,
+   "diffMm": 88,
    "verdict": "outside"
   },
   {
@@ -779,14 +959,38 @@
    "refSegment": "shank",
    "toleranceMm": 25,
    "ours": [
-    0.613,
+    0.615,
     0.083
    ],
    "ref": [
     0.388,
     0.054
    ],
-   "diffMm": 86.1,
+   "diffMm": 87,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor digitorum longus",
+   "part": "VD_extensor_digitorum_longus_right",
+   "reference": [
+    "edl_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.516,
+    0.09
+   ],
+   "ref": [
+    0.29,
+    0.061
+   ],
+   "diffMm": 86.5,
    "verdict": "outside"
   },
   {
@@ -838,6 +1042,30 @@
     -0.621
    ],
    "diffMm": 84.3,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right vastus lateralis",
+   "part": "VD_vastus_lateralis_right",
+   "reference": [
+    "vaslat_r"
+   ],
+   "end": "origin",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.234,
+    0.132
+   ],
+   "ref": [
+    0.458,
+    0.089
+   ],
+   "diffMm": 83.5,
    "verdict": "outside"
   },
   {
@@ -920,6 +1148,54 @@
    "verdict": "outside"
   },
   {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right fibularis longus",
+   "part": "VD_peroneus_longus_right",
+   "reference": [
+    "perlong_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.553,
+    0.106
+   ],
+   "ref": [
+    0.344,
+    0.082
+   ],
+   "diffMm": 79.9,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left vastus lateralis",
+   "part": "VD_vastus_lateralis_left",
+   "reference": [
+    "vaslat_l"
+   ],
+   "end": "origin",
+   "ourJoint": "hip_L",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.246,
+    0.129
+   ],
+   "ref": [
+    0.458,
+    0.089
+   ],
+   "diffMm": 78.2,
+   "verdict": "outside"
+  },
+  {
    "body": "male",
    "side": "R",
    "muscle": "Right gluteus maximus",
@@ -948,6 +1224,54 @@
    "verdict": "outside"
   },
   {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left fibularis longus",
+   "part": "VD_peroneus_longus_left",
+   "reference": [
+    "perlong_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.55,
+    0.103
+   ],
+   "ref": [
+    0.344,
+    0.082
+   ],
+   "diffMm": 77.6,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left extensor digitorum longus",
+   "part": "VD_extensor_digitorum_longus_left",
+   "reference": [
+    "edl_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.494,
+    0.088
+   ],
+   "ref": [
+    0.29,
+    0.061
+   ],
+   "diffMm": 77.3,
+   "verdict": "outside"
+  },
+  {
    "body": "male",
    "side": "R",
    "muscle": "Medial head of right triceps brachii",
@@ -969,6 +1293,54 @@
     0.04
    ],
    "diffMm": 75.6,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left extensor hallucis longus",
+   "part": "VD_extensor_hallucis_longus_left",
+   "reference": [
+    "ehl_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.581,
+    0.083
+   ],
+   "ref": [
+    0.388,
+    0.054
+   ],
+   "diffMm": 73.3,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right tibialis anterior",
+   "part": "VD_tibialis_anterior_right",
+   "reference": [
+    "tibant_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.518,
+    0.039
+   ],
+   "ref": [
+    0.327,
+    0.062
+   ],
+   "diffMm": 72.9,
    "verdict": "outside"
   },
   {
@@ -1034,6 +1406,84 @@
    "verdict": "outside"
   },
   {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gluteus maximus",
+   "part": "VD_gluteus_maximus_right",
+   "reference": [
+    "glmax1_r",
+    "glmax2_r",
+    "glmax3_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.061,
+    0.176
+   ],
+   "ref": [
+    0.247,
+    0.117
+   ],
+   "diffMm": 71.3,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left rectus abdominis",
+   "part": "R3_FMA13378",
+   "reference": [
+    "rect_abd_l"
+   ],
+   "end": "origin",
+   "ourJoint": "si_L",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    0.115,
+    -0.069,
+    0.339
+   ],
+   "ref": [
+    -0.069,
+    0.201,
+    0.095
+   ],
+   "diffMm": 71.1,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right rectus abdominis",
+   "part": "W_R3_FMA13377",
+   "reference": [
+    "rect_abd_r"
+   ],
+   "end": "origin",
+   "ourJoint": "si_R",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    -0.083,
+    -0.142,
+    0.241
+   ],
+   "ref": [
+    0.069,
+    0.201,
+    0.095
+   ],
+   "diffMm": 69.9,
+   "verdict": "outside"
+  },
+  {
    "body": "male",
    "side": "R",
    "muscle": "Right rectus abdominis",
@@ -1060,30 +1510,101 @@
    "verdict": "outside"
   },
   {
-   "body": "female",
+   "body": "male",
    "side": "R",
-   "muscle": "Right adductor magnus",
-   "part": "VD_adductor_magnus_right",
+   "muscle": "Right abductor pollicis longus",
+   "part": "FJ1484",
    "reference": [
-    "addmagDist_r",
-    "addmagIsch_r",
-    "addmagMid_r",
-    "addmagProx_r"
+    "APL"
    ],
-   "end": "insertion",
-   "ourJoint": "hip_R",
-   "ourSegment": "thigh",
-   "refSegment": "thigh",
+   "end": "origin",
+   "ourJoint": "radioulnar_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
    "toleranceMm": 25,
    "ours": [
-    0.716,
-    0.004
+    0.7,
+    0.078
    ],
    "ref": [
-    0.551,
-    0.074
+    0.433,
+    0.07
    ],
-   "diffMm": 65.6,
+   "diffMm": 68.7,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left flexor digitorum longus",
+   "part": "VD_flexor_digitorum_longus_left",
+   "reference": [
+    "fdl_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.635,
+    0.043
+   ],
+   "ref": [
+    0.458,
+    0.007
+   ],
+   "diffMm": 68,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left tibialis posterior",
+   "part": "VD_tibialis_posterior_left",
+   "reference": [
+    "tibpost_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.504,
+    0.037
+   ],
+   "ref": [
+    0.326,
+    0.026
+   ],
+   "diffMm": 67,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left rectus abdominis",
+   "part": "W_R3_FMA13378",
+   "reference": [
+    "rect_abd_l"
+   ],
+   "end": "origin",
+   "ourJoint": "si_L",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    0.076,
+    -0.12,
+    0.243
+   ],
+   "ref": [
+    -0.069,
+    0.201,
+    0.095
+   ],
+   "diffMm": 66.3,
    "verdict": "outside"
   },
   {
@@ -1114,12 +1635,13 @@
   {
    "body": "female",
    "side": "R",
-   "muscle": "Right gluteus maximus",
-   "part": "VD_gluteus_maximus_right",
+   "muscle": "Right adductor magnus",
+   "part": "VD_adductor_magnus_right",
    "reference": [
-    "glmax1_r",
-    "glmax2_r",
-    "glmax3_r"
+    "addmagDist_r",
+    "addmagIsch_r",
+    "addmagMid_r",
+    "addmagProx_r"
    ],
    "end": "insertion",
    "ourJoint": "hip_R",
@@ -1127,14 +1649,158 @@
    "refSegment": "thigh",
    "toleranceMm": 25,
    "ours": [
-    0.089,
-    0.172
+    0.709,
+    0.003
    ],
    "ref": [
-    0.247,
-    0.117
+    0.551,
+    0.074
    ],
-   "diffMm": 61.4,
+   "diffMm": 63.5,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left tibialis anterior",
+   "part": "VD_tibialis_anterior_left",
+   "reference": [
+    "tibant_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.494,
+    0.043
+   ],
+   "ref": [
+    0.327,
+    0.062
+   ],
+   "diffMm": 63.4,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor pollicis longus",
+   "part": "FJ1495",
+   "reference": [
+    "EPL"
+   ],
+   "end": "origin",
+   "ourJoint": "elbow_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.611,
+    0.05
+   ],
+   "ref": [
+    0.385,
+    0.095
+   ],
+   "diffMm": 59.1,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right fibularis brevis",
+   "part": "W_FJ1409",
+   "reference": [
+    "perbrev_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.789,
+    0.092
+   ],
+   "ref": [
+    0.634,
+    0.077
+   ],
+   "diffMm": 58.9,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right abductor pollicis longus",
+   "part": "W_FJ1484",
+   "reference": [
+    "APL"
+   ],
+   "end": "origin",
+   "ourJoint": "radioulnar_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.689,
+    0.098
+   ],
+   "ref": [
+    0.433,
+    0.07
+   ],
+   "diffMm": 58.8,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left fibularis brevis",
+   "part": "W_FJ1409M",
+   "reference": [
+    "perbrev_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.789,
+    0.092
+   ],
+   "ref": [
+    0.634,
+    0.077
+   ],
+   "diffMm": 58.4,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left fibularis brevis",
+   "part": "FJ1409M",
+   "reference": [
+    "perbrev_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.772,
+    0.068
+   ],
+   "ref": [
+    0.634,
+    0.077
+   ],
+   "diffMm": 56.5,
    "verdict": "outside"
   },
   {
@@ -1192,16 +1858,136 @@
    "refSegment": "trunk",
    "toleranceMm": 25,
    "ours": [
-    0.17,
-    0.376,
-    -0.132
+    0.172,
+    0.373,
+    -0.131
    ],
    "ref": [
     0.077,
     0.29,
     -0.067
    ],
-   "diffMm": 55.1,
+   "diffMm": 54.9,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right fibularis brevis",
+   "part": "FJ1409",
+   "reference": [
+    "perbrev_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.765,
+    0.067
+   ],
+   "ref": [
+    0.634,
+    0.077
+   ],
+   "diffMm": 53.6,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right soleus",
+   "part": "VD_soleus_right",
+   "reference": [
+    "soleus_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.366,
+    0.034
+   ],
+   "ref": [
+    0.229,
+    0.028
+   ],
+   "diffMm": 51.9,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right tibialis posterior",
+   "part": "VD_tibialis_posterior_right",
+   "reference": [
+    "tibpost_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.462,
+    0.035
+   ],
+   "ref": [
+    0.326,
+    0.026
+   ],
+   "diffMm": 51.7,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left tibialis anterior",
+   "part": "FJ1439M",
+   "reference": [
+    "tibant_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.45,
+    0.061
+   ],
+   "ref": [
+    0.327,
+    0.062
+   ],
+   "diffMm": 50.2,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right tibialis anterior",
+   "part": "FJ1439",
+   "reference": [
+    "tibant_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.449,
+    0.058
+   ],
+   "ref": [
+    0.327,
+    0.062
+   ],
+   "diffMm": 50,
    "verdict": "outside"
   },
   {
@@ -1218,14 +2004,14 @@
    "refSegment": "forearm",
    "toleranceMm": 25,
    "ours": [
-    0.72,
+    0.714,
     0.108
    ],
    "ref": [
     0.925,
     0.098
    ],
-   "diffMm": 46.8,
+   "diffMm": 48,
    "verdict": "outside"
   },
   {
@@ -1254,6 +2040,54 @@
    "diffMm": 46.1,
    "verdict": "outside",
    "note": "reference tendon runs the other way; its ends were swapped"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right flexor pollicis longus",
+   "part": "FJ1498",
+   "reference": [
+    "FPL"
+   ],
+   "end": "origin",
+   "ourJoint": "radioulnar_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.61,
+    0.065
+   ],
+   "ref": [
+    0.432,
+    0.072
+   ],
+   "diffMm": 45.9,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor pollicis longus",
+   "part": "W_FJ1495",
+   "reference": [
+    "EPL"
+   ],
+   "end": "origin",
+   "ourJoint": "elbow_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.587,
+    0.09
+   ],
+   "ref": [
+    0.385,
+    0.095
+   ],
+   "diffMm": 45.8,
+   "verdict": "outside"
   },
   {
    "body": "female",
@@ -1299,32 +2133,6 @@
    "verdict": "outside"
   },
   {
-   "body": "female",
-   "side": "R",
-   "muscle": "Right iliacus",
-   "part": "VD_iliacus_right",
-   "reference": [
-    "iliacus_r"
-   ],
-   "end": "origin",
-   "ourJoint": "si_R",
-   "ourSegment": "pelvis",
-   "refSegment": "pelvis",
-   "toleranceMm": 25,
-   "ours": [
-    -0.491,
-    0.461,
-    0.015
-   ],
-   "ref": [
-    -0.546,
-    0.708,
-    -0.027
-   ],
-   "diffMm": 44.4,
-   "verdict": "outside"
-  },
-  {
    "body": "male",
    "side": "R",
    "muscle": "Acromial part of right deltoid",
@@ -1350,6 +2158,32 @@
    "note": "reference tendon runs the other way; its ends were swapped"
   },
   {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right iliacus",
+   "part": "VD_iliacus_right",
+   "reference": [
+    "iliacus_r"
+   ],
+   "end": "origin",
+   "ourJoint": "si_R",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    -0.491,
+    0.465,
+    0.012
+   ],
+   "ref": [
+    -0.546,
+    0.708,
+    -0.027
+   ],
+   "diffMm": 43.7,
+   "verdict": "outside"
+  },
+  {
    "body": "male",
    "side": "R",
    "muscle": "Right anconeus",
@@ -1371,6 +2205,30 @@
     0.101
    ],
    "diffMm": 43.6,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right flexor hallucis longus",
+   "part": "VD_flexor_hallucis_longus_right",
+   "reference": [
+    "fhl_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.649,
+    0.089
+   ],
+   "ref": [
+    0.542,
+    0.081
+   ],
+   "diffMm": 40.6,
    "verdict": "outside"
   },
   {
@@ -1487,16 +2345,66 @@
    "ours": [
     0.131,
     -0.203,
-    -0.189
+    -0.188
    ],
    "ref": [
     0.213,
     -0.162,
     -0.299
    ],
-   "diffMm": 38,
+   "diffMm": 38.1,
    "verdict": "outside",
    "note": "reference tendon runs the other way; its ends were swapped"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left semimembranosus",
+   "part": "FJ1435M",
+   "reference": [
+    "semimem_l"
+   ],
+   "end": "origin",
+   "ourJoint": "si_L",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    0.258,
+    -0.336,
+    -0.146
+   ],
+   "ref": [
+    0.397,
+    -0.23,
+    -0.275
+   ],
+   "diffMm": 37.9,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left soleus",
+   "part": "FJ1437M",
+   "reference": [
+    "soleus_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.162,
+    0.09
+   ],
+   "ref": [
+    0.229,
+    0.028
+   ],
+   "diffMm": 37.6,
+   "verdict": "outside"
   },
   {
    "body": "male",
@@ -1520,6 +2428,102 @@
     0.061
    ],
    "diffMm": 37.5,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left soleus",
+   "part": "VD_soleus_left",
+   "reference": [
+    "soleus_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.237,
+    0.127
+   ],
+   "ref": [
+    0.229,
+    0.028
+   ],
+   "diffMm": 37.3,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right soleus",
+   "part": "FJ1437",
+   "reference": [
+    "soleus_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.16,
+    0.086
+   ],
+   "ref": [
+    0.229,
+    0.028
+   ],
+   "diffMm": 37.1,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left extensor digitorum longus",
+   "part": "FJ1406M",
+   "reference": [
+    "edl_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.379,
+    0.077
+   ],
+   "ref": [
+    0.29,
+    0.061
+   ],
+   "diffMm": 37.1,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor pollicis brevis",
+   "part": "FJ1494",
+   "reference": [
+    "EPB"
+   ],
+   "end": "origin",
+   "ourJoint": "radioulnar_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.78,
+    0.06
+   ],
+   "ref": [
+    0.636,
+    0.058
+   ],
+   "diffMm": 36.9,
    "verdict": "outside"
   },
   {
@@ -1575,6 +2579,54 @@
    "verdict": "outside"
   },
   {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor digitorum longus",
+   "part": "FJ1406",
+   "reference": [
+    "edl_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.379,
+    0.074
+   ],
+   "ref": [
+    0.29,
+    0.061
+   ],
+   "diffMm": 36.7,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right flexor digitorum longus",
+   "part": "VD_flexor_digitorum_longus_right",
+   "reference": [
+    "fdl_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.548,
+    0.039
+   ],
+   "ref": [
+    0.458,
+    0.007
+   ],
+   "diffMm": 36.3,
+   "verdict": "outside"
+  },
+  {
    "body": "female",
    "side": "R",
    "muscle": "Right teres major",
@@ -1588,41 +2640,68 @@
    "refSegment": "girdle",
    "toleranceMm": 25,
    "ours": [
-    0.191,
-    -0.34,
-    -0.279
+    0.192,
+    -0.341,
+    -0.28
    ],
    "ref": [
     0.291,
     -0.263,
     -0.334
    ],
-   "diffMm": 36.4,
+   "diffMm": 36.3,
    "verdict": "outside",
    "note": "reference tendon runs the other way; its ends were swapped"
   },
   {
    "body": "female",
-   "side": "R",
-   "muscle": "Right palmaris longus",
-   "part": "W_FJ1502",
+   "side": "L",
+   "muscle": "Left adductor magnus",
+   "part": "VD_adductor_magnus_left",
    "reference": [
-    "PL"
+    "addmagDist_l",
+    "addmagIsch_l",
+    "addmagMid_l",
+    "addmagProx_l"
    ],
    "end": "insertion",
-   "ourJoint": "mcp5_R",
-   "ourSegment": "hand",
-   "refSegment": "hand",
+   "ourJoint": "hip_L",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
    "toleranceMm": 25,
    "ours": [
-    0.866,
-    0.499
+    0.629,
+    0.012
    ],
    "ref": [
-    0.575,
-    0.045
+    0.551,
+    0.074
    ],
-   "diffMm": 36.4,
+   "diffMm": 36.3,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left extensor hallucis longus",
+   "part": "VD_extensor_hallucis_longus_left",
+   "reference": [
+    "ehl_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "mtp1_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    1.098,
+    0.15
+   ],
+   "ref": [
+    1.37,
+    0.222
+   ],
+   "diffMm": 36,
    "verdict": "outside"
   },
   {
@@ -1653,29 +2732,50 @@
   },
   {
    "body": "female",
-   "side": "L",
-   "muscle": "Left adductor magnus",
-   "part": "VD_adductor_magnus_left",
+   "side": "R",
+   "muscle": "Right palmaris longus",
+   "part": "W_FJ1502",
    "reference": [
-    "addmagDist_l",
-    "addmagIsch_l",
-    "addmagMid_l",
-    "addmagProx_l"
+    "PL"
    ],
    "end": "insertion",
-   "ourJoint": "hip_L",
-   "ourSegment": "thigh",
-   "refSegment": "thigh",
+   "ourJoint": "mcp5_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
    "toleranceMm": 25,
    "ours": [
-    0.628,
-    0.012
+    0.866,
+    0.487
    ],
    "ref": [
-    0.551,
-    0.074
+    0.575,
+    0.045
    ],
    "diffMm": 35.7,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor digitorum longus",
+   "part": "FJ1406",
+   "reference": [
+    "edl_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "tpip5_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    1.103,
+    0.375
+   ],
+   "ref": [
+    1.317,
+    0.19
+   ],
+   "diffMm": 35.2,
    "verdict": "outside"
   },
   {
@@ -1717,6 +2817,54 @@
     -0.076,
     0.281,
     -0.064
+   ],
+   "diffMm": 35.2,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor pollicis brevis",
+   "part": "W_FJ1494",
+   "reference": [
+    "EPB"
+   ],
+   "end": "origin",
+   "ourJoint": "radioulnar_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.789,
+    0.08
+   ],
+   "ref": [
+    0.636,
+    0.058
+   ],
+   "diffMm": 35.2,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left flexor hallucis longus",
+   "part": "VD_flexor_hallucis_longus_left",
+   "reference": [
+    "fhl_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.636,
+    0.091
+   ],
+   "ref": [
+    0.542,
+    0.081
    ],
    "diffMm": 35.2,
    "verdict": "outside"
@@ -1769,6 +2917,54 @@
    "diffMm": 34.7,
    "verdict": "outside",
    "note": "reference tendon runs the other way; its ends were swapped"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left vastus medialis",
+   "part": "VD_vastus_medialis_left",
+   "reference": [
+    "vasmed_l"
+   ],
+   "end": "origin",
+   "ourJoint": "hip_L",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.607,
+    0.024
+   ],
+   "ref": [
+    0.519,
+    0.059
+   ],
+   "diffMm": 34.6,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right brachialis",
+   "part": "W_FJ1486",
+   "reference": [
+    "BRA"
+   ],
+   "end": "origin",
+   "ourJoint": "gh_R",
+   "ourSegment": "upperarm",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": [
+    0.729,
+    0.02
+   ],
+   "ref": [
+    0.599,
+    0.017
+   ],
+   "diffMm": 34.5,
+   "verdict": "outside"
   },
   {
    "body": "female",
@@ -1852,23 +3048,23 @@
   {
    "body": "female",
    "side": "L",
-   "muscle": "Left vastus medialis",
-   "part": "VD_vastus_medialis_left",
+   "muscle": "Left extensor digitorum longus",
+   "part": "VD_extensor_digitorum_longus_left",
    "reference": [
-    "vasmed_l"
+    "edl_l"
    ],
-   "end": "origin",
-   "ourJoint": "hip_L",
-   "ourSegment": "thigh",
-   "refSegment": "thigh",
+   "end": "insertion",
+   "ourJoint": "tpip5_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
    "toleranceMm": 25,
    "ours": [
-    0.605,
-    0.024
+    1.093,
+    0.332
    ],
    "ref": [
-    0.519,
-    0.059
+    1.317,
+    0.19
    ],
    "diffMm": 33.9,
    "verdict": "outside"
@@ -1900,27 +3096,27 @@
    "verdict": "outside"
   },
   {
-   "body": "female",
+   "body": "male",
    "side": "R",
-   "muscle": "Right brachialis",
-   "part": "W_FJ1486",
+   "muscle": "Right vastus medialis",
+   "part": "FJ1443",
    "reference": [
-    "BRA"
+    "vasmed_r"
    ],
    "end": "origin",
-   "ourJoint": "gh_R",
-   "ourSegment": "upperarm",
-   "refSegment": "upperarm",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
    "toleranceMm": 25,
    "ours": [
-    0.726,
-    0.02
+    0.599,
+    0.056
    ],
    "ref": [
-    0.599,
-    0.017
+    0.519,
+    0.059
    ],
-   "diffMm": 33.7,
+   "diffMm": 33.4,
    "verdict": "outside"
   },
   {
@@ -1967,6 +3163,32 @@
    "verdict": "outside"
   },
   {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right tensor fasciae latae",
+   "part": "VD_tensor_fasciae_latae_right",
+   "reference": [
+    "tfl_r"
+   ],
+   "end": "origin",
+   "ourJoint": "si_R",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    -0.708,
+    0.492,
+    0.216
+   ],
+   "ref": [
+    -0.803,
+    0.647,
+    0.163
+   ],
+   "diffMm": 32.8,
+   "verdict": "outside"
+  },
+  {
    "body": "male",
    "side": "R",
    "muscle": "Right extensor hallucis longus",
@@ -1988,6 +3210,33 @@
     0.222
    ],
    "diffMm": 32.5,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor digitorum",
+   "part": "FJ1492",
+   "reference": [
+    "EDC2",
+    "EDC3",
+    "EDC4",
+    "EDC5"
+   ],
+   "end": "insertion",
+   "ourJoint": "mcp4_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    1.382,
+    0.302
+   ],
+   "ref": [
+    1.836,
+    0.305
+   ],
+   "diffMm": 32.4,
    "verdict": "outside"
   },
   {
@@ -2066,6 +3315,30 @@
    "note": "reference tendon runs the other way; its ends were swapped"
   },
   {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right flexor pollicis longus",
+   "part": "W_FJ1498",
+   "reference": [
+    "FPL"
+   ],
+   "end": "origin",
+   "ourJoint": "radioulnar_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.571,
+    0.089
+   ],
+   "ref": [
+    0.432,
+    0.072
+   ],
+   "diffMm": 31.8,
+   "verdict": "outside"
+  },
+  {
    "body": "male",
    "side": "R",
    "muscle": "Right iliacus",
@@ -2094,25 +3367,25 @@
   {
    "body": "female",
    "side": "R",
-   "muscle": "Right brachioradialis",
-   "part": "W_FJ1487",
+   "muscle": "Right extensor digitorum longus",
+   "part": "VD_extensor_digitorum_longus_right",
    "reference": [
-    "BRD"
+    "edl_r"
    ],
-   "end": "origin",
-   "ourJoint": "gh_R",
-   "ourSegment": "upperarm",
-   "refSegment": "upperarm",
+   "end": "insertion",
+   "ourJoint": "tpip5_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
    "toleranceMm": 25,
    "ours": [
-    0.804,
-    0.069
+    1.108,
+    0.323
    ],
    "ref": [
-    0.685,
-    0.061
+    1.317,
+    0.19
    ],
-   "diffMm": 31.6,
+   "diffMm": 31.4,
    "verdict": "outside"
   },
   {
@@ -2129,42 +3402,16 @@
    "refSegment": "pelvis",
    "toleranceMm": 25,
    "ours": [
-    0.508,
-    0.534,
-    -0.006
+    0.507,
+    0.533,
+    -0.005
    ],
    "ref": [
     0.546,
     0.708,
     -0.028
    ],
-   "diffMm": 31.1,
-   "verdict": "outside"
-  },
-  {
-   "body": "female",
-   "side": "R",
-   "muscle": "Spinal part of right deltoid",
-   "part": "W_FJ1513",
-   "reference": [
-    "DELT3"
-   ],
-   "end": "origin",
-   "ourJoint": "ac_R",
-   "ourSegment": "girdle",
-   "refSegment": "girdle",
-   "toleranceMm": 25,
-   "ours": [
-    0.153,
-    0.016,
-    -0.194
-   ],
-   "ref": [
-    0.117,
-    0.121,
-    -0.159
-   ],
-   "diffMm": 30.9,
+   "diffMm": 31.4,
    "verdict": "outside"
   },
   {
@@ -2189,6 +3436,32 @@
     0.063
    ],
    "diffMm": 30.7,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gracilis",
+   "part": "W_FJ1421M",
+   "reference": [
+    "grac_l"
+   ],
+   "end": "origin",
+   "ourJoint": "si_L",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    0.119,
+    -0.185,
+    0.149
+   ],
+   "ref": [
+    0.159,
+    -0.329,
+    0.058
+   ],
+   "diffMm": 30.5,
    "verdict": "outside"
   },
   {
@@ -2266,27 +3539,128 @@
   {
    "body": "female",
    "side": "L",
-   "muscle": "Left gracilis",
-   "part": "W_FJ1421M",
+   "muscle": "Left gluteus maximus",
+   "part": "VD_gluteus_maximus_left",
    "reference": [
-    "grac_l"
+    "glmax1_l",
+    "glmax2_l",
+    "glmax3_l"
    ],
-   "end": "origin",
-   "ourJoint": "si_L",
-   "ourSegment": "pelvis",
-   "refSegment": "pelvis",
+   "end": "insertion",
+   "ourJoint": "hip_L",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
    "toleranceMm": 25,
    "ours": [
-    0.119,
-    -0.185,
-    0.146
+    0.325,
+    0.086
    ],
    "ref": [
-    0.159,
-    -0.329,
-    0.058
+    0.247,
+    0.117
    ],
-   "diffMm": 30.1,
+   "diffMm": 30.2,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Spinal part of right deltoid",
+   "part": "W_FJ1513",
+   "reference": [
+    "DELT3"
+   ],
+   "end": "origin",
+   "ourJoint": "ac_R",
+   "ourSegment": "girdle",
+   "refSegment": "girdle",
+   "toleranceMm": 25,
+   "ours": [
+    0.149,
+    0.018,
+    -0.192
+   ],
+   "ref": [
+    0.117,
+    0.121,
+    -0.159
+   ],
+   "diffMm": 29.9,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor digitorum",
+   "part": "W_FJ1492",
+   "reference": [
+    "EDC2",
+    "EDC3",
+    "EDC4",
+    "EDC5"
+   ],
+   "end": "insertion",
+   "ourJoint": "mcp4_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    1.393,
+    0.329
+   ],
+   "ref": [
+    1.836,
+    0.305
+   ],
+   "diffMm": 29.9,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right brachioradialis",
+   "part": "W_FJ1487",
+   "reference": [
+    "BRD"
+   ],
+   "end": "origin",
+   "ourJoint": "gh_R",
+   "ourSegment": "upperarm",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": [
+    0.797,
+    0.07
+   ],
+   "ref": [
+    0.685,
+    0.061
+   ],
+   "diffMm": 29.7,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left flexor digitorum longus",
+   "part": "VD_flexor_digitorum_longus_left",
+   "reference": [
+    "fdl_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "mtp3_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    1.1,
+    0.121
+   ],
+   "ref": [
+    1.329,
+    0.166
+   ],
+   "diffMm": 29.7,
    "verdict": "outside"
   },
   {
@@ -2343,12 +3717,12 @@
    "note": "reference tendon runs the other way; its ends were swapped"
   },
   {
-   "body": "female",
+   "body": "male",
    "side": "R",
-   "muscle": "Short head of right biceps femoris",
-   "part": "VD_biceps_femoris_short_right",
+   "muscle": "Right vastus intermedius",
+   "part": "FJ1441",
    "reference": [
-    "bfsh_r"
+    "vasint_r"
    ],
    "end": "origin",
    "ourJoint": "hip_R",
@@ -2356,14 +3730,86 @@
    "refSegment": "thigh",
    "toleranceMm": 25,
    "ours": [
-    0.444,
-    0.061
+    0.539,
+    0.076
    ],
    "ref": [
-    0.522,
-    0.061
+    0.475,
+    0.106
    ],
-   "diffMm": 28.6,
+   "diffMm": 29.3,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right flexor digitorum longus",
+   "part": "VD_flexor_digitorum_longus_right",
+   "reference": [
+    "fdl_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "mtp3_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    1.102,
+    0.119
+   ],
+   "ref": [
+    1.329,
+    0.166
+   ],
+   "diffMm": 29.3,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor indicis",
+   "part": "FJ1493",
+   "reference": [
+    "EIP"
+   ],
+   "end": "origin",
+   "ourJoint": "elbow_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.769,
+    0.047
+   ],
+   "ref": [
+    0.657,
+    0.068
+   ],
+   "diffMm": 29.1,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Humeral head of right pronator teres",
+   "part": "W_FJ1474",
+   "reference": [
+    "PT"
+   ],
+   "end": "insertion",
+   "ourJoint": "radioulnar_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.367,
+    0.124
+   ],
+   "ref": [
+    0.492,
+    0.096
+   ],
+   "diffMm": 29,
    "verdict": "outside"
   },
   {
@@ -2420,30 +3866,6 @@
   {
    "body": "female",
    "side": "R",
-   "muscle": "Humeral head of right pronator teres",
-   "part": "W_FJ1474",
-   "reference": [
-    "PT"
-   ],
-   "end": "insertion",
-   "ourJoint": "radioulnar_R",
-   "ourSegment": "forearm",
-   "refSegment": "forearm",
-   "toleranceMm": 25,
-   "ours": [
-    0.37,
-    0.122
-   ],
-   "ref": [
-    0.492,
-    0.096
-   ],
-   "diffMm": 28.3,
-   "verdict": "outside"
-  },
-  {
-   "body": "female",
-   "side": "R",
    "muscle": "Right gracilis",
    "part": "W_FJ1421",
    "reference": [
@@ -2468,27 +3890,27 @@
    "verdict": "outside"
   },
   {
-   "body": "female",
-   "side": "R",
-   "muscle": "Humeral head of right flexor carpi ulnaris",
-   "part": "W_FJ1473",
+   "body": "male",
+   "side": "L",
+   "muscle": "Left vastus intermedius",
+   "part": "FJ1441M",
    "reference": [
-    "FCU"
+    "vasint_l"
    ],
-   "end": "insertion",
-   "ourJoint": "wrist_R",
-   "ourSegment": "hand",
-   "refSegment": "hand",
+   "end": "origin",
+   "ourJoint": "hip_L",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
    "toleranceMm": 25,
    "ours": [
-    -0.032,
-    0.326
+    0.537,
+    0.078
    ],
    "ref": [
-    0.376,
-    0.253
+    0.475,
+    0.106
    ],
-   "diffMm": 28,
+   "diffMm": 28.1,
    "verdict": "outside"
   },
   {
@@ -2517,6 +3939,54 @@
   },
   {
    "body": "male",
+   "side": "L",
+   "muscle": "Left flexor digitorum longus",
+   "part": "FJ1414M",
+   "reference": [
+    "fdl_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "mtp3_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    1.108,
+    0.129
+   ],
+   "ref": [
+    1.329,
+    0.166
+   ],
+   "diffMm": 27.9,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right flexor digitorum longus",
+   "part": "FJ1414",
+   "reference": [
+    "fdl_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "mtp3_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    1.108,
+    0.13
+   ],
+   "ref": [
+    1.329,
+    0.166
+   ],
+   "diffMm": 27.8,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
    "side": "R",
    "muscle": "Clavicular part of right deltoid",
    "part": "FJ1468",
@@ -2539,6 +4009,30 @@
    "diffMm": 27.7,
    "verdict": "outside",
    "note": "reference tendon runs the other way; its ends were swapped"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Humeral head of right flexor carpi ulnaris",
+   "part": "W_FJ1473",
+   "reference": [
+    "FCU"
+   ],
+   "end": "insertion",
+   "ourJoint": "wrist_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    -0.028,
+    0.323
+   ],
+   "ref": [
+    0.376,
+    0.253
+   ],
+   "diffMm": 27.7,
+   "verdict": "outside"
   },
   {
    "body": "male",
@@ -2594,6 +4088,54 @@
   {
    "body": "female",
    "side": "R",
+   "muscle": "Short head of right biceps femoris",
+   "part": "VD_biceps_femoris_short_right",
+   "reference": [
+    "bfsh_r"
+   ],
+   "end": "origin",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.447,
+    0.059
+   ],
+   "ref": [
+    0.522,
+    0.061
+   ],
+   "diffMm": 27.2,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor carpi radialis brevis",
+   "part": "W_FJ1489",
+   "reference": [
+    "ECRB"
+   ],
+   "end": "origin",
+   "ourJoint": "gh_R",
+   "ourSegment": "upperarm",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": [
+    0.9,
+    0.072
+   ],
+   "ref": [
+    0.997,
+    0.104
+   ],
+   "diffMm": 27,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
    "muscle": "Right opponens pollicis",
    "part": "W_FJ1501",
    "reference": [
@@ -2605,14 +4147,14 @@
    "refSegment": "hand",
    "toleranceMm": 25,
    "ours": [
-    0.271,
-    0.468
+    0.269,
+    0.465
    ],
    "ref": [
     0.648,
     0.594
    ],
-   "diffMm": 26.8,
+   "diffMm": 27,
    "verdict": "outside"
   },
   {
@@ -2767,6 +4309,32 @@
    "verdict": "outside"
   },
   {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left tensor fasciae latae",
+   "part": "VD_tensor_fasciae_latae_left",
+   "reference": [
+    "tfl_l"
+   ],
+   "end": "origin",
+   "ourJoint": "si_L",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    0.705,
+    0.545,
+    0.207
+   ],
+   "ref": [
+    0.803,
+    0.647,
+    0.162
+   ],
+   "diffMm": 25.8,
+   "verdict": "outside"
+  },
+  {
    "body": "male",
    "side": "R",
    "muscle": "Spinal part of right deltoid",
@@ -2867,6 +4435,78 @@
   {
    "body": "female",
    "side": "L",
+   "muscle": "Left fibularis brevis",
+   "part": "W_FJ1409M",
+   "reference": [
+    "perbrev_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    0.394,
+    0.304
+   ],
+   "ref": [
+    0.197,
+    0.309
+   ],
+   "diffMm": 25.2,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right fibularis brevis",
+   "part": "W_FJ1409",
+   "reference": [
+    "perbrev_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    0.391,
+    0.308
+   ],
+   "ref": [
+    0.197,
+    0.309
+   ],
+   "diffMm": 24.6,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left tibialis posterior",
+   "part": "VD_tibialis_posterior_left",
+   "reference": [
+    "tibpost_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    0.419,
+    0.112
+   ],
+   "ref": [
+    0.246,
+    0.199
+   ],
+   "diffMm": 24.6,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
    "muscle": "Short head of left biceps femoris",
    "part": "VD_biceps_femoris_short_left",
    "reference": [
@@ -2918,12 +4558,34 @@
   {
    "body": "female",
    "side": "R",
-   "muscle": "Right gluteus maximus",
-   "part": "VD_gluteus_maximus_right",
+   "muscle": "Right tibialis posterior",
+   "part": "VD_tibialis_posterior_right",
    "reference": [
-    "glmax1_r",
-    "glmax2_r",
-    "glmax3_r"
+    "tibpost_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    0.403,
+    0.091
+   ],
+   "ref": [
+    0.246,
+    0.199
+   ],
+   "diffMm": 24.1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right tensor fasciae latae",
+   "part": "FJ1438",
+   "reference": [
+    "tfl_r"
    ],
    "end": "origin",
    "ourJoint": "si_R",
@@ -2931,16 +4593,16 @@
    "refSegment": "pelvis",
    "toleranceMm": 25,
    "ours": [
-    -0.369,
-    0.515,
-    -0.419
+    -0.783,
+    0.544,
+    0.252
    ],
    "ref": [
-    -0.241,
-    0.488,
-    -0.466
+    -0.803,
+    0.647,
+    0.163
    ],
-   "diffMm": 24.2,
+   "diffMm": 23.9,
    "verdict": "within"
   },
   {
@@ -2968,6 +4630,32 @@
    "verdict": "within"
   },
   {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left tensor fasciae latae",
+   "part": "FJ1438M",
+   "reference": [
+    "tfl_l"
+   ],
+   "end": "origin",
+   "ourJoint": "si_L",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    0.784,
+    0.546,
+    0.25
+   ],
+   "ref": [
+    0.803,
+    0.647,
+    0.162
+   ],
+   "diffMm": 23.6,
+   "verdict": "within"
+  },
+  {
    "body": "female",
    "side": "L",
    "muscle": "Left gluteus medius",
@@ -2991,6 +4679,34 @@
     0.147
    ],
    "diffMm": 23.5,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gluteus maximus",
+   "part": "VD_gluteus_maximus_right",
+   "reference": [
+    "glmax1_r",
+    "glmax2_r",
+    "glmax3_r"
+   ],
+   "end": "origin",
+   "ourJoint": "si_R",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    -0.365,
+    0.468,
+    -0.418
+   ],
+   "ref": [
+    -0.241,
+    0.488,
+    -0.466
+   ],
+   "diffMm": 23.4,
    "verdict": "within"
   },
   {
@@ -3079,14 +4795,14 @@
    "refSegment": "hand",
    "toleranceMm": 25,
    "ours": [
-    -0.044,
-    0.274
+    -0.042,
+    0.275
    ],
    "ref": [
     0.284,
     0.207
    ],
-   "diffMm": 22.6,
+   "diffMm": 22.5,
    "verdict": "within"
   },
   {
@@ -3153,14 +4869,40 @@
    "refSegment": "pelvis",
    "toleranceMm": 25,
    "ours": [
-    0.14,
-    0.385,
-    -0.374
+    0.139,
+    0.384,
+    -0.376
    ],
    "ref": [
     0.087,
     0.466,
     -0.295
+   ],
+   "diffMm": 21.8,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right adductor longus",
+   "part": "VD_adductor_longus_right",
+   "reference": [
+    "addlong_r"
+   ],
+   "end": "origin",
+   "ourJoint": "si_R",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    -0.132,
+    -0.146,
+    0.218
+   ],
+   "ref": [
+    -0.122,
+    -0.067,
+    0.315
    ],
    "diffMm": 21.7,
    "verdict": "within"
@@ -3217,56 +4959,6 @@
   },
   {
    "body": "female",
-   "side": "L",
-   "muscle": "Left adductor longus",
-   "part": "VD_adductor_longus_left",
-   "reference": [
-    "addlong_l"
-   ],
-   "end": "origin",
-   "ourJoint": "si_L",
-   "ourSegment": "pelvis",
-   "refSegment": "pelvis",
-   "toleranceMm": 25,
-   "ours": [
-    0.122,
-    -0.151,
-    0.225
-   ],
-   "ref": [
-    0.123,
-    -0.067,
-    0.315
-   ],
-   "diffMm": 21.4,
-   "verdict": "within"
-  },
-  {
-   "body": "female",
-   "side": "L",
-   "muscle": "Long head of left biceps femoris",
-   "part": "VD_biceps_femoris_long_left",
-   "reference": [
-    "bflh_l"
-   ],
-   "end": "insertion",
-   "ourJoint": "knee_L",
-   "ourSegment": "shank",
-   "refSegment": "shank",
-   "toleranceMm": 25,
-   "ours": [
-    0.153,
-    0.145
-   ],
-   "ref": [
-    0.115,
-    0.102
-   ],
-   "diffMm": 21.3,
-   "verdict": "within"
-  },
-  {
-   "body": "female",
    "side": "R",
    "muscle": "Clavicular part of right pectoralis major",
    "part": "W_FJ1447",
@@ -3293,49 +4985,54 @@
   {
    "body": "female",
    "side": "L",
-   "muscle": "Medial head of left gastrocnemius",
-   "part": "W_FJ1397M",
+   "muscle": "Long head of left biceps femoris",
+   "part": "VD_biceps_femoris_long_left",
    "reference": [
-    "gasmed_l"
+    "bflh_l"
    ],
    "end": "insertion",
-   "ourJoint": "subtalar_L",
-   "ourSegment": "foot",
-   "refSegment": "foot",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
    "toleranceMm": 25,
    "ours": [
-    -0.284,
-    0.348
+    0.151,
+    0.146
    ],
    "ref": [
-    -0.278,
-    0.183
+    0.115,
+    0.102
    ],
    "diffMm": 21.2,
    "verdict": "within"
   },
   {
    "body": "female",
-   "side": "L",
-   "muscle": "Lateral head of left gastrocnemius",
-   "part": "W_FJ1394M",
+   "side": "R",
+   "muscle": "Right adductor magnus",
+   "part": "VD_adductor_magnus_right",
    "reference": [
-    "gaslat_l"
+    "addmagDist_r",
+    "addmagIsch_r",
+    "addmagMid_r",
+    "addmagProx_r"
    ],
-   "end": "insertion",
-   "ourJoint": "subtalar_L",
-   "ourSegment": "foot",
-   "refSegment": "foot",
+   "end": "origin",
+   "ourJoint": "si_R",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
    "toleranceMm": 25,
    "ours": [
-    -0.284,
-    0.348
+    -0.144,
+    -0.231,
+    0.061
    ],
    "ref": [
+    -0.2,
     -0.278,
-    0.183
+    -0.036
    ],
-   "diffMm": 21.2,
+   "diffMm": 21.1,
    "verdict": "within"
   },
   {
@@ -3365,29 +5062,51 @@
    "verdict": "within"
   },
   {
-   "body": "female",
+   "body": "male",
    "side": "R",
-   "muscle": "Right adductor longus",
-   "part": "VD_adductor_longus_right",
+   "muscle": "Right fibularis brevis",
+   "part": "FJ1409",
    "reference": [
-    "addlong_r"
+    "perbrev_r"
    ],
-   "end": "origin",
-   "ourJoint": "si_R",
-   "ourSegment": "pelvis",
-   "refSegment": "pelvis",
+   "end": "insertion",
+   "ourJoint": "subtalar_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
    "toleranceMm": 25,
    "ours": [
-    -0.131,
-    -0.141,
-    0.221
+    0.363,
+    0.295
    ],
    "ref": [
-    -0.122,
-    -0.067,
-    0.315
+    0.197,
+    0.309
    ],
-   "diffMm": 20.9,
+   "diffMm": 20.8,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left fibularis brevis",
+   "part": "FJ1409M",
+   "reference": [
+    "perbrev_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    0.363,
+    0.295
+   ],
+   "ref": [
+    0.197,
+    0.309
+   ],
+   "diffMm": 20.8,
    "verdict": "within"
   },
   {
@@ -3411,55 +5130,7 @@
     0.115,
     0.102
    ],
-   "diffMm": 20.8,
-   "verdict": "within"
-  },
-  {
-   "body": "female",
-   "side": "R",
-   "muscle": "Medial head of right gastrocnemius",
-   "part": "W_FJ1397",
-   "reference": [
-    "gasmed_r"
-   ],
-   "end": "insertion",
-   "ourJoint": "subtalar_R",
-   "ourSegment": "foot",
-   "refSegment": "foot",
-   "toleranceMm": 25,
-   "ours": [
-    -0.289,
-    0.345
-   ],
-   "ref": [
-    -0.278,
-    0.183
-   ],
-   "diffMm": 20.6,
-   "verdict": "within"
-  },
-  {
-   "body": "female",
-   "side": "R",
-   "muscle": "Lateral head of right gastrocnemius",
-   "part": "W_FJ1394",
-   "reference": [
-    "gaslat_r"
-   ],
-   "end": "insertion",
-   "ourJoint": "subtalar_R",
-   "ourSegment": "foot",
-   "refSegment": "foot",
-   "toleranceMm": 25,
-   "ours": [
-    -0.289,
-    0.345
-   ],
-   "ref": [
-    -0.278,
-    0.183
-   ],
-   "diffMm": 20.6,
+   "diffMm": 20.7,
    "verdict": "within"
   },
   {
@@ -3488,26 +5159,172 @@
   },
   {
    "body": "female",
-   "side": "L",
-   "muscle": "Short head of left biceps femoris",
-   "part": "VD_biceps_femoris_short_left",
+   "side": "R",
+   "muscle": "Right gluteus medius",
+   "part": "VD_gluteus_medius_right",
    "reference": [
-    "bfsh_l"
+    "glmed1_r",
+    "glmed2_r",
+    "glmed3_r"
    ],
    "end": "insertion",
-   "ourJoint": "knee_L",
-   "ourSegment": "shank",
-   "refSegment": "shank",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
    "toleranceMm": 25,
    "ours": [
-    0.152,
-    0.137
+    0.069,
+    0.171
    ],
    "ref": [
-    0.107,
-    0.108
+    0.018,
+    0.147
    ],
-   "diffMm": 20.3,
+   "diffMm": 20.5,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Medial head of left gastrocnemius",
+   "part": "W_FJ1397M",
+   "reference": [
+    "gasmed_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    -0.283,
+    0.342
+   ],
+   "ref": [
+    -0.278,
+    0.183
+   ],
+   "diffMm": 20.4,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Lateral head of left gastrocnemius",
+   "part": "W_FJ1394M",
+   "reference": [
+    "gaslat_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    -0.283,
+    0.342
+   ],
+   "ref": [
+    -0.278,
+    0.183
+   ],
+   "diffMm": 20.4,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left soleus",
+   "part": "VD_soleus_left",
+   "reference": [
+    "soleus_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    -0.283,
+    0.342
+   ],
+   "ref": [
+    -0.278,
+    0.183
+   ],
+   "diffMm": 20.4,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Medial head of right gastrocnemius",
+   "part": "W_FJ1397",
+   "reference": [
+    "gasmed_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    -0.29,
+    0.342
+   ],
+   "ref": [
+    -0.278,
+    0.183
+   ],
+   "diffMm": 20.2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Lateral head of right gastrocnemius",
+   "part": "W_FJ1394",
+   "reference": [
+    "gaslat_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    -0.29,
+    0.342
+   ],
+   "ref": [
+    -0.278,
+    0.183
+   ],
+   "diffMm": 20.2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right soleus",
+   "part": "VD_soleus_right",
+   "reference": [
+    "soleus_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    -0.29,
+    0.342
+   ],
+   "ref": [
+    -0.278,
+    0.183
+   ],
+   "diffMm": 20.2,
    "verdict": "within"
   },
   {
@@ -3524,14 +5341,41 @@
    "refSegment": "pelvis",
    "toleranceMm": 25,
    "ours": [
-    -0.137,
-    0.398,
-    -0.376
+    -0.139,
+    0.399,
+    -0.375
    ],
    "ref": [
     -0.088,
     0.466,
     -0.295
+   ],
+   "diffMm": 20.2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right flexor digitorum profundus",
+   "part": "W_FJ1497",
+   "reference": [
+    "FDP2",
+    "FDP3",
+    "FDP4",
+    "FDP5"
+   ],
+   "end": "insertion",
+   "ourJoint": "dip2_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    1.891,
+    0.633
+   ],
+   "ref": [
+    1.86,
+    0.335
    ],
    "diffMm": 20.2,
    "verdict": "within"
@@ -3563,30 +5407,51 @@
   {
    "body": "female",
    "side": "R",
-   "muscle": "Right adductor magnus",
-   "part": "VD_adductor_magnus_right",
+   "muscle": "Long head of right biceps brachii",
+   "part": "W_FJ1478",
    "reference": [
-    "addmagDist_r",
-    "addmagIsch_r",
-    "addmagMid_r",
-    "addmagProx_r"
+    "BIClong"
    ],
    "end": "origin",
-   "ourJoint": "si_R",
-   "ourSegment": "pelvis",
-   "refSegment": "pelvis",
+   "ourJoint": "ac_R",
+   "ourSegment": "girdle",
+   "refSegment": "girdle",
    "toleranceMm": 25,
    "ours": [
-    -0.147,
-    -0.236,
-    0.055
+    0.071,
+    0.064,
+    -0.004
    ],
    "ref": [
-    -0.2,
-    -0.278,
-    -0.036
+    0.076,
+    0.036,
+    -0.075
    ],
-   "diffMm": 19.7,
+   "diffMm": 20.1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Long head of right biceps brachii",
+   "part": "W_FJ1478",
+   "reference": [
+    "BIClong"
+   ],
+   "end": "insertion",
+   "ourJoint": "radioulnar_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.111,
+    0.056
+   ],
+   "ref": [
+    0.198,
+    0.041
+   ],
+   "diffMm": 20.1,
    "verdict": "within"
   },
   {
@@ -3640,6 +5505,54 @@
   {
    "body": "male",
    "side": "R",
+   "muscle": "Right soleus",
+   "part": "FJ1437",
+   "reference": [
+    "soleus_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    -0.258,
+    0.338
+   ],
+   "ref": [
+    -0.278,
+    0.183
+   ],
+   "diffMm": 19.5,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Short head of left biceps femoris",
+   "part": "VD_biceps_femoris_short_left",
+   "reference": [
+    "bfsh_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.149,
+    0.137
+   ],
+   "ref": [
+    0.107,
+    0.108
+   ],
+   "diffMm": 19.4,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
    "muscle": "Long head of right triceps brachii",
    "part": "FJ1479",
    "reference": [
@@ -3659,6 +5572,56 @@
     0.078,
     -0.023,
     -0.124
+   ],
+   "diffMm": 19.3,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left tibialis posterior",
+   "part": "FJ1440M",
+   "reference": [
+    "tibpost_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    0.394,
+    0.151
+   ],
+   "ref": [
+    0.246,
+    0.199
+   ],
+   "diffMm": 19.3,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left adductor longus",
+   "part": "VD_adductor_longus_left",
+   "reference": [
+    "addlong_l"
+   ],
+   "end": "origin",
+   "ourJoint": "si_L",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    0.125,
+    -0.136,
+    0.227
+   ],
+   "ref": [
+    0.123,
+    -0.067,
+    0.315
    ],
    "diffMm": 19.3,
    "verdict": "within"
@@ -3689,6 +5652,80 @@
    "diffMm": 19.2,
    "verdict": "within",
    "note": "reference tendon runs the other way; its ends were swapped"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor indicis",
+   "part": "W_FJ1493",
+   "reference": [
+    "EIP"
+   ],
+   "end": "origin",
+   "ourJoint": "elbow_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.741,
+    0.082
+   ],
+   "ref": [
+    0.657,
+    0.068
+   ],
+   "diffMm": 19.2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right rectus femoris",
+   "part": "VD_rectus_femoris_right",
+   "reference": [
+    "recfem_r"
+   ],
+   "end": "origin",
+   "ourJoint": "si_R",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    -0.57,
+    0.232,
+    0.108
+   ],
+   "ref": [
+    -0.604,
+    0.257,
+    0.209
+   ],
+   "diffMm": 19.1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left vastus lateralis",
+   "part": "FJ1442M",
+   "reference": [
+    "vaslat_l"
+   ],
+   "end": "origin",
+   "ourJoint": "hip_L",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.414,
+    0.081
+   ],
+   "ref": [
+    0.458,
+    0.089
+   ],
+   "diffMm": 18.9,
+   "verdict": "within"
   },
   {
    "body": "male",
@@ -3739,27 +5776,27 @@
    "verdict": "within"
   },
   {
-   "body": "female",
-   "side": "R",
-   "muscle": "Right extensor indicis",
-   "part": "W_FJ1493",
+   "body": "male",
+   "side": "L",
+   "muscle": "Left soleus",
+   "part": "FJ1437M",
    "reference": [
-    "EIP"
+    "soleus_l"
    ],
-   "end": "origin",
-   "ourJoint": "elbow_R",
-   "ourSegment": "forearm",
-   "refSegment": "forearm",
+   "end": "insertion",
+   "ourJoint": "subtalar_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
    "toleranceMm": 25,
    "ours": [
-    0.739,
-    0.082
+    -0.26,
+    0.333
    ],
    "ref": [
-    0.657,
-    0.068
+    -0.278,
+    0.183
    ],
-   "diffMm": 18.8,
+   "diffMm": 18.9,
    "verdict": "within"
   },
   {
@@ -3777,11 +5814,35 @@
    "toleranceMm": 25,
    "ours": [
     0.161,
-    0.068
+    0.069
    ],
    "ref": [
     0.202,
     0.04
+   ],
+   "diffMm": 18.7,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right tibialis posterior",
+   "part": "FJ1440",
+   "reference": [
+    "tibpost_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    0.389,
+    0.153
+   ],
+   "ref": [
+    0.246,
+    0.199
    ],
    "diffMm": 18.6,
    "verdict": "within"
@@ -3811,55 +5872,27 @@
    "verdict": "within"
   },
   {
-   "body": "female",
-   "side": "R",
-   "muscle": "Right gluteus medius",
-   "part": "VD_gluteus_medius_right",
+   "body": "male",
+   "side": "L",
+   "muscle": "Left semimembranosus",
+   "part": "FJ1435M",
    "reference": [
-    "glmed1_r",
-    "glmed2_r",
-    "glmed3_r"
+    "semimem_l"
    ],
    "end": "insertion",
-   "ourJoint": "hip_R",
-   "ourSegment": "thigh",
-   "refSegment": "thigh",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
    "toleranceMm": 25,
    "ours": [
-    0.063,
-    0.17
+    0.145,
+    0.063
    ],
    "ref": [
-    0.018,
-    0.147
+    0.106,
+    0.085
    ],
-   "diffMm": 18.5,
-   "verdict": "within"
-  },
-  {
-   "body": "female",
-   "side": "R",
-   "muscle": "Right adductor brevis",
-   "part": "VD_adductor_brevis_right",
-   "reference": [
-    "addbrev_r"
-   ],
-   "end": "origin",
-   "ourJoint": "si_R",
-   "ourSegment": "pelvis",
-   "refSegment": "pelvis",
-   "toleranceMm": 25,
-   "ours": [
-    -0.156,
-    -0.157,
-    0.17
-   ],
-   "ref": [
-    -0.099,
-    -0.1,
-    0.241
-   ],
-   "diffMm": 18.5,
+   "diffMm": 18.4,
    "verdict": "within"
   },
   {
@@ -3915,26 +5948,50 @@
   },
   {
    "body": "female",
-   "side": "R",
-   "muscle": "Right vastus medialis",
-   "part": "VD_vastus_medialis_right",
+   "side": "L",
+   "muscle": "Left flexor hallucis longus",
+   "part": "VD_flexor_hallucis_longus_left",
    "reference": [
-    "vasmed_r"
+    "fhl_l"
    ],
-   "end": "origin",
-   "ourJoint": "hip_R",
-   "ourSegment": "thigh",
-   "refSegment": "thigh",
+   "end": "insertion",
+   "ourJoint": "tip1_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
    "toleranceMm": 25,
    "ours": [
-    0.556,
-    0.026
+    1.262,
+    0.138
    ],
    "ref": [
-    0.519,
-    0.059
+    1.401,
+    0.169
    ],
-   "diffMm": 18.1,
+   "diffMm": 18.3,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor carpi radialis brevis",
+   "part": "FJ1489",
+   "reference": [
+    "ECRB"
+   ],
+   "end": "origin",
+   "ourJoint": "gh_R",
+   "ourSegment": "upperarm",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": [
+    0.931,
+    0.111
+   ],
+   "ref": [
+    0.997,
+    0.104
+   ],
+   "diffMm": 18.2,
    "verdict": "within"
   },
   {
@@ -3991,6 +6048,59 @@
   },
   {
    "body": "male",
+   "side": "R",
+   "muscle": "Right flexor digitorum profundus",
+   "part": "FJ1497",
+   "reference": [
+    "FDP2",
+    "FDP3",
+    "FDP4",
+    "FDP5"
+   ],
+   "end": "insertion",
+   "ourJoint": "dip2_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    1.896,
+    0.58
+   ],
+   "ref": [
+    1.86,
+    0.335
+   ],
+   "diffMm": 17.7,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Short head of right biceps brachii",
+   "part": "FJ1512",
+   "reference": [
+    "BICshort"
+   ],
+   "end": "origin",
+   "ourJoint": "ac_R",
+   "ourSegment": "girdle",
+   "refSegment": "girdle",
+   "toleranceMm": 25,
+   "ours": [
+    0.104,
+    0.043,
+    0.072
+   ],
+   "ref": [
+    0.121,
+    -0.018,
+    0.076
+   ],
+   "diffMm": 17.6,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
    "side": "L",
    "muscle": "Long head of left biceps femoris",
    "part": "FJ1395M",
@@ -4013,6 +6123,80 @@
     -0.309
    ],
    "diffMm": 17.6,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right vastus medialis",
+   "part": "VD_vastus_medialis_right",
+   "reference": [
+    "vasmed_r"
+   ],
+   "end": "origin",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.554,
+    0.027
+   ],
+   "ref": [
+    0.519,
+    0.059
+   ],
+   "diffMm": 17.6,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor carpi radialis longus",
+   "part": "FJ1490",
+   "reference": [
+    "ECRL"
+   ],
+   "end": "insertion",
+   "ourJoint": "wrist_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    0.226,
+    0.269
+   ],
+   "ref": [
+    0.469,
+    0.236
+   ],
+   "diffMm": 17.5,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right adductor brevis",
+   "part": "VD_adductor_brevis_right",
+   "reference": [
+    "addbrev_r"
+   ],
+   "end": "origin",
+   "ourJoint": "si_R",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    -0.154,
+    -0.153,
+    0.174
+   ],
+   "ref": [
+    -0.099,
+    -0.1,
+    0.241
+   ],
+   "diffMm": 17.5,
    "verdict": "within"
   },
   {
@@ -4061,6 +6245,54 @@
     -0.379,
     -0.263,
     -0.308
+   ],
+   "diffMm": 17.2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right flexor hallucis longus",
+   "part": "VD_flexor_hallucis_longus_right",
+   "reference": [
+    "fhl_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "tip1_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    1.268,
+    0.142
+   ],
+   "ref": [
+    1.401,
+    0.169
+   ],
+   "diffMm": 17.2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left vastus intermedius",
+   "part": "VD_vastus_intermedius_left",
+   "reference": [
+    "vasint_l"
+   ],
+   "end": "origin",
+   "ourJoint": "hip_L",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.509,
+    0.073
+   ],
+   "ref": [
+    0.475,
+    0.106
    ],
    "diffMm": 17.2,
    "verdict": "within"
@@ -4142,6 +6374,34 @@
    "verdict": "within"
   },
   {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gluteus maximus",
+   "part": "VD_gluteus_maximus_left",
+   "reference": [
+    "glmax1_l",
+    "glmax2_l",
+    "glmax3_l"
+   ],
+   "end": "origin",
+   "ourJoint": "si_L",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    0.332,
+    0.472,
+    -0.443
+   ],
+   "ref": [
+    0.24,
+    0.488,
+    -0.466
+   ],
+   "diffMm": 16.6,
+   "verdict": "within"
+  },
+  {
    "body": "male",
    "side": "L",
    "muscle": "Left gluteus maximus",
@@ -4194,6 +6454,30 @@
   {
    "body": "male",
    "side": "R",
+   "muscle": "Right extensor indicis",
+   "part": "FJ1493",
+   "reference": [
+    "EIP"
+   ],
+   "end": "insertion",
+   "ourJoint": "pip2_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    1.834,
+    0.477
+   ],
+   "ref": [
+    1.996,
+    0.322
+   ],
+   "diffMm": 15.9,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
    "muscle": "Short head of right biceps femoris",
    "part": "FJ1444",
    "reference": [
@@ -4211,6 +6495,54 @@
    "ref": [
     0.107,
     0.108
+   ],
+   "diffMm": 15.7,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right flexor hallucis longus",
+   "part": "FJ1415",
+   "reference": [
+    "fhl_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "tip1_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    1.281,
+    0.134
+   ],
+   "ref": [
+    1.401,
+    0.169
+   ],
+   "diffMm": 15.7,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right abductor pollicis longus",
+   "part": "FJ1484",
+   "reference": [
+    "APL"
+   ],
+   "end": "insertion",
+   "ourJoint": "cmc1_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    0.154,
+    0.443
+   ],
+   "ref": [
+    0.371,
+    0.479
    ],
    "diffMm": 15.7,
    "verdict": "within"
@@ -4294,53 +6626,75 @@
   {
    "body": "female",
    "side": "R",
-   "muscle": "Right gluteus medius",
-   "part": "VD_gluteus_medius_right",
+   "muscle": "Right abductor pollicis longus",
+   "part": "W_FJ1484",
    "reference": [
-    "glmed1_r",
-    "glmed2_r",
-    "glmed3_r"
-   ],
-   "end": "origin",
-   "ourJoint": "si_R",
-   "ourSegment": "pelvis",
-   "refSegment": "pelvis",
-   "toleranceMm": 25,
-   "ours": [
-    -0.475,
-    0.618,
-    -0.243
-   ],
-   "ref": [
-    -0.512,
-    0.613,
-    -0.164
-   ],
-   "diffMm": 15.2,
-   "verdict": "within"
-  },
-  {
-   "body": "female",
-   "side": "R",
-   "muscle": "Right extensor digiti minimi",
-   "part": "W_FJ1491",
-   "reference": [
-    "EDM"
+    "APL"
    ],
    "end": "insertion",
-   "ourJoint": "dip5_R",
+   "ourJoint": "cmc1_R",
    "ourSegment": "hand",
    "refSegment": "hand",
    "toleranceMm": 25,
    "ours": [
-    1.596,
-    0.779
+    0.172,
+    0.368
    ],
    "ref": [
-    1.55,
-    0.56
+    0.371,
+    0.479
    ],
-   "diffMm": 15.2,
+   "diffMm": 15.4,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left rectus femoris",
+   "part": "VD_rectus_femoris_left",
+   "reference": [
+    "recfem_l"
+   ],
+   "end": "origin",
+   "ourJoint": "si_L",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    0.566,
+    0.237,
+    0.131
+   ],
+   "ref": [
+    0.604,
+    0.257,
+    0.208
+   ],
+   "diffMm": 15.4,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left flexor hallucis longus",
+   "part": "FJ1415M",
+   "reference": [
+    "fhl_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "tip1_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    1.285,
+    0.131
+   ],
+   "ref": [
+    1.401,
+    0.169
+   ],
+   "diffMm": 15.3,
    "verdict": "within"
   },
   {
@@ -4370,25 +6724,77 @@
   {
    "body": "female",
    "side": "R",
-   "muscle": "Right anconeus",
-   "part": "W_FJ1485",
+   "muscle": "Right gluteus medius",
+   "part": "VD_gluteus_medius_right",
    "reference": [
-    "ANC"
+    "glmed1_r",
+    "glmed2_r",
+    "glmed3_r"
    ],
-   "end": "insertion",
-   "ourJoint": "elbow_R",
-   "ourSegment": "forearm",
-   "refSegment": "forearm",
+   "end": "origin",
+   "ourJoint": "si_R",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
    "toleranceMm": 25,
    "ours": [
-    0.063,
-    0.123
+    -0.481,
+    0.629,
+    -0.243
    ],
    "ref": [
-    0.002,
-    0.101
+    -0.512,
+    0.613,
+    -0.164
    ],
-   "diffMm": 14.8,
+   "diffMm": 15,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left adductor brevis",
+   "part": "VD_adductor_brevis_left",
+   "reference": [
+    "addbrev_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_L",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.329,
+    0.046
+   ],
+   "ref": [
+    0.292,
+    0.063
+   ],
+   "diffMm": 15,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left extensor digitorum longus",
+   "part": "FJ1406M",
+   "reference": [
+    "edl_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "tdip4_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    1.242,
+    0.284
+   ],
+   "ref": [
+    1.317,
+    0.19
+   ],
+   "diffMm": 14.9,
    "verdict": "within"
   },
   {
@@ -4417,6 +6823,126 @@
   },
   {
    "body": "male",
+   "side": "R",
+   "muscle": "Right vastus lateralis",
+   "part": "FJ1442",
+   "reference": [
+    "vaslat_r"
+   ],
+   "end": "origin",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.424,
+    0.08
+   ],
+   "ref": [
+    0.458,
+    0.089
+   ],
+   "diffMm": 14.6,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right anconeus",
+   "part": "W_FJ1485",
+   "reference": [
+    "ANC"
+   ],
+   "end": "insertion",
+   "ourJoint": "elbow_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.062,
+    0.123
+   ],
+   "ref": [
+    0.002,
+    0.101
+   ],
+   "diffMm": 14.6,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right vastus intermedius",
+   "part": "VD_vastus_intermedius_right",
+   "reference": [
+    "vasint_r"
+   ],
+   "end": "origin",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.501,
+    0.076
+   ],
+   "ref": [
+    0.475,
+    0.106
+   ],
+   "diffMm": 14.3,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor digiti minimi",
+   "part": "W_FJ1491",
+   "reference": [
+    "EDM"
+   ],
+   "end": "insertion",
+   "ourJoint": "dip5_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    1.614,
+    0.762
+   ],
+   "ref": [
+    1.55,
+    0.56
+   ],
+   "diffMm": 14.3,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor carpi radialis longus",
+   "part": "W_FJ1490",
+   "reference": [
+    "ECRL"
+   ],
+   "end": "insertion",
+   "ourJoint": "wrist_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    0.26,
+    0.26
+   ],
+   "ref": [
+    0.469,
+    0.236
+   ],
+   "diffMm": 14.2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
    "side": "L",
    "muscle": "Left semitendinosus",
    "part": "FJ1436M",
@@ -4435,6 +6961,30 @@
    "ref": [
     0.193,
     0.031
+   ],
+   "diffMm": 14,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right flexor pollicis longus",
+   "part": "W_FJ1498",
+   "reference": [
+    "FPL"
+   ],
+   "end": "insertion",
+   "ourJoint": "ip1_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    0.993,
+    0.719
+   ],
+   "ref": [
+    1.086,
+    0.905
    ],
    "diffMm": 14,
    "verdict": "within"
@@ -4466,6 +7016,56 @@
    "verdict": "within"
   },
   {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gluteus minimus",
+   "part": "W_FJ1420M",
+   "reference": [
+    "glmin1_l",
+    "glmin2_l",
+    "glmin3_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_L",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.032,
+    0.178
+   ],
+   "ref": [
+    0.024,
+    0.14
+   ],
+   "diffMm": 14,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Lateral head of right triceps brachii",
+   "part": "FJ1477",
+   "reference": [
+    "TRIlat"
+   ],
+   "end": "origin",
+   "ourJoint": "gh_R",
+   "ourSegment": "upperarm",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": [
+    0.388,
+    0.067
+   ],
+   "ref": [
+    0.433,
+    0.044
+   ],
+   "diffMm": 13.9,
+   "verdict": "within"
+  },
+  {
    "body": "male",
    "side": "R",
    "muscle": "Right iliacus",
@@ -4490,6 +7090,59 @@
    "verdict": "within"
   },
   {
+   "body": "male",
+   "side": "R",
+   "muscle": "Long head of right biceps brachii",
+   "part": "FJ1478",
+   "reference": [
+    "BIClong"
+   ],
+   "end": "origin",
+   "ourJoint": "ac_R",
+   "ourSegment": "girdle",
+   "refSegment": "girdle",
+   "toleranceMm": 25,
+   "ours": [
+    0.081,
+    0.061,
+    -0.033
+   ],
+   "ref": [
+    0.076,
+    0.036,
+    -0.075
+   ],
+   "diffMm": 13.5,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right flexor digitorum profundus",
+   "part": "FJ1497",
+   "reference": [
+    "FDP2",
+    "FDP3",
+    "FDP4",
+    "FDP5"
+   ],
+   "end": "origin",
+   "ourJoint": "elbow_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.177,
+    0.032
+   ],
+   "ref": [
+    0.125,
+    0.034
+   ],
+   "diffMm": 13.5,
+   "verdict": "within"
+  },
+  {
    "body": "female",
    "side": "R",
    "muscle": "Right semitendinosus",
@@ -4510,7 +7163,7 @@
     0.193,
     0.031
    ],
-   "diffMm": 13.3,
+   "diffMm": 13.4,
    "verdict": "within"
   },
   {
@@ -4589,6 +7242,33 @@
    "note": "reference tendon runs the other way; its ends were swapped"
   },
   {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right infraspinatus muscle",
+   "part": "W_FJ1500",
+   "reference": [
+    "INFSP"
+   ],
+   "end": "origin",
+   "ourJoint": "ac_R",
+   "ourSegment": "girdle",
+   "refSegment": "girdle",
+   "toleranceMm": 25,
+   "ours": [
+    0.201,
+    -0.118,
+    -0.209
+   ],
+   "ref": [
+    0.195,
+    -0.071,
+    -0.221
+   ],
+   "diffMm": 12.7,
+   "verdict": "within",
+   "note": "reference tendon runs the other way; its ends were swapped"
+  },
+  {
    "body": "male",
    "side": "L",
    "muscle": "Left rectus femoris",
@@ -4617,52 +7297,49 @@
   {
    "body": "female",
    "side": "R",
-   "muscle": "Right infraspinatus muscle",
-   "part": "W_FJ1500",
+   "muscle": "Right extensor pollicis brevis",
+   "part": "W_FJ1494",
    "reference": [
-    "INFSP"
-   ],
-   "end": "origin",
-   "ourJoint": "ac_R",
-   "ourSegment": "girdle",
-   "refSegment": "girdle",
-   "toleranceMm": 25,
-   "ours": [
-    0.2,
-    -0.117,
-    -0.208
-   ],
-   "ref": [
-    0.195,
-    -0.071,
-    -0.221
-   ],
-   "diffMm": 12.5,
-   "verdict": "within",
-   "note": "reference tendon runs the other way; its ends were swapped"
-  },
-  {
-   "body": "female",
-   "side": "L",
-   "muscle": "Left adductor brevis",
-   "part": "VD_adductor_brevis_left",
-   "reference": [
-    "addbrev_l"
+    "EPB"
    ],
    "end": "insertion",
-   "ourJoint": "hip_L",
-   "ourSegment": "thigh",
-   "refSegment": "thigh",
+   "ourJoint": "mcp1_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
    "toleranceMm": 25,
    "ours": [
-    0.322,
-    0.047
+    0.602,
+    0.612
    ],
    "ref": [
-    0.292,
-    0.063
+    0.72,
+    0.753
    ],
    "diffMm": 12.4,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right flexor digitorum longus",
+   "part": "FJ1414",
+   "reference": [
+    "fdl_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.487,
+    0.012
+   ],
+   "ref": [
+    0.458,
+    0.007
+   ],
+   "diffMm": 12.2,
    "verdict": "within"
   },
   {
@@ -4718,6 +7395,30 @@
   {
    "body": "male",
    "side": "R",
+   "muscle": "Lateral head of right triceps brachii",
+   "part": "FJ1477",
+   "reference": [
+    "TRIlat"
+   ],
+   "end": "insertion",
+   "ourJoint": "elbow_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.001,
+    0.084
+   ],
+   "ref": [
+    -0.046,
+    0.082
+   ],
+   "diffMm": 12.1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
    "muscle": "Right flexor carpi radialis",
    "part": "FJ1496",
    "reference": [
@@ -4754,7 +7455,7 @@
    "toleranceMm": 25,
    "ours": [
     0.031,
-    0.092,
+    0.093,
     -0.037
    ],
    "ref": [
@@ -4765,6 +7466,33 @@
    "diffMm": 12.1,
    "verdict": "within",
    "note": "reference tendon runs the other way; its ends were swapped"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right flexor digitorum superficialis",
+   "part": "W_FJ1475",
+   "reference": [
+    "FDS2",
+    "FDS3",
+    "FDS4",
+    "FDS5"
+   ],
+   "end": "insertion",
+   "ourJoint": "pip4_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    1.567,
+    0.471
+   ],
+   "ref": [
+    1.593,
+    0.294
+   ],
+   "diffMm": 12.1,
+   "verdict": "within"
   },
   {
    "body": "male",
@@ -4791,6 +7519,56 @@
     -0.2,
     -0.278,
     -0.036
+   ],
+   "diffMm": 12,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gluteus minimus",
+   "part": "W_FJ1420",
+   "reference": [
+    "glmin1_r",
+    "glmin2_r",
+    "glmin3_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.025,
+    0.173
+   ],
+   "ref": [
+    0.024,
+    0.14
+   ],
+   "diffMm": 12,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Lateral head of right triceps brachii",
+   "part": "W_FJ1477",
+   "reference": [
+    "TRIlat"
+   ],
+   "end": "origin",
+   "ourJoint": "gh_R",
+   "ourSegment": "upperarm",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": [
+    0.396,
+    0.071
+   ],
+   "ref": [
+    0.433,
+    0.044
    ],
    "diffMm": 12,
    "verdict": "within"
@@ -4921,6 +7699,54 @@
   {
    "body": "male",
    "side": "R",
+   "muscle": "Right extensor carpi ulnaris",
+   "part": "FJ1517",
+   "reference": [
+    "ECU"
+   ],
+   "end": "insertion",
+   "ourJoint": "wrist_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    0.19,
+    0.314
+   ],
+   "ref": [
+    0.341,
+    0.25
+   ],
+   "diffMm": 11.7,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left fibularis longus",
+   "part": "FJ1410M",
+   "reference": [
+    "perlong_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    0.491,
+    0.072
+   ],
+   "ref": [
+    0.564,
+    0.13
+   ],
+   "diffMm": 11.7,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
    "muscle": "Right sartorius",
    "part": "FJ1434",
    "reference": [
@@ -4942,6 +7768,78 @@
     0.238
    ],
    "diffMm": 11.4,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right fibularis longus",
+   "part": "FJ1410",
+   "reference": [
+    "perlong_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    0.491,
+    0.075
+   ],
+   "ref": [
+    0.564,
+    0.13
+   ],
+   "diffMm": 11.4,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor digiti minimi",
+   "part": "FJ1491",
+   "reference": [
+    "EDM"
+   ],
+   "end": "insertion",
+   "ourJoint": "dip5_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    1.578,
+    0.717
+   ],
+   "ref": [
+    1.55,
+    0.56
+   ],
+   "diffMm": 11.4,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor pollicis longus",
+   "part": "W_FJ1495",
+   "reference": [
+    "EPL"
+   ],
+   "end": "insertion",
+   "ourJoint": "ip1_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    1.009,
+    0.769
+   ],
+   "ref": [
+    1.036,
+    0.934
+   ],
+   "diffMm": 11.3,
    "verdict": "within"
   },
   {
@@ -5044,25 +7942,25 @@
   {
    "body": "female",
    "side": "R",
-   "muscle": "Right iliacus",
-   "part": "VD_iliacus_right",
+   "muscle": "Right fibularis longus",
+   "part": "VD_peroneus_longus_right",
    "reference": [
-    "iliacus_r"
+    "perlong_r"
    ],
    "end": "insertion",
-   "ourJoint": "hip_R",
-   "ourSegment": "thigh",
-   "refSegment": "thigh",
+   "ourJoint": "subtalar_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
    "toleranceMm": 25,
    "ours": [
-    0.186,
-    0.051
+    0.504,
+    0.069
    ],
    "ref": [
-    0.157,
-    0.058
+    0.564,
+    0.13
    ],
-   "diffMm": 10.8,
+   "diffMm": 10.9,
    "verdict": "within"
   },
   {
@@ -5216,6 +8114,30 @@
   },
   {
    "body": "male",
+   "side": "R",
+   "muscle": "Right extensor carpi ulnaris",
+   "part": "FJ1472",
+   "reference": [
+    "ECU"
+   ],
+   "end": "insertion",
+   "ourJoint": "wrist_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    0.211,
+    0.313
+   ],
+   "ref": [
+    0.341,
+    0.25
+   ],
+   "diffMm": 10.3,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
    "side": "L",
    "muscle": "Left gluteus medius",
    "part": "FJ1419M",
@@ -5238,6 +8160,82 @@
     0.512,
     0.613,
     -0.165
+   ],
+   "diffMm": 10.3,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor carpi radialis longus",
+   "part": "W_FJ1490",
+   "reference": [
+    "ECRL"
+   ],
+   "end": "origin",
+   "ourJoint": "gh_R",
+   "ourSegment": "upperarm",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": [
+    0.856,
+    0.079
+   ],
+   "ref": [
+    0.895,
+    0.082
+   ],
+   "diffMm": 10.3,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gluteus minimus",
+   "part": "W_FJ1420M",
+   "reference": [
+    "glmin1_l",
+    "glmin2_l",
+    "glmin3_l"
+   ],
+   "end": "origin",
+   "ourJoint": "si_L",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    0.551,
+    0.425,
+    -0.058
+   ],
+   "ref": [
+    0.606,
+    0.412,
+    -0.04
+   ],
+   "diffMm": 10.3,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left fibularis longus",
+   "part": "VD_peroneus_longus_left",
+   "reference": [
+    "perlong_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    0.513,
+    0.068
+   ],
+   "ref": [
+    0.564,
+    0.13
    ],
    "diffMm": 10.3,
    "verdict": "within"
@@ -5266,30 +8264,6 @@
     0.241
    ],
    "diffMm": 10.2,
-   "verdict": "within"
-  },
-  {
-   "body": "female",
-   "side": "L",
-   "muscle": "Left piriformis",
-   "part": "VD_piriformis_left",
-   "reference": [
-    "piri_l"
-   ],
-   "end": "insertion",
-   "ourJoint": "hip_L",
-   "ourSegment": "thigh",
-   "refSegment": "thigh",
-   "toleranceMm": 25,
-   "ours": [
-    -0.006,
-    0.138
-   ],
-   "ref": [
-    0.009,
-    0.114
-   ],
-   "diffMm": 10.1,
    "verdict": "within"
   },
   {
@@ -5341,6 +8315,126 @@
    "verdict": "within"
   },
   {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right iliacus",
+   "part": "VD_iliacus_right",
+   "reference": [
+    "iliacus_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.183,
+    0.05
+   ],
+   "ref": [
+    0.157,
+    0.058
+   ],
+   "diffMm": 9.7,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left piriformis",
+   "part": "VD_piriformis_left",
+   "reference": [
+    "piri_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_L",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    -0.005,
+    0.137
+   ],
+   "ref": [
+    0.009,
+    0.114
+   ],
+   "diffMm": 9.7,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor carpi radialis brevis",
+   "part": "FJ1489",
+   "reference": [
+    "ECRB"
+   ],
+   "end": "insertion",
+   "ourJoint": "wrist_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    0.223,
+    0.18
+   ],
+   "ref": [
+    0.345,
+    0.124
+   ],
+   "diffMm": 9.6,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right flexor pollicis longus",
+   "part": "FJ1498",
+   "reference": [
+    "FPL"
+   ],
+   "end": "insertion",
+   "ourJoint": "ip1_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    1.023,
+    0.787
+   ],
+   "ref": [
+    1.086,
+    0.905
+   ],
+   "diffMm": 9.6,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor carpi ulnaris",
+   "part": "W_FJ1517",
+   "reference": [
+    "ECU"
+   ],
+   "end": "insertion",
+   "ourJoint": "wrist_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    0.241,
+    0.351
+   ],
+   "ref": [
+    0.341,
+    0.25
+   ],
+   "diffMm": 9.6,
+   "verdict": "within"
+  },
+  {
    "body": "male",
    "side": "L",
    "muscle": "Left adductor magnus",
@@ -5372,23 +8466,25 @@
   {
    "body": "female",
    "side": "R",
-   "muscle": "Right piriformis",
-   "part": "VD_piriformis_right",
+   "muscle": "Short head of right biceps brachii",
+   "part": "W_FJ1512",
    "reference": [
-    "piri_r"
+    "BICshort"
    ],
-   "end": "insertion",
-   "ourJoint": "hip_R",
-   "ourSegment": "thigh",
-   "refSegment": "thigh",
+   "end": "origin",
+   "ourJoint": "ac_R",
+   "ourSegment": "girdle",
+   "refSegment": "girdle",
    "toleranceMm": 25,
    "ours": [
-    -0.009,
-    0.133
+    0.103,
+    0.012,
+    0.074
    ],
    "ref": [
-    0.009,
-    0.114
+    0.121,
+    -0.018,
+    0.076
    ],
    "diffMm": 9.4,
    "verdict": "within"
@@ -5424,6 +8520,58 @@
   {
    "body": "female",
    "side": "R",
+   "muscle": "Right piriformis",
+   "part": "VD_piriformis_right",
+   "reference": [
+    "piri_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    -0.009,
+    0.132
+   ],
+   "ref": [
+    0.009,
+    0.114
+   ],
+   "diffMm": 9.2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gluteus minimus",
+   "part": "W_FJ1420",
+   "reference": [
+    "glmin1_r",
+    "glmin2_r",
+    "glmin3_r"
+   ],
+   "end": "origin",
+   "ourJoint": "si_R",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    -0.556,
+    0.402,
+    -0.049
+   ],
+   "ref": [
+    -0.606,
+    0.412,
+    -0.039
+   ],
+   "diffMm": 9.1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
    "muscle": "Right supraspinatus",
    "part": "W_FJ1506",
    "reference": [
@@ -5449,6 +8597,58 @@
   {
    "body": "female",
    "side": "R",
+   "muscle": "Short head of right biceps brachii",
+   "part": "W_FJ1512",
+   "reference": [
+    "BICshort"
+   ],
+   "end": "insertion",
+   "ourJoint": "radioulnar_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.166,
+    0.021
+   ],
+   "ref": [
+    0.198,
+    0.041
+   ],
+   "diffMm": 8.7,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right gluteus minimus",
+   "part": "FJ1420",
+   "reference": [
+    "glmin1_r",
+    "glmin2_r",
+    "glmin3_r"
+   ],
+   "end": "origin",
+   "ourJoint": "si_R",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    -0.567,
+    0.435,
+    -0.057
+   ],
+   "ref": [
+    -0.606,
+    0.412,
+    -0.039
+   ],
+   "diffMm": 8.6,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
    "muscle": "Right extensor carpi ulnaris",
    "part": "W_FJ1472",
    "reference": [
@@ -5460,8 +8660,8 @@
    "refSegment": "hand",
    "toleranceMm": 25,
    "ours": [
-    0.262,
-    0.351
+    0.261,
+    0.35
    ],
    "ref": [
     0.341,
@@ -5492,6 +8692,33 @@
     0.086
    ],
    "diffMm": 8.5,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right flexor digitorum superficialis",
+   "part": "FJ1475",
+   "reference": [
+    "FDS2",
+    "FDS3",
+    "FDS4",
+    "FDS5"
+   ],
+   "end": "insertion",
+   "ourJoint": "pip4_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    1.559,
+    0.407
+   ],
+   "ref": [
+    1.593,
+    0.294
+   ],
+   "diffMm": 8.4,
    "verdict": "within"
   },
   {
@@ -5540,6 +8767,60 @@
     0.072
    ],
    "diffMm": 8.3,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left gluteus minimus",
+   "part": "FJ1420M",
+   "reference": [
+    "glmin1_l",
+    "glmin2_l",
+    "glmin3_l"
+   ],
+   "end": "origin",
+   "ourJoint": "si_L",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    0.578,
+    0.448,
+    -0.049
+   ],
+   "ref": [
+    0.606,
+    0.412,
+    -0.04
+   ],
+   "diffMm": 8.2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right sartorius",
+   "part": "W_FJ1434",
+   "reference": [
+    "sart_r"
+   ],
+   "end": "origin",
+   "ourJoint": "si_R",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    -0.642,
+    0.412,
+    0.26
+   ],
+   "ref": [
+    -0.683,
+    0.407,
+    0.238
+   ],
+   "diffMm": 8.2,
    "verdict": "within"
   },
   {
@@ -5597,36 +8878,10 @@
   {
    "body": "female",
    "side": "R",
-   "muscle": "Right sartorius",
-   "part": "W_FJ1434",
+   "muscle": "Lateral head of right triceps brachii",
+   "part": "W_FJ1477",
    "reference": [
-    "sart_r"
-   ],
-   "end": "origin",
-   "ourJoint": "si_R",
-   "ourSegment": "pelvis",
-   "refSegment": "pelvis",
-   "toleranceMm": 25,
-   "ours": [
-    -0.642,
-    0.412,
-    0.259
-   ],
-   "ref": [
-    -0.683,
-    0.407,
-    0.238
-   ],
-   "diffMm": 8.1,
-   "verdict": "within"
-  },
-  {
-   "body": "female",
-   "side": "R",
-   "muscle": "Long head of right triceps brachii",
-   "part": "W_FJ1479",
-   "reference": [
-    "TRIlong"
+    "TRIlat"
    ],
    "end": "insertion",
    "ourJoint": "elbow_R",
@@ -5634,14 +8889,38 @@
    "refSegment": "forearm",
    "toleranceMm": 25,
    "ours": [
-    -0.069,
-    0.109
+    -0.076,
+    0.102
    ],
    "ref": [
     -0.046,
     0.082
    ],
    "diffMm": 8.1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Long head of right biceps brachii",
+   "part": "FJ1478",
+   "reference": [
+    "BIClong"
+   ],
+   "end": "insertion",
+   "ourJoint": "radioulnar_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.167,
+    0.044
+   ],
+   "ref": [
+    0.198,
+    0.041
+   ],
+   "diffMm": 7.9,
    "verdict": "within"
   },
   {
@@ -5664,6 +8943,54 @@
    "ref": [
     0.115,
     0.102
+   ],
+   "diffMm": 7.8,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor digiti minimi",
+   "part": "FJ1491",
+   "reference": [
+    "EDM"
+   ],
+   "end": "origin",
+   "ourJoint": "gh_R",
+   "ourSegment": "upperarm",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": [
+    1.009,
+    0.085
+   ],
+   "ref": [
+    0.991,
+    0.107
+   ],
+   "diffMm": 7.8,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Long head of right triceps brachii",
+   "part": "W_FJ1479",
+   "reference": [
+    "TRIlong"
+   ],
+   "end": "insertion",
+   "ourJoint": "elbow_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    -0.068,
+    0.108
+   ],
+   "ref": [
+    -0.046,
+    0.082
    ],
    "diffMm": 7.8,
    "verdict": "within"
@@ -5693,6 +9020,30 @@
    "verdict": "within"
   },
   {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left psoas major",
+   "part": "FJ1431M",
+   "reference": [
+    "psoas_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_L",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.142,
+    0.049
+   ],
+   "ref": [
+    0.129,
+    0.062
+   ],
+   "diffMm": 7.6,
+   "verdict": "within"
+  },
+  {
    "body": "female",
    "side": "R",
    "muscle": "Humeral head of right pronator teres",
@@ -5717,6 +9068,59 @@
    "verdict": "within"
   },
   {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left adductor magnus",
+   "part": "VD_adductor_magnus_left",
+   "reference": [
+    "addmagDist_l",
+    "addmagIsch_l",
+    "addmagMid_l",
+    "addmagProx_l"
+   ],
+   "end": "origin",
+   "ourJoint": "si_L",
+   "ourSegment": "pelvis",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": [
+    0.202,
+    -0.302,
+    0
+   ],
+   "ref": [
+    0.2,
+    -0.278,
+    -0.036
+   ],
+   "diffMm": 7.4,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right psoas major",
+   "part": "FJ1431",
+   "reference": [
+    "psoas_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.143,
+    0.052
+   ],
+   "ref": [
+    0.129,
+    0.062
+   ],
+   "diffMm": 7.3,
+   "verdict": "within"
+  },
+  {
    "body": "male",
    "side": "R",
    "muscle": "Right brachialis",
@@ -5736,34 +9140,6 @@
    "ref": [
     0.091,
     0.023
-   ],
-   "diffMm": 7.3,
-   "verdict": "within"
-  },
-  {
-   "body": "female",
-   "side": "L",
-   "muscle": "Left gluteus medius",
-   "part": "VD_gluteus_medius_left",
-   "reference": [
-    "glmed1_l",
-    "glmed2_l",
-    "glmed3_l"
-   ],
-   "end": "origin",
-   "ourJoint": "si_L",
-   "ourSegment": "pelvis",
-   "refSegment": "pelvis",
-   "toleranceMm": 25,
-   "ours": [
-    0.552,
-    0.619,
-    -0.154
-   ],
-   "ref": [
-    0.512,
-    0.613,
-    -0.165
    ],
    "diffMm": 7.3,
    "verdict": "within"
@@ -5847,6 +9223,54 @@
   },
   {
    "body": "male",
+   "side": "R",
+   "muscle": "Right extensor pollicis longus",
+   "part": "FJ1495",
+   "reference": [
+    "EPL"
+   ],
+   "end": "insertion",
+   "ourJoint": "ip1_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    1.047,
+    0.835
+   ],
+   "ref": [
+    1.036,
+    0.934
+   ],
+   "diffMm": 7.1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor pollicis brevis",
+   "part": "FJ1494",
+   "reference": [
+    "EPB"
+   ],
+   "end": "insertion",
+   "ourJoint": "mcp1_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    0.631,
+    0.708
+   ],
+   "ref": [
+    0.72,
+    0.753
+   ],
+   "diffMm": 7.1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
    "side": "L",
    "muscle": "Long head of left biceps femoris",
    "part": "FJ1395M",
@@ -5872,13 +9296,12 @@
   {
    "body": "female",
    "side": "L",
-   "muscle": "Left adductor magnus",
-   "part": "VD_adductor_magnus_left",
+   "muscle": "Left gluteus medius",
+   "part": "VD_gluteus_medius_left",
    "reference": [
-    "addmagDist_l",
-    "addmagIsch_l",
-    "addmagMid_l",
-    "addmagProx_l"
+    "glmed1_l",
+    "glmed2_l",
+    "glmed3_l"
    ],
    "end": "origin",
    "ourJoint": "si_L",
@@ -5886,16 +9309,256 @@
    "refSegment": "pelvis",
    "toleranceMm": 25,
    "ours": [
-    0.202,
-    -0.297,
-    -0.004
+    0.551,
+    0.61,
+    -0.153
    ],
    "ref": [
-    0.2,
-    -0.278,
-    -0.036
+    0.512,
+    0.613,
+    -0.165
    ],
-   "diffMm": 6.4,
+   "diffMm": 7.1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor carpi radialis longus",
+   "part": "FJ1490",
+   "reference": [
+    "ECRL"
+   ],
+   "end": "origin",
+   "ourJoint": "gh_R",
+   "ourSegment": "upperarm",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": [
+    0.896,
+    0.107
+   ],
+   "ref": [
+    0.895,
+    0.082
+   ],
+   "diffMm": 7,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left tibialis anterior",
+   "part": "FJ1439M",
+   "reference": [
+    "tibant_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    0.456,
+    0.194
+   ],
+   "ref": [
+    0.512,
+    0.198
+   ],
+   "diffMm": 7,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right tibialis anterior",
+   "part": "FJ1439",
+   "reference": [
+    "tibant_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    0.456,
+    0.196
+   ],
+   "ref": [
+    0.512,
+    0.198
+   ],
+   "diffMm": 6.9,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right psoas major",
+   "part": "VD_psoas_major_right",
+   "reference": [
+    "psoas_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.119,
+    0.047
+   ],
+   "ref": [
+    0.129,
+    0.062
+   ],
+   "diffMm": 6.9,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor carpi radialis brevis",
+   "part": "W_FJ1489",
+   "reference": [
+    "ECRB"
+   ],
+   "end": "insertion",
+   "ourJoint": "wrist_R",
+   "ourSegment": "hand",
+   "refSegment": "hand",
+   "toleranceMm": 25,
+   "ours": [
+    0.263,
+    0.185
+   ],
+   "ref": [
+    0.345,
+    0.124
+   ],
+   "diffMm": 6.9,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right flexor hallucis longus",
+   "part": "FJ1415",
+   "reference": [
+    "fhl_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.539,
+    0.065
+   ],
+   "ref": [
+    0.542,
+    0.081
+   ],
+   "diffMm": 6.7,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left flexor hallucis longus",
+   "part": "FJ1415M",
+   "reference": [
+    "fhl_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.531,
+    0.069
+   ],
+   "ref": [
+    0.542,
+    0.081
+   ],
+   "diffMm": 6.7,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right rectus femoris",
+   "part": "VD_rectus_femoris_right",
+   "reference": [
+    "recfem_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.145,
+    0.072
+   ],
+   "ref": [
+    0.156,
+    0.085
+   ],
+   "diffMm": 6.5,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right tibialis anterior",
+   "part": "VD_tibialis_anterior_right",
+   "reference": [
+    "tibant_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_R",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    0.488,
+    0.153
+   ],
+   "ref": [
+    0.512,
+    0.198
+   ],
+   "diffMm": 6.5,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left rectus femoris",
+   "part": "VD_rectus_femoris_left",
+   "reference": [
+    "recfem_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.139,
+    0.079
+   ],
+   "ref": [
+    0.156,
+    0.085
+   ],
+   "diffMm": 6.5,
    "verdict": "within"
   },
   {
@@ -5974,27 +9637,49 @@
    "verdict": "within"
   },
   {
-   "body": "female",
-   "side": "R",
-   "muscle": "Right coracobrachialis",
-   "part": "W_FJ1488",
+   "body": "male",
+   "side": "L",
+   "muscle": "Left flexor digitorum longus",
+   "part": "FJ1414M",
    "reference": [
-    "CORB"
+    "fdl_l"
    ],
    "end": "origin",
-   "ourJoint": "ac_R",
-   "ourSegment": "girdle",
-   "refSegment": "girdle",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
    "toleranceMm": 25,
    "ours": [
-    0.12,
-    -0.004,
-    0.073
+    0.471,
+    0.011
    ],
    "ref": [
-    0.122,
-    -0.025,
-    0.076
+    0.458,
+    0.007
+   ],
+   "diffMm": 5.7,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left tibialis anterior",
+   "part": "VD_tibialis_anterior_left",
+   "reference": [
+    "tibant_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "subtalar_L",
+   "ourSegment": "foot",
+   "refSegment": "foot",
+   "toleranceMm": 25,
+   "ours": [
+    0.499,
+    0.155
+   ],
+   "ref": [
+    0.512,
+    0.198
    ],
    "diffMm": 5.7,
    "verdict": "within"
@@ -6023,6 +9708,83 @@
     0.315
    ],
    "diffMm": 5.6,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right coracobrachialis",
+   "part": "W_FJ1488",
+   "reference": [
+    "CORB"
+   ],
+   "end": "origin",
+   "ourJoint": "ac_R",
+   "ourSegment": "girdle",
+   "refSegment": "girdle",
+   "toleranceMm": 25,
+   "ours": [
+    0.12,
+    -0.004,
+    0.073
+   ],
+   "ref": [
+    0.122,
+    -0.025,
+    0.076
+   ],
+   "diffMm": 5.6,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left fibularis longus",
+   "part": "FJ1410M",
+   "reference": [
+    "perlong_l"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_L",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.345,
+    0.095
+   ],
+   "ref": [
+    0.344,
+    0.082
+   ],
+   "diffMm": 5.5,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right flexor digitorum profundus",
+   "part": "W_FJ1497",
+   "reference": [
+    "FDP2",
+    "FDP3",
+    "FDP4",
+    "FDP5"
+   ],
+   "end": "origin",
+   "ourJoint": "elbow_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.13,
+    0.057
+   ],
+   "ref": [
+    0.125,
+    0.034
+   ],
+   "diffMm": 5.4,
    "verdict": "within"
   },
   {
@@ -6124,6 +9886,32 @@
   {
    "body": "male",
    "side": "R",
+   "muscle": "Right gluteus minimus",
+   "part": "FJ1420",
+   "reference": [
+    "glmin1_r",
+    "glmin2_r",
+    "glmin3_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.035,
+    0.14
+   ],
+   "ref": [
+    0.024,
+    0.14
+   ],
+   "diffMm": 4.9,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
    "muscle": "Right supraspinatus",
    "part": "FJ1506",
    "reference": [
@@ -6171,12 +9959,14 @@
    "verdict": "within"
   },
   {
-   "body": "female",
+   "body": "male",
    "side": "L",
-   "muscle": "Left iliacus",
-   "part": "VD_iliacus_left",
+   "muscle": "Left gluteus minimus",
+   "part": "FJ1420M",
    "reference": [
-    "iliacus_l"
+    "glmin1_l",
+    "glmin2_l",
+    "glmin3_l"
    ],
    "end": "insertion",
    "ourJoint": "hip_L",
@@ -6184,14 +9974,38 @@
    "refSegment": "thigh",
    "toleranceMm": 25,
    "ours": [
-    0.168,
-    0.05
+    0.035,
+    0.139
    ],
    "ref": [
-    0.157,
-    0.058
+    0.024,
+    0.14
    ],
-   "diffMm": 4.6,
+   "diffMm": 4.7,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Short head of right biceps brachii",
+   "part": "FJ1512",
+   "reference": [
+    "BICshort"
+   ],
+   "end": "insertion",
+   "ourJoint": "radioulnar_R",
+   "ourSegment": "forearm",
+   "refSegment": "forearm",
+   "toleranceMm": 25,
+   "ours": [
+    0.182,
+    0.047
+   ],
+   "ref": [
+    0.198,
+    0.041
+   ],
+   "diffMm": 4.5,
    "verdict": "within"
   },
   {
@@ -6270,6 +10084,54 @@
   {
    "body": "male",
    "side": "R",
+   "muscle": "Right fibularis longus",
+   "part": "FJ1410",
+   "reference": [
+    "perlong_r"
+   ],
+   "end": "origin",
+   "ourJoint": "knee_R",
+   "ourSegment": "shank",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": [
+    0.343,
+    0.091
+   ],
+   "ref": [
+    0.344,
+    0.082
+   ],
+   "diffMm": 4,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left iliacus",
+   "part": "VD_iliacus_left",
+   "reference": [
+    "iliacus_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_L",
+   "ourSegment": "thigh",
+   "refSegment": "thigh",
+   "toleranceMm": 25,
+   "ours": [
+    0.165,
+    0.05
+   ],
+   "ref": [
+    0.157,
+    0.058
+   ],
+   "diffMm": 3.9,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
    "muscle": "Right infraspinatus muscle",
    "part": "FJ1500",
    "reference": [
@@ -6291,6 +10153,33 @@
    "diffMm": 3.3,
    "verdict": "within",
    "note": "reference tendon runs the other way; its ends were swapped"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor digitorum",
+   "part": "FJ1492",
+   "reference": [
+    "EDC2",
+    "EDC3",
+    "EDC4",
+    "EDC5"
+   ],
+   "end": "origin",
+   "ourJoint": "gh_R",
+   "ourSegment": "upperarm",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": [
+    0.982,
+    0.101
+   ],
+   "ref": [
+    0.991,
+    0.108
+   ],
+   "diffMm": 3.2,
+   "verdict": "within"
   },
   {
    "body": "male",
@@ -6476,7 +10365,7 @@
    "toleranceMm": 25,
    "ours": [
     -0.021,
-    0.086
+    0.087
    ],
    "ref": [
     -0.021,
@@ -6538,6 +10427,139 @@
   {
    "body": "male",
    "side": "R",
+   "muscle": "Right vastus lateralis",
+   "part": "FJ1442",
+   "reference": [
+    "vaslat_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "patella_R",
+   "ourSegment": "thigh",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right vastus medialis",
+   "part": "FJ1443",
+   "reference": [
+    "vasmed_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "patella_R",
+   "ourSegment": "thigh",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right vastus intermedius",
+   "part": "FJ1441",
+   "reference": [
+    "vasint_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "patella_R",
+   "ourSegment": "thigh",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right psoas major",
+   "part": "FJ1431",
+   "reference": [
+    "psoas_r"
+   ],
+   "end": "origin",
+   "ourJoint": "L3",
+   "ourSegment": "trunk",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right tensor fasciae latae",
+   "part": "FJ1438",
+   "reference": [
+    "tfl_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Sternocostal part of right pectoralis major",
+   "part": "FJ1464",
+   "reference": [
+    "PECM2"
+   ],
+   "end": "origin",
+   "ourJoint": "sc_R",
+   "ourSegment": "girdle",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Sternocostal part of right pectoralis major",
+   "part": "FJ1464",
+   "reference": [
+    "PECM2"
+   ],
+   "end": "insertion",
+   "ourJoint": "gh_R",
+   "ourSegment": "upperarm",
+   "refSegment": "trunk",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "male",
+   "side": "R",
    "muscle": "Right latissimus dorsi",
    "part": "R3_FMA13358",
    "reference": [
@@ -6580,6 +10602,44 @@
   {
    "body": "male",
    "side": "R",
+   "muscle": "Right extensor carpi ulnaris",
+   "part": "FJ1472",
+   "reference": [
+    "ECU"
+   ],
+   "end": "origin",
+   "ourJoint": "elbow_R",
+   "ourSegment": "forearm",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor carpi ulnaris",
+   "part": "FJ1517",
+   "reference": [
+    "ECU"
+   ],
+   "end": "origin",
+   "ourJoint": "elbow_R",
+   "ourSegment": "forearm",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "male",
+   "side": "R",
    "muscle": "Right external oblique",
    "part": "FJ1452",
    "reference": [
@@ -6604,6 +10664,25 @@
   {
    "body": "male",
    "side": "L",
+   "muscle": "Left vastus lateralis",
+   "part": "FJ1442M",
+   "reference": [
+    "vaslat_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "patella_L",
+   "ourSegment": "thigh",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "male",
+   "side": "L",
    "muscle": "Left vastus medialis",
    "part": "FJ1443M",
    "reference": [
@@ -6611,6 +10690,63 @@
    ],
    "end": "insertion",
    "ourJoint": "patella_L",
+   "ourSegment": "thigh",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left vastus intermedius",
+   "part": "FJ1441M",
+   "reference": [
+    "vasint_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "patella_L",
+   "ourSegment": "thigh",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left psoas major",
+   "part": "FJ1431M",
+   "reference": [
+    "psoas_l"
+   ],
+   "end": "origin",
+   "ourJoint": "L4",
+   "ourSegment": "trunk",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left tensor fasciae latae",
+   "part": "FJ1438M",
+   "reference": [
+    "tfl_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_L",
    "ourSegment": "thigh",
    "refSegment": "shank",
    "toleranceMm": 25,
@@ -6647,6 +10783,25 @@
   {
    "body": "female",
    "side": "R",
+   "muscle": "Right vastus lateralis",
+   "part": "VD_vastus_lateralis_right",
+   "reference": [
+    "vaslat_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "patella_R",
+   "ourSegment": "thigh",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "female",
+   "side": "R",
    "muscle": "Right vastus medialis",
    "part": "VD_vastus_medialis_right",
    "reference": [
@@ -6656,6 +10811,101 @@
    "ourJoint": "patella_R",
    "ourSegment": "thigh",
    "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right vastus intermedius",
+   "part": "VD_vastus_intermedius_right",
+   "reference": [
+    "vasint_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "patella_R",
+   "ourSegment": "thigh",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right psoas major",
+   "part": "VD_psoas_major_right",
+   "reference": [
+    "psoas_r"
+   ],
+   "end": "origin",
+   "ourJoint": "T12",
+   "ourSegment": "trunk",
+   "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right tensor fasciae latae",
+   "part": "VD_tensor_fasciae_latae_right",
+   "reference": [
+    "tfl_r"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_R",
+   "ourSegment": "thigh",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Sternocostal part of right pectoralis major",
+   "part": "W_FJ1464",
+   "reference": [
+    "PECM2"
+   ],
+   "end": "origin",
+   "ourJoint": "sc_R",
+   "ourSegment": "girdle",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Sternocostal part of right pectoralis major",
+   "part": "W_FJ1464",
+   "reference": [
+    "PECM2"
+   ],
+   "end": "insertion",
+   "ourJoint": "gh_R",
+   "ourSegment": "upperarm",
+   "refSegment": "trunk",
    "toleranceMm": 25,
    "ours": null,
    "ref": null,
@@ -6727,6 +10977,47 @@
   {
    "body": "female",
    "side": "R",
+   "muscle": "Right extensor carpi ulnaris",
+   "part": "W_FJ1517",
+   "reference": [
+    "ECU"
+   ],
+   "end": "origin",
+   "ourJoint": "elbow_R",
+   "ourSegment": "forearm",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor digitorum",
+   "part": "W_FJ1492",
+   "reference": [
+    "EDC2",
+    "EDC3",
+    "EDC4",
+    "EDC5"
+   ],
+   "end": "origin",
+   "ourJoint": "elbow_R",
+   "ourSegment": "forearm",
+   "refSegment": "upperarm",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "female",
+   "side": "R",
    "muscle": "Right extensor digiti minimi",
    "part": "W_FJ1491",
    "reference": [
@@ -6770,10 +11061,48 @@
   {
    "body": "female",
    "side": "L",
+   "muscle": "Left vastus lateralis",
+   "part": "VD_vastus_lateralis_left",
+   "reference": [
+    "vaslat_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "patella_L",
+   "ourSegment": "thigh",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "female",
+   "side": "L",
    "muscle": "Left vastus medialis",
    "part": "VD_vastus_medialis_left",
    "reference": [
     "vasmed_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "patella_L",
+   "ourSegment": "thigh",
+   "refSegment": "shank",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left vastus intermedius",
+   "part": "VD_vastus_intermedius_left",
+   "reference": [
+    "vasint_l"
    ],
    "end": "insertion",
    "ourJoint": "patella_L",
@@ -6798,6 +11127,25 @@
    "ourJoint": "T12",
    "ourSegment": "trunk",
    "refSegment": "pelvis",
+   "toleranceMm": 25,
+   "ours": null,
+   "ref": null,
+   "diffMm": null,
+   "verdict": "not comparable",
+   "note": "the end rides a different segment in the two models"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left tensor fasciae latae",
+   "part": "VD_tensor_fasciae_latae_left",
+   "reference": [
+    "tfl_l"
+   ],
+   "end": "insertion",
+   "ourJoint": "hip_L",
+   "ourSegment": "thigh",
+   "refSegment": "shank",
    "toleranceMm": 25,
    "ours": null,
    "ref": null,

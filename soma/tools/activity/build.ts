@@ -21,7 +21,7 @@ import { rigSignature } from '../../src/activity/model.ts'
 import type { ActivityData, ActivityMuscle, AnchoredPoint, Bilingual, ContactPoint, MassSegment, MuscleFlag } from '../../src/activity/types.ts'
 import { meshVolume } from '../rig/geom.ts'
 import { hashInput, inputFile, readBody, type Body } from '../rig/io.ts'
-import { axisAngle, m3apply, type V3, type Xf, add, sub, xfApply } from '../rig/math.ts'
+import { type V3, type Xf, sub, xfApply } from '../rig/math.ts'
 import { jointFrames, type Pose } from '../rig/pose.ts'
 import { skinSegments } from './mass.ts'
 
@@ -40,7 +40,6 @@ interface Params {
   lockedJoints: { match: string[] }
   dofGroups: { groups: { id: string; name: Bilingual; joints: string[] }[] }
   specificTension: { ncm2: number }
-  quadriceps: { match: string; patellaJoint: string; femurJoint: string; backDeg: number }
   wrap: { match: string; zh: string; en: string }[]
   retinacula: { rules: { match: string; joint: string; fixTo: string }[] }
   noLoad: { rules: { match: string; zh: string; en: string }[] }
@@ -265,19 +264,11 @@ export async function computeActivity(bodyId: 'male' | 'female', log: (m: string
   const neutral: Pose = {}
   for (const j of joints) if (j.dofs.some((d) => (d.neutral ?? 0) !== 0)) neutral[j.id] = j.dofs.map((d) => Math.min(d.max, Math.max(d.min, d.neutral ?? 0)))
   const xfsNeutral = jointFrames(joints, neutral).xfs
-  const quadRe = new RegExp(params.quadriceps.match, 'i')
   const wrap = params.wrap.map((w) => ({ re: new RegExp(w.match, 'i'), why: { zh: w.zh, en: w.en } }))
   const calibRows: { body: string; parts: string[]; movement: string; refArmMm: number; ourLineArmMm: number | null; ref: string }[] = []
   for (const key of CURATED.slice(2)) {
     const j = JSON.parse(readFileSync(join(ROOT, inputFile(key)), 'utf8')) as { references: { id: string }[]; rows: { body: string; parts: string[]; movement: string; refArmMm: number; ourLineArmMm: number | null }[] }
     for (const r of j.rows) calibRows.push({ ...r, ref: j.references[0]?.id ?? '' })
-  }
-  // 每侧髌骨上的点：该侧股肌止点的平均 / the patella point per side: the mean of that side's vasti insertions
-  const patellaPoint: Partial<Record<'L' | 'R', V3>> = {}
-  for (const side of ['L', 'R'] as const) {
-    const pj = params.quadriceps.patellaJoint.replace('{S}', side)
-    const pts = rig.muscles.filter((m) => m.insertion.joint === pj && quadRe.test(body.byId.get(m.part)?.name ?? '')).map((m) => m.insertion.point as V3)
-    if (pts.length) patellaPoint[side] = [pts.reduce((s, p) => s + p[0], 0) / pts.length, pts.reduce((s, p) => s + p[1], 0) / pts.length, pts.reduce((s, p) => s + p[2], 0) / pts.length]
   }
   interface Draft {
     m: ActivityMuscle
@@ -295,24 +286,23 @@ export async function computeActivity(bodyId: 'male' | 'female', log: (m: string
     const flags: MuscleFlag[] = []
     const why: Bilingual[] = []
     let path: AnchoredPoint[] = [line.origin, line.insertion]
-    const isQuad = quadRe.test(part.name) && side !== null
-    if (isQuad) {
-      const pj = joints[index.get(params.quadriceps.patellaJoint.replace('{S}', side!)) ?? -1]
-      const fj = params.quadriceps.femurJoint.replace('{S}', side!)
-      const P: V3 | undefined = line.insertion.joint === pj?.id ? (line.insertion.point as V3) : patellaPoint[side!]
-      if (pj && P && index.has(fj) && pj.dofs[0]) {
-        // 经过点：髌骨点绕髌骨轴往近侧（与屈膝时髌骨的运动方向相反）转 backDeg 度，固定在股骨上
-        // via point: the patella point turned backDeg degrees proximally (against the patella's motion in knee flexion) about the patellar axis, fixed to the femur
-        const axis = pj.axes[pj.dofs[0].axis] as V3
-        const sign = (pj.dofs[0].driver?.ratio ?? 1) >= 0 ? -1 : 1
-        const T = add(pj.center as V3, m3apply(axisAngle(axis, (sign * params.quadriceps.backDeg * Math.PI) / 180), sub(P, pj.center as V3)))
-        path = [line.origin, { point: T.map(r5) as V3, joint: fj }, { point: P.map(r5) as V3, joint: pj.id }]
-        flags.push('via')
-        why.push({ zh: '路径经股骨上的经过点到髌骨（不是绑定里的直线）；膝关节力臂 ≈ 髌骨轨道半径 × 髌骨/膝传动比', en: 'path runs through a via point on the femur to the patella (not the rig’s straight line); knee moment arm ≈ patellar track radius × patella/knee ratio' })
-      }
+    // 绑定里的经过点（tools/rig/via.ts 放置：膝周肌肉、股四头肌经髌骨）。这里的路径是固定的点列，只取无条件的经过点；
+    // 带缠绕条件的点（股骨髁后面、髌骨轨道上）随姿势时用时不用，不进这条路径
+    // via points of the rig (placed by tools/rig/via.ts: the muscles round the knee, the quadriceps through the patella). The path here is a fixed
+    // list of points, so only the unconditional via points are taken; the wrapping points (behind the femoral condyles, along the patellar track)
+    // come and go with the pose and are left out of it
+    const rigVia = line.via ?? []
+    if (rigVia.length) {
+      const fixed = rigVia.filter((v) => !v.wrap && index.has(v.joint))
+      path = [line.origin, ...fixed.map((v) => ({ point: (v.point as V3).map(r5) as V3, joint: v.joint })), line.insertion]
+      flags.push('via')
+      why.push({
+        zh: `路径取绑定里的经过点（${fixed.length} 个固定点${rigVia.length > fixed.length ? `；另有 ${rigVia.length - fixed.length} 个只在缠绕时才用的点不在这条路径里，这里的力臂在屈膝较深时不可靠` : ''}），不是起止点之间的直线`,
+        en: `path through the rig's via points (${fixed.length} fixed${rigVia.length > fixed.length ? `; ${rigVia.length - fixed.length} more that are used only while wrapping are not in this path, so its moment arms are unreliable in deeper knee flexion` : ''}), not the straight line between the ends`,
+      })
     }
     // 支持带：静止作用线上离关节中心最近的点，固定在近端节段上 / retinaculum: the point of the rest line nearest the joint centre, fixed to the proximal segment
-    if (!isQuad && side !== null) {
+    if (!rigVia.length && side !== null) {
       for (const rule of params.retinacula.rules) {
         if (!new RegExp(rule.match, 'i').test(bare(part.name))) continue
         const J = joints[index.get(rule.joint.replace('{S}', side)) ?? -1]

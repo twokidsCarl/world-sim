@@ -35,24 +35,24 @@
  ],
  "ourState": {
   "male": {
-   "anatomy.json": "b8acc1f6aa9f",
-   "rig.json": "d6f78c4a2637",
-   "rig.bin": "c592ecf76a6d",
-   "face.json": "e5929504ad8e",
-   "face.bin": "a3fbd2d38611",
-   "muscular.glb": "34d6d4fbefac",
-   "skeletal.glb": "b0cb3b0f29f0",
-   "integumentary.glb": "a42b95e41b26"
+   "anatomy.json": "53411643e427",
+   "rig.json": "570cc04b4931",
+   "rig.bin": "d36d82938693",
+   "face.json": "9dc79d631883",
+   "face.bin": "5bae4424d792",
+   "muscular.glb": "67ee781f73e8",
+   "skeletal.glb": "153a069e1df5",
+   "integumentary.glb": "13ec5fdbb970"
   },
   "female": {
-   "anatomy.json": "03f878a6bcda",
-   "rig.json": "8b11cb7a5713",
-   "rig.bin": "f8cde8d7af4e",
-   "face.json": "7035b5bd1287",
-   "face.bin": "8689765b7261",
-   "muscular.glb": "b5bbda989a8d",
-   "skeletal.glb": "75ef5bae1128",
-   "integumentary.glb": "4d6b3ab8090c"
+   "anatomy.json": "7bb6bb8270aa",
+   "rig.json": "2b5ee6910a1a",
+   "rig.bin": "8489fc454f40",
+   "face.json": "ffb93397e009",
+   "face.bin": "e92fe3bdbe91",
+   "muscular.glb": "7f920ec10363",
+   "skeletal.glb": "368e1ca0d548",
+   "integumentary.glb": "b85a6c377ac0"
   }
  },
  "notes": [

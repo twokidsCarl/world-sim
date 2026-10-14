@@ -197,7 +197,11 @@ export function rigSignature(rig: { joints: Joint[]; muscles: MuscleLine[] }): s
     feed(`${j.id}|${j.parent ?? ''}|${j.center.map(num).join(',')}|${j.axes.map((a) => a.map(num).join(',')).join(';')}|`)
     for (const d of j.dofs) feed(`${d.axis},${num(d.min)},${num(d.max)},${num(d.neutral ?? 0)},${d.driver ? `${d.driver.joint}.${d.driver.dof}*${num(d.driver.ratio)}` : ''}|`)
   }
-  for (const m of rig.muscles) feed(`${m.part}|${m.origin.joint}|${m.origin.point.map(num).join(',')}|${m.insertion.joint}|${m.insertion.point.map(num).join(',')}|`)
+  for (const m of rig.muscles) {
+    feed(`${m.part}|${m.origin.joint}|${m.origin.point.map(num).join(',')}|${m.insertion.joint}|${m.insertion.point.map(num).join(',')}|`)
+    // 经过点只在有时计入，没有经过点的绑定签名不变 / via points count only when present, so a rig without them keeps its signature
+    for (const v of m.via ?? []) feed(`v${v.joint}|${v.point.map(num).join(',')}|${v.wrap ? `${v.wrap.centre.map(num).join(',')};${v.wrap.axis.map(num).join(',')}` : ''}|`)
+  }
   return h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(8, '0')
 }
 

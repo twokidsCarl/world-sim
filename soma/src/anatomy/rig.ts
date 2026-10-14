@@ -9,7 +9,7 @@
 // in the blend-and-apply step.
 
 import { dqFromXf, type V3, type Xf } from '../../tools/rig/math.ts'
-import { clampPose, jointFrames, muscleLength, type JointFrames, type Pose, type Scales } from '../../tools/rig/pose.ts'
+import { clampPose, jointFrames, muscleLength, skin, straightLine, type JointFrames, type Pose, type Scales } from '../../tools/rig/pose.ts'
 import { standardPostures } from '../../tools/rig/postures.ts'
 import { fetchJson } from './load.ts'
 import type { Joint, MuscleLine, Rig, RigBinding } from './types.ts'
@@ -371,7 +371,8 @@ export function packMuscles(r: LoadedRig, frames: JointFrames, out?: Float32Arra
   const data = out && out.length === rows * MUSCLE_TEXELS * 4 ? out : new Float32Array(rows * MUSCLE_TEXELS * 4)
   data.fill(0)
   lines.forEach((line, i) => {
-    const m = muscleLength(line, frames.xfs, r.jointIndex)
+    // 体积修正按直线（经过点不影响网格，见 tools/rig/pose.ts 的 straightLine）/ the volume correction uses the straight line (via points do not affect the mesh; see straightLine in tools/rig/pose.ts)
+    const m = muscleLength(straightLine(line), frames.xfs, r.jointIndex)
     const o = i * 8
     const len = m.length > 1e-6 ? m.length : 1
     data[o] = m.origin[0]

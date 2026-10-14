@@ -54,11 +54,11 @@
  "ourState": {
   "male": {
    "aus": "AU1 AU2 AU4 AU5 AU6 AU7 AU9 AU10 AU11 AU12 AU13 AU14 AU15 AU16 AU17 AU18 AU20 AU22 AU23 AU24 AU25 AU26 AU27 AU28 AU43",
-   "channels": "53"
+   "channels": "57"
   },
   "female": {
-   "aus": "AU1 AU2 AU4 AU5 AU6 AU7 AU9 AU10 AU12 AU14 AU15 AU16 AU17 AU20 AU23 AU24 AU25 AU26 AU27 AU43",
-   "channels": "42"
+   "aus": "AU1 AU2 AU4 AU5 AU6 AU7 AU9 AU10 AU11 AU12 AU13 AU14 AU15 AU16 AU17 AU18 AU20 AU22 AU23 AU24 AU25 AU26 AU27 AU28 AU43",
+   "channels": "57"
   }
  },
  "notes": [
@@ -77,9 +77,9 @@
  ],
  "summary": {
   "coefficients": 52,
-  "covered": 3,
-  "partial": 29,
-  "none": 20,
+  "covered": 5,
+  "partial": 31,
+  "none": 16,
   "ourAus": 25,
   "ourAusWithCoefficient": 22,
   "ourAusWithout": "AU13 AU23 AU25",
@@ -588,19 +588,39 @@
    "inArkitDocs": true,
    "inMediaPipe": true,
    "ictShape": "mouthFunnel.obj",
-   "ourAus": [],
+   "ourAus": [
+    "AU22"
+   ],
    "ourChannels": {
-    "male": [],
-    "female": []
+    "male": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R",
+     "lip_evert",
+     "lip_protrusion",
+     "lip_purse",
+     "lls_L",
+     "lls_R",
+     "orbicularis_oris"
+    ],
+    "female": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R",
+     "lip_evert",
+     "lip_protrusion",
+     "lip_purse",
+     "lls_L",
+     "lls_R",
+     "orbicularis_oris"
+    ]
    },
    "coefficients": [
     "mouthFunnel"
    ],
-   "coverage": "none",
-   "verdict": "outside",
+   "coverage": "covered",
+   "verdict": "within",
    "note": {
-    "zh": "对应的 AU22 不在当前的 face.json 里。",
-    "en": "The matching AU22 is not in the current face.json."
+    "zh": "",
+    "en": ""
    }
   },
   {
@@ -610,19 +630,29 @@
    "inArkitDocs": true,
    "inMediaPipe": true,
    "ictShape": "mouthPucker.obj",
-   "ourAus": [],
+   "ourAus": [
+    "AU18"
+   ],
    "ourChannels": {
-    "male": [],
-    "female": []
+    "male": [
+     "lip_protrusion",
+     "lip_purse",
+     "orbicularis_oris"
+    ],
+    "female": [
+     "lip_protrusion",
+     "lip_purse",
+     "orbicularis_oris"
+    ]
    },
    "coefficients": [
     "mouthPucker"
    ],
-   "coverage": "none",
-   "verdict": "outside",
+   "coverage": "covered",
+   "verdict": "within",
    "note": {
-    "zh": "对应的 AU18 不在当前的 face.json 里。",
-    "en": "The matching AU18 is not in the current face.json."
+    "zh": "",
+    "en": ""
    }
   },
   {
@@ -924,19 +954,31 @@
    "inArkitDocs": true,
    "inMediaPipe": true,
    "ictShape": "mouthRollLower.obj",
-   "ourAus": [],
+   "ourAus": [
+    "AU28"
+   ],
    "ourChannels": {
-    "male": [],
-    "female": []
+    "male": [
+     "lip_press",
+     "lip_roll_lower",
+     "lip_roll_upper",
+     "mouth_corner"
+    ],
+    "female": [
+     "lip_press",
+     "lip_roll_lower",
+     "lip_roll_upper",
+     "mouth_corner"
+    ]
    },
    "coefficients": [
     "mouthRollLower"
    ],
-   "coverage": "none",
-   "verdict": "outside",
+   "coverage": "partial",
+   "verdict": "within",
    "note": {
-    "zh": "对应的 AU28 不在当前的 face.json 里。",
-    "en": "The matching AU28 is not in the current face.json."
+    "zh": "我们的 AU28 上下唇一起卷入，不能只卷一片。",
+    "en": "Our AU28 rolls both lips in together, not one alone."
    }
   },
   {
@@ -946,19 +988,31 @@
    "inArkitDocs": true,
    "inMediaPipe": true,
    "ictShape": "mouthRollUpper.obj",
-   "ourAus": [],
+   "ourAus": [
+    "AU28"
+   ],
    "ourChannels": {
-    "male": [],
-    "female": []
+    "male": [
+     "lip_press",
+     "lip_roll_lower",
+     "lip_roll_upper",
+     "mouth_corner"
+    ],
+    "female": [
+     "lip_press",
+     "lip_roll_lower",
+     "lip_roll_upper",
+     "mouth_corner"
+    ]
    },
    "coefficients": [
     "mouthRollUpper"
    ],
-   "coverage": "none",
-   "verdict": "outside",
+   "coverage": "partial",
+   "verdict": "within",
    "note": {
-    "zh": "对应的 AU28 不在当前的 face.json 里。",
-    "en": "The matching AU28 is not in the current face.json."
+    "zh": "我们的 AU28 上下唇一起卷入，不能只卷一片。",
+    "en": "Our AU28 rolls both lips in together, not one alone."
    }
   },
   {
@@ -1039,6 +1093,9 @@
      "orbicularis_oris"
     ],
     "female": [
+     "lip_press",
+     "mentalis_L",
+     "mentalis_R",
      "orbicularis_oris"
     ]
    },
@@ -1070,6 +1127,9 @@
      "orbicularis_oris"
     ],
     "female": [
+     "lip_press",
+     "mentalis_L",
+     "mentalis_R",
      "orbicularis_oris"
     ]
    },
@@ -1151,16 +1211,21 @@
    "inMediaPipe": true,
    "ictShape": "mouthUpperUp_L.obj",
    "ourAus": [
-    "AU10"
+    "AU10",
+    "AU11"
    ],
    "ourChannels": {
     "male": [
      "lls_L",
-     "lls_R"
+     "lls_R",
+     "zygomaticus_minor_L",
+     "zygomaticus_minor_R"
     ],
     "female": [
      "lls_L",
-     "lls_R"
+     "lls_R",
+     "zygomaticus_minor_L",
+     "zygomaticus_minor_R"
     ]
    },
    "coefficients": [
@@ -1181,16 +1246,21 @@
    "inMediaPipe": true,
    "ictShape": "mouthUpperUp_R.obj",
    "ourAus": [
-    "AU10"
+    "AU10",
+    "AU11"
    ],
    "ourChannels": {
     "male": [
      "lls_L",
-     "lls_R"
+     "lls_R",
+     "zygomaticus_minor_L",
+     "zygomaticus_minor_R"
     ],
     "female": [
      "lls_L",
-     "lls_R"
+     "lls_R",
+     "zygomaticus_minor_L",
+     "zygomaticus_minor_R"
     ]
    },
    "coefficients": [
@@ -1820,7 +1890,10 @@
      "zygomaticus_minor_L",
      "zygomaticus_minor_R"
     ],
-    "female": []
+    "female": [
+     "zygomaticus_minor_L",
+     "zygomaticus_minor_R"
+    ]
    },
    "coefficients": [
     "mouthUpperUpLeft",
@@ -1879,7 +1952,10 @@
      "levator_anguli_oris_L",
      "levator_anguli_oris_R"
     ],
-    "female": []
+    "female": [
+     "levator_anguli_oris_L",
+     "levator_anguli_oris_R"
+    ]
    },
    "coefficients": [],
    "coverage": "none",
@@ -2025,9 +2101,14 @@
    "ourChannels": {
     "male": [
      "lip_protrusion",
+     "lip_purse",
      "orbicularis_oris"
     ],
-    "female": []
+    "female": [
+     "lip_protrusion",
+     "lip_purse",
+     "orbicularis_oris"
+    ]
    },
    "coefficients": [
     "mouthPucker"
@@ -2088,12 +2169,23 @@
     "male": [
      "depressor_labii_inferioris_L",
      "depressor_labii_inferioris_R",
+     "lip_evert",
      "lip_protrusion",
+     "lip_purse",
      "lls_L",
      "lls_R",
      "orbicularis_oris"
     ],
-    "female": []
+    "female": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R",
+     "lip_evert",
+     "lip_protrusion",
+     "lip_purse",
+     "lls_L",
+     "lls_R",
+     "orbicularis_oris"
+    ]
    },
    "coefficients": [
     "mouthFunnel"
@@ -2122,6 +2214,8 @@
      "orbicularis_oris"
     ],
     "female": [
+     "lip_roll_lower",
+     "lip_roll_upper",
      "orbicularis_oris"
     ]
    },
@@ -2151,6 +2245,9 @@
      "orbicularis_oris"
     ],
     "female": [
+     "lip_press",
+     "mentalis_L",
+     "mentalis_R",
      "orbicularis_oris"
     ]
    },
@@ -2184,7 +2281,9 @@
     ],
     "female": [
      "depressor_labii_inferioris_L",
-     "depressor_labii_inferioris_R"
+     "depressor_labii_inferioris_R",
+     "lls_L",
+     "lls_R"
     ]
    },
    "coefficients": [],
@@ -2276,7 +2375,12 @@
      "lip_roll_upper",
      "mouth_corner"
     ],
-    "female": []
+    "female": [
+     "lip_press",
+     "lip_roll_lower",
+     "lip_roll_upper",
+     "mouth_corner"
+    ]
    },
    "coefficients": [
     "mouthRollLower",

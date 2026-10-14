@@ -14,13 +14,13 @@
   "reproductive.glb": "cf5977d88f195980",
   "endocrine.glb": "0a119fb81c936395",
   "lymphatic.glb": "32ffb933a62efa64",
-  "rig.json": "9e5604e85cee009a",
+  "rig.json": "2b5ee6910a1a14bc",
   "rig.bin": "8489fc454f40883b",
   "shape.json": "9949fd7cb4872585",
-  "data/curated/activity/params.json#data": "7afab410aa0a3e69",
+  "data/curated/activity/params.json#data": "0435a0e6c29dd37b",
   "data/curated/activity/fibre-map.json#data": "2b7484fdeab115de",
-  "data/curated/calibration/muscle-curves-opensim.json#data": "4c69b0d8c969e2ae",
-  "data/curated/calibration/muscle-curves-myo.json#data": "f3f1dc69be352c3f",
+  "data/curated/calibration/muscle-curves-opensim.json#data": "e64f7a8036b5310c",
+  "data/curated/calibration/muscle-curves-myo.json#data": "5c603ac772237bc4",
   "data/curated/rig/opensim/gait2392_thelen2003muscle.osim": "3af1ca20aa87bc88",
   "data/curated/rig/opensim/arm26.osim": "e2224d0044eb393b",
   "data/curated/activity/segments-deleva.json#data": "acf3b7d05c2f1e5c"
@@ -263,9 +263,9 @@
    },
    {
     "muscle": "Left rectus femoris",
-    "oursN": 795.5,
+    "oursN": 683.7,
     "modelN": 1169,
-    "ratio": 0.68,
+    "ratio": 0.585,
     "model": "gait2392"
    },
    {
@@ -441,9 +441,9 @@
  },
  "flags": {
   "wrap": 108,
-  "arm": 44,
+  "arm": 68,
   "fibre": 246,
-  "via": 46,
+  "via": 62,
   "volume": 0,
   "noload": 46
  },
