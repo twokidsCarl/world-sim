@@ -116,6 +116,7 @@ export function snapshot(s: AppState): UrlState {
   }
   if (s.speechStyle) out.style = s.speechStyle
   if (s.skinOpaque) out.skin = true
+  if (!s.look) out.look = false
   if (s.stim) out.stim = { settings: s.stim.settings, site: s.stim.siteRef }
   if (Object.keys(s.shapeControls).length) out.shape = s.shape ? nonDefaultControls(s.shape.data, s.shapeControls) : { ...s.shapeControls }
   if (s.colorMode === 'source') out.src = true
@@ -188,6 +189,7 @@ export async function restoreFromUrl(state: UrlState): Promise<string[]> {
   if (state.xp !== undefined) app.setExplode(state.xp)
   if (state.src) app.setColorMode('source')
   if (state.skin) app.setSkinOpaque(true)
+  if (state.look === false) app.setLook(false)
   if (state.pain !== undefined || state.au) {
     // 只恢复表情（保持在给定强度）；声音必须由用户手势触发，这里绝不出声
     // only the expression is restored (held at the given level); sound needs a user gesture and is never started here

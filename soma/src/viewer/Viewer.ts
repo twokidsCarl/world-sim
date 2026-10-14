@@ -91,6 +91,10 @@ import { LumenLayer } from './lumenLayer.ts'
 import { ORIGIN_BOUNDED, ORIGIN_CONSTRUCTION, ORIGIN_MIXED, applyFilling, buildCanalPath, pathPoint, radiusAt, ringStations, ringsOf, segmentAt, widenRings, type CanalPath, type PathSegmentInput, type RingMesh, type V3 } from '../lumen/core.ts'
 import { LUMEN_COLOR } from '../lumen/colors.ts'
 import { isTrackpadScroll } from './wheel.ts'
+import { LookSkin } from '../look/lookSkin.ts'
+import { LookEnvironment } from '../look/environment.ts'
+import { SkinLook } from '../look/skinMaterial.ts'
+import type { LoadedSkinUv } from '../look/load.ts'
 import { FLY_MIN_FILL, FLY_MIN_RADIUS, FLY_SPEED, displacementOf, ensureLumenData, fillingOf, lumenCandidates, registerLumenGeometry, reportFly, segmentIds, showCanal, useLumen, type LumenData, type LumenState } from '../lumen/state.ts'
 
 const LEGACY_SORT = typeof location !== 'undefined' && new URLSearchParams(location.search).get('sort') === 'origin'
@@ -198,6 +202,8 @@ export type ViewState = Pick<
   | 'faceDetail'
   | 'skinHide'
   | 'skinOpaque'
+  | 'look'
+  | 'skinUv'
   | 'shape'
   | 'shapeControls'
 >
@@ -330,6 +336,14 @@ export class Viewer {
   private holdTimer: ReturnType<typeof setTimeout> | null = null
   private holdActive = false
   private appliedDetail: LoadedDetail | null = null
+  /** 写实皮肤层、它的参数和光照环境（见 src/look/）/ the lifelike skin layer, its parameters and lighting environment (see src/look/) */
+  private lookSkin: LookSkin | null = null
+  private appliedSkinUv: LoadedSkinUv | null = null
+  private readonly skinLook = new SkinLook()
+  private lookEnv!: LookEnvironment
+  private lookWanted = true
+  /** 每个皮肤顶点的写实 UV（给皱纹层），按 appliedSkinUv 缓存 / the lifelike UV per skin vertex (for the wrinkle layer), cached for appliedSkinUv */
+  private lookUvPerSkin: Float32Array | null = null
   private readonly detailWeights: number[] = []
   /** 被改写过静止几何的部件：原始的位置与法线 / Parts whose rest geometry was rewritten: their original positions and normals. */
   private restOrig = new Map<number, { position: Float32Array; normal: Float32Array }>()
@@ -537,7 +551,9 @@ export class Viewer {
     // 光照：柔和的天空 / 地面补光，加一盏随相机移动的主光，这样无论模型怎么转，朝向观察者的表面总是被照亮
     // lighting: soft sky/ground fill plus a key light that travels with the camera, so the
     // surface facing the viewer is always lit however the model is turned
-    this.scene.add(new HemisphereLight(0xf2f5fa, 0x4a443e, 1.25))
+    const fill = new HemisphereLight(0xf2f5fa, 0x4a443e, 1.25)
+    this.scene.add(fill)
+    this.lookEnv = new LookEnvironment(this.renderer, this.scene, fill)
     const key = new DirectionalLight(0xfff6ea, 2.3)
     key.position.set(-0.35, 0.55, 1)
     const keyTarget = new Object3D()
@@ -762,6 +778,9 @@ export class Viewer {
     this.pouch = null
     this.throughShown = false
     this.detailLayer = null
+    this.lookSkin = null
+    this.appliedSkinUv = null
+    this.lookUvPerSkin = null
     this.painOverlay = null
     this.clearStim()
     this.appliedDetail = null
@@ -1112,6 +1131,8 @@ export class Viewer {
       p.skinHide !== s.skinHide ||
       p.peel !== s.peel ||
       p.skinOpaque !== s.skinOpaque ||
+      p.look !== s.look ||
+      p.skinUv !== s.skinUv ||
       skinDrawnOpaque(p, this.mainSkin) !== skinDrawnOpaque(s, this.mainSkin) ||
       p.selection !== s.selection
     this.stimDirty = false
@@ -1125,6 +1146,9 @@ export class Viewer {
     const hoverChanged = !p || p.hover !== s.hover
     const boostChanged = !p || p.nerveBoost !== s.nerveBoost
     this.syncDetail(s)
+    this.syncLook(s)
+    // 写实外观：皮肤画成不透明时才去取 UV 网格 / lifelike look: the UV mesh is fetched only once the skin is drawn opaque
+    if (this.source === useApp.getState && s.look && !s.skinUv && skinDrawnOpaque(s, this.mainSkin)) void useApp.getState().ensureSkinUv()
     // 皮肤不透明时要藏哪些部件，写在管线报告里：第一次用到时去取 / which parts to hide under an opaque skin is in the pipeline report: fetched on first use
     if (this.source === useApp.getState && s.skinHide === undefined && skinDrawnOpaque(s, this.mainSkin)) useApp.getState().ensureSkinReport()
     // 有真实口裂的皮肤：下颌一张开就需要表情数据里的口角通道（哪怕没开过"疼痛"页）
@@ -1526,8 +1550,50 @@ export class Viewer {
     this.updateDetail()
   }
 
+  /** 写实皮肤层：UV 数据到了（或换了）就重建；可见性由 updateLook 管 / The lifelike skin layer: rebuilt when its UV data arrive or change; visibility is updateLook's job. */
+  private syncLook(s: ViewState): void {
+    this.lookWanted = s.look
+    if (s.skinUv === this.appliedSkinUv && (this.lookSkin || !s.skinUv)) return
+    const i = this.mainSkinIndex()
+    if (s.skinUv && i < 0) return // 皮肤还没加载，下次再来 / the skin is not loaded yet; try again later
+    if (this.lookSkin) {
+      this.removeFollower(this.lookSkin)
+      this.lookSkin = null
+    }
+    this.appliedSkinUv = s.skinUv
+    this.lookUvPerSkin = null
+    if (!s.skinUv) return
+    const geo = this.skinGeometry.get(i)!
+    if (s.skinUv.data.skin !== this.mainSkin || !LookSkin.fits(geo, s.skinUv)) {
+      console.warn(`[soma] lifelike skin rejected: it is for ${s.skinUv.data.skin} with ${s.skinUv.data.skinVertexCount} vertices, the skin ${this.mainSkin} has ${geo.position.length / 3}`)
+      return
+    }
+    this.lookSkin = new LookSkin(geo, s.skinUv, this.skinLook, this.skinning, this.pouchTriangles)
+    this.addFollower(this.lookSkin)
+    this.updateDetail()
+  }
+
+  /** 写实外观是否正在显示：要了写实、有数据、皮肤画成不透明（不是体表图）/ Whether the lifelike look is showing: wanted, with data, and the skin drawn opaque (not as a skin map). */
+  private lookShowing(): boolean {
+    const i = this.mainSkinIndex()
+    return !!this.lookSkin && this.lookWanted && i >= 0 && i !== this.skinIndex && this.display[i] === NORMAL && this.solid[i] === 1
+  }
+
+  /** 写实皮肤层、光照环境和皱纹层的材质跟着 lookShowing() 走 / The lifelike layer, the lighting environment and the wrinkle layer's material follow lookShowing(). */
+  private updateLook(): void {
+    const show = this.lookShowing()
+    if (this.lookSkin && this.lookSkin.patch.mesh.visible !== show) {
+      this.lookSkin.patch.mesh.visible = show
+      this.dirty = true
+    }
+    if (this.lookEnv.set(show)) this.dirty = true
+    if (show && !this.lookUvPerSkin && this.appliedSkinUv) this.lookUvPerSkin = LookSkin.uvPerSkinVertex(this.appliedSkinUv)
+    this.detailLayer?.useLook(show ? this.skinLook : null, show ? this.lookUvPerSkin : null)
+  }
+
   /** 按当前表情设各层权重；只有皮肤画成不透明（且不是体表图）时才显示 / Set the layer weights from the current expression; shown only while the skin is drawn opaque (and not as a skin map). */
   private updateDetail(): void {
+    this.updateLook()
     const d = this.detailLayer
     if (!d) return
     const any = d.setWeights(layerWeights(d.detail.data, this.faceAUs, this.detailWeights))

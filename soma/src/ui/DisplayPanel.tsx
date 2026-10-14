@@ -23,6 +23,7 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
   const provenanceHidden = useApp((s) => s.provenanceHidden)
   const nerveBoost = useApp((s) => s.nerveBoost)
   const skinOpaque = useApp((s) => s.skinOpaque)
+  const look = useApp((s) => s.look)
   const mainSkin = graph.mainSkinId()
   const opaqueNow = useApp((s) => skinDrawnOpaque(s, mainSkin))
   const skinHide = useApp((s) => s.skinHide)
@@ -99,6 +100,12 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
               <input type="checkbox" checked={skinOpaque} onChange={(e) => app.setSkinOpaque(e.target.checked)} />
               皮肤不透明 <span className="en">Opaque skin</span>
             </label>
+            {skinOpaque && (
+              <label className="check" title="Lifelike skin: physically based material and image-based light; off = the anatomical colours">
+                <input type="checkbox" checked={look} onChange={(e) => app.setLook(e.target.checked)} />
+                写实外观 <span className="en">Lifelike look</span>
+              </label>
+            )}
             {opaqueNow && hiddenNames.length > 0 && (
               <p className="hint">
                 皮肤不透明时暂时隐藏：{hiddenNames.map((n) => n.zh).join('、')}。

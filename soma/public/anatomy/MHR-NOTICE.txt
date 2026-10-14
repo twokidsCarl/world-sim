@@ -1,0 +1,20 @@
+本目录下的以下数据由 Momentum Human Rig (MHR) v1.0.1 派生：
+  male/ 和 female/ 的皮肤部件（integumentary.glb 里的 FJ2810、SOMA_skin）中标为 MHR 的那一片、
+  rig.json / rig.bin 里皮肤的蒙皮权重、shape.json / shape.bin 里的体型场、
+  look/skin-uv.json / skin-uv.bin（UV 布局）。
+
+The following data in this directory are derived from Momentum Human Rig (MHR) v1.0.1:
+  the piece of the skin parts (FJ2810, SOMA_skin in integumentary.glb) of male/ and female/ marked as MHR,
+  the skin weights in rig.json / rig.bin, the shape fields in shape.json / shape.bin,
+  look/skin-uv.json / skin-uv.bin (the UV layout).
+
+MHR: Copyright (c) Meta Platforms, Inc. and affiliates. Licensed under the Apache License, Version 2.0
+(see MHR-LICENSE.txt). https://github.com/facebookresearch/MHR
+
+改动 / changes (statement under section 4(b) of the Apache License 2.0):
+  身份系数、骨架缩放和姿势拟合到 soma 的人体；逐顶点修正（男性朝 BodyParts3D 的皮肤，两个人体都向外包住内部结构）；
+  切掉部分皮肤并换上别的来源的移植片（脚趾、外生殖器），剪开眼和口；网格简化；UV 搬到简化后的网格上，接缝处拆分顶点。
+  identity, skeleton scale and pose fitted to the soma bodies; per-vertex corrections (towards the BodyParts3D skin for
+  the male, outwards to enclose the internal parts for both); pieces of skin cut out and replaced by grafts from other
+  sources (toes, external genitalia), eyes and mouth opened; mesh simplification; the UVs carried over to the simplified
+  mesh, with vertices split at the seams.

@@ -1,0 +1,32 @@
+{
+ "schema": 1,
+ "skin": "FJ2810",
+ "skinVertexCount": 53576,
+ "skinTriangleCount": 107019,
+ "vertexCount": 55366,
+ "triangleCount": 107019,
+ "inputs": {
+  "integumentary.glb": "13ec5fdbb9708dcb",
+  "skin-source.u32": "b7407b92b37146fc",
+  "mhr-lod0-uv": "8dbfa27f000bd5f3"
+ },
+ "islands": 11,
+ "stats": {
+  "mhrVertices": 29639,
+  "appendedVertices": 23937,
+  "seamTriangles": 777,
+  "rewrappedTriangles": 871,
+  "flippedMhrTriangles": 160,
+  "flippedAppendedTriangles": 14813,
+  "appendedMedianMm": 22.78832113497529,
+  "appended95Mm": 48.46288561126833,
+  "appendedMaxMm": 56.20841147661756,
+  "seamMedianMm": 19.852051211061642,
+  "seamMaxMm": 63.56009527246812,
+  "packageOffsetMaxMm": 0.02
+ },
+ "source": {
+  "zh": "UV 布局取自 Meta MHR v1.0.1 的 LOD0 网格（Apache-2.0），经 skin-source.u32 搬到发布的皮肤上；移植片和开口构造追加的顶点按最近的 MHR 面投影取 UV。由 tools/look/uv.ts 生成。",
+  "en": "The UV layout is MHR v1.0.1's LOD0 mesh (Meta, Apache-2.0), carried over to the shipped skin through skin-source.u32; vertices appended by grafts and the construction of the openings take the UV of the nearest MHR face. Built by tools/look/uv.ts."
+ }
+}

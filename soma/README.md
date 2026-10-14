@@ -30,6 +30,14 @@
 - **触屏**：单指旋转、双指平移和捏合缩放、点按选取；手机上顶栏分两行，详情是底部抽屉。嵌入页里第一次触摸画布之后才接管手势，之前竖向滑动仍然滚动页面。只在设备模拟里验证过，没有在真机上测过。
 - **WebGL2 回退**：每个系统里不透明的部件合成一次绘制（三千多次降到一百多次）；`?chunks=0` 可关掉用于对照。改变身高时相机跟随身体。
 
+### 写实外观（第一步）
+
+皮肤不透明时默认用写实外观；"显示"页的"写实外观"开关或地址里的 `look=0` 改回解剖配色。皮肤半透明、显示体表图时总是解剖配色；对照窗格暂不画写实外观。
+
+- **皮肤有了 UV。** UV 布局取自 MHR LOD0（Apache-2.0）。皮肤本来就是 MHR 的拓扑，发布的顶点经 `skin-source.u32` 指回 MHR 的顶点，所以 UV 能原样搬过来；简化把少数三角形拉过了接缝，这些三角形按一个有自己 UV 的角重新投影。移植片（CC0 的脚趾、外生殖器、过渡环）和开口构造的顶点没有 MHR 来源，投影到最近的 MHR 面上取 UV，形状不同处 UV 会折叠（男性约 1.5 万个三角形）；以后的皮肤细节在这些地方用不依赖 UV 的三平面映射。皮肤顶点的次序不变，写实皮肤是一层跟随皮肤的覆盖网格（接缝处一个皮肤顶点有两个副本），所以体型、表情、软组织偏移和姿势都照常生效。数据在 `public/anatomy/<人体>/look/skin-uv.*`。
+- **材质和光照。** 基于物理的材质：折射率 1.4（F0 ≈ 0.028）、粗糙度 0.5、一层淡的绒光代表毳毛、three 的快速厚度近似作次表面散射；环境光是 three 自带的程序化房间预滤波而成（不用外部 HDR 图），色调映射用 Khronos PBR Neutral。皱纹细节层在写实模式下换用同一套材质。
+- **现在的局限。** 肤色是一个均匀的假设值，还没有纹理、毛孔、分区的颜色差异；眼、睫毛、眉、头发仍是原来的画法；没有衣服。这些按计划分步做：按 NIST 皮肤反射率标定的生色团底色和肤色滑块、程序化毛孔与厚度透射、游戏式的眼和注视、由发丝生成的头发卡片（WebGPU 近景用真发丝）、按版型生成并做布料模拟的日常便装和运动服。MetaHuman 只参考它公开的技术文档，不用它的资产（其许可不允许把资产放进公开仓库）。
+
 ### 体型
 
 "姿势"页的"体型"一节有四个滑块：身高、BMI、腿长比例、体型分布。BMI 只改变皮肤和皮下脂肪（肌肉、骨、内脏不变，内脏脂肪和乳房没有模拟）；身高和比例通过各关节的节段缩放实现。每个滑块只能在这副身体上可用的范围内移动，到头时会写明原因（例如男性不能低于 BMI 21.5，否则肌肉穿出皮肤）。回归公式来自人群测量数据，给出的是平均体型，不是对某个人的预测。
@@ -158,6 +166,7 @@ cd .. && SOMA_API_PORT=<端口> bun run dev                              # 开�
 | `drive` | `audio` | 和 `say` 一起用：口形由什么带动。`phone` 按音素时间线（缺省，不写进地址），`audio` 按对同一段声音的分析（近似） |
 | `style` | `normal`、`clear` | 说话的风格：正常朗读（按实测标定）或夸张。省略时保持的口形用夸张、说话用正常 |
 | `skin` | `1` | 不透明皮肤视图 |
+| `look` | `0` | 不透明皮肤不用写实外观，改回解剖配色（缺省是写实） |
 | `act` | `len`、`load` | 肌肉活动：`len` 作用线长度变化（几何），`load` 抵抗重力所需的激活度（估计） |
 | `load` | `2`、`2L`、`2R` | `act=load` 时手持的重物（千克）；`L` / `R` 只一只手，省略为两手各持 |
 | `grav` | `supine`、`prone` | `act=load` 时的重力方向：仰卧、俯卧；省略为站立 |
@@ -207,6 +216,8 @@ bun run pipeline                 # 生成 public/anatomy/male/
 bun run pipeline:female          # 生成 public/anatomy/female/，需要先有男性输出和女性锚点包（tools/register/run_anchors.sh）
 bun tools/knowledge/run.ts       # 名称和关系；加 --refresh 重新查询 Wikidata
 bun tools/skinmaps/run.ts male   # 体表图；female 同理
+data/raw/bodyshape/.venv/bin/python -I tools/look/mhr_uv.py   # MHR LOD0 的 UV（要 MHR 资产和 pymomentum，见 tools/bodyshape/REPORT.md）
+bun tools/look/uv.ts male        # 写实皮肤的 UV 网格；female 同理。皮肤或 skin-source.u32 变了要重跑
 ```
 
 顺序有依赖：知识层和体表图读取几何管线的输出，女性体型读取男性体型的输出。
@@ -219,6 +230,7 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 |---|---|---|
 | [BodyParts3D](https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html) 4.0 | 男性体型的几何（2,220 个部件）与两棵层级树 | CC BY 4.0（"BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International"）。注意：该数据说明页写的是 CC BY 4.0，而 4.0 版 OBJ 文件头里写的是 CC BY-SA 2.1 日本版；两种表述都如实列在这里，两者都允许本项目的用法 |
 | [Blender Studio Human Base Meshes](https://www.blender.org/download/demo-files/) v1.4.1 | 两个体型皮肤上分开的脚趾（美术建模的写实前足，按趾骨配准后移植），标记为 `curated` | CC0 |
+| [Momentum Human Rig (MHR)](https://github.com/facebookresearch/MHR) v1.0.1（Meta） | 两个体型的皮肤表面（参数化体表按内部结构拟合）、皮肤的蒙皮权重、体型场、写实皮肤的 UV 布局 | Apache-2.0；许可全文和改动声明见 `public/anatomy/MHR-LICENSE.txt`、`MHR-NOTICE.txt` |
 | BodyParts3D 3.0 | 4.0 里没有的 79 个部件：肺叶、腹壁肌、背阔肌、咀嚼肌和表情肌。经配准变形，标记为 `warped` | CC BY-SA 2.1 JP |
 | [Z-Anatomy](https://github.com/Z-Anatomy) | 颅神经和躯干神经、脊神经根、脊髓、韧带、筋膜、关节囊、淋巴结群、甲状腺、腮腺。手工建模，标记为 `curated` | CC BY-SA 4.0（"Z-Anatomy - The libre 3D atlas of anatomy"） |
 | [AnatomyTool Open3DModel](https://anatomytool.org/open3dmodel) | 四肢神经（右侧建模，左侧为镜像）、膝关节交叉韧带和半月板。手工建模，标记为 `curated` | CC BY-SA 4.0 |
@@ -312,6 +324,14 @@ The long-term goal is a simulated patient for surgical training: anatomy that is
 - **While the skin is opaque**, the parts to hide come from each body's `display.json` (at present the external ear and the deep upper and lower lip, shapes the skin has itself; the compare pane uses its own body's list); they stay in the tree and selecting one shows it. The eyebrows are drawn opaque with the skin, in an illustrative dark colour: they stand only a fraction of a millimetre proud of it and all but vanish when see-through. The Display tab has an "Opaque skin" switch.
 - **Touch**: one finger orbits, two fingers pan and pinch-zoom, a tap picks; on phones the top bar takes two rows and details open as a bottom sheet. In an embed the canvas takes over gestures only after it is first touched; before that a vertical swipe still scrolls the page. Verified in device emulation only, not on a real device.
 - **WebGL2 fallback**: opaque parts of each system are drawn in one call (from over three thousand draws to about a hundred); `?chunks=0` switches this off for comparison. The camera follows the body when stature changes.
+
+### Lifelike look (first step)
+
+An opaque skin takes the lifelike look by default; the "Lifelike look" switch on the Display tab or `look=0` in the address brings back the anatomical colours. A see-through skin and the skin maps always use the anatomical colours; the compare pane does not draw the lifelike look yet.
+
+- **The skin has UVs.** The UV layout is MHR LOD0's (Apache-2.0). The skin is MHR topology already and the shipped vertices point back to MHR's through `skin-source.u32`, so the UVs carry over as they are; simplification pulled a few triangles across a seam, and those are re-projected about a corner that has its own UV. Grafts (the CC0 toes, the external genitalia, the blend rings) and the vertices built for the openings have no MHR origin: they take the UV of the nearest MHR face, which folds where the shapes differ (about 15 000 triangles on the male); later skin detail uses UV-free triplanar mapping there. The skin's vertex order is unchanged: the lifelike skin is an overlay that follows the skin (one skin vertex has two copies at a seam), so body shape, expression, soft-tissue offsets and pose all apply as before. The data are in `public/anatomy/<body>/look/skin-uv.*`.
+- **Material and light.** A physically based material: index of refraction 1.4 (F0 ≈ 0.028), roughness 0.5, a faint sheen for vellus hair, three's fast thickness approximation for subsurface scattering; the image-based light is three's own procedural room, prefiltered (no external HDR image), with Khronos PBR Neutral tone mapping. In lifelike mode the wrinkle detail layer switches to the same material.
+- **Current limits.** The skin colour is one uniform assumed value, with no texture, pores or regional differences; eyes, lashes, brows and hair are drawn as before; there are no clothes. These come in steps: a chromophore base colour calibrated against the NIST skin reflectance data with a skin-tone slider, procedural pores and thickness-based transmission, game-style eyes with gaze, hair cards generated from strands (real strands close up on WebGPU), and everyday and sports clothing generated from sewing patterns with cloth simulation. MetaHuman serves only through its published technical documentation; its assets are not used (their licence does not allow them in a public repository).
 
 ### Body shape
 
@@ -441,6 +461,7 @@ The whole view state lives in the query string, so any view can be opened by one
 | `drive` | `audio` | With `say`: what drives the mouth. `phone` = the phoneme timeline (default, not written to the URL), `audio` = an analysis of the same audio (approximate) |
 | `style` | `normal`, `clear` | Style of speech: normal read speech (calibrated against measurements) or exaggerated. When omitted, held shapes use clear and speech uses normal |
 | `skin` | `1` | Opaque-skin view |
+| `look` | `0` | An opaque skin without the lifelike look, in the anatomical colours (lifelike is the default) |
 | `act` | `len`, `load` | Muscle activity: `len` length change of the lines of action (geometry), `load` activation needed against gravity (an estimate) |
 | `load` | `2`, `2L`, `2R` | With `act=load`, the load held in the hand (kg); `L` / `R` one hand, both when omitted |
 | `grav` | `supine`, `prone` | With `act=load`, the gravity direction: supine, prone; standing when omitted |
@@ -490,6 +511,8 @@ bun run pipeline                 # writes public/anatomy/male/
 bun run pipeline:female          # writes public/anatomy/female/; needs the male output and the female anchor package (tools/register/run_anchors.sh)
 bun tools/knowledge/run.ts       # names and relations; --refresh re-queries Wikidata
 bun tools/skinmaps/run.ts male   # skin maps; likewise for female
+data/raw/bodyshape/.venv/bin/python -I tools/look/mhr_uv.py   # MHR LOD0's UVs (needs the MHR assets and pymomentum; see tools/bodyshape/REPORT.md)
+bun tools/look/uv.ts male        # the lifelike skin's UV mesh; likewise for female. Rerun after the skin or skin-source.u32 changes
 ```
 
 Order matters: the knowledge layer and skin maps read the geometry pipeline's output, and the female body reads the male body's output.
@@ -502,6 +525,7 @@ Apart from the code, the anatomy data in this directory (`public/anatomy/`, `dat
 |---|---|---|
 | [BodyParts3D](https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html) 4.0 | Geometry of the male body (2,220 parts) and both hierarchies | CC BY 4.0 ("BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International"). Note: the dataset's description page says CC BY 4.0 while the headers of the 4.0 OBJ files say CC BY-SA 2.1 Japan; both statements are recorded here, and both permit this project's use |
 | [Blender Studio Human Base Meshes](https://www.blender.org/download/demo-files/) v1.4.1 | Separate toes on both skins (an artist-made realistic forefoot, registered to the toe bones and grafted), marked `curated` | CC0 |
+| [Momentum Human Rig (MHR)](https://github.com/facebookresearch/MHR) v1.0.1 (Meta) | The skin surface of both bodies (the parametric surface fitted to the internal structures), the skin weights, the shape fields, and the UV layout of the lifelike skin | Apache-2.0; licence text and statement of changes in `public/anatomy/MHR-LICENSE.txt`, `MHR-NOTICE.txt` |
 | BodyParts3D 3.0 | 79 parts missing from 4.0: lung lobes, abdominal wall muscles, latissimus dorsi, muscles of mastication and facial expression. Registered into place, marked `warped` | CC BY-SA 2.1 JP |
 | [Z-Anatomy](https://github.com/Z-Anatomy) | Cranial and trunk nerves, spinal roots, spinal cord, ligaments, fasciae, joint capsules, lymph node groups, thyroid, parotid. Artist-modelled, marked `curated` | CC BY-SA 4.0 ("Z-Anatomy - The libre 3D atlas of anatomy") |
 | [AnatomyTool Open3DModel](https://anatomytool.org/open3dmodel) | Limb nerves (right side modelled, left mirrored), cruciate ligaments and menisci. Artist-modelled, marked `curated` | CC BY-SA 4.0 |

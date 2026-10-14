@@ -12,6 +12,7 @@ import type { DemoRecording } from '../face/say.ts'
 import { defaultSettings, kindSpec, withKind, type StimSettings } from '../pain/stimulus.ts'
 import { fetchJson } from '../anatomy/load.ts'
 import { loadDetail, type LoadedDetail } from '../pain/detail.ts'
+import { type LoadedSkinUv, loadSkinUv } from '../look/load.ts'
 import { loadFace, type AUs, type LoadedFace } from '../pain/face.ts'
 import { loadSkinMaps, regionParts, regionsForParts, type LoadedSkinMaps, type SkinMapId } from '../anatomy/skinmaps.ts'
 import type { Provenance, SystemId } from '../anatomy/types.ts'
@@ -204,6 +205,8 @@ export interface AppState {
   skinHide: readonly string[] | null | undefined
   /** 皱纹细节层（面部 UV + 法线图集）；皮肤画成不透明时才去取 / The wrinkle detail layer (face UV + normal atlas); fetched only once the skin is drawn opaque. */
   faceDetail: LoadedDetail | null
+  /** 写实皮肤的 UV 网格；皮肤画成不透明、要写实外观时才去取 / The lifelike skin's UV mesh; fetched only once the skin is drawn opaque with the lifelike look on. */
+  skinUv: LoadedSkinUv | null
   faceStatus: 'idle' | 'loading' | 'ready' | 'missing' | 'error'
   faceMessage: string
   pain: PainSettings
@@ -238,6 +241,8 @@ export interface AppState {
   lastVoice: { source: 'recorded' | 'synthetic' | 'none'; type: string; probability: number } | null
   /** 把皮肤画成不透明（看表情时用）/ Draw the skin opaque (for reading the expression). */
   skinOpaque: boolean
+  /** 不透明的皮肤用写实外观（缺省）；false 用解剖配色 / An opaque skin takes the lifelike look (default); false = the anatomical colours. */
+  look: boolean
   selection: Selection
   hover: string | null
   explode: number
@@ -295,6 +300,9 @@ export interface AppState {
   /** 加载当前人体的表情数据（已加载则直接返回）/ Load this body's expression data (no-op when loaded). */
   ensureFace(): Promise<LoadedFace | null>
   ensureFaceDetail(): Promise<LoadedDetail | null>
+  /** 取写实皮肤的 UV 网格（已取过则直接返回）/ Fetch the lifelike skin's UV mesh (no-op once tried). */
+  ensureSkinUv(): Promise<LoadedSkinUv | null>
+  setLook(on: boolean): void
   ensureSkinReport(): void
   setStimSettings(patch: Partial<StimSettings>): void
   setStimArmed(on: boolean): void
@@ -383,6 +391,8 @@ export function isSolo(systems: Partial<Record<SystemId, SystemState>>, id: Syst
 let pendingFace: { graph: AnatomyGraph; promise: Promise<LoadedFace | null> } | null = null
 let detailLoader = (dataset: string) => loadDetail(`${import.meta.env.BASE_URL}anatomy/${dataset}/`)
 let detailTried: AnatomyGraph | null = null
+let skinUvTried: AnatomyGraph | null = null
+let pendingSkinUv: Promise<LoadedSkinUv | null> = Promise.resolve(null)
 let reportTried: AnatomyGraph | null = null
 let pendingDetail: Promise<LoadedDetail | null> = Promise.resolve(null)
 /** 测试用：替换细节层的加载方式 / For tests: replace how the detail layer is loaded. */
@@ -450,6 +460,7 @@ export const useApp = create<AppState>()((set, get) => ({
   face: null,
   skinHide: undefined,
   faceDetail: null,
+  skinUv: null,
   faceStatus: 'idle',
   faceMessage: '',
   pain: { level: 5, onset: 'sudden', hold: false, muted: false, always: false },
@@ -471,6 +482,7 @@ export const useApp = create<AppState>()((set, get) => ({
   voiceProgress: 0,
   lastVoice: null,
   skinOpaque: false,
+  look: true,
   rig: null,
   rigStatus: 'idle',
   rigMessage: '',
@@ -579,6 +591,7 @@ export const useApp = create<AppState>()((set, get) => ({
       face: null,
       skinHide: undefined,
       faceDetail: null,
+      skinUv: null,
       faceStatus: 'idle',
       stim: null,
       stimNow: null,
@@ -785,6 +798,25 @@ export const useApp = create<AppState>()((set, get) => ({
       })
     return pendingDetail
   },
+  ensureSkinUv: async () => {
+    const { skinUv, graph, dataset } = get()
+    if (skinUv || !graph) return skinUv
+    if (skinUvTried === graph) return pendingSkinUv
+    skinUvTried = graph
+    pendingSkinUv = loadSkinUv(dataset)
+      .then((loaded) => {
+        if (get().graph !== graph) return null
+        if (loaded) set({ skinUv: loaded })
+        return loaded
+      })
+      .catch((err: unknown) => {
+        // 写实外观是附加的：没有或坏了就照旧用解剖配色 / the lifelike look is an extra: absent or broken, the anatomical colours stay
+        console.warn('[soma] lifelike skin failed to load', err)
+        return null
+      })
+    return pendingSkinUv
+  },
+  setLook: (look) => set({ look }),
   rejectFace: (message) => set({ face: null, faceStatus: 'error', faceMessage: message }),
   setStimSettings: (patch) =>
     set((s) => {
