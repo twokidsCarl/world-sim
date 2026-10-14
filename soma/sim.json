@@ -555,6 +555,30 @@
       "url": "/?body=female&sys=int,ske,ner&stim=pinch,20,1@sole_L"
     },
     {
+      "id": "press-forearm",
+      "title": {
+        "zh": "按压前臂：软组织求解出的凹陷和接触压强",
+        "en": "Pressing the forearm: the dent and contact pressure from a soft-tissue solve"
+      },
+      "hint": {
+        "zh": "直径 26 mm 的平头压头压入前臂中段 4.5 mm（forearm2026 的做法）：后台约 12 秒解出软组织，凹陷边算边出现，平均接触压强交给疼痛模型。与文献对照过：这里 1.83 N，是实测 2.83 N 的 0.65 倍",
+        "en": "A 26 mm flat punch pressed 4.5 mm into the mid-forearm (the forearm2026 protocol): the soft tissue is solved in the background in about 12 s, the dent forms as it solves, and the mean contact pressure goes to the pain model. Compared with the literature: 1.83 N here, 0.65 of the 2.83 N measured"
+      },
+      "url": "/?sys=int&skin=1&phys=flat,13,4.5mm@p286.526,907.817,153.696&cam=0.36,0.95,0.36,0.2865,0.9078,0.1537"
+    },
+    {
+      "id": "posture-supine",
+      "title": {
+        "zh": "躺下：软组织在重力下的下垂（未经实测验证）",
+        "en": "Lying down: soft tissue sagging under gravity (not validated against measurements)"
+      },
+      "hint": {
+        "zh": "重力转向背侧，全身软组织笼子在后台走到平衡（CPU 上约 80 秒），然后皮肤按相对站立的位移着色并移动。可以换俯卧、侧卧。没有与实测数据对照过",
+        "en": "Gravity turns to the back and the whole-body soft-tissue cage settles in the background (about 80 s on CPU); then the skin is coloured by, and moves with, its displacement relative to standing. Try prone or lying on a side. Not compared with measured data"
+      },
+      "url": "/?sys=int&skin=1&phys=1&grav=supine&cam=1.45,1.05,0.05,0,1.05,0.05"
+    },
+    {
       "id": "lumen-canal",
       "title": {
         "zh": "消化道的腔：从口到肛门连成一条",

@@ -6,6 +6,7 @@ import { TREE_KINDS, type AnatomyGraph, type TreeKind } from '../anatomy/graph.t
 import { posePresets } from '../anatomy/rig.ts'
 import { loadDemoClip, playSay, setSayMode } from '../face/say.ts'
 import { applyStimulus } from '../pain/stim.ts'
+import { prepareSoftFromUrl, registerSoftUrlWriter, startSoftFromUrl } from '../softbody/client.ts'
 import { nonDefaultControls } from '../anatomy/shape.ts'
 import type { SystemId } from '../anatomy/types.ts'
 import type { SystemState } from './display.ts'
@@ -117,7 +118,8 @@ export function snapshot(s: AppState): UrlState {
   if (s.speechStyle) out.style = s.speechStyle
   if (s.skinOpaque) out.skin = true
   if (!s.look) out.look = false
-  if (s.stim) out.stim = { settings: s.stim.settings, site: s.stim.siteRef }
+  // 接触来自软组织物理的钝压由 phys= 记录（见 src/softbody/client.ts），不再写 stim= / a pressure whose contact came from the soft-tissue physics is recorded by phys= (see src/softbody/client.ts), not stim=
+  if (s.stim && !s.stim.contact) out.stim = { settings: s.stim.settings, site: s.stim.siteRef }
   if (Object.keys(s.shapeControls).length) out.shape = s.shape ? nonDefaultControls(s.shape.data, s.shapeControls) : { ...s.shapeControls }
   if (s.colorMode === 'source') out.src = true
   return out
@@ -133,6 +135,10 @@ export async function restoreFromUrl(state: UrlState): Promise<string[]> {
   const app = useApp.getState()
   const graph = app.graph
   if (!graph) return ['没有已加载的人体 / no body is loaded']
+  // 软组织物理的 phys= / grav=：先设好状态（链接里的钝压要用到），最后再开始 / phys= / grav= of the soft-tissue physics: state first (a linked pressure needs it), started at the end
+  registerSoftUrlWriter(setPassthroughParam)
+  const search = typeof location === 'undefined' ? '' : location.search
+  warnings.push(...prepareSoftFromUrl(search))
   const resolve = (key: string, tokens: readonly string[]): ResolvedTokens => {
     const r = resolveTokens(graph, tokens)
     if (r.unknown.length) warnings.push(`${key}: 此人体中没有 ${r.unknown.slice(0, 5).join(', ')} / not in this body`)
@@ -285,6 +291,7 @@ export async function restoreFromUrl(state: UrlState): Promise<string[]> {
       if (state.breath) useApp.getState().setBreathing(true)
     }
   }
+  warnings.push(...(await startSoftFromUrl(search, { frame: !state.cam })))
   if (state.cam) {
     useApp.setState((s) => ({ cameraRequest: { nonce: (s.cameraRequest?.nonce ?? 0) + 1, p: state.cam!.p, t: state.cam!.t } }))
     camera = state.cam

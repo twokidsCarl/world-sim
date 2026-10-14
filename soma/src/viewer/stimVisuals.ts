@@ -21,7 +21,10 @@ export { PAIN_COLORS }
 /** 皮肤上的疼痛分布层 / The pain map layer on the skin. */
 export class PainOverlay {
   readonly patch: SkinPatch
-  private readonly material: MeshBasicNodeMaterial
+  /** 公开给按压凹陷的细分网格共用（src/viewer/dentPatch.ts）/ public so that a press's subdivided dent mesh can share it (src/viewer/dentPatch.ts) */
+  readonly material: MeshBasicNodeMaterial
+  /** 当前每个皮肤顶点的权重（null = 隐藏）/ the current per-skin-vertex weights (null = hidden) */
+  weights: Float32Array | null = null
   private readonly intensity = uniform(0)
 
   constructor(
@@ -49,6 +52,7 @@ export class PainOverlay {
 
   /** `weights`：每个皮肤顶点一个 0–1 的值；null 为隐藏 / `weights`: one 0–1 value per skin vertex; null hides the layer. */
   setWeights(weights: Float32Array | null): void {
+    this.weights = weights
     this.patch.mesh.visible = !!weights
     if (weights) this.patch.setAttribute('aPain', weights, 1)
   }

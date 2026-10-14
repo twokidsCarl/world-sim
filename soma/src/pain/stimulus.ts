@@ -92,14 +92,34 @@ export interface ResolvedSite {
   position: [number, number, number]
 }
 
+/**
+ * 由软组织物理算出的接触（src/softbody/）：到达的力和接触面积。疼痛输入模型的压强 = 力 ÷ 面积，所以把这两个数放进
+ * 刺激的 forceN、areaMm2（模型已有的输入），模型拿到的就是物理算出的平均接触压强，取代名义上"1 cm² 探头上的力"。
+ * A contact computed by the soft-tissue physics (src/softbody/): the force reached and the contact area. The pain input
+ * model takes pressure = force ÷ area, so putting these two into the stimulus's forceN and areaMm2 (inputs the model
+ * already has) hands it the physics' mean contact pressure in place of the nominal "force on a 1 cm² probe".
+ */
+export interface Contact {
+  forceN: number
+  areaMm2: number
+  meanPressureKPa: number
+  peakPressureKPa: number
+  depthMm: number
+}
+
 /** 界面设置 + 部位 → 模型的刺激（对象不可变，模型按对象缓存）/ UI settings + site → the model's stimulus (immutable: the model caches per object). */
-export function buildStimulus(s: StimSettings, site: ResolvedSite, skinPart: string, duration = s.duration): Stimulus {
+export function buildStimulus(s: StimSettings, site: ResolvedSite, skinPart: string, duration = s.duration, contact: Contact | null = null): Stimulus {
   const k = kindSpec(s.kind)
   const out: Stimulus = { kind: s.kind, site: { part: skinPart, position: site.position, vertex: site.vertex }, duration }
   if (k.unit === 'mN') out.forceN = s.magnitude / 1000
   else if (k.unit === 'N') out.forceN = s.magnitude
   else out.temperatureC = s.magnitude
   if (k.areaMm2 && s.kind !== 'pinprick') out.areaMm2 = k.areaMm2
+  if (contact && s.kind === 'pressure') {
+    out.forceN = contact.forceN
+    out.areaMm2 = contact.areaMm2
+    out.site.depthMm = contact.depthMm
+  }
   if (s.repeat && s.repeat.count > 1) out.repeat = { count: s.repeat.count, hz: s.repeat.hz }
   if (s.held) out.withdrawalEndsStimulus = false
   return out

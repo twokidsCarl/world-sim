@@ -58,6 +58,13 @@
 //                                                 [,heat reading]@site. Magnitude: mN for pinprick, N for pressure / pinch, °C for heat / cold.
 //                                                 A site is a named site with its side (list above) or a rest-pose position in mm,
 //                                                 p-182,1034,28. See src/pain/stimulus.ts.
+//   phys   1 | sphere,5,1N@forearm_L             软组织物理（男性；src/softbody/client.ts 解析，按"其他参数"保留）：1 打开体位求解，
+//                                                 或一次按压 压头,半径毫米,目标(1N | 4.5mm)@部位（部位写法同 stim）
+//                                                 soft-tissue physics (male; parsed by src/softbody/client.ts, kept as an "other parameter"):
+//                                                 1 turns the posture solve on, or one press probe,radius mm,target (1N | 4.5mm)@site (sites as in stim)
+//   grav   supine | prone | left | right          体位；省略为站立。肌肉活动显示（src/activity/state.ts）和软组织物理共用，同样按"其他参数"保留
+//                                                 the posture; standing when omitted. Shared by the muscle-activity display (src/activity/state.ts)
+//                                                 and the soft-tissue physics, likewise kept as an "other parameter"
 //   src    1                                      按来源着色 / colour by source
 //   cmp    ske                                    对照视图及其系统 / compare view and its system
 //

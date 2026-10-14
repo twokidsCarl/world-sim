@@ -81,10 +81,13 @@ import { shapeIsDefault, type LoadedShape, type ShapeControls } from '../anatomy
 import { SkinLayer, type SkinGeometry } from './skinLayer.ts'
 import { FaceDetailLayer, type DetailDebug } from './faceDetail.ts'
 import { SkinPatch } from './skinPatch.ts'
+import { DentPatch, type DentPatchData } from './dentPatch.ts'
+import { DisplacementOverlay } from './dispOverlay.ts'
 import { fetchJson } from '../anatomy/load.ts'
 import type { FaceOpenings } from '../face/types.ts'
 import { PAIN_COLORS, PainOverlay, PathVisuals, bindPath, boundPositions, resamplePolyline, type PathBinding } from './stimVisuals.ts'
 import { applyStimulus, registerStimHost, releaseStimulus, stimFrame, type ActiveStim, type StimFrame } from '../pain/stim.ts'
+import { registerSoftHost } from '../softbody/host.ts'
 import type { ResolvedSite } from '../pain/stimulus.ts'
 import { layerWeights, type LoadedDetail } from '../pain/detail.ts'
 import { LumenLayer } from './lumenLayer.ts'
@@ -357,6 +360,17 @@ export class Viewer {
   /** 被改写的部件当前的包围盒（拾取的粗筛用）/ Current bounds of rewritten parts (for the pick broad phase). */
   private boxOverride = new Map<number, [number, number, number, number, number, number]>()
   private faceDisplaced = new Set<number>()
+  /** 软组织物理给主皮肤的静止空间位移（null = 没有）/ the rest-space displacement the soft-tissue physics gives the main skin (null = none) */
+  private softOffset: Float32Array | null = null
+  /** 同样的位移，给其他部件（按部件下标）/ the same kind of displacement for other parts (by part index) */
+  private softParts = new Map<number, Float32Array>()
+  /** 按压凹陷的细分显示网格（src/viewer/dentPatch.ts）/ the subdivided display mesh of a press's dent (src/viewer/dentPatch.ts) */
+  private dentPatch: DentPatch | null = null
+  /** 软组织物理的位移着色层 / the soft-tissue physics' displacement colour layer */
+  private dispOverlay: DisplacementOverlay | null = null
+  private dispOn = false
+  private dentData: DentPatchData | null = null
+  private dentShown = false
   private faceAUs: AUs = {}
   /** 已应用到顶点上的通道激活 / The channel activations applied to the vertices. */
   private faceChannels: Activations = {}
@@ -525,6 +539,21 @@ export class Viewer {
           const i = this.mainSkinIndex()
           return i >= 0 ? { part: this.mainSkin!, positions: this.skinGeometry.get(i)!.position } : null
         },
+        request: (systems) => this.requestSystems(systems),
+      })
+      // 软组织物理（src/softbody/client.ts）：静止几何和皮肤上的位移 / soft-tissue physics (src/softbody/client.ts): rest geometry and the skin's displacement
+      registerSoftHost({
+        skin: () => {
+          const i = this.mainSkinIndex()
+          const g = i >= 0 ? this.skinGeometry.get(i) : undefined
+          if (!g) return null
+          // 口腔袋的三角形放回去：笼子的"体内"判断要完整的皮肤 / the oral pouch's triangles go back in: the cage's inside test needs the whole skin
+          const indices = this.pouchTriangles ? Uint32Array.from([...g.index, ...this.pouchTriangles]) : g.index
+          return { part: this.mainSkin!, positions: g.position, indices }
+        },
+        restGeometry: (partId) => this.restGeometry(partId),
+        setSkinOffset: (offset, dent, parts) => this.setSkinOffset(offset, dent ?? null, parts ?? null),
+        setSkinColors: (rgba) => this.setSkinColors(rgba),
         request: (systems) => this.requestSystems(systems),
       })
     }
@@ -708,6 +737,7 @@ export class Viewer {
   dispose(): void {
     this.disposed = true
     cancelAnimationFrame(this.raf)
+    this.dentPatch?.dispose()
     document.removeEventListener('visibilitychange', this.onVisibility)
     this.intersection?.disconnect()
     this.unsubscribe?.()
@@ -782,6 +812,7 @@ export class Viewer {
     this.appliedSkinUv = null
     this.lookUvPerSkin = null
     this.painOverlay = null
+    this.dispOverlay = null
     this.clearStim()
     this.appliedDetail = null
     this.poseRt = null
@@ -1479,6 +1510,7 @@ export class Viewer {
 
   /** 口腔袋的可见性和颜色 / The pouch's visibility and colour. */
   private updatePouch(s: ViewState): void {
+    this.updateDent()
     this.syncPouch()
     const p = this.pouch
     if (!p) return
@@ -1703,6 +1735,7 @@ export class Viewer {
     }
     this.stimEval = null
     this.painOverlay?.setWeights(null)
+    this.updateDent()
     this.pathVisuals?.clear()
     this.pathRest = null
     this.pathBinding = null
@@ -1738,6 +1771,7 @@ export class Viewer {
       this.addFollower(this.painOverlay)
     }
     this.painOverlay?.setWeights(i >= 0 && a.weights.length * 3 === this.skinGeometry.get(i)!.position.length ? a.weights : null)
+    this.updateDent()
     if (!this.pathVisuals) {
       this.pathVisuals = new PathVisuals()
       this.scene.add(this.pathVisuals.group)
@@ -1814,6 +1848,7 @@ export class Viewer {
       const show = i >= 0 && this.display[i] === NORMAL && a.weights.length * 3 === this.skinGeometry.get(i)!.position.length
       if (this.painOverlay.patch.mesh.visible !== show) {
         this.painOverlay.patch.mesh.visible = show
+        this.updateDent()
         this.dirty = true
       }
     }
@@ -1864,15 +1899,34 @@ export class Viewer {
         this.pathBinding,
         (c) => {
           const i = this.pathCandidates[c]!
-          if (posed) return posed.positions(i)
           // 静止时只有皮肤可能被体型 / 表情改写 / at rest only the skin can have been rewritten by shape or expression
-          return i === skin ? batches.partBuffers(this.inst[i]!).position : null
+          const p = posed ? posed.positions(i) : i === skin ? batches.partBuffers(this.inst[i]!).position : null
+          return p && i === skin ? this.undent(p) : p
         },
         this.pathBuf,
       )
       pv.setLine(this.pathBuf)
     }
     pv.setMarkers(this.stimMarkers.fast, this.stimMarkers.slow, this.camera)
+  }
+
+  /**
+   * 按压凹陷的细分网格显示着时，它盖住的皮肤顶点为显示向里收了（可达 3 cm）；通路和部位标记绑在这些顶点上，
+   * 所以这里把它们放回凹陷的表面。静止时精确；摆姿势时修正量按静止空间加上，没有随骨转动（近似）。
+   * While a press's subdivided dent mesh is shown, the skin vertices it covers are drawn inward (by up to 3 cm); the
+   * pathway and the site marker are bound to those vertices, so here they are put back on the dented surface. Exact at
+   * rest; in a pose the correction is added in rest space without turning with the bones (an approximation).
+   */
+  private undent(p: Float32Array): Float32Array {
+    const d = this.dentShown ? this.dentData : null
+    const soft = this.softOffset
+    if (!d || !soft || soft.length !== p.length) return p
+    const out = p.slice()
+    for (let k = 0; k < d.hidden.length; k++) for (let r = 0; r < 3; r++) {
+      const q = d.hidden[k]! * 3 + r
+      out[q] = out[q]! + soft[q]! - d.hideOffsets[k * 3 + r]!
+    }
+    return out
   }
 
   /** 刺激可视化的状态（验证用）/ State of the stimulus visuals (verification). */
@@ -2002,6 +2056,7 @@ export class Viewer {
       this.skinLayer?.setSkinning(mode)
       this.lumenLayer?.setSkinning(mode)
       for (const f of this.followers) f.setSkinning(mode)
+      this.dentPatch?.setSkinning(mode)
     }
     if (this.posed !== active) {
       this.posed = active
@@ -2243,7 +2298,14 @@ export class Viewer {
       else buf.position.set(base)
       if (facing) this.faceDisplaced.add(i)
       else this.faceDisplaced.delete(i)
-      const displaced = facing || this.shaped.has(i)
+      // 软组织物理的位移（按压的凹陷、体位的下垂）叠在体型和表情之上 / the soft-tissue displacement (a press's dent, a posture's sag) on top of shape and expression
+      const own = i === this.mainSkinIndex() ? this.softOffset : this.softParts.get(i) ?? null
+      const soft = own && own.length === buf.position.length ? own : null
+      if (soft) for (let k = 0; k < soft.length; k++) buf.position[k] = buf.position[k]! + soft[k]!
+      // 凹陷的细分网格显示着：它盖住的皮肤顶点改用它给的位移（向里收）/ the dent's subdivided mesh is shown: the skin vertices it covers take its displacement instead (drawn inward)
+      const dent = soft && soft === this.softOffset && this.dentShown ? this.dentData : null
+      if (dent) for (let k = 0; k < dent.hidden.length; k++) for (let r = 0; r < 3; r++) buf.position[dent.hidden[k]! * 3 + r] = buf.position[dent.hidden[k]! * 3 + r]! - soft![dent.hidden[k]! * 3 + r]! + dent.hideOffsets[k * 3 + r]!
+      const displaced = facing || this.shaped.has(i) || !!soft
       if (displaced) {
         // 位移改变了曲面的朝向：重算法线，明暗才对 / the displacement turns the surface: recompute normals so shading is right
         recomputeNormals(buf.position, buf.index, buf.indexBase, buf.normal)
@@ -2334,6 +2396,77 @@ export class Viewer {
 
   /** CPU 参考实现在当前姿势下的顶点位置；静止时为 null（验证用）。 */
   /** The CPU reference's vertex positions in the current pose; null at rest (verification). */
+  /** 部件的原始静止几何（未经体型、表情改写）和部件内的下标；没有几何时为 null / A part's original rest geometry (before shape or expression rewrote it) with part-local indices; null without geometry. */
+  restGeometry(partId: string): { positions: Float32Array; indices: Uint32Array } | null {
+    const i = this.graph.indexOf(partId)
+    const id = i >= 0 ? this.inst[i]! : -1
+    if (id < 0 || !this.batches) return null
+    const buf = this.batches.partBuffers(id)
+    const indices = new Uint32Array(buf.index.length)
+    for (let k = 0; k < indices.length; k++) indices[k] = buf.index[k]! - buf.indexBase
+    return { positions: new Float32Array(this.restOrig.get(i)?.position ?? buf.position), indices }
+  }
+
+  /** 软组织物理：主皮肤的静止空间位移（米，按顶点；null 清除）/ Soft-tissue physics: the main skin's rest-space displacement (metres, per vertex; null clears). */
+  setSkinOffset(offset: Float32Array | null, dent: DentPatchData | null = null, parts: ReadonlyMap<string, Float32Array> | null = null): void {
+    if (!offset && !this.softOffset && !dent && !this.dentData && !parts?.size && !this.softParts.size) return
+    this.softOffset = offset
+    this.dentData = offset ? dent : null
+    // 其他部件（皮肤的其他片、皮下脂肪）：旧的和新的都要重写 / other parts (other skin pieces, subcutaneous fat): old and new ones are rewritten
+    for (const k of this.softParts.keys()) this.restDirty.add(k)
+    this.softParts.clear()
+    for (const [id, o] of parts ?? []) {
+      const k = this.graph.indexOf(id)
+      if (k < 0) continue
+      this.softParts.set(k, o)
+      this.restDirty.add(k)
+    }
+    const i = this.mainSkinIndex()
+    if (i >= 0) this.restDirty.add(i)
+    if (this.dentData && i >= 0 && this.batches) {
+      if (!this.dentPatch) {
+        this.dentPatch = new DentPatch(this.skinning, this.baseColor[i]!.clone())
+        this.dentPatch.setSkinning(this.skinMode)
+        this.root.add(this.dentPatch.group)
+      }
+      const b = this.batches.partBuffers(this.inst[i]!)
+      this.dentPatch.set(this.dentData, b.skinIndex, b.skinWeight)
+      this.dentPatch.setInfluences(this.dentData, b.skinIndex, b.skinWeight)
+    }
+    this.updateDent()
+    this.dirty = true
+  }
+
+  /** 软组织物理：主皮肤按位移着色（每个顶点 rgba；null 关闭）/ Soft-tissue physics: colours the main skin by displacement (rgba per vertex; null turns it off). */
+  setSkinColors(rgba: Float32Array | null): void {
+    const i = this.mainSkinIndex()
+    const fits = !!rgba && i >= 0 && rgba.length * 3 === this.skinGeometry.get(i)!.position.length * 4
+    if (!this.dispOverlay && fits) {
+      this.dispOverlay = new DisplacementOverlay(this.skinGeometry.get(i)!, this.skinning)
+      this.addFollower(this.dispOverlay)
+    }
+    this.dispOverlay?.setColors(fits ? rgba : null)
+    this.dispOn = fits
+    this.updateDent()
+    this.dirty = true
+  }
+
+  /** 凹陷网格的可见性：有数据、皮肤显示着并且不透明（与口腔袋同一条规则）/ The dent mesh's visibility: data present and the skin shown and opaque (the oral pouch's rule). */
+  private updateDent(): void {
+    const i = this.mainSkinIndex()
+    const show = !!this.dentData && !!this.dentPatch && i >= 0 && this.display[i] === NORMAL && (i === this.skinIndex ? this.skinPickable : this.solid[i] === 1)
+    if (this.dentPatch && i >= 0) this.dentPatch.setOffset(this.offsets[i * 3]!, this.offsets[i * 3 + 1]!, this.offsets[i * 3 + 2]!)
+    // 位移着色层只在皮肤显示着时画 / the displacement colour layer is drawn only while the skin is shown
+    if (this.dispOverlay) this.dispOverlay.patch.mesh.visible = this.dispOn && i >= 0 && this.display[i] === NORMAL
+    // 疼痛分布层在它盖住的地方由它接着画 / where it covers the skin, it carries the pain-map layer on
+    if (this.dentPatch && this.dentData) this.dentPatch.setOverlay(this.painOverlay?.patch.mesh.visible ? this.painOverlay.material : null, this.painOverlay?.weights ?? null, this.dentData)
+    if (show === this.dentShown) return
+    this.dentShown = show
+    if (this.dentPatch) this.dentPatch.group.visible = show
+    if (i >= 0) this.restDirty.add(i)
+    this.dirty = true
+  }
+
   referencePositions(partId: string): Float32Array | null {
     const i = this.graph.indexOf(partId)
     return i >= 0 && this.posed && this.poseRt ? this.poseRt.positions(i) : null

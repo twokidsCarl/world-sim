@@ -2742,3 +2742,33 @@ div.voice-attrib p + p {
 .tabs > button[role='tab'] .en {
   font-size: 10.5px;
 }
+
+/* 软组织物理（src/ui/SoftPanels.tsx）/ soft-tissue physics (src/ui/SoftPanels.tsx) */
+.soft-press {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.soft-postures {
+  flex-wrap: wrap;
+}
+.soft-posture .segmented {
+  margin: 6px 0;
+}
+.embed-strip .soft-postures button {
+  white-space: nowrap;
+}
+.soft-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.soft-legend-bar {
+  display: inline-block;
+  width: 96px;
+  height: 8px;
+  border-radius: 2px;
+}

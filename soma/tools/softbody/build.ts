@@ -16,26 +16,20 @@ import type { Rig } from '../../src/anatomy/types.ts'
 import { type LoadedSoft, decodeSoft, encodeSoft, solverInput } from '../../src/softbody/body.ts'
 import { solveZeroGravityRest } from '../../src/softbody/rest.ts'
 import { SoftSolver } from '../../src/softbody/solver.ts'
-import type { SoftData, SoftMaterial } from '../../src/softbody/types.ts'
+import { type MaterialsFile, solverMaterials } from '../../src/softbody/materials.ts'
+import type { SoftData } from '../../src/softbody/types.ts'
 import { type Body, readBody } from '../rig/io.ts'
 import { type CageOptions, type CageStats, buildCage } from './cage.ts'
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 export const OUT = join(ROOT, 'data', 'raw', 'softbody', 'out')
 
-export interface MaterialsFile {
-  damping: { rate: number }
-  gravity: [number, number, number]
-  materials: (SoftMaterial & { basis: { thickness?: { value: number }; activeStrain?: { value: number } } })[]
-}
+// 类型和 solverMaterials 搬到了 src/softbody/materials.ts（浏览器也要用）；这里转出，旧的导入照常可用
+// the type and solverMaterials moved to src/softbody/materials.ts (the browser needs them too); re-exported here so old imports keep working
+export { type MaterialsFile, solverMaterials } from '../../src/softbody/materials.ts'
 
 export function readMaterials(): MaterialsFile {
   return JSON.parse(readFileSync(join(ROOT, 'data', 'curated', 'softbody', 'materials.json'), 'utf8')) as MaterialsFile
-}
-
-/** 求解器用的材料：去掉出处说明，只留数值 / the materials as the solver uses them: numbers only, without the provenance notes */
-export function solverMaterials(file: MaterialsFile): SoftMaterial[] {
-  return file.materials.map(({ id, name, young, poisson, density, youngActive, fibreYoung, rigid, stiffening, branchRatio, branchTau, ogden }) => ({ id, name, young, poisson, density, ...(youngActive ? { youngActive } : {}), ...(fibreYoung ? { fibreYoung } : {}), ...(rigid ? { rigid } : {}), ...(stiffening ? { stiffening } : {}), ...(branchRatio ? { branchRatio, branchTau } : {}), ...(ogden ? { ogden: { c: ogden.c, m: ogden.m } } : {}) }))
 }
 
 /** 具名区域的盒子，由关节中心定出 / the box of a named region, from joint centres */
