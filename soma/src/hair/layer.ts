@@ -11,7 +11,8 @@
 import { BufferAttribute, BufferGeometry, type DataTexture, Group, LinearFilter, LinearMipmapLinearFilter, LOD, Mesh, NoColorSpace, Texture, Vector3, type MeshLambertNodeMaterial, type MeshStandardNodeMaterial } from 'three/webgpu'
 import type { BeardStyle, HairData, HairPieceId, HairStrandsInfo, HairStyle } from '../look/types.ts'
 import { positionNodeFor, type SkinningData, type SkinningMode } from '../viewer/skinning.ts'
-import { type DecodedLod, decodeLod, dominantVertex, placeVertices } from './cards.ts'
+import { type DecodedLod, decodeLod, dominantVertex, placeVertices, surfaceAnchors } from './cards.ts'
+import { followSkin } from './follow.ts'
 import type { HairColour } from './colour.ts'
 import { loadAtlasImage, loadHairData, loadMask, loadPiece, loadScalp, loadStrandFile } from './load.ts'
 import { HairDynamics } from './dynamicsHost.ts'
@@ -37,10 +38,21 @@ const MATERIAL: Record<MaterialKind, HairMaterialOptions> = {
   body: { roughness: 0.5, scatter: 0.6, rootShadow: 0.3, pigment: 1.15, rootFade: 0, tipFade: 0.4, layerShadow: 0 },
 }
 
+interface Level {
+  d: DecodedLod
+  geometry: BufferGeometry
+  mesh: Mesh
+  /** 'root'：整张发片照抄根的主顶点的蒙皮；'skin'：每个顶点照抄最近的皮肤顶点 / 'root': the whole card copies the root's main vertex's skinning; 'skin': each vertex copies the nearest skin vertex's */
+  follow: 'root' | 'skin'
+  anchors: Uint32Array | null
+  /** 静止位置（重排的起点）/ rest positions (the starting point of the re-lay) */
+  rest?: Float32Array
+}
+
 interface Piece {
   id: HairPieceId
   lod: LOD
-  levels: { d: DecodedLod; geometry: BufferGeometry; mesh: Mesh }[]
+  levels: Level[]
   /** 近景真发丝（只在 WebGPU 上）/ close-up real strands (WebGPU only) */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   strands?: { d: DecodedGuides; built: StrandGeometry; mesh: Mesh; roots: DataTexture; setSkinning: (s: SkinningData, m: SkinningMode, disp?: ((along: any, sim: any) => any) | null) => void }
@@ -291,6 +303,7 @@ export class HairLayer {
    * asks for a redraw through onChange.
    */
   tickDynamics(t: number): void {
+    this.followTick()
     const d = this.dyn
     if (!d || !this.settings.show || this.style() !== d.piece) return
     d.host.tick(t, this.mode === 'off' ? null : (this.skinning.joints.image.data as Float32Array), this.mode)
@@ -477,7 +490,8 @@ export class HairLayer {
       const mesh = new Mesh(geometry, this.material(KIND_OF[id]))
       mesh.frustumCulled = false
       mesh.name = `hair-${id}-lod${i}`
-      const level = { d, geometry, mesh }
+      // 胡须、阴毛、腋毛每个顶点跟着它下面的那片皮肤；头发、眉、睫随根刚性地走 / beard, pubic and axillary hair follow the skin under each vertex; scalp hair, brows and lashes move rigidly with the root
+      const level: Level = { d, geometry, mesh, follow: id === 'beard' || id === 'pubic' || id === 'axilla' ? 'skin' : 'root', anchors: null }
       this.place(level)
       this.influence_(level)
       lod.addLevel(mesh, i === 0 ? 0 : spec.lods[i - 1]!.maxDistance)
@@ -551,22 +565,66 @@ export class HairLayer {
     return c.multiplyScalar(3 / tmp.length)
   }
 
-  private place(l: { d: DecodedLod; geometry: BufferGeometry }): void {
+  private place(l: Level): void {
     if (!this.skinPos) return
     const attr = l.geometry.getAttribute('position') as BufferAttribute
     placeVertices(l.d, this.skinPos, attr.array as Float32Array)
     attr.needsUpdate = true
+    if (l.follow === 'skin') {
+      l.rest = Float32Array.from(attr.array as Float32Array)
+      this.followKey = ''
+    }
   }
 
-  private influence_(l: { d: DecodedLod; geometry: BufferGeometry }): void {
+  private followKey = ''
+
+  /**
+   * 贴着皮肤的毛按当前姿势重排（见 follow.ts）：关节数据、显示的部件变了才算。
+   * Re-lay the hair lying on the skin for the current pose (see follow.ts): only when the joint data or the shown pieces changed.
+   */
+  private followTick(): void {
+    if (!this.settings.show || !this.influence) return
+    const joints = this.skinning.joints.image.data as Float32Array
+    let key = this.mode
+    if (this.mode !== 'off') {
+      let h = 0
+      for (let i = 0; i < joints.length; i += 7) h = (h * 31 + Math.round(joints[i]! * 1e5)) | 0
+      key += h
+    }
+    for (const p of this.pieces.values()) if (p.lod.visible) key += p.id
+    if (key === this.followKey) return
+    this.followKey = key
+    let changed = false
+    for (const p of this.pieces.values()) {
+      if (!p.lod.visible) continue
+      for (const l of p.levels) {
+        if (l.follow !== 'skin' || !l.rest || !l.anchors) continue
+        const attr = l.geometry.getAttribute('position') as BufferAttribute
+        const out = attr.array as Float32Array
+        if (this.mode === 'off') out.set(l.rest)
+        else followSkin(l.rest, l.anchors, l.d.rings, this.influence.index, this.influence.weight, joints, this.mode, out)
+        attr.needsUpdate = true
+        changed = true
+      }
+    }
+    if (changed) this.onChange()
+  }
+
+  private influence_(l: Level): void {
     if (!this.influence) return
     const { index, weight } = this.influence
     const si = l.geometry.getAttribute('skinIndex') as BufferAttribute, sw = l.geometry.getAttribute('skinWeight') as BufferAttribute
     const di = si.array as Uint16Array, dw = sw.array as Uint8Array
     const per = l.d.rings * 2
+    if (l.follow === 'skin' && !l.anchors && this.skinPos) {
+      const pos = new Float32Array(l.d.offset.length)
+      placeVertices(l.d, this.skinPos, pos)
+      l.anchors = surfaceAnchors(pos, this.skinPos, this.skinNormal ?? undefined, l.d)
+    }
     for (let c = 0; c < l.d.cards; c++) {
-      const v = dominantVertex(l.d, c)
+      const root = dominantVertex(l.d, c)
       for (let j = 0; j < per; j++) {
+        const v = l.anchors ? l.anchors[c * per + j]! : root
         const o = (c * per + j) * 4
         for (let k = 0; k < 4; k++) {
           di[o + k] = index[v * 4 + k]!
@@ -576,6 +634,7 @@ export class HairLayer {
     }
     si.needsUpdate = true
     sw.needsUpdate = true
+    this.followKey = ''
   }
 
   dispose(): void {
