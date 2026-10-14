@@ -42,6 +42,10 @@
       "zh": "表中是绝对误差，正负号没有给出。即使在该文自己的解剖几何上，本项目第二阶段的材料组合在 P2 也差 35%。",
       "en": "The table gives absolute errors without sign. Even on the paper's own anatomy, the material set of phase 2 of this project misses P2 by 35 %."
      }
+    },
+    "phase4": {
+     "zh": "第三阶段把前臂上的差距（0.55–0.64 倍）归于受试者与本模型的几何；第四阶段发现细笼子里几乎没有皮肤（皮肤按顶点分到四面体，前臂皮肤网格太粗），补上以后为 0.66–0.83 倍（validation-report.json 的 ours.forearm）。",
+     "en": "Phase 3 put the forearm gap (0.55–0.64) down to the geometry of the subject against this model; phase 4 found the fine cages had almost no skin (skin shared out by vertex, the forearm skin mesh too coarse), and with it restored the ratio is 0.66–0.83 (ours.forearm in validation-report.json)."
     }
    },
    {
@@ -80,6 +84,10 @@
       "zh": "在该文的几何上，本项目的材料组合在 P3 差 5.7%；本模型在自己的前臂上差 36%，所以 P3 的差距来自几何（受试者与本模型的层厚、到骨的距离、曲率），不是材料。",
       "en": "On the paper's geometry the material set of this project misses P3 by 5.7 %; this model misses it by 36 % on its own forearm, so the gap at P3 comes from geometry (layer thicknesses, depth to bone and curvature of the subject against this model), not from the material."
      }
+    },
+    "phase4": {
+     "zh": "第三阶段把前臂上的差距（0.55–0.64 倍）归于受试者与本模型的几何；第四阶段发现细笼子里几乎没有皮肤（皮肤按顶点分到四面体，前臂皮肤网格太粗），补上以后为 0.66–0.83 倍（validation-report.json 的 ours.forearm）。",
+     "en": "Phase 3 put the forearm gap (0.55–0.64) down to the geometry of the subject against this model; phase 4 found the fine cages had almost no skin (skin shared out by vertex, the forearm skin mesh too coarse), and with it restored the ratio is 0.66–0.83 (ours.forearm in validation-report.json)."
     }
    },
    {
@@ -181,6 +189,71 @@
     "subjects": 10,
     "source": "remus2024",
     "where": "Table 4 (R3); Table 6: c = 7 kPa, m = 12"
+   },
+   {
+    "id": "forearm_radius_small_flat",
+    "site": {
+     "zh": "前臂，盖在左桡骨上、肘关节以远约 10 cm 的软组织（皮肤、脂肪和其下的肌肉），探头垂直于骨面",
+     "en": "forearm, the soft tissue over the left radius about 10 cm distal to the elbow joint (skin, fat and the muscle beneath), probe perpendicular to the bone"
+    },
+    "indenter": {
+     "kind": "flat",
+     "diameterMm": 9
+    },
+    "rateMmPerS": [
+     0.75,
+     7.5
+    ],
+    "preloadN": 0.5,
+    "subjects": 3,
+    "effectiveYoungKPa": {
+     "relaxed": 14,
+     "relaxedSd": 5,
+     "contracted": 58.8
+    },
+    "exampleSubject": {
+     "thicknessMm": 16.2,
+     "kOfHMm": 15.6,
+     "slopeNPerMm": 0.35,
+     "effectiveYoungKPa": 22.6,
+     "fit": "load = 0.3534·w − 0.0573 (N, w in mm from the 0.5 N preload state, w up to about 3.5 mm)"
+    },
+    "slopeRelaxedNPerMm": {
+     "value": 0.218,
+     "range": [
+      0.14,
+      0.296
+     ],
+     "derivation": "E·K(h) with the paper's K(h) = 15.6 mm (h = 16.2 mm): 14.0 kPa × 15.6 mm; range from ±1 SD (9.0–19.0 kPa)",
+     "assumption": true
+    },
+    "source": "zheng1999",
+    "where": "methods (indentation apparatus; experiments on indentation rate and muscular contraction; data reduction, Eq. 3) and results (Fig. 8 and the paragraph on Fig. 13)",
+    "caveat": {
+     "zh": "三名年轻男性；手持探头，速率只是大致控制。w 是超声测得的组织厚度变化（从 0.5 N 预载时算起），不是探头行程；该文按 ν = 0.45 和 Hayes 的系数把斜率换成有效模量。斜率的平均值是本项目用该文给的 K(h) 换算的，只对与示例相近的厚度（约 16 mm）成立。",
+     "en": "Three young men; hand-held probe, rate only roughly controlled. w is the change of tissue thickness measured by ultrasound (from the 0.5 N preload state), not probe travel; the paper turns slope into an effective modulus with ν = 0.45 and Hayes' factor. The mean slope is this project's conversion with the paper's K(h) and holds only for thicknesses near the example (about 16 mm)."
+    }
+   },
+   {
+    "id": "lower_limb_intact_10mm",
+    "site": {
+     "zh": "下肢截肢者健侧肢体外侧（大腿或小腿，与残肢的测量部位对应）",
+     "en": "lateral surface of the intact limb of lower-limb amputees (thigh or calf, the site matching the residual limb)"
+    },
+    "indenter": {
+     "kind": "unstated",
+     "radiusMm": 10
+    },
+    "depthMm": 5,
+    "stiffnessNPerMm": 0.49,
+    "stiffnessSdNPerMm": 0.24,
+    "subjects": 13,
+    "source": "hayes2025",
+    "where": "section 2.2 (device) and section 3.2 (results)",
+    "caveat": {
+     "zh": "压头形状没有写明，手动丝杠加载、没有速率；受试者是平均 65 岁的男性截肢者；刚度是线性拟合 F = K·d。只作量级参考，本项目没有在大腿上算。",
+     "en": "Indenter shape not stated, loaded by a hand-turned lead screw with no rate given; subjects are male amputees aged 65 on average; the stiffness is a linear fit F = K·d. An order-of-magnitude reference only; this project did not compute the thigh."
+    }
    }
   ],
   "posture": [
@@ -213,6 +286,23 @@
     "phase3": {
      "zh": "第三阶段没有在女性身体上重跑（女性身体正在重建，按要求不读）。原因的分析用不读人体数据的体模（tools/softbody/phantom.ts），结果在 validation-report.json 的 ours.breastPhantom。",
      "en": "Not rerun on the female body in phase 3 (the female body is being rebuilt and was not to be read). The causes were analysed on a phantom that reads no body data (tools/softbody/phantom.ts); results under ours.breastPhantom of validation-report.json."
+    },
+    "phase4": {
+     "zh": "打开 proneSupine2016 全文确认：患者的乳房体积没有在任何地方给出；该文自己的数值体模（胸壁是圆柱，边界固定）\"与中等大小的乳房相当\"，包住的体积 1.14 L，俯卧与仰卧之间的初始 TRE（即两态之间的位移）为 19.3 ± 16.2 mm；临床各例刚性对齐后的平均标志点距离为 38.8–133.1 mm。乳房沿胸壁的滑动在该文里是对胸壁结点的切向运动约束（只许沿胸壁表面移动），没有摩擦系数或界面刚度。体模的第四阶段结果见 validation-report.json 的 ours.breastPhantom（不读女性身体）。",
+     "en": "Checked in the full text of proneSupine2016: patient breast volumes are not given anywhere; the paper's own numerical phantom (a cylinder for the chest wall, fixed boundaries) is \"comparable to a medium sized breast\" with an enclosed volume of 1.14 L, and its initial TRE between prone and supine (the displacement between the two states) is 19.3 ± 16.2 mm; the mean landmark distance of the clinical cases after rigid alignment is 38.8–133.1 mm. Sliding along the chest wall is there a tangential motion constraint on chest-wall nodes (movement along the chest surface only), with no friction coefficient or interface stiffness. Phase-4 phantom results under ours.breastPhantom of validation-report.json (the female body was not read).",
+     "ownPhantom": {
+      "volumeL": 1.14,
+      "initialTreMm": 19.3,
+      "initialTreSdMm": 16.2
+     },
+     "clinicalMeanLandmarkDistanceRangeMm": [
+      38.8,
+      133.1
+     ],
+     "interface": {
+      "proneSupine2016": "tangential motion constraint on chest-wall nodes (slave nodes moved along the chest surface)",
+      "mira2018": "no-separation contact between breast and pectoral muscle, friction coefficient k = 0.1 (reported to hardly matter), the deep layer of the superficial fascia as a 0.1 mm shell on the interface whose modulus governs the sliding; fascia modulus searched over 80–250 kPa in 40 kPa steps; fitted breast tissue 0.2–0.3 kPa and skin 4 kPa (skin with the superficial layer of the superficial fascia as a 2 mm shell)"
+     }
     }
    }
   ],
@@ -593,131 +683,131 @@
     "capsules": 4,
     "skinVerticesEmbedded": 53576,
     "skinVertices": 53576,
-    "seconds": 4.6
+    "seconds": 2
    },
    "standing": {
     "residualMm": 0,
-    "maxSpeed": 6.0108427073540006e-12
+    "maxSpeed": 5.448457726059693e-12
    },
    "timing": {
-    "substeps": 10,
-    "msPerFrame": 108.191,
-    "msPerSubstep": 10.819,
+    "substeps": 13,
+    "msPerFrame": 59.404,
+    "msPerSubstep": 4.57,
     "tets": 55603,
     "nodes": 12090
    },
    "jiggle": {
     "motion": "hip_L flexion 40° in 0.15 s, then held; corrective displacement in mm: of skin vertices (largest), of cage nodes (largest and 99th percentile)",
     "withoutGravity": {
-     "skinPeak": 42.61,
-     "skinAt0_5s": 10.77,
-     "skinAt1s": 2.57,
-     "skinAt2s": 1.52,
-     "skinAt4s": 0.21,
-     "nodePeak": 176.6,
-     "node99thPercentilePeak": 34.11,
-     "nodeAt4s": 1.25
+     "skinPeak": 40.98,
+     "skinAt0_5s": 7.98,
+     "skinAt1s": 2.86,
+     "skinAt2s": 0.26,
+     "skinAt4s": 0.19,
+     "nodePeak": 169,
+     "node99thPercentilePeak": 31.13,
+     "nodeAt4s": 0.54
     },
     "withoutGravityNoMaxwellBranch": {
-     "skinPeak": 82.89,
-     "skinAt0_5s": 44.84,
-     "skinAt1s": 9.45,
-     "skinAt2s": 7.49,
-     "skinAt4s": 0.37,
-     "nodePeak": 391.73,
-     "node99thPercentilePeak": 56.77,
-     "nodeAt4s": 9.64
+     "skinPeak": 84.72,
+     "skinAt0_5s": 53.69,
+     "skinAt1s": 19.42,
+     "skinAt2s": 2.36,
+     "skinAt4s": 0.17,
+     "nodePeak": 328.92,
+     "node99thPercentilePeak": 53.4,
+     "nodeAt4s": 3.3
     },
     "withoutGravityPhase1Solver": {
-     "skinPeak": 122.57,
-     "skinAt0_5s": 22.93,
-     "skinAt1s": 5.6,
-     "skinAt2s": 0.1,
+     "skinPeak": 114.68,
+     "skinAt0_5s": 36.31,
+     "skinAt1s": 1.52,
+     "skinAt2s": 0.09,
      "skinAt4s": 0,
-     "nodePeak": 636.57,
-     "node99thPercentilePeak": 72.75,
+     "nodePeak": 431.31,
+     "node99thPercentilePeak": 69.37,
      "nodeAt4s": 0
     },
     "withGravity": {
-     "skinPeak": 39.24,
-     "skinAt0_5s": 12.12,
-     "skinAt1s": 8.56,
-     "skinAt2s": 8,
-     "skinAt4s": 10.43,
-     "nodePeak": 161.01,
-     "node99thPercentilePeak": 32.03,
-     "nodeAt4s": 32.86,
-     "settledSpeed": 0.014414063773279463
+     "skinPeak": 38.02,
+     "skinAt0_5s": 7.05,
+     "skinAt1s": 7.56,
+     "skinAt2s": 6.97,
+     "skinAt4s": 9.47,
+     "nodePeak": 171.55,
+     "node99thPercentilePeak": 29.26,
+     "nodeAt4s": 24.06,
+     "settledSpeed": 0.008634915241809845
     }
    },
    "stability": {
-    "substeps": 10000,
+    "substeps": 13000,
     "finite": true,
-    "largestDisplacementMm": 102.03,
-    "seconds": 108.684
+    "largestDisplacementMm": 93.63,
+    "seconds": 81.32
    },
    "energyDecay": {
     "joulesEveryQuarterSecond": [
-     1.407,
-     0.5322,
-     0.3651,
-     0.2805,
-     0.2248,
-     0.1844,
-     0.1533,
-     0.1286,
-     0.1086,
-     0.09217,
-     0.0786,
-     0.06727
+     1.715,
+     0.5433,
+     0.3547,
+     0.2705,
+     0.215,
+     0.1755,
+     0.1455,
+     0.1217,
+     0.1026,
+     0.08693,
+     0.07398,
+     0.0632
     ],
     "risesAfterFirstHalfSecond": 0,
-    "residualMm": 4.88
+    "residualMm": 4.36
    },
    "supine": {
     "abdomenFrontMeanDisplacementMm": {
-     "anterior": -5.67,
-     "cranial": 12.59,
+     "anterior": -5.65,
+     "cranial": 12.2,
      "vertices": 152
     },
-    "largestDisplacementMm": 20.55,
+    "largestDisplacementMm": 19.11,
     "volumeRatioByMaterial": {
-     "fat": 1.0002,
+     "fat": 1.0001,
      "muscle": 1.0004,
-     "abdomen": 0.9977,
-     "thorax": 0.9848,
+     "abdomen": 0.9978,
+     "thorax": 0.9851,
      "other": 1.0002
     },
-    "supportForceN": 4.563,
-    "settledSpeed": 0.0019082541334001692
+    "supportForceN": 5.536,
+    "settledSpeed": 0.0017334873380044703
    },
    "forearmCoarse": {
     "proximalThird": [
      {
       "depthMm": 3.2,
-      "forceN": 1.35,
-      "contactAreaMm2": 22.7,
-      "meanKPa": 59.444
+      "forceN": 1.609,
+      "contactAreaMm2": 25.6,
+      "meanKPa": 62.799
      },
      {
       "depthMm": 4.5,
-      "forceN": 2.185,
-      "contactAreaMm2": 12.2,
-      "meanKPa": 179.007
+      "forceN": 2.449,
+      "contactAreaMm2": 18.5,
+      "meanKPa": 132.729
      }
     ],
     "middle": [
      {
       "depthMm": 3.2,
-      "forceN": 1.413,
-      "contactAreaMm2": 39.3,
-      "meanKPa": 35.979
+      "forceN": 1.578,
+      "contactAreaMm2": 63.2,
+      "meanKPa": 24.981
      },
      {
       "depthMm": 4.5,
-      "forceN": 2.041,
-      "contactAreaMm2": 17.3,
-      "meanKPa": 118.158
+      "forceN": 2.376,
+      "contactAreaMm2": 22.8,
+      "meanKPa": 104.21
      }
     ]
    },
@@ -725,47 +815,47 @@
     "proximalThird": [
      {
       "depthMm": 3.2,
-      "forceN": 2.48,
-      "contactAreaMm2": 20.2,
-      "meanKPa": 122.589
+      "forceN": 2.883,
+      "contactAreaMm2": 23.6,
+      "meanKPa": 122.367
      },
      {
       "depthMm": 4.5,
-      "forceN": 3.661,
-      "contactAreaMm2": 21.2,
-      "meanKPa": 172.682
+      "forceN": 4.265,
+      "contactAreaMm2": 19.4,
+      "meanKPa": 220.354
      }
     ],
     "middle": [
      {
       "depthMm": 3.2,
-      "forceN": 2.258,
-      "contactAreaMm2": 25.3,
-      "meanKPa": 89.106
+      "forceN": 2.538,
+      "contactAreaMm2": 20.9,
+      "meanKPa": 121.53
      },
      {
       "depthMm": 4.5,
-      "forceN": 3.535,
-      "contactAreaMm2": 8,
-      "meanKPa": 442.485
+      "forceN": 3.972,
+      "contactAreaMm2": 7.4,
+      "meanKPa": 536.584
      }
     ]
    },
-   "muscleVolumeRatioPhase1Solver": 1.0614,
-   "muscleVolumeRatio40Substeps": 0.9992,
+   "muscleVolumeRatioPhase1Solver": 1.0622,
+   "muscleVolumeRatio40Substeps": 0.9989,
    "muscle": {
     "activated": [
      "Long head of left biceps brachii",
      "Short head of left biceps brachii"
     ],
     "tets": 112,
-    "largestOutwardSkinDisplacementMm": 9.52,
-    "muscleVolumeRatio": 1.0116
+    "largestOutwardSkinDisplacementMm": 9.88,
+    "muscleVolumeRatio": 1.0058
    },
-   "seconds": 385
+   "seconds": 298
   },
   "forearm": {
-   "insideTestBuildMs": 23,
+   "insideTestBuildMs": 31,
    "proximalThird": {
     "published": {
      "depthMm": 3.2,
@@ -775,66 +865,66 @@
      "tets": 15259,
      "nodes": 3317,
      "buildMs": {
-      "cage": 210,
-      "solver": 17
+      "cage": 255,
+      "solver": 25
      },
-     "massScale": 10.36,
+     "massScale": 11.885,
      "tissueThicknessMm": 42.25,
-     "solveSeconds": 10.064,
+     "solveSeconds": 13.236,
      "rows": [
       {
        "depthMm": 1.6,
-       "forceN": 0.321,
-       "meanPressureKPa": 0.67,
-       "peakPressureKPa": 1.47,
-       "contactAreaMm2": 482.3,
-       "peakStrain": 0.1,
+       "forceN": 0.445,
+       "meanPressureKPa": 0.88,
+       "peakPressureKPa": 2.54,
+       "contactAreaMm2": 505.7,
+       "peakStrain": 0.089,
        "strainAt2_5_10mm": [
-        0.1,
-        0.099,
-        0.064
+        0.062,
+        0.089,
+        0.07
        ],
        "valid": false,
        "flags": [
         "probe-under-resolved"
        ],
-       "frames": 272
+       "frames": 322
       },
       {
        "depthMm": 3.2,
-       "forceN": 0.826,
-       "meanPressureKPa": 2.29,
-       "peakPressureKPa": 3.53,
-       "contactAreaMm2": 361.3,
-       "peakStrain": 0.165,
+       "forceN": 1.123,
+       "meanPressureKPa": 3.06,
+       "peakPressureKPa": 4.72,
+       "contactAreaMm2": 366.3,
+       "peakStrain": 0.147,
        "strainAt2_5_10mm": [
-        0.162,
-        0.165,
-        0.125
+        0.104,
+        0.147,
+        0.129
        ],
        "valid": false,
        "flags": [
         "probe-under-resolved"
        ],
-       "frames": 314
+       "frames": 364
       },
       {
        "depthMm": 4.5,
-       "forceN": 1.35,
-       "meanPressureKPa": 4.52,
-       "peakPressureKPa": 5.24,
-       "contactAreaMm2": 298.3,
-       "peakStrain": 0.213,
+       "forceN": 1.825,
+       "meanPressureKPa": 6.02,
+       "peakPressureKPa": 3.52,
+       "contactAreaMm2": 302.9,
+       "peakStrain": 0.191,
        "strainAt2_5_10mm": [
-        0.196,
-        0.213,
-        0.171
+        0.131,
+        0.191,
+        0.173
        ],
        "valid": false,
        "flags": [
         "probe-under-resolved"
        ],
-       "frames": 325
+       "frames": 305
       }
      ]
     },
@@ -842,116 +932,117 @@
      "tets": 34621,
      "nodes": 7004,
      "buildMs": {
-      "cage": 350,
-      "solver": 15
+      "cage": 636,
+      "solver": 28
      },
      "massScale": 23.673,
      "tissueThicknessMm": 36.55,
-     "solveSeconds": 21.841,
+     "solveSeconds": 30.663,
      "rows": [
       {
        "depthMm": 1.6,
-       "forceN": 0.341,
-       "meanPressureKPa": 0.67,
-       "peakPressureKPa": 1.4,
-       "contactAreaMm2": 509.9,
-       "peakStrain": 0.119,
+       "forceN": 0.444,
+       "meanPressureKPa": 0.84,
+       "peakPressureKPa": 2.5,
+       "contactAreaMm2": 528.5,
+       "peakStrain": 0.107,
        "strainAt2_5_10mm": [
-        0.119,
-        0.099,
-        0.059
+        0.077,
+        0.077,
+        0.065
        ],
-       "valid": true,
-       "flags": [],
-       "frames": 333
+       "valid": false,
+       "flags": [
+        "not-converged"
+       ],
+       "frames": 403
       },
       {
        "depthMm": 3.2,
-       "forceN": 0.909,
-       "meanPressureKPa": 2.07,
-       "peakPressureKPa": 3.19,
-       "contactAreaMm2": 438.1,
-       "peakStrain": 0.183,
+       "forceN": 1.194,
+       "meanPressureKPa": 2.77,
+       "peakPressureKPa": 4.04,
+       "contactAreaMm2": 431.6,
+       "peakStrain": 0.178,
        "strainAt2_5_10mm": [
-        0.183,
-        0.158,
-        0.125
+        0.128,
+        0.122,
+        0.13
        ],
        "valid": true,
        "flags": [],
-       "frames": 395
+       "frames": 355
       },
       {
        "depthMm": 4.5,
-       "forceN": 1.63,
-       "meanPressureKPa": 4.36,
-       "peakPressureKPa": 5.41,
-       "contactAreaMm2": 374,
-       "peakStrain": 0.23,
+       "forceN": 2.054,
+       "meanPressureKPa": 5.91,
+       "peakPressureKPa": 5.75,
+       "contactAreaMm2": 347.7,
+       "peakStrain": 0.228,
        "strainAt2_5_10mm": [
-        0.23,
-        0.2,
-        0.176
+        0.165,
+        0.157,
+        0.18
        ],
        "valid": true,
        "flags": [],
-       "frames": 147
+       "frames": 177
       }
      ]
     },
     "twoLevel": {
      "cutNodes": 2569,
-     "forceBeforeN": 0.857,
-     "largestCutNodeDisplacementMm": 1.15,
-     "forceAfterN": 0.593
+     "forceBeforeN": 1.166,
+     "largestCutNodeDisplacementMm": 1.4,
+     "forceAfterN": 0.694
     },
     "reboundMmEveryQuarterSecondPseudoTime": [
-     4.78,
-     4.41,
-     3.99,
-     3.63,
-     3.32,
-     3.05
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
     ],
     "skinNeoHookean720kPa": {
      "cellMm": 6.5,
      "rows": [
       {
        "depthMm": 3.2,
-       "forceN": 0.839,
-       "meanPressureKPa": 2.35,
-       "peakPressureKPa": 3.54,
-       "contactAreaMm2": 357.6,
-       "peakStrain": 0.169,
+       "forceN": 2.486,
+       "meanPressureKPa": 9.01,
+       "peakPressureKPa": 16.59,
+       "contactAreaMm2": 275.9,
+       "peakStrain": 0.157,
        "strainAt2_5_10mm": [
-        0.151,
-        0.169,
-        0.127
+        0.053,
+        0.15,
+        0.157
        ],
        "valid": false,
        "flags": [
-        "not-converged",
         "probe-under-resolved"
        ],
-       "frames": 404
+       "frames": 284
       },
       {
        "depthMm": 4.5,
-       "forceN": 1.39,
-       "meanPressureKPa": 4.7,
-       "peakPressureKPa": 5.4,
-       "contactAreaMm2": 296,
-       "peakStrain": 0.216,
+       "forceN": 3.9,
+       "meanPressureKPa": 18.55,
+       "peakPressureKPa": 9.09,
+       "contactAreaMm2": 210.2,
+       "peakStrain": 0.214,
        "strainAt2_5_10mm": [
-        0.186,
-        0.216,
-        0.175
+        0.076,
+        0.199,
+        0.214
        ],
        "valid": false,
        "flags": [
         "probe-under-resolved"
        ],
-       "frames": 265
+       "frames": 185
       }
      ]
     },
@@ -962,7 +1053,7 @@
        "depthMm": 3.2,
        "forceN": 0.812,
        "meanPressureKPa": 2.26,
-       "peakPressureKPa": 3.59,
+       "peakPressureKPa": 2.66,
        "contactAreaMm2": 360,
        "peakStrain": 0.172,
        "strainAt2_5_10mm": [
@@ -980,7 +1071,7 @@
        "depthMm": 4.5,
        "forceN": 1.321,
        "meanPressureKPa": 4.45,
-       "peakPressureKPa": 5.09,
+       "peakPressureKPa": 2,
        "contactAreaMm2": 296.7,
        "peakStrain": 0.21,
        "strainAt2_5_10mm": [
@@ -1006,62 +1097,60 @@
      "tets": 30706,
      "nodes": 6253,
      "buildMs": {
-      "cage": 338,
+      "cage": 346,
       "solver": 12
      },
-     "massScale": 23.673,
+     "massScale": 31.177,
      "tissueThicknessMm": 36.55,
-     "solveSeconds": 26.11,
+     "solveSeconds": 27.526,
      "rows": [
       {
        "depthMm": 1.6,
-       "forceN": 0.315,
-       "meanPressureKPa": 0.69,
-       "peakPressureKPa": 1.39,
-       "contactAreaMm2": 457.4,
-       "peakStrain": 0.123,
+       "forceN": 0.394,
+       "meanPressureKPa": 0.89,
+       "peakPressureKPa": 2.03,
+       "contactAreaMm2": 444,
+       "peakStrain": 0.097,
        "strainAt2_5_10mm": [
-        0.123,
-        0.102,
-        0.056
+        0.08,
+        0.097,
+        0.063
        ],
-       "valid": false,
-       "flags": [
-        "not-converged"
-       ],
+       "valid": true,
+       "flags": [],
        "frames": 403
       },
       {
        "depthMm": 3.2,
-       "forceN": 0.902,
-       "meanPressureKPa": 2.02,
-       "peakPressureKPa": 3.28,
-       "contactAreaMm2": 445.8,
-       "peakStrain": 0.179,
+       "forceN": 1.131,
+       "meanPressureKPa": 2.35,
+       "peakPressureKPa": 4.33,
+       "contactAreaMm2": 482.2,
+       "peakStrain": 0.149,
        "strainAt2_5_10mm": [
-        0.179,
-        0.147,
-        0.126
+        0.112,
+        0.138,
+        0.133
        ],
        "valid": true,
        "flags": [],
-       "frames": 375
+       "frames": 285
       },
       {
        "depthMm": 4.5,
-       "forceN": 1.515,
-       "meanPressureKPa": 4.08,
+       "forceN": 1.877,
+       "meanPressureKPa": 4.62,
        "peakPressureKPa": 5.57,
-       "contactAreaMm2": 371.5,
-       "peakStrain": 0.214,
+       "contactAreaMm2": 406.4,
+       "peakStrain": 0.19,
        "strainAt2_5_10mm": [
-        0.214,
-        0.17,
-        0.184
+        0.138,
+        0.159,
+        0.188
        ],
        "valid": true,
        "flags": [],
-       "frames": 337
+       "frames": 307
       }
      ]
     },
@@ -1070,40 +1159,39 @@
      "rows": [
       {
        "depthMm": 3.2,
-       "forceN": 0.844,
-       "meanPressureKPa": 1.99,
-       "peakPressureKPa": 3.67,
-       "contactAreaMm2": 424.7,
-       "peakStrain": 0.161,
+       "forceN": 2.117,
+       "meanPressureKPa": 5,
+       "peakPressureKPa": 12.83,
+       "contactAreaMm2": 423.6,
+       "peakStrain": 0.147,
        "strainAt2_5_10mm": [
-        0.161,
-        0.15,
-        0.118
+        0.053,
+        0.147,
+        0.129
        ],
        "valid": false,
        "flags": [
-        "not-converged",
         "probe-under-resolved"
        ],
-       "frames": 404
+       "frames": 324
       },
       {
        "depthMm": 4.5,
-       "forceN": 1.371,
-       "meanPressureKPa": 4.25,
-       "peakPressureKPa": 5.61,
-       "contactAreaMm2": 322.4,
-       "peakStrain": 0.195,
+       "forceN": 3.387,
+       "meanPressureKPa": 10.12,
+       "peakPressureKPa": 18.98,
+       "contactAreaMm2": 334.8,
+       "peakStrain": 0.196,
        "strainAt2_5_10mm": [
-        0.195,
-        0.189,
-        0.164
+        0.058,
+        0.184,
+        0.18
        ],
        "valid": false,
        "flags": [
         "probe-under-resolved"
        ],
-       "frames": 325
+       "frames": 245
       }
      ]
     },
@@ -1114,7 +1202,7 @@
        "depthMm": 3.2,
        "forceN": 0.82,
        "meanPressureKPa": 1.88,
-       "peakPressureKPa": 3.67,
+       "peakPressureKPa": 3.24,
        "contactAreaMm2": 436.4,
        "peakStrain": 0.178,
        "strainAt2_5_10mm": [
@@ -1133,7 +1221,7 @@
        "depthMm": 4.5,
        "forceN": 1.49,
        "meanPressureKPa": 4.99,
-       "peakPressureKPa": 5.96,
+       "peakPressureKPa": 6.14,
        "contactAreaMm2": 298.8,
        "peakStrain": 0.228,
        "strainAt2_5_10mm": [
@@ -1155,121 +1243,123 @@
     "cellMm": 2,
     "tets": 29913,
     "buildMs": {
-     "cage": 298,
-     "solver": 20
+     "cage": 348,
+     "solver": 19
     },
     "tissueThicknessMm": 15,
-    "solveSeconds": 40.492,
+    "solveSeconds": 97.611,
     "at5N": {
-     "depthMm": 6.29,
-     "forceN": 2.401,
-     "meanPressureKPa": 43.22,
-     "peakPressureKPa": 29.75,
-     "contactAreaMm2": 55.6,
-     "peakStrain": 0.573,
+     "depthMm": 6.69,
+     "forceN": 3.716,
+     "meanPressureKPa": 87.52,
+     "peakPressureKPa": 36.18,
+     "contactAreaMm2": 42.5,
+     "peakStrain": 0.59,
      "strainAt2_5_10mm": [
-      0.364,
-      0.556,
-      0.461
+      0.342,
+      0.583,
+      0.518
      ],
      "valid": false,
      "flags": [
       "not-converged",
       "force-not-reached:tissue-crushed-or-bottomed-out",
-      "strain-beyond-model-range"
+      "strain-beyond-model-range",
+      "pressure-beyond-validated-range"
      ],
-     "frames": 1038,
+     "frames": 2578,
      "pressureProfile": [
       {
        "rMm": 0.35,
-       "kPa": 8.51
+       "kPa": 0
       },
       {
        "rMm": 1.06,
-       "kPa": 8.91
+       "kPa": 5.93
       },
       {
        "rMm": 1.76,
-       "kPa": 7.51
+       "kPa": 3.61
       },
       {
        "rMm": 2.47,
-       "kPa": 7.34
+       "kPa": 3.03
       },
       {
        "rMm": 3.17,
-       "kPa": 5.73
+       "kPa": 2.26
       },
       {
        "rMm": 3.88,
-       "kPa": 5.61
+       "kPa": 6.36
       },
       {
        "rMm": 4.58,
-       "kPa": 21.55
+       "kPa": 41.47
       },
       {
        "rMm": 5.29,
-       "kPa": 17.63
+       "kPa": 50.13
       }
      ]
     },
     "at50N": {
-     "depthMm": 6.29,
-     "forceN": 2.401,
-     "meanPressureKPa": 43.22,
-     "peakPressureKPa": 29.75,
-     "contactAreaMm2": 55.6,
-     "peakStrain": 0.573,
+     "depthMm": 6.53,
+     "forceN": 3.494,
+     "meanPressureKPa": 86.88,
+     "peakPressureKPa": 5.84,
+     "contactAreaMm2": 40.2,
+     "peakStrain": 0.579,
      "strainAt2_5_10mm": [
-      0.364,
-      0.556,
-      0.461
+      0.325,
+      0.572,
+      0.507
      ],
      "valid": false,
      "flags": [
       "not-converged",
       "force-not-reached:tissue-crushed-or-bottomed-out",
-      "strain-beyond-model-range"
+      "strain-beyond-model-range",
+      "pressure-beyond-validated-range"
      ],
-     "frames": 1078,
+     "frames": 3057,
      "pressureProfile": [
       {
        "rMm": 0.35,
-       "kPa": 8.51
+       "kPa": 0
       },
       {
        "rMm": 1.06,
-       "kPa": 8.91
+       "kPa": 5.38
       },
       {
        "rMm": 1.76,
-       "kPa": 7.51
+       "kPa": 3.61
       },
       {
        "rMm": 2.47,
-       "kPa": 7.34
+       "kPa": 2.68
       },
       {
        "rMm": 3.17,
-       "kPa": 5.73
+       "kPa": 2.13
       },
       {
        "rMm": 3.88,
-       "kPa": 5.61
+       "kPa": 7.69
       },
       {
        "rMm": 4.58,
-       "kPa": 21.55
+       "kPa": 42.17
       },
       {
        "rMm": 5.29,
-       "kPa": 17.63
+       "kPa": 45.43
       }
      ]
     }
    },
-   "seconds": 157
+   "seconds": 237
   },
   "abdomen": {
    "R2": {
@@ -1281,8 +1371,8 @@
     "default": {
      "tets": 36726,
      "buildMs": {
-      "cage": 927,
-      "solver": 28
+      "cage": 962,
+      "solver": 30
      },
      "tissueThicknessMm": 57.75,
      "byMaterial": {
@@ -1303,19 +1393,19 @@
        "litres": 0
       }
      },
-     "solveSeconds": 39.213,
+     "solveSeconds": 38.923,
      "rows": [
       {
        "depthMm": 5,
-       "forceN": 0.823,
-       "meanPressureKPa": 56.39,
-       "peakPressureKPa": 10.89,
-       "contactAreaMm2": 14.6,
-       "peakStrain": 0.309,
+       "forceN": 0.953,
+       "meanPressureKPa": 73.06,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 13,
+       "peakStrain": 0.29,
        "strainAt2_5_10mm": [
-        0.309,
-        0.309,
-        0.21
+        0.29,
+        0.29,
+        0.218
        ],
        "valid": false,
        "flags": [
@@ -1325,19 +1415,19 @@
        ],
        "frames": 305,
        "publishedMeanN": 1.174,
-       "ratio": 0.701
+       "ratio": 0.812
       },
       {
        "depthMm": 10,
-       "forceN": 2.4,
-       "meanPressureKPa": 96.49,
-       "peakPressureKPa": 16.08,
-       "contactAreaMm2": 24.9,
-       "peakStrain": 0.491,
+       "forceN": 2.665,
+       "meanPressureKPa": 87.23,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 30.6,
+       "peakStrain": 0.509,
        "strainAt2_5_10mm": [
-        0.491,
-        0.491,
-        0.412
+        0.509,
+        0.509,
+        0.421
        ],
        "valid": false,
        "flags": [
@@ -1348,42 +1438,41 @@
        ],
        "frames": 310,
        "publishedMeanN": 2.641,
-       "ratio": 0.909
+       "ratio": 1.009
       },
       {
        "depthMm": 15,
-       "forceN": 4.914,
-       "meanPressureKPa": 224.43,
-       "peakPressureKPa": 17.04,
-       "contactAreaMm2": 21.9,
-       "peakStrain": 0.684,
+       "forceN": 5.481,
+       "meanPressureKPa": 242.08,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 22.6,
+       "peakStrain": 0.731,
        "strainAt2_5_10mm": [
-        0.684,
-        0.684,
-        0.563
+        0.731,
+        0.731,
+        0.571
        ],
        "valid": false,
        "flags": [
-        "not-converged",
         "probe-under-resolved",
         "strain-beyond-model-range",
         "pressure-beyond-validated-range"
        ],
        "frames": 315,
        "publishedMeanN": 4.528,
-       "ratio": 1.085
+       "ratio": 1.211
       },
       {
        "depthMm": 20,
-       "forceN": 8.727,
-       "meanPressureKPa": 436.95,
-       "peakPressureKPa": 24.24,
-       "contactAreaMm2": 20,
-       "peakStrain": 0.993,
+       "forceN": 9.92,
+       "meanPressureKPa": 840.63,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 11.8,
+       "peakStrain": 1.094,
        "strainAt2_5_10mm": [
-        0.993,
-        0.993,
-        0.677
+        1.094,
+        1.094,
+        0.712
        ],
        "valid": false,
        "flags": [
@@ -1391,43 +1480,43 @@
         "strain-beyond-model-range",
         "pressure-beyond-validated-range"
        ],
-       "frames": 300,
+       "frames": 200,
        "publishedMeanN": 6.92,
-       "ratio": 1.261
+       "ratio": 1.434
       },
       {
        "depthMm": 25,
-       "forceN": 14.326,
-       "meanPressureKPa": 1082.62,
-       "peakPressureKPa": 31.32,
-       "contactAreaMm2": 13.2,
-       "peakStrain": 1.34,
+       "forceN": null,
+       "meanPressureKPa": null,
+       "peakPressureKPa": null,
+       "contactAreaMm2": 326.9,
+       "peakStrain": 0,
        "strainAt2_5_10mm": [
-        1.34,
-        1.34,
-        0.875
+        0,
+        0,
+        0
        ],
        "valid": false,
        "flags": [
-        "probe-under-resolved",
-        "strain-beyond-model-range",
-        "pressure-beyond-validated-range"
+        "not-converged",
+        "not-finite",
+        "probe-under-resolved"
        ],
-       "frames": 184,
+       "frames": 324,
        "publishedMeanN": 9.856,
-       "ratio": 1.453
+       "ratio": null
       },
       {
        "depthMm": 30,
        "forceN": null,
-       "meanPressureKPa": 0,
-       "peakPressureKPa": 0,
-       "contactAreaMm2": 0,
-       "peakStrain": null,
+       "meanPressureKPa": null,
+       "peakPressureKPa": null,
+       "contactAreaMm2": 326.9,
+       "peakStrain": 0,
        "strainAt2_5_10mm": [
-        null,
-        null,
-        null
+        0,
+        0,
+        0
        ],
        "valid": false,
        "flags": [
@@ -1444,7 +1533,7 @@
     "withoutStiffening": {
      "tets": 36726,
      "buildMs": {
-      "cage": 856,
+      "cage": 838,
       "solver": 21
      },
      "tissueThicknessMm": 57.75,
@@ -1466,19 +1555,19 @@
        "litres": 0
       }
      },
-     "solveSeconds": 43.5,
+     "solveSeconds": 40.331,
      "rows": [
       {
        "depthMm": 5,
-       "forceN": 0.649,
-       "meanPressureKPa": 16.68,
-       "peakPressureKPa": 9.89,
-       "contactAreaMm2": 38.9,
-       "peakStrain": 0.4,
+       "forceN": 0.749,
+       "meanPressureKPa": 32.6,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 23,
+       "peakStrain": 0.36,
        "strainAt2_5_10mm": [
-        0.4,
-        0.4,
-        0.186
+        0.36,
+        0.36,
+        0.2
        ],
        "valid": false,
        "flags": [
@@ -1487,19 +1576,19 @@
        ],
        "frames": 305,
        "publishedMeanN": 1.174,
-       "ratio": 0.553
+       "ratio": 0.638
       },
       {
        "depthMm": 10,
-       "forceN": 1.814,
-       "meanPressureKPa": 50.18,
-       "peakPressureKPa": 11.85,
-       "contactAreaMm2": 36.2,
-       "peakStrain": 0.657,
+       "forceN": 2.007,
+       "meanPressureKPa": 62.33,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 32.2,
+       "peakStrain": 0.622,
        "strainAt2_5_10mm": [
-        0.657,
-        0.657,
-        0.357
+        0.622,
+        0.622,
+        0.366
        ],
        "valid": false,
        "flags": [
@@ -1510,42 +1599,41 @@
        ],
        "frames": 310,
        "publishedMeanN": 2.641,
-       "ratio": 0.687
+       "ratio": 0.76
       },
       {
        "depthMm": 15,
-       "forceN": 3.28,
-       "meanPressureKPa": 148.59,
-       "peakPressureKPa": 20.14,
-       "contactAreaMm2": 22.1,
-       "peakStrain": 0.905,
+       "forceN": 3.65,
+       "meanPressureKPa": 151.16,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 24.1,
+       "peakStrain": 0.868,
        "strainAt2_5_10mm": [
-        0.905,
-        0.905,
-        0.482
+        0.868,
+        0.868,
+        0.479
        ],
        "valid": false,
        "flags": [
-        "not-converged",
         "probe-under-resolved",
         "strain-beyond-model-range",
         "pressure-beyond-validated-range"
        ],
        "frames": 315,
        "publishedMeanN": 4.528,
-       "ratio": 0.724
+       "ratio": 0.806
       },
       {
        "depthMm": 20,
-       "forceN": 4.973,
-       "meanPressureKPa": 227.77,
-       "peakPressureKPa": 21.53,
-       "contactAreaMm2": 21.8,
-       "peakStrain": 1.139,
+       "forceN": 5.555,
+       "meanPressureKPa": 290.73,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 19.1,
+       "peakStrain": 1.127,
        "strainAt2_5_10mm": [
-        1.139,
-        1.139,
-        0.575
+        1.127,
+        1.127,
+        0.566
        ],
        "valid": false,
        "flags": [
@@ -1553,44 +1641,43 @@
         "strain-beyond-model-range",
         "pressure-beyond-validated-range"
        ],
-       "frames": 300,
+       "frames": 280,
        "publishedMeanN": 6.92,
-       "ratio": 0.719
+       "ratio": 0.803
       },
       {
        "depthMm": 25,
-       "forceN": 6.878,
-       "meanPressureKPa": 369.2,
-       "peakPressureKPa": 31.72,
-       "contactAreaMm2": 18.6,
-       "peakStrain": 1.236,
+       "forceN": 7.717,
+       "meanPressureKPa": 438.13,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 17.6,
+       "peakStrain": 1.275,
        "strainAt2_5_10mm": [
-        1.236,
-        1.236,
-        0.669
+        1.275,
+        1.275,
+        0.685
        ],
        "valid": false,
        "flags": [
-        "not-converged",
         "probe-under-resolved",
         "strain-beyond-model-range",
         "pressure-beyond-validated-range"
        ],
-       "frames": 324,
+       "frames": 284,
        "publishedMeanN": 9.856,
-       "ratio": 0.698
+       "ratio": 0.783
       },
       {
        "depthMm": 30,
-       "forceN": 9.83,
-       "meanPressureKPa": 1188.73,
-       "peakPressureKPa": 120.47,
-       "contactAreaMm2": 8.3,
-       "peakStrain": 1.821,
+       "forceN": 10.329,
+       "meanPressureKPa": 972.05,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 10.6,
+       "peakStrain": 1.297,
        "strainAt2_5_10mm": [
-        1.821,
-        1.821,
-        0.626
+        1.297,
+        1.297,
+        0.697
        ],
        "valid": false,
        "flags": [
@@ -1598,17 +1685,17 @@
         "strain-beyond-model-range",
         "pressure-beyond-validated-range"
        ],
-       "frames": 319,
+       "frames": 229,
        "publishedMeanN": 13.334,
-       "ratio": 0.737
+       "ratio": 0.775
       }
      ]
     },
     "softerWallAndContents": {
      "tets": 36726,
      "buildMs": {
-      "cage": 891,
-      "solver": 17
+      "cage": 841,
+      "solver": 20
      },
      "tissueThicknessMm": 57.75,
      "byMaterial": {
@@ -1629,40 +1716,41 @@
        "litres": 0
       }
      },
-     "solveSeconds": 39.775,
+     "solveSeconds": 37.524,
      "rows": [
       {
        "depthMm": 5,
-       "forceN": 0.655,
-       "meanPressureKPa": 26.18,
-       "peakPressureKPa": 8.87,
-       "contactAreaMm2": 25,
-       "peakStrain": 0.369,
+       "forceN": 0.809,
+       "meanPressureKPa": 67.13,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 12,
+       "peakStrain": 0.331,
        "strainAt2_5_10mm": [
-        0.369,
-        0.369,
-        0.187
+        0.331,
+        0.331,
+        0.204
        ],
        "valid": false,
        "flags": [
         "not-converged",
-        "probe-under-resolved"
+        "probe-under-resolved",
+        "pressure-beyond-validated-range"
        ],
        "frames": 305,
        "publishedMeanN": 1.174,
-       "ratio": 0.558
+       "ratio": 0.689
       },
       {
        "depthMm": 10,
-       "forceN": 1.901,
-       "meanPressureKPa": 69.37,
-       "peakPressureKPa": 10.31,
-       "contactAreaMm2": 27.4,
-       "peakStrain": 0.565,
+       "forceN": 2.192,
+       "meanPressureKPa": 79.07,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 27.7,
+       "peakStrain": 0.572,
        "strainAt2_5_10mm": [
-        0.565,
-        0.565,
-        0.377
+        0.572,
+        0.572,
+        0.398
        ],
        "valid": false,
        "flags": [
@@ -1673,64 +1761,63 @@
        ],
        "frames": 310,
        "publishedMeanN": 2.641,
-       "ratio": 0.72
+       "ratio": 0.83
       },
       {
        "depthMm": 15,
-       "forceN": 3.72,
-       "meanPressureKPa": 160.65,
-       "peakPressureKPa": 12.83,
-       "contactAreaMm2": 23.2,
-       "peakStrain": 0.759,
+       "forceN": 4.318,
+       "meanPressureKPa": 214.16,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 20.2,
+       "peakStrain": 0.804,
        "strainAt2_5_10mm": [
-        0.759,
-        0.759,
-        0.522
+        0.804,
+        0.804,
+        0.542
+       ],
+       "valid": false,
+       "flags": [
+        "probe-under-resolved",
+        "strain-beyond-model-range",
+        "pressure-beyond-validated-range"
+       ],
+       "frames": 305,
+       "publishedMeanN": 4.528,
+       "ratio": 0.954
+      },
+      {
+       "depthMm": 20,
+       "forceN": null,
+       "meanPressureKPa": null,
+       "peakPressureKPa": null,
+       "contactAreaMm2": 326.9,
+       "peakStrain": 0,
+       "strainAt2_5_10mm": [
+        0,
+        0,
+        0
        ],
        "valid": false,
        "flags": [
         "not-converged",
-        "probe-under-resolved",
-        "strain-beyond-model-range",
-        "pressure-beyond-validated-range"
+        "not-finite",
+        "probe-under-resolved"
        ],
-       "frames": 315,
-       "publishedMeanN": 4.528,
-       "ratio": 0.822
-      },
-      {
-       "depthMm": 20,
-       "forceN": 6.253,
-       "meanPressureKPa": 314.35,
-       "peakPressureKPa": 19.07,
-       "contactAreaMm2": 19.9,
-       "peakStrain": 1.014,
-       "strainAt2_5_10mm": [
-        1.014,
-        1.014,
-        0.636
-       ],
-       "valid": false,
-       "flags": [
-        "probe-under-resolved",
-        "strain-beyond-model-range",
-        "pressure-beyond-validated-range"
-       ],
-       "frames": 290,
+       "frames": 320,
        "publishedMeanN": 6.92,
-       "ratio": 0.904
+       "ratio": null
       },
       {
        "depthMm": 25,
        "forceN": null,
-       "meanPressureKPa": 0,
-       "peakPressureKPa": 0,
-       "contactAreaMm2": 0,
-       "peakStrain": null,
+       "meanPressureKPa": null,
+       "peakPressureKPa": null,
+       "contactAreaMm2": 326.9,
+       "peakStrain": 0,
        "strainAt2_5_10mm": [
-        null,
-        null,
-        null
+        0,
+        0,
+        0
        ],
        "valid": false,
        "flags": [
@@ -1745,14 +1832,14 @@
       {
        "depthMm": 30,
        "forceN": null,
-       "meanPressureKPa": 0,
-       "peakPressureKPa": 0,
-       "contactAreaMm2": 0,
-       "peakStrain": null,
+       "meanPressureKPa": null,
+       "peakPressureKPa": null,
+       "contactAreaMm2": 326.9,
+       "peakStrain": 0,
        "strainAt2_5_10mm": [
-        null,
-        null,
-        null
+        0,
+        0,
+        0
        ],
        "valid": false,
        "flags": [
@@ -1777,8 +1864,8 @@
     "default": {
      "tets": 37372,
      "buildMs": {
-      "cage": 863,
-      "solver": 15
+      "cage": 798,
+      "solver": 17
      },
      "tissueThicknessMm": 61.25,
      "byMaterial": {
@@ -1795,19 +1882,19 @@
        "litres": 0.27
       }
      },
-     "solveSeconds": 46.268,
+     "solveSeconds": 46.366,
      "rows": [
       {
        "depthMm": 5,
-       "forceN": 0.745,
-       "meanPressureKPa": 36.2,
-       "peakPressureKPa": 12.24,
-       "contactAreaMm2": 20.6,
-       "peakStrain": 0.3,
+       "forceN": 0.855,
+       "meanPressureKPa": 42.64,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 20,
+       "peakStrain": 0.279,
        "strainAt2_5_10mm": [
-        0.3,
-        0.3,
-        0.156
+        0.279,
+        0.279,
+        0.154
        ],
        "valid": false,
        "flags": [
@@ -1816,19 +1903,19 @@
        ],
        "frames": 305,
        "publishedMeanN": 0.845,
-       "ratio": 0.882
+       "ratio": 1.012
       },
       {
        "depthMm": 10,
-       "forceN": 2.164,
-       "meanPressureKPa": 114.47,
-       "peakPressureKPa": 16.08,
-       "contactAreaMm2": 18.9,
-       "peakStrain": 0.461,
+       "forceN": 2.452,
+       "meanPressureKPa": 139.8,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 17.5,
+       "peakStrain": 0.454,
        "strainAt2_5_10mm": [
-        0.461,
-        0.461,
-        0.324
+        0.454,
+        0.454,
+        0.31
        ],
        "valid": false,
        "flags": [
@@ -1839,42 +1926,41 @@
        ],
        "frames": 310,
        "publishedMeanN": 2.12,
-       "ratio": 1.021
+       "ratio": 1.156
       },
       {
        "depthMm": 15,
-       "forceN": 4.302,
-       "meanPressureKPa": 201.6,
-       "peakPressureKPa": 25.16,
-       "contactAreaMm2": 21.3,
-       "peakStrain": 0.619,
+       "forceN": 4.916,
+       "meanPressureKPa": 263.95,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 18.6,
+       "peakStrain": 0.64,
        "strainAt2_5_10mm": [
-        0.619,
-        0.619,
-        0.457
+        0.614,
+        0.614,
+        0.437
        ],
        "valid": false,
        "flags": [
-        "not-converged",
         "probe-under-resolved",
         "strain-beyond-model-range",
         "pressure-beyond-validated-range"
        ],
        "frames": 315,
        "publishedMeanN": 3.826,
-       "ratio": 1.124
+       "ratio": 1.285
       },
       {
        "depthMm": 20,
-       "forceN": 7.334,
-       "meanPressureKPa": 473.26,
-       "peakPressureKPa": 39.48,
-       "contactAreaMm2": 15.5,
-       "peakStrain": 0.833,
+       "forceN": 8.455,
+       "meanPressureKPa": 683.42,
+       "peakPressureKPa": 0,
+       "contactAreaMm2": 12.4,
+       "peakStrain": 0.861,
        "strainAt2_5_10mm": [
-        0.833,
-        0.833,
-        0.54
+        0.851,
+        0.851,
+        0.522
        ],
        "valid": false,
        "flags": [
@@ -1882,21 +1968,21 @@
         "strain-beyond-model-range",
         "pressure-beyond-validated-range"
        ],
-       "frames": 310,
+       "frames": 270,
        "publishedMeanN": 5.962,
-       "ratio": 1.23
+       "ratio": 1.418
       },
       {
        "depthMm": 25,
        "forceN": null,
-       "meanPressureKPa": 0,
-       "peakPressureKPa": 0,
-       "contactAreaMm2": 0,
-       "peakStrain": null,
+       "meanPressureKPa": null,
+       "peakPressureKPa": null,
+       "contactAreaMm2": 326.8,
+       "peakStrain": 0,
        "strainAt2_5_10mm": [
-        null,
-        null,
-        null
+        0,
+        0,
+        0
        ],
        "valid": false,
        "flags": [
@@ -1911,14 +1997,14 @@
       {
        "depthMm": 30,
        "forceN": null,
-       "meanPressureKPa": 0,
-       "peakPressureKPa": 0,
-       "contactAreaMm2": 0,
-       "peakStrain": null,
+       "meanPressureKPa": null,
+       "peakPressureKPa": null,
+       "contactAreaMm2": 326.8,
+       "peakStrain": 0,
        "strainAt2_5_10mm": [
-        null,
-        null,
-        null
+        0,
+        0,
+        0
        ],
        "valid": false,
        "flags": [
@@ -1934,7 +2020,7 @@
     },
     "publishedRmse": 0.512
    },
-   "seconds": 175
+   "seconds": 169
   },
   "breast": {
    "cell14mm": {
@@ -2243,31 +2329,31 @@
    "tets": 55603,
    "inverseSolve": {
     "residualsMm": [
-     16.71,
-     1.24,
-     0.26,
+     14.84,
+     1.18,
+     0.24,
      0.02
     ],
     "converged": true
    },
-   "inverseSeconds": 72.471,
+   "inverseSeconds": 69.052,
    "forwardUnderGravity": {
-    "frames": 1141,
-    "nodeLargestMm": 0.54,
-    "nodeMeanMm": 0.04,
-    "skinLargestMm": 0.27,
+    "frames": 1062,
+    "nodeLargestMm": 0.46,
+    "nodeMeanMm": 0.05,
+    "skinLargestMm": 0.23,
     "skinMeanMm": 0.02,
-    "largestReferenceShiftMm": 16.88,
+    "largestReferenceShiftMm": 14.98,
     "volumeRatioByMaterial": {
      "fat": 1,
      "muscle": 0.9998,
      "abdomen": 1.0002,
-     "thorax": 1.0056,
+     "thorax": 1.0055,
      "other": 1
     },
-    "maxSpeed": 0.000019989096253947434
+    "maxSpeed": 0.00001992942341948909
    },
-   "seconds": 147
+   "seconds": 145
   },
   "contact": {
    "forearmSphere": {
@@ -2284,133 +2370,137 @@
     "sphere5mmCell2mm": {
      "tissueThicknessMm": 13.5,
      "tets": 20988,
-     "solveSeconds": 40.005,
+     "solveSeconds": 131.938,
      "rows": [
       {
-       "depthMm": 3.46,
-       "forceN": 0.177,
-       "meanPressureKPa": 5.38,
-       "peakPressureKPa": 6.81,
-       "contactAreaMm2": 32.9,
-       "peakStrain": 0.42,
+       "depthMm": 5.23,
+       "forceN": 0.958,
+       "meanPressureKPa": 43.68,
+       "peakPressureKPa": 23.65,
+       "contactAreaMm2": 21.9,
+       "peakStrain": 0.593,
        "strainAt2_5_10mm": [
-        0.406,
-        0.357,
-        0.159
+        0.543,
+        0.501,
+        0.344
        ],
        "valid": false,
        "flags": [
         "force-not-reached:tissue-crushed-or-bottomed-out",
         "strain-beyond-model-range"
        ],
-       "frames": 1013
+       "frames": 2108
       },
       {
-       "depthMm": 3.46,
-       "forceN": 0.177,
-       "meanPressureKPa": 5.38,
-       "peakPressureKPa": 6.81,
-       "contactAreaMm2": 32.9,
-       "peakStrain": 0.42,
+       "depthMm": 5.23,
+       "forceN": 0.958,
+       "meanPressureKPa": 43.68,
+       "peakPressureKPa": 23.65,
+       "contactAreaMm2": 21.9,
+       "peakStrain": 0.593,
        "strainAt2_5_10mm": [
-        0.406,
-        0.357,
-        0.159
+        0.543,
+        0.501,
+        0.344
        ],
        "valid": false,
        "flags": [
+        "not-converged",
         "force-not-reached:tissue-crushed-or-bottomed-out",
         "strain-beyond-model-range"
        ],
-       "frames": 1273
+       "frames": 2298
       },
       {
-       "depthMm": 3.46,
-       "forceN": 0.177,
-       "meanPressureKPa": 5.38,
-       "peakPressureKPa": 6.81,
-       "contactAreaMm2": 32.9,
-       "peakStrain": 0.42,
+       "depthMm": 5.23,
+       "forceN": 0.958,
+       "meanPressureKPa": 43.68,
+       "peakPressureKPa": 23.65,
+       "contactAreaMm2": 21.9,
+       "peakStrain": 0.593,
        "strainAt2_5_10mm": [
-        0.406,
-        0.357,
-        0.159
+        0.543,
+        0.501,
+        0.344
        ],
        "valid": false,
        "flags": [
+        "not-converged",
         "force-not-reached:tissue-crushed-or-bottomed-out",
         "strain-beyond-model-range"
        ],
-       "frames": 1273
+       "frames": 2298
       }
      ]
     },
     "sphere5mmCell2.5mm": {
      "tissueThicknessMm": 15,
      "tets": 16920,
-     "solveSeconds": 44.457,
+     "solveSeconds": 91.121,
      "rows": [
       {
-       "depthMm": 5.64,
-       "forceN": 0.516,
-       "meanPressureKPa": 40.35,
-       "peakPressureKPa": 2.49,
+       "depthMm": 5.77,
+       "forceN": 0.994,
+       "meanPressureKPa": 77.92,
+       "peakPressureKPa": 0,
        "contactAreaMm2": 12.8,
-       "peakStrain": 0.594,
+       "peakStrain": 0.593,
        "strainAt2_5_10mm": [
-        0.593,
-        0.492,
-        0.303
+        0.582,
+        0.498,
+        0.335
        ],
        "valid": false,
        "flags": [
-        "force-not-reached:tissue-crushed-or-bottomed-out",
         "probe-under-resolved",
-        "strain-beyond-model-range"
+        "strain-beyond-model-range",
+        "pressure-beyond-validated-range"
        ],
-       "frames": 1462
+       "frames": 1039
       },
       {
        "depthMm": 5.64,
-       "forceN": 0.516,
-       "meanPressureKPa": 40.35,
-       "peakPressureKPa": 2.49,
-       "contactAreaMm2": 12.8,
-       "peakStrain": 0.594,
+       "forceN": 0.943,
+       "meanPressureKPa": 70.69,
+       "peakPressureKPa": 17.91,
+       "contactAreaMm2": 13.3,
+       "peakStrain": 0.584,
        "strainAt2_5_10mm": [
-        0.593,
-        0.492,
-        0.303
+        0.575,
+        0.494,
+        0.323
        ],
        "valid": false,
        "flags": [
         "not-converged",
         "force-not-reached:tissue-crushed-or-bottomed-out",
         "probe-under-resolved",
-        "strain-beyond-model-range"
+        "strain-beyond-model-range",
+        "pressure-beyond-validated-range"
        ],
-       "frames": 1783
+       "frames": 2714
       },
       {
        "depthMm": 5.64,
-       "forceN": 0.516,
-       "meanPressureKPa": 40.35,
-       "peakPressureKPa": 2.49,
-       "contactAreaMm2": 12.8,
-       "peakStrain": 0.594,
+       "forceN": 0.943,
+       "meanPressureKPa": 70.69,
+       "peakPressureKPa": 17.91,
+       "contactAreaMm2": 13.3,
+       "peakStrain": 0.584,
        "strainAt2_5_10mm": [
-        0.593,
-        0.492,
-        0.303
+        0.575,
+        0.494,
+        0.323
        ],
        "valid": false,
        "flags": [
         "not-converged",
         "force-not-reached:tissue-crushed-or-bottomed-out",
         "probe-under-resolved",
-        "strain-beyond-model-range"
+        "strain-beyond-model-range",
+        "pressure-beyond-validated-range"
        ],
-       "frames": 1783
+       "frames": 2724
       }
      ]
     }
@@ -2429,64 +2519,64 @@
     "sphere5mmCell2mm": {
      "tissueThicknessMm": 15,
      "tets": 20982,
-     "solveSeconds": 19.378,
+     "solveSeconds": 108.598,
      "rows": [
       {
-       "depthMm": 2.1,
-       "forceN": 0.055,
-       "meanPressureKPa": 2.03,
-       "peakPressureKPa": 2.39,
-       "contactAreaMm2": 27,
-       "peakStrain": 0.408,
+       "depthMm": 4.28,
+       "forceN": 0.499,
+       "meanPressureKPa": 22.3,
+       "peakPressureKPa": 9.15,
+       "contactAreaMm2": 22.4,
+       "peakStrain": 0.584,
        "strainAt2_5_10mm": [
-        0.332,
-        0.24,
-        0.021
+        0.584,
+        0.45,
+        0.163
        ],
        "valid": false,
        "flags": [
         "force-not-reached:tissue-crushed-or-bottomed-out",
         "strain-beyond-model-range"
        ],
-       "frames": 570
+       "frames": 2096
       },
       {
-       "depthMm": 2.1,
-       "forceN": 0.055,
-       "meanPressureKPa": 2.03,
-       "peakPressureKPa": 2.39,
-       "contactAreaMm2": 27,
-       "peakStrain": 0.408,
+       "depthMm": 4.28,
+       "forceN": 0.499,
+       "meanPressureKPa": 22.3,
+       "peakPressureKPa": 9.15,
+       "contactAreaMm2": 22.4,
+       "peakStrain": 0.584,
        "strainAt2_5_10mm": [
-        0.332,
-        0.24,
-        0.021
+        0.584,
+        0.45,
+        0.163
        ],
        "valid": false,
        "flags": [
         "force-not-reached:tissue-crushed-or-bottomed-out",
         "strain-beyond-model-range"
        ],
-       "frames": 490
+       "frames": 2266
       },
       {
-       "depthMm": 2.1,
-       "forceN": 0.055,
-       "meanPressureKPa": 2.03,
-       "peakPressureKPa": 2.39,
-       "contactAreaMm2": 27,
-       "peakStrain": 0.408,
+       "depthMm": 4.28,
+       "forceN": 0.499,
+       "meanPressureKPa": 22.3,
+       "peakPressureKPa": 9.15,
+       "contactAreaMm2": 22.4,
+       "peakStrain": 0.584,
        "strainAt2_5_10mm": [
-        0.332,
-        0.24,
-        0.021
+        0.584,
+        0.45,
+        0.163
        ],
        "valid": false,
        "flags": [
         "force-not-reached:tissue-crushed-or-bottomed-out",
         "strain-beyond-model-range"
        ],
-       "frames": 490
+       "frames": 2266
       }
      ]
     }
@@ -2495,38 +2585,40 @@
     "cellMm": 6,
     "rows": [
      {
-      "depthMm": 3.88,
-      "forceN": 2.008,
-      "meanPressureKPa": 0.84,
-      "peakPressureKPa": 2.2,
-      "contactAreaMm2": 2393.4,
-      "peakStrain": 0.176,
+      "depthMm": 3.25,
+      "forceN": 2.005,
+      "meanPressureKPa": 0.85,
+      "peakPressureKPa": 3.17,
+      "contactAreaMm2": 2356.3,
+      "peakStrain": 0.109,
       "strainAt2_5_10mm": [
-       0.176,
-       0.139,
-       0.13
-      ],
-      "valid": true,
-      "flags": [],
-      "frames": 1188
-     },
-     {
-      "depthMm": 6.96,
-      "forceN": 4.999,
-      "meanPressureKPa": 2.06,
-      "peakPressureKPa": 3.85,
-      "contactAreaMm2": 2426,
-      "peakStrain": 0.265,
-      "strainAt2_5_10mm": [
-       0.265,
-       0.204,
-       0.205
+       0.099,
+       0.104,
+       0.109
       ],
       "valid": false,
       "flags": [
        "not-converged"
       ],
-      "frames": 1573
+      "frames": 957
+     },
+     {
+      "depthMm": 5.98,
+      "forceN": 5.012,
+      "meanPressureKPa": 1.92,
+      "peakPressureKPa": 6.06,
+      "contactAreaMm2": 2604.5,
+      "peakStrain": 0.173,
+      "strainAt2_5_10mm": [
+       0.152,
+       0.158,
+       0.173
+      ],
+      "valid": false,
+      "flags": [
+       "not-converged"
+      ],
+      "frames": 1521
      }
     ]
    },
@@ -2542,31 +2634,31 @@
      0.14678449928760529
     ],
     "mirrorMismatchMm": 10.91,
-    "forceL": 0.127,
-    "forceR": 0.126,
-    "peakKPaL": 5.4,
-    "peakKPaR": 6.43
+    "forceL": 0.245,
+    "forceR": 0.235,
+    "peakKPaL": 14.29,
+    "peakKPaR": 15.49
    },
    "forearmRender": {
-    "depthMm": 3.46,
-    "forceN": 0.177,
-    "peakPressureKPa": 6.81
+    "depthMm": 5.23,
+    "forceN": 0.958,
+    "peakPressureKPa": 23.65
    },
    "chestRender": {
-    "depthMm": 2.1,
-    "forceN": 0.055,
-    "peakPressureKPa": 2.39
+    "depthMm": 4.28,
+    "forceN": 0.499,
+    "peakPressureKPa": 9.15
    },
-   "seconds": 272
+   "seconds": 737
   },
   "stability": {
    "frames": 10000,
-   "substeps": 100000,
+   "substeps": 130000,
    "finite": true,
-   "largestDisplacementMm": 101.92,
+   "largestDisplacementMm": 93.85,
    "largestVolumeDeviationDuringRun": 0.013,
    "afterReturn": {
-    "residualMm": 1.04,
+    "residualMm": 0.91,
     "volumeRatioByMaterial": {
      "fat": 1,
      "muscle": 1,
@@ -2574,10 +2666,10 @@
      "thorax": 1,
      "other": 1
     },
-    "maxSpeed": 0.00026418221019830403
+    "maxSpeed": 0.00023536054778842784
    },
-   "seconds": 607,
-   "msPerFrame": 57.078
+   "seconds": 1074,
+   "msPerFrame": 96.531
   },
   "timing": {
    "cpu": "Bun, one thread, machine shared with other jobs",
@@ -2587,133 +2679,2040 @@
      "nodes": 12090,
      "tets": 55603,
      "substeps": 10,
-     "msPerFrame": 43.561,
-     "msPerSubstep": 4.356
+     "msPerFrame": 45.022,
+     "msPerSubstep": 4.502
     },
     {
      "cage": "whole body 20 mm",
      "nodes": 26316,
      "tets": 128357,
      "substeps": 10,
-     "msPerFrame": 93.722,
-     "msPerSubstep": 9.372
+     "msPerFrame": 100.727,
+     "msPerSubstep": 10.073
     },
     {
      "cage": "chest region 14 mm",
      "nodes": 25514,
      "tets": 134415,
      "substeps": 10,
-     "msPerFrame": 91.702,
-     "msPerSubstep": 9.17
+     "msPerFrame": 94.297,
+     "msPerSubstep": 9.43
     },
     {
      "cage": "forearm region 12 mm",
      "nodes": 1941,
      "tets": 8753,
      "substeps": 10,
-     "msPerFrame": 6.237,
-     "msPerSubstep": 0.624
+     "msPerFrame": 6.588,
+     "msPerSubstep": 0.659
     },
     {
      "cage": "press() site cage, probe 13 mm, cell 4.3 mm",
      "nodes": 7004,
      "tets": 34621,
      "substeps": 8,
-     "msPerFrame": 16.627,
-     "msPerSubstep": 2.078
+     "msPerFrame": 18.196,
+     "msPerSubstep": 2.274
     },
     {
      "cage": "press() site cage, probe 5 mm, cell 2 mm",
      "nodes": 4446,
      "tets": 20988,
      "substeps": 8,
-     "msPerFrame": 8.124,
-     "msPerSubstep": 1.016
+     "msPerFrame": 8.615,
+     "msPerSubstep": 1.077
     }
    ],
-   "seconds": 29
+   "seconds": 30
   },
   "breastPhantom": {
-   "what": "hemisphere of breast tissue on a rigid wall, gravity from prone (away from the wall) to supine (towards it, optionally tilted); nipple = top of the dome; displacement prone → supine",
+   "what": "hemisphere of breast tissue on a rigid wall; postures by a 3D gravity vector in the body frame (x lateral, y cranial, z anterior); each posture solved from the unloaded shape; pairs give nipple / mean tissue displacement in mm",
    "published": {
     "meanMm": 69.7,
-    "source": "proneSupine2016"
+    "source": "proneSupine2016",
+    "ownPhantomInitialTreMm": 19.3,
+    "ownPhantomVolumeL": 1.14
    },
    "rows": [
     {
-     "label": "262 mL, 14 mm, bonded (as the phase-2 model)",
-     "nippleMm": 11.6,
-     "meanTissueMm": 6.8,
-     "volumeRatio": 0.9934,
-     "tets": 576,
-     "frames": 265
+     "label": "262 mL, bonded, no skin (phases 2–3)",
+     "nippleMm": 12,
+     "meanTissueMm": 7,
+     "volumeRatio": 0.9936,
+     "tets": 1596,
+     "frames": 726,
+     "converged": true,
+     "minJ": 0.69,
+     "crushedTets": 0,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 12,
+       "meanTissueMm": 7,
+       "nippleVectorMm": [
+        0.1,
+        0,
+        -12
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 27.5,
+       "meanTissueMm": 16.6,
+       "nippleVectorMm": [
+        0.2,
+        27.2,
+        -3.6
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 28.4,
+       "meanTissueMm": 16.5,
+       "nippleVectorMm": [
+        0.1,
+        27.2,
+        8.4
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 26,
+       "meanTissueMm": 15.8,
+       "nippleVectorMm": [
+        25.6,
+        0.1,
+        4.8
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 27,
+       "meanTissueMm": 16.6,
+       "nippleVectorMm": [
+        -26.6,
+        -0.1,
+        4.5
+       ]
+      }
+     ]
     },
     {
-     "label": "cell 7 mm",
+     "label": "262 mL, bonded, no skin, cell 7 mm",
      "nippleMm": 12.7,
      "meanTissueMm": 6.8,
      "volumeRatio": 0.9938,
      "tets": 4584,
-     "frames": 247
+     "frames": 712,
+     "converged": true,
+     "minJ": 0.64,
+     "crushedTets": 0,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 12.7,
+       "meanTissueMm": 6.8,
+       "nippleVectorMm": [
+        0,
+        0,
+        -12.7
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 27.6,
+       "meanTissueMm": 15.8,
+       "nippleVectorMm": [
+        0,
+        27.3,
+        -4.5
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 28.4,
+       "meanTissueMm": 16,
+       "nippleVectorMm": [
+        0,
+        27.2,
+        8.2
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 26.6,
+       "meanTissueMm": 15.2,
+       "nippleVectorMm": [
+        26.2,
+        0,
+        4.9
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 27.6,
+       "meanTissueMm": 15.8,
+       "nippleVectorMm": [
+        -27.2,
+        0,
+        4.5
+       ]
+      }
+     ]
     },
     {
-     "label": "cell 5 mm",
-     "nippleMm": 13,
-     "meanTissueMm": 6.7,
-     "volumeRatio": 0.9939,
-     "tets": 12630,
-     "frames": 240
+     "label": "262 mL, sliding with a central patch pinned, no skin (phase-3 upper bound)",
+     "nippleMm": 19.3,
+     "meanTissueMm": 12,
+     "volumeRatio": 0.994,
+     "tets": 1596,
+     "frames": 874,
+     "converged": true,
+     "minJ": -4.53,
+     "crushedTets": 26,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 19.3,
+       "meanTissueMm": 12,
+       "nippleVectorMm": [
+        0.1,
+        0.3,
+        -19.3
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 95.9,
+       "meanTissueMm": 94.3,
+       "nippleVectorMm": [
+        -1.5,
+        95.8,
+        -3.2
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 96.9,
+       "meanTissueMm": 94.4,
+       "nippleVectorMm": [
+        -1.5,
+        95.5,
+        16.1
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 101.1,
+       "meanTissueMm": 98,
+       "nippleVectorMm": [
+        100.9,
+        4.7,
+        4
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 106.6,
+       "meanTissueMm": 96.6,
+       "nippleVectorMm": [
+        -106.5,
+        -3.8,
+        3.1
+       ]
+      }
+     ]
     },
     {
-     "label": "shear 166.6 Pa (softest published)",
-     "nippleMm": 25.4,
-     "meanTissueMm": 14.9,
-     "volumeRatio": 0.9862,
-     "tets": 576,
-     "frames": 312
+     "label": "262 mL, sliding, rim pinned, no skin",
+     "nippleMm": 19.3,
+     "meanTissueMm": 12,
+     "volumeRatio": 0.993,
+     "tets": 1596,
+     "frames": 12305,
+     "converged": false,
+     "minJ": 0,
+     "crushedTets": 18,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 19.3,
+       "meanTissueMm": 12,
+       "nippleVectorMm": [
+        4.8,
+        5,
+        -18
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 210,
+       "meanTissueMm": 184.1,
+       "nippleVectorMm": [
+        12.4,
+        209.6,
+        4.7
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 206,
+       "meanTissueMm": 179.6,
+       "nippleVectorMm": [
+        7.6,
+        204.6,
+        22.7
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 177.8,
+       "meanTissueMm": 162.9,
+       "nippleVectorMm": [
+        177.5,
+        -10.6,
+        4.4
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 200.7,
+       "meanTissueMm": 182.2,
+       "nippleVectorMm": [
+        -200.6,
+        -2.3,
+        5.1
+       ]
+      }
+     ]
     },
     {
-     "label": "base sliding (frictionless, bilateral)",
-     "nippleMm": 18.7,
-     "meanTissueMm": 11.6,
-     "volumeRatio": 0.9948,
-     "tets": 576,
-     "frames": 303
+     "label": "262 mL, sliding, forearm skin of materials.json",
+     "nippleMm": 6,
+     "meanTissueMm": 2.9,
+     "volumeRatio": 0.9955,
+     "tets": 1596,
+     "frames": 672,
+     "converged": true,
+     "minJ": 0.81,
+     "crushedTets": 0,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 6,
+       "meanTissueMm": 2.9,
+       "nippleVectorMm": [
+        0.3,
+        0.6,
+        -5.9
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 9.4,
+       "meanTissueMm": 6.3,
+       "nippleVectorMm": [
+        -0.1,
+        8.8,
+        -3.5
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 8.5,
+       "meanTissueMm": 6.1,
+       "nippleVectorMm": [
+        -0.4,
+        8.1,
+        2.5
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 8.6,
+       "meanTissueMm": 6.2,
+       "nippleVectorMm": [
+        8.1,
+        -0.8,
+        2.8
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 8.8,
+       "meanTissueMm": 6.3,
+       "nippleVectorMm": [
+        -8.3,
+        -0.1,
+        2.9
+       ]
+      }
+     ]
     },
     {
-     "label": "supine gravity tilted 45° from the wall normal",
-     "nippleMm": 21.5,
-     "meanTissueMm": 13,
-     "volumeRatio": 0.9954,
-     "tets": 576,
-     "frames": 290
-    },
-    {
-     "label": "sliding and tilted 45°",
-     "nippleMm": 55.2,
-     "meanTissueMm": 46.3,
-     "volumeRatio": 0.9967,
-     "tets": 576,
-     "frames": 360
-    },
-    {
-     "label": "600 mL",
-     "nippleMm": 21.3,
-     "meanTissueMm": 12.2,
-     "volumeRatio": 0.9917,
-     "tets": 1324,
-     "frames": 287
-    },
-    {
-     "label": "600 mL, tilted 45°",
-     "nippleMm": 38.1,
-     "meanTissueMm": 22.6,
+     "label": "262 mL, bonded, mira2018 breast skin",
+     "nippleMm": 9.4,
+     "meanTissueMm": 5,
      "volumeRatio": 0.9941,
-     "tets": 1324,
-     "frames": 325
+     "tets": 1596,
+     "frames": 675,
+     "converged": true,
+     "minJ": 0.84,
+     "crushedTets": 0,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 9.4,
+       "meanTissueMm": 5,
+       "nippleVectorMm": [
+        -0.1,
+        0.1,
+        -9.4
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 19,
+       "meanTissueMm": 11.6,
+       "nippleVectorMm": [
+        -0.4,
+        18.7,
+        -3.7
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 19.4,
+       "meanTissueMm": 11.7,
+       "nippleVectorMm": [
+        -0.2,
+        18.6,
+        5.7
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 17.8,
+       "meanTissueMm": 11.1,
+       "nippleVectorMm": [
+        17.3,
+        -0.3,
+        4.1
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 18.4,
+       "meanTissueMm": 11.6,
+       "nippleVectorMm": [
+        -18,
+        0.2,
+        3.8
+       ]
+      }
+     ]
+    },
+    {
+     "label": "262 mL, sliding, mira2018 breast skin",
+     "nippleMm": 14,
+     "meanTissueMm": 7.9,
+     "volumeRatio": 0.9933,
+     "tets": 1596,
+     "frames": 824,
+     "converged": true,
+     "minJ": 0.06,
+     "crushedTets": 12,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 14,
+       "meanTissueMm": 7.9,
+       "nippleVectorMm": [
+        2.2,
+        2.7,
+        -13.6
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 69.3,
+       "meanTissueMm": 55.1,
+       "nippleVectorMm": [
+        -4.3,
+        69,
+        -4.7
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 67.2,
+       "meanTissueMm": 53.2,
+       "nippleVectorMm": [
+        -6.4,
+        66.3,
+        8.9
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 54.7,
+       "meanTissueMm": 47.3,
+       "nippleVectorMm": [
+        54.3,
+        -5.1,
+        4
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 68.6,
+       "meanTissueMm": 56.8,
+       "nippleVectorMm": [
+        -68.4,
+        0.4,
+        5.1
+       ]
+      }
+     ]
+    },
+    {
+     "label": "262 mL, sliding, mira2018 breast skin, cell 7 mm",
+     "nippleMm": 16.5,
+     "meanTissueMm": 9.5,
+     "volumeRatio": 0.9938,
+     "tets": 4584,
+     "frames": 4695,
+     "converged": false,
+     "minJ": -0.1,
+     "crushedTets": 25,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 16.5,
+       "meanTissueMm": 9.5,
+       "nippleVectorMm": [
+        2.5,
+        2.5,
+        -16.1
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 120.8,
+       "meanTissueMm": 101.9,
+       "nippleVectorMm": [
+        2.9,
+        120.7,
+        -2.8
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 119,
+       "meanTissueMm": 99.5,
+       "nippleVectorMm": [
+        0.4,
+        118.2,
+        13.3
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 91.3,
+       "meanTissueMm": 81.6,
+       "nippleVectorMm": [
+        90.6,
+        -10.6,
+        4.9
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 123.1,
+       "meanTissueMm": 102.8,
+       "nippleVectorMm": [
+        -123.1,
+        -2.8,
+        1.6
+       ]
+      }
+     ]
+    },
+    {
+     "label": "262 mL, fascia 80 kPa × 0.1 mm, mira2018 breast skin",
+     "nippleMm": 11.8,
+     "meanTissueMm": 6.1,
+     "volumeRatio": 0.9943,
+     "tets": 1596,
+     "frames": 785,
+     "converged": true,
+     "minJ": 0.04,
+     "crushedTets": 4,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 11.8,
+       "meanTissueMm": 6.1,
+       "nippleVectorMm": [
+        1.2,
+        1.6,
+        -11.6
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 50.5,
+       "meanTissueMm": 38.5,
+       "nippleVectorMm": [
+        -5.1,
+        50,
+        -4.3
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 49.4,
+       "meanTissueMm": 37.3,
+       "nippleVectorMm": [
+        -6.2,
+        48.4,
+        7.3
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 42.1,
+       "meanTissueMm": 34.4,
+       "nippleVectorMm": [
+        41.8,
+        -3.8,
+        3.8
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 48.1,
+       "meanTissueMm": 38.5,
+       "nippleVectorMm": [
+        -47.5,
+        5.7,
+        5.5
+       ]
+      }
+     ]
+    },
+    {
+     "label": "262 mL, fascia 250 kPa × 0.1 mm, mira2018 breast skin",
+     "nippleMm": 9.9,
+     "meanTissueMm": 4.6,
+     "volumeRatio": 0.9948,
+     "tets": 1596,
+     "frames": 740,
+     "converged": true,
+     "minJ": 0.28,
+     "crushedTets": 1,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 9.9,
+       "meanTissueMm": 4.6,
+       "nippleVectorMm": [
+        0.4,
+        0.7,
+        -9.8
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 27.5,
+       "meanTissueMm": 18.3,
+       "nippleVectorMm": [
+        0.2,
+        27,
+        -5.3
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 26.7,
+       "meanTissueMm": 17.5,
+       "nippleVectorMm": [
+        -0.3,
+        26.3,
+        4.5
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 29.8,
+       "meanTissueMm": 21.9,
+       "nippleVectorMm": [
+        29.5,
+        -2.2,
+        3.7
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 26.7,
+       "meanTissueMm": 18.3,
+       "nippleVectorMm": [
+        -26.2,
+        -0.3,
+        5.3
+       ]
+      }
+     ]
+    },
+    {
+     "label": "262 mL, sliding, mira2018 breast skin, wall turned 30° outward",
+     "nippleMm": 54.4,
+     "meanTissueMm": 45.2,
+     "volumeRatio": 0.9939,
+     "tets": 1596,
+     "frames": 849,
+     "converged": true,
+     "minJ": 0.02,
+     "crushedTets": 10,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 54.4,
+       "meanTissueMm": 45.2,
+       "nippleVectorMm": [
+        38.3,
+        -1.5,
+        -38.6
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 69.9,
+       "meanTissueMm": 55.4,
+       "nippleVectorMm": [
+        16.5,
+        66.1,
+        -15.5
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 74.7,
+       "meanTissueMm": 60.2,
+       "nippleVectorMm": [
+        -21.8,
+        67.6,
+        23.1
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 21.6,
+       "meanTissueMm": 17.6,
+       "nippleVectorMm": [
+        21.2,
+        -2.4,
+        -2.8
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 85.2,
+       "meanTissueMm": 72,
+       "nippleVectorMm": [
+        -72.2,
+        4.6,
+        45
+       ]
+      }
+     ]
+    },
+    {
+     "label": "262 mL, sliding, mira2018 breast skin, shear 166.6 Pa",
+     "nippleMm": 24,
+     "meanTissueMm": 13.1,
+     "volumeRatio": 0.988,
+     "tets": 1596,
+     "frames": 885,
+     "converged": true,
+     "minJ": 0.21,
+     "crushedTets": 11,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 24,
+       "meanTissueMm": 13.1,
+       "nippleVectorMm": [
+        2.9,
+        4,
+        -23.5
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 110.9,
+       "meanTissueMm": 79,
+       "nippleVectorMm": [
+        5.7,
+        110.2,
+        10.4
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 111.6,
+       "meanTissueMm": 76.9,
+       "nippleVectorMm": [
+        2.8,
+        106.2,
+        33.9
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 71.7,
+       "meanTissueMm": 60.6,
+       "nippleVectorMm": [
+        71.1,
+        -5.8,
+        6.9
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 106.5,
+       "meanTissueMm": 79,
+       "nippleVectorMm": [
+        -106.3,
+        -6.2,
+        -2.4
+       ]
+      }
+     ]
+    },
+    {
+     "label": "1140 mL, bonded, no skin",
+     "nippleMm": 34.1,
+     "meanTissueMm": 18.9,
+     "volumeRatio": 0.99,
+     "tets": 2480,
+     "frames": 855,
+     "converged": true,
+     "minJ": 0.44,
+     "crushedTets": 0,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 34.1,
+       "meanTissueMm": 18.9,
+       "nippleVectorMm": [
+        0.8,
+        0.8,
+        -34.1
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 76.5,
+       "meanTissueMm": 44.2,
+       "nippleVectorMm": [
+        0.5,
+        76.1,
+        -7.5
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 79.9,
+       "meanTissueMm": 44.7,
+       "nippleVectorMm": [
+        -0.3,
+        75.3,
+        26.6
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 72.1,
+       "meanTissueMm": 41.6,
+       "nippleVectorMm": [
+        71.2,
+        -0.2,
+        11.4
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 76.5,
+       "meanTissueMm": 44.2,
+       "nippleVectorMm": [
+        -76.1,
+        -0.5,
+        7.5
+       ]
+      }
+     ]
+    },
+    {
+     "label": "1140 mL, bonded, mira2018 breast skin",
+     "nippleMm": 28.8,
+     "meanTissueMm": 15.2,
+     "volumeRatio": 0.9903,
+     "tets": 2480,
+     "frames": 842,
+     "converged": true,
+     "minJ": 0.53,
+     "crushedTets": 0,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 28.8,
+       "meanTissueMm": 15.2,
+       "nippleVectorMm": [
+        0.7,
+        0.8,
+        -28.7
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 59.3,
+       "meanTissueMm": 35.2,
+       "nippleVectorMm": [
+        0,
+        58.7,
+        -8.7
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 61.3,
+       "meanTissueMm": 35.5,
+       "nippleVectorMm": [
+        -0.7,
+        57.9,
+        20
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 55.1,
+       "meanTissueMm": 33,
+       "nippleVectorMm": [
+        54.1,
+        -0.9,
+        10.7
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 59.3,
+       "meanTissueMm": 35.2,
+       "nippleVectorMm": [
+        -58.7,
+        -0.1,
+        8.7
+       ]
+      }
+     ]
+    },
+    {
+     "label": "1140 mL, sliding, mira2018 breast skin",
+     "nippleMm": 42.1,
+     "meanTissueMm": 24.1,
+     "volumeRatio": 0.9907,
+     "tets": 2480,
+     "frames": 957,
+     "converged": true,
+     "minJ": -0.17,
+     "crushedTets": 26,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 42.1,
+       "meanTissueMm": 24.1,
+       "nippleVectorMm": [
+        10.1,
+        10.2,
+        -39.6
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 228,
+       "meanTissueMm": 170.8,
+       "nippleVectorMm": [
+        19.4,
+        226.5,
+        17
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 223.9,
+       "meanTissueMm": 163.9,
+       "nippleVectorMm": [
+        9.3,
+        216.4,
+        56.6
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 162.2,
+       "meanTissueMm": 137.2,
+       "nippleVectorMm": [
+        161.6,
+        -9.3,
+        9.6
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 227.7,
+       "meanTissueMm": 170.7,
+       "nippleVectorMm": [
+        -226.2,
+        -19.9,
+        -16.6
+       ]
+      }
+     ]
+    },
+    {
+     "label": "1140 mL, fascia 80 kPa, mira2018 breast skin",
+     "nippleMm": 36.7,
+     "meanTissueMm": 19.5,
+     "volumeRatio": 0.9919,
+     "tets": 2480,
+     "frames": 935,
+     "converged": true,
+     "minJ": -0.03,
+     "crushedTets": 9,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 36.7,
+       "meanTissueMm": 19.5,
+       "nippleVectorMm": [
+        6.8,
+        6.8,
+        -35.4
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 187.3,
+       "meanTissueMm": 134.1,
+       "nippleVectorMm": [
+        13,
+        186.4,
+        12.6
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 186,
+       "meanTissueMm": 129.8,
+       "nippleVectorMm": [
+        6.2,
+        179.6,
+        48
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 131.7,
+       "meanTissueMm": 105.4,
+       "nippleVectorMm": [
+        131.1,
+        -7.3,
+        9.3
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 187.3,
+       "meanTissueMm": 134.1,
+       "nippleVectorMm": [
+        -186.4,
+        -13.1,
+        -12.7
+       ]
+      }
+     ]
+    },
+    {
+     "label": "1140 mL, sliding, mira2018 breast skin, wall turned 30° outward",
+     "nippleMm": 170.2,
+     "meanTissueMm": 134.9,
+     "volumeRatio": 0.9926,
+     "tets": 2480,
+     "frames": 1007,
+     "converged": true,
+     "minJ": -0.06,
+     "crushedTets": 33,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 170.2,
+       "meanTissueMm": 134.9,
+       "nippleVectorMm": [
+        124,
+        2.9,
+        -116.5
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 244.8,
+       "meanTissueMm": 184,
+       "nippleVectorMm": [
+        94.1,
+        222.9,
+        -37.1
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 235.8,
+       "meanTissueMm": 177.3,
+       "nippleVectorMm": [
+        -29.8,
+        220,
+        79.4
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 61.4,
+       "meanTissueMm": 49.6,
+       "nippleVectorMm": [
+        60.5,
+        -5.8,
+        -8.6
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 295.4,
+       "meanTissueMm": 222.4,
+       "nippleVectorMm": [
+        -269.1,
+        -15.1,
+        120.8
+       ]
+      }
+     ]
+    },
+    {
+     "label": "1140 mL, sliding, mira2018 breast skin, shear 166.6 Pa",
+     "nippleMm": 76.8,
+     "meanTissueMm": 43.3,
+     "volumeRatio": 0.9818,
+     "tets": 2480,
+     "frames": 8569,
+     "converged": false,
+     "minJ": 0.01,
+     "crushedTets": 31,
+     "pairs": [
+      {
+       "from": "prone",
+       "to": "supine",
+       "nippleMm": 76.8,
+       "meanTissueMm": 43.3,
+       "nippleVectorMm": [
+        16.9,
+        16.9,
+        -73
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "supine",
+       "nippleMm": 304.2,
+       "meanTissueMm": 228.1,
+       "nippleVectorMm": [
+        27.1,
+        302.1,
+        23.9
+       ]
+      },
+      {
+       "from": "standing",
+       "to": "prone",
+       "nippleMm": 301.4,
+       "meanTissueMm": 217.7,
+       "nippleVectorMm": [
+        10.2,
+        285.2,
+        96.9
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "lateral",
+       "nippleMm": 245.2,
+       "meanTissueMm": 197.3,
+       "nippleVectorMm": [
+        244.2,
+        -19.4,
+        10.8
+       ]
+      },
+      {
+       "from": "supine",
+       "to": "medial",
+       "nippleMm": 304.2,
+       "meanTissueMm": 228.1,
+       "nippleVectorMm": [
+        -302.1,
+        -27.1,
+        -23.8
+       ]
+      }
+     ]
     }
    ],
-   "seconds": 7
+   "seconds": 121
+  },
+  "smallProbe": {
+   "zhengRadius10cm": {
+    "site": [
+     0.32018635093394143,
+     0.9412020052795175,
+     0.10007856811224534
+    ],
+    "normal": [
+     0.8968037009571367,
+     0.10819148639843758,
+     -0.42899618205816137
+    ],
+    "phase3": {
+     "tissueThicknessMm": 13.5,
+     "flat9mm": {
+      "cellMm": 1.8,
+      "rows": [
+       {
+        "depthMm": 2.63,
+        "forceN": 0.505,
+        "meanPressureKPa": 14.8,
+        "peakPressureKPa": 5.77,
+        "contactAreaMm2": 34.1,
+        "peakStrain": 0.337,
+        "strainAt2_5_10mm": [
+         0.219,
+         0.309,
+         0.153
+        ],
+        "valid": true,
+        "flags": [],
+        "frames": 975
+       },
+       {
+        "depthMm": 3.83,
+        "forceN": 1.005,
+        "meanPressureKPa": 37.56,
+        "peakPressureKPa": 13.72,
+        "contactAreaMm2": 26.8,
+        "peakStrain": 0.434,
+        "strainAt2_5_10mm": [
+         0.287,
+         0.4,
+         0.26
+        ],
+        "valid": false,
+        "flags": [
+         "not-converged",
+         "strain-beyond-model-range"
+        ],
+        "frames": 1089
+       },
+       {
+        "depthMm": 4.88,
+        "forceN": 1.693,
+        "meanPressureKPa": 52.07,
+        "peakPressureKPa": 30.24,
+        "contactAreaMm2": 32.5,
+        "peakStrain": 0.505,
+        "strainAt2_5_10mm": [
+         0.363,
+         0.471,
+         0.351
+        ],
+        "valid": false,
+        "flags": [
+         "not-converged",
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "strain-beyond-model-range",
+         "pressure-beyond-validated-range"
+        ],
+        "frames": 2562
+       },
+       {
+        "depthMm": 5.12,
+        "forceN": null,
+        "meanPressureKPa": 0,
+        "peakPressureKPa": 0,
+        "contactAreaMm2": 0,
+        "peakStrain": null,
+        "strainAt2_5_10mm": [
+         null,
+         null,
+         null
+        ],
+        "valid": false,
+        "flags": [
+         "not-converged",
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "not-finite"
+        ],
+        "frames": 3606
+       }
+      ],
+      "slopeNPerMmFromPreload": 0.417
+     },
+     "sphere5mm": {
+      "cellMm": 2,
+      "rows": [
+       {
+        "depthMm": 3.21,
+        "forceN": 0.255,
+        "meanPressureKPa": 11.19,
+        "peakPressureKPa": 7.21,
+        "contactAreaMm2": 22.8,
+        "peakStrain": 0.598,
+        "strainAt2_5_10mm": [
+         0.342,
+         0.33,
+         0.129
+        ],
+        "valid": false,
+        "flags": [
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "strain-beyond-model-range"
+        ],
+        "frames": 2967
+       },
+       {
+        "depthMm": 3.21,
+        "forceN": 0.255,
+        "meanPressureKPa": 11.19,
+        "peakPressureKPa": 7.21,
+        "contactAreaMm2": 22.8,
+        "peakStrain": 0.598,
+        "strainAt2_5_10mm": [
+         0.342,
+         0.33,
+         0.129
+        ],
+        "valid": false,
+        "flags": [
+         "not-converged",
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "strain-beyond-model-range"
+        ],
+        "frames": 2957
+       },
+       {
+        "depthMm": 3.21,
+        "forceN": 0.255,
+        "meanPressureKPa": 11.19,
+        "peakPressureKPa": 7.21,
+        "contactAreaMm2": 22.8,
+        "peakStrain": 0.598,
+        "strainAt2_5_10mm": [
+         0.342,
+         0.33,
+         0.129
+        ],
+        "valid": false,
+        "flags": [
+         "not-converged",
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "strain-beyond-model-range"
+        ],
+        "frames": 2957
+       }
+      ]
+     },
+     "seconds": 246.683
+    },
+    "phase4": {
+     "tissueThicknessMm": 13.5,
+     "flat9mm": {
+      "cellMm": 1.8,
+      "rows": [
+       {
+        "depthMm": 1.88,
+        "forceN": 0.5,
+        "meanPressureKPa": 11.83,
+        "peakPressureKPa": 14.36,
+        "contactAreaMm2": 42.2,
+        "peakStrain": 0.277,
+        "strainAt2_5_10mm": [
+         0.114,
+         0.249,
+         0.106
+        ],
+        "valid": true,
+        "flags": [],
+        "frames": 580
+       },
+       {
+        "depthMm": 2.81,
+        "forceN": 1.001,
+        "meanPressureKPa": 33.99,
+        "peakPressureKPa": 20.98,
+        "contactAreaMm2": 29.5,
+        "peakStrain": 0.367,
+        "strainAt2_5_10mm": [
+         0.16,
+         0.332,
+         0.184
+        ],
+        "valid": true,
+        "flags": [],
+        "frames": 1026
+       },
+       {
+        "depthMm": 4.02,
+        "forceN": 2.005,
+        "meanPressureKPa": 93.98,
+        "peakPressureKPa": 40.38,
+        "contactAreaMm2": 21.3,
+        "peakStrain": 0.467,
+        "strainAt2_5_10mm": [
+         0.208,
+         0.423,
+         0.293
+        ],
+        "valid": false,
+        "flags": [
+         "not-converged",
+         "strain-beyond-model-range",
+         "pressure-beyond-validated-range"
+        ],
+        "frames": 1201
+       },
+       {
+        "depthMm": 5.48,
+        "forceN": 3.98,
+        "meanPressureKPa": 143.05,
+        "peakPressureKPa": 5.01,
+        "contactAreaMm2": 27.8,
+        "peakStrain": 0.586,
+        "strainAt2_5_10mm": [
+         0.262,
+         0.514,
+         0.42
+        ],
+        "valid": false,
+        "flags": [
+         "not-converged",
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "strain-beyond-model-range",
+         "pressure-beyond-validated-range"
+        ],
+        "frames": 2137
+       }
+      ],
+      "slopeNPerMmFromPreload": 0.703
+     },
+     "sphere5mm": {
+      "cellMm": 2,
+      "rows": [
+       {
+        "depthMm": 4.62,
+        "forceN": 0.993,
+        "meanPressureKPa": 31.2,
+        "peakPressureKPa": 27.43,
+        "contactAreaMm2": 31.8,
+        "peakStrain": 0.491,
+        "strainAt2_5_10mm": [
+         0.462,
+         0.461,
+         0.276
+        ],
+        "valid": false,
+        "flags": [
+         "strain-beyond-model-range"
+        ],
+        "frames": 1615
+       },
+       {
+        "depthMm": 6.13,
+        "forceN": 2.005,
+        "meanPressureKPa": 82.67,
+        "peakPressureKPa": 25.52,
+        "contactAreaMm2": 24.3,
+        "peakStrain": 0.564,
+        "strainAt2_5_10mm": [
+         0.533,
+         0.544,
+         0.407
+        ],
+        "valid": false,
+        "flags": [
+         "not-converged",
+         "strain-beyond-model-range",
+         "pressure-beyond-validated-range"
+        ],
+        "frames": 1306
+       },
+       {
+        "depthMm": 6.72,
+        "forceN": 2.559,
+        "meanPressureKPa": 139.12,
+        "peakPressureKPa": 29.36,
+        "contactAreaMm2": 18.4,
+        "peakStrain": 0.595,
+        "strainAt2_5_10mm": [
+         0.564,
+         0.575,
+         0.456
+        ],
+        "valid": false,
+        "flags": [
+         "not-converged",
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "strain-beyond-model-range",
+         "pressure-beyond-validated-range"
+        ],
+        "frames": 3040
+       }
+      ]
+     },
+     "seconds": 144.297
+    }
+   },
+   "painProximalThird": {
+    "site": [
+     0.26421424746513367,
+     0.9644516706466675,
+     0.14539162814617157
+    ],
+    "normal": [
+     -0.09812098741531372,
+     0.14868535101413727,
+     0.984004557132721
+    ],
+    "phase3": {
+     "tissueThicknessMm": 12.15,
+     "flat9mm": {
+      "cellMm": 1.8,
+      "rows": [
+       {
+        "depthMm": 3.31,
+        "forceN": 0.496,
+        "meanPressureKPa": 11.19,
+        "peakPressureKPa": 9.94,
+        "contactAreaMm2": 44.3,
+        "peakStrain": 0.395,
+        "strainAt2_5_10mm": [
+         0.218,
+         0.393,
+         0.202
+        ],
+        "valid": true,
+        "flags": [],
+        "frames": 435
+       },
+       {
+        "depthMm": 4.57,
+        "forceN": 0.999,
+        "meanPressureKPa": 22.55,
+        "peakPressureKPa": 18.06,
+        "contactAreaMm2": 44.3,
+        "peakStrain": 0.504,
+        "strainAt2_5_10mm": [
+         0.295,
+         0.504,
+         0.349
+        ],
+        "valid": false,
+        "flags": [
+         "strain-beyond-model-range"
+        ],
+        "frames": 606
+       },
+       {
+        "depthMm": 5.48,
+        "forceN": 1.584,
+        "meanPressureKPa": 40.74,
+        "peakPressureKPa": 30.26,
+        "contactAreaMm2": 38.9,
+        "peakStrain": 0.586,
+        "strainAt2_5_10mm": [
+         0.365,
+         0.581,
+         0.429
+        ],
+        "valid": false,
+        "flags": [
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "strain-beyond-model-range"
+        ],
+        "frames": 1553
+       },
+       {
+        "depthMm": 5.32,
+        "forceN": 1.487,
+        "meanPressureKPa": 39.74,
+        "peakPressureKPa": 22.3,
+        "contactAreaMm2": 37.4,
+        "peakStrain": 0.576,
+        "strainAt2_5_10mm": [
+         0.36,
+         0.569,
+         0.404
+        ],
+        "valid": false,
+        "flags": [
+         "not-converged",
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "strain-beyond-model-range"
+        ],
+        "frames": 1961
+       }
+      ],
+      "slopeNPerMmFromPreload": 0.399
+     },
+     "sphere5mm": {
+      "cellMm": 2,
+      "rows": [
+       {
+        "depthMm": 4.96,
+        "forceN": 0.429,
+        "meanPressureKPa": 21.61,
+        "peakPressureKPa": 9.98,
+        "contactAreaMm2": 19.8,
+        "peakStrain": 0.579,
+        "strainAt2_5_10mm": [
+         0.528,
+         0.461,
+         0.289
+        ],
+        "valid": false,
+        "flags": [
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "strain-beyond-model-range"
+        ],
+        "frames": 2295
+       },
+       {
+        "depthMm": 4.96,
+        "forceN": 0.429,
+        "meanPressureKPa": 21.61,
+        "peakPressureKPa": 9.98,
+        "contactAreaMm2": 19.8,
+        "peakStrain": 0.579,
+        "strainAt2_5_10mm": [
+         0.528,
+         0.461,
+         0.289
+        ],
+        "valid": false,
+        "flags": [
+         "not-converged",
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "strain-beyond-model-range"
+        ],
+        "frames": 2595
+       },
+       {
+        "depthMm": 4.96,
+        "forceN": 0.429,
+        "meanPressureKPa": 21.61,
+        "peakPressureKPa": 9.98,
+        "contactAreaMm2": 19.8,
+        "peakStrain": 0.579,
+        "strainAt2_5_10mm": [
+         0.528,
+         0.461,
+         0.289
+        ],
+        "valid": false,
+        "flags": [
+         "not-converged",
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "strain-beyond-model-range"
+        ],
+        "frames": 2595
+       }
+      ]
+     },
+     "seconds": 136.815
+    },
+    "phase3Render0.17N": {
+     "depthMm": 3.41,
+     "forceN": 0.17,
+     "flags": [
+      "not-converged",
+      "strain-beyond-model-range"
+     ]
+    },
+    "phase4": {
+     "tissueThicknessMm": 12.15,
+     "flat9mm": {
+      "cellMm": 1.8,
+      "rows": [
+       {
+        "depthMm": 2.39,
+        "forceN": 0.5,
+        "meanPressureKPa": 22.04,
+        "peakPressureKPa": 13.89,
+        "contactAreaMm2": 22.7,
+        "peakStrain": 0.339,
+        "strainAt2_5_10mm": [
+         0.165,
+         0.322,
+         0.129
+        ],
+        "valid": true,
+        "flags": [],
+        "frames": 483
+       },
+       {
+        "depthMm": 3.41,
+        "forceN": 0.996,
+        "meanPressureKPa": 50.67,
+        "peakPressureKPa": 27.43,
+        "contactAreaMm2": 19.7,
+        "peakStrain": 0.435,
+        "strainAt2_5_10mm": [
+         0.218,
+         0.426,
+         0.221
+        ],
+        "valid": false,
+        "flags": [
+         "strain-beyond-model-range",
+         "pressure-beyond-validated-range"
+        ],
+        "frames": 347
+       },
+       {
+        "depthMm": 4.72,
+        "forceN": 1.99,
+        "meanPressureKPa": 108.39,
+        "peakPressureKPa": 0,
+        "contactAreaMm2": 18.4,
+        "peakStrain": 0.542,
+        "strainAt2_5_10mm": [
+         0.275,
+         0.541,
+         0.368
+        ],
+        "valid": false,
+        "flags": [
+         "strain-beyond-model-range",
+         "pressure-beyond-validated-range"
+        ],
+        "frames": 615
+       },
+       {
+        "depthMm": 5.23,
+        "forceN": 2.572,
+        "meanPressureKPa": 101.69,
+        "peakPressureKPa": 37.32,
+        "contactAreaMm2": 25.3,
+        "peakStrain": 0.6,
+        "strainAt2_5_10mm": [
+         0.293,
+         0.591,
+         0.38
+        ],
+        "valid": false,
+        "flags": [
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "strain-beyond-model-range",
+         "pressure-beyond-validated-range"
+        ],
+        "frames": 1232
+       }
+      ],
+      "slopeNPerMmFromPreload": 0.639
+     },
+     "sphere5mm": {
+      "cellMm": 2,
+      "rows": [
+       {
+        "depthMm": 5.23,
+        "forceN": 0.958,
+        "meanPressureKPa": 43.68,
+        "peakPressureKPa": 23.65,
+        "contactAreaMm2": 21.9,
+        "peakStrain": 0.593,
+        "strainAt2_5_10mm": [
+         0.543,
+         0.501,
+         0.344
+        ],
+        "valid": false,
+        "flags": [
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "strain-beyond-model-range"
+        ],
+        "frames": 2108
+       },
+       {
+        "depthMm": 5.23,
+        "forceN": 0.958,
+        "meanPressureKPa": 43.68,
+        "peakPressureKPa": 23.65,
+        "contactAreaMm2": 21.9,
+        "peakStrain": 0.593,
+        "strainAt2_5_10mm": [
+         0.543,
+         0.501,
+         0.344
+        ],
+        "valid": false,
+        "flags": [
+         "not-converged",
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "strain-beyond-model-range"
+        ],
+        "frames": 2298
+       },
+       {
+        "depthMm": 5.23,
+        "forceN": 0.958,
+        "meanPressureKPa": 43.68,
+        "peakPressureKPa": 23.65,
+        "contactAreaMm2": 21.9,
+        "peakStrain": 0.593,
+        "strainAt2_5_10mm": [
+         0.543,
+         0.501,
+         0.344
+        ],
+        "valid": false,
+        "flags": [
+         "not-converged",
+         "force-not-reached:tissue-crushed-or-bottomed-out",
+         "strain-beyond-model-range"
+        ],
+        "frames": 2298
+       }
+      ]
+     },
+     "seconds": 114.012
+    },
+    "phase4Render0.17N": {
+     "depthMm": 2.53,
+     "forceN": 0.17,
+     "flags": [
+      "not-converged"
+     ]
+    },
+    "phase4Render2N": {
+     "depthMm": 5.23,
+     "forceN": 0.958,
+     "flags": [
+      "force-not-reached:tissue-crushed-or-bottomed-out",
+      "strain-beyond-model-range"
+     ]
+    }
+   },
+   "zhengSite": {
+    "radiusCentre": [
+     0.2917009234428406,
+     0.9347677826881409,
+     0.11038282066583634
+    ]
+   },
+   "seconds": 687
+  },
+  "substeps": {
+   "cantilever": {
+    "what": "self-weight cantilever, ν = 0.49, nodal volume; deflection over the run with 256 (4 across) or 128 (8 across) substeps; Π = h²·μ̃·V·Σw‖∇N‖² (99th percentile over tetrahedra)",
+    "rows": [
+     {
+      "cellsAcross": 4,
+      "substeps": 2,
+      "stiffnessRatioP99": 21.75,
+      "deflectionOverConverged": 3.134
+     },
+     {
+      "cellsAcross": 4,
+      "substeps": 4,
+      "stiffnessRatioP99": 5.437,
+      "deflectionOverConverged": 1.85
+     },
+     {
+      "cellsAcross": 4,
+      "substeps": 8,
+      "stiffnessRatioP99": 1.359,
+      "deflectionOverConverged": 1.151
+     },
+     {
+      "cellsAcross": 4,
+      "substeps": 16,
+      "stiffnessRatioP99": 0.34,
+      "deflectionOverConverged": 1.013
+     },
+     {
+      "cellsAcross": 4,
+      "substeps": 32,
+      "stiffnessRatioP99": 0.085,
+      "deflectionOverConverged": 1
+     },
+     {
+      "cellsAcross": 8,
+      "substeps": 8,
+      "stiffnessRatioP99": 3.884,
+      "deflectionOverConverged": 1.661
+     },
+     {
+      "cellsAcross": 8,
+      "substeps": 16,
+      "stiffnessRatioP99": 0.971,
+      "deflectionOverConverged": 1.126
+     },
+     {
+      "cellsAcross": 8,
+      "substeps": 32,
+      "stiffnessRatioP99": 0.243,
+      "deflectionOverConverged": 1.015
+     }
+    ]
+   },
+   "wholeBodySupine": {
+    "what": "male whole-body cage 27 mm, pre-stress, gravity turned to supine without a support plane; steady skin displacement by substep count; stiffness ratios at 10 substeps",
+    "stiffnessRatioAt10Substeps": {
+     "p50": 0.039,
+     "p99": 0.791,
+     "max": 1.55,
+     "p99MusclesFullyActive": 13.411,
+     "substepsForP99Within0_5": 13,
+     "substepsForP99Within0_5MusclesActive": 52
+    },
+    "rows": [
+     {
+      "substeps": 2,
+      "frames": 407,
+      "skinMeanMm": 3.72,
+      "skinMaxMm": 28.65,
+      "maxSpeed": 0.0001982962500470965
+     },
+     {
+      "substeps": 4,
+      "frames": 582,
+      "skinMeanMm": 3.28,
+      "skinMaxMm": 23.86,
+      "maxSpeed": 0.00019950772506159589
+     },
+     {
+      "substeps": 8,
+      "frames": 716,
+      "skinMeanMm": 3.27,
+      "skinMaxMm": 23.38,
+      "maxSpeed": 0.00019924252517427617
+     },
+     {
+      "substeps": 10,
+      "frames": 739,
+      "skinMeanMm": 3.27,
+      "skinMaxMm": 23.35,
+      "maxSpeed": 0.00019930508189740993
+     },
+     {
+      "substeps": 20,
+      "frames": 772,
+      "skinMeanMm": 3.28,
+      "skinMaxMm": 23.3,
+      "maxSpeed": 0.00019980550089812612
+     }
+    ]
+   },
+   "seconds": 298
   }
  }
 }

@@ -41,6 +41,10 @@
      "zh": "表中是绝对误差，正负号没有给出。即使在该文自己的解剖几何上，本项目第二阶段的材料组合在 P2 也差 35%。",
      "en": "The table gives absolute errors without sign. Even on the paper's own anatomy, the material set of phase 2 of this project misses P2 by 35 %."
     }
+   },
+   "phase4": {
+    "zh": "第三阶段把前臂上的差距（0.55–0.64 倍）归于受试者与本模型的几何；第四阶段发现细笼子里几乎没有皮肤（皮肤按顶点分到四面体，前臂皮肤网格太粗），补上以后为 0.66–0.83 倍（validation-report.json 的 ours.forearm）。",
+    "en": "Phase 3 put the forearm gap (0.55–0.64) down to the geometry of the subject against this model; phase 4 found the fine cages had almost no skin (skin shared out by vertex, the forearm skin mesh too coarse), and with it restored the ratio is 0.66–0.83 (ours.forearm in validation-report.json)."
    }
   },
   {
@@ -79,6 +83,10 @@
      "zh": "在该文的几何上，本项目的材料组合在 P3 差 5.7%；本模型在自己的前臂上差 36%，所以 P3 的差距来自几何（受试者与本模型的层厚、到骨的距离、曲率），不是材料。",
      "en": "On the paper's geometry the material set of this project misses P3 by 5.7 %; this model misses it by 36 % on its own forearm, so the gap at P3 comes from geometry (layer thicknesses, depth to bone and curvature of the subject against this model), not from the material."
     }
+   },
+   "phase4": {
+    "zh": "第三阶段把前臂上的差距（0.55–0.64 倍）归于受试者与本模型的几何；第四阶段发现细笼子里几乎没有皮肤（皮肤按顶点分到四面体，前臂皮肤网格太粗），补上以后为 0.66–0.83 倍（validation-report.json 的 ours.forearm）。",
+    "en": "Phase 3 put the forearm gap (0.55–0.64) down to the geometry of the subject against this model; phase 4 found the fine cages had almost no skin (skin shared out by vertex, the forearm skin mesh too coarse), and with it restored the ratio is 0.66–0.83 (ours.forearm in validation-report.json)."
    }
   },
   {
@@ -180,6 +188,71 @@
    "subjects": 10,
    "source": "remus2024",
    "where": "Table 4 (R3); Table 6: c = 7 kPa, m = 12"
+  },
+  {
+   "id": "forearm_radius_small_flat",
+   "site": {
+    "zh": "前臂，盖在左桡骨上、肘关节以远约 10 cm 的软组织（皮肤、脂肪和其下的肌肉），探头垂直于骨面",
+    "en": "forearm, the soft tissue over the left radius about 10 cm distal to the elbow joint (skin, fat and the muscle beneath), probe perpendicular to the bone"
+   },
+   "indenter": {
+    "kind": "flat",
+    "diameterMm": 9.0
+   },
+   "rateMmPerS": [
+    0.75,
+    7.5
+   ],
+   "preloadN": 0.5,
+   "subjects": 3,
+   "effectiveYoungKPa": {
+    "relaxed": 14.0,
+    "relaxedSd": 5.0,
+    "contracted": 58.8
+   },
+   "exampleSubject": {
+    "thicknessMm": 16.2,
+    "kOfHMm": 15.6,
+    "slopeNPerMm": 0.35,
+    "effectiveYoungKPa": 22.6,
+    "fit": "load = 0.3534·w − 0.0573 (N, w in mm from the 0.5 N preload state, w up to about 3.5 mm)"
+   },
+   "slopeRelaxedNPerMm": {
+    "value": 0.218,
+    "range": [
+     0.14,
+     0.296
+    ],
+    "derivation": "E·K(h) with the paper's K(h) = 15.6 mm (h = 16.2 mm): 14.0 kPa × 15.6 mm; range from ±1 SD (9.0–19.0 kPa)",
+    "assumption": true
+   },
+   "source": "zheng1999",
+   "where": "methods (indentation apparatus; experiments on indentation rate and muscular contraction; data reduction, Eq. 3) and results (Fig. 8 and the paragraph on Fig. 13)",
+   "caveat": {
+    "zh": "三名年轻男性；手持探头，速率只是大致控制。w 是超声测得的组织厚度变化（从 0.5 N 预载时算起），不是探头行程；该文按 ν = 0.45 和 Hayes 的系数把斜率换成有效模量。斜率的平均值是本项目用该文给的 K(h) 换算的，只对与示例相近的厚度（约 16 mm）成立。",
+    "en": "Three young men; hand-held probe, rate only roughly controlled. w is the change of tissue thickness measured by ultrasound (from the 0.5 N preload state), not probe travel; the paper turns slope into an effective modulus with ν = 0.45 and Hayes' factor. The mean slope is this project's conversion with the paper's K(h) and holds only for thicknesses near the example (about 16 mm)."
+   }
+  },
+  {
+   "id": "lower_limb_intact_10mm",
+   "site": {
+    "zh": "下肢截肢者健侧肢体外侧（大腿或小腿，与残肢的测量部位对应）",
+    "en": "lateral surface of the intact limb of lower-limb amputees (thigh or calf, the site matching the residual limb)"
+   },
+   "indenter": {
+    "kind": "unstated",
+    "radiusMm": 10
+   },
+   "depthMm": 5,
+   "stiffnessNPerMm": 0.49,
+   "stiffnessSdNPerMm": 0.24,
+   "subjects": 13,
+   "source": "hayes2025",
+   "where": "section 2.2 (device) and section 3.2 (results)",
+   "caveat": {
+    "zh": "压头形状没有写明，手动丝杠加载、没有速率；受试者是平均 65 岁的男性截肢者；刚度是线性拟合 F = K·d。只作量级参考，本项目没有在大腿上算。",
+    "en": "Indenter shape not stated, loaded by a hand-turned lead screw with no rate given; subjects are male amputees aged 65 on average; the stiffness is a linear fit F = K·d. An order-of-magnitude reference only; this project did not compute the thigh."
+   }
   }
  ],
  "notFound": {
@@ -216,6 +289,23 @@
    "phase3": {
     "zh": "第三阶段没有在女性身体上重跑（女性身体正在重建，按要求不读）。原因的分析用不读人体数据的体模（tools/softbody/phantom.ts），结果在 validation-report.json 的 ours.breastPhantom。",
     "en": "Not rerun on the female body in phase 3 (the female body is being rebuilt and was not to be read). The causes were analysed on a phantom that reads no body data (tools/softbody/phantom.ts); results under ours.breastPhantom of validation-report.json."
+   },
+   "phase4": {
+    "zh": "打开 proneSupine2016 全文确认：患者的乳房体积没有在任何地方给出；该文自己的数值体模（胸壁是圆柱，边界固定）\"与中等大小的乳房相当\"，包住的体积 1.14 L，俯卧与仰卧之间的初始 TRE（即两态之间的位移）为 19.3 ± 16.2 mm；临床各例刚性对齐后的平均标志点距离为 38.8–133.1 mm。乳房沿胸壁的滑动在该文里是对胸壁结点的切向运动约束（只许沿胸壁表面移动），没有摩擦系数或界面刚度。体模的第四阶段结果见 validation-report.json 的 ours.breastPhantom（不读女性身体）。",
+    "en": "Checked in the full text of proneSupine2016: patient breast volumes are not given anywhere; the paper's own numerical phantom (a cylinder for the chest wall, fixed boundaries) is \"comparable to a medium sized breast\" with an enclosed volume of 1.14 L, and its initial TRE between prone and supine (the displacement between the two states) is 19.3 ± 16.2 mm; the mean landmark distance of the clinical cases after rigid alignment is 38.8–133.1 mm. Sliding along the chest wall is there a tangential motion constraint on chest-wall nodes (movement along the chest surface only), with no friction coefficient or interface stiffness. Phase-4 phantom results under ours.breastPhantom of validation-report.json (the female body was not read).",
+    "ownPhantom": {
+     "volumeL": 1.14,
+     "initialTreMm": 19.3,
+     "initialTreSdMm": 16.2
+    },
+    "clinicalMeanLandmarkDistanceRangeMm": [
+     38.8,
+     133.1
+    ],
+    "interface": {
+     "proneSupine2016": "tangential motion constraint on chest-wall nodes (slave nodes moved along the chest surface)",
+     "mira2018": "no-separation contact between breast and pectoral muscle, friction coefficient k = 0.1 (reported to hardly matter), the deep layer of the superficial fascia as a 0.1 mm shell on the interface whose modulus governs the sliding; fascia modulus searched over 80–250 kPa in 40 kPa steps; fitted breast tissue 0.2–0.3 kPa and skin 4 kPa (skin with the superficial layer of the superficial fascia as a 2 mm shell)"
+    }
    }
   }
  ],
@@ -317,6 +407,28 @@
    "note": {
     "zh": "数据本身没有使用。",
     "en": "The data themselves were not used."
+   }
+  },
+  "zheng1999": {
+   "citation": "Zheng YP, Mak AFT, Lue B. Objective assessment of limb tissue elasticity: development of a manual indentation procedure. J Rehabil Res Dev 1999;36(2):71–85.",
+   "url": "https://ira.lib.polyu.edu.hk/handle/10397/1977",
+   "licence": "all rights reserved (repository copy marked open access); numbers only, no text or figures committed",
+   "opened": "full text PDF from the repository (text layer): methods, data reduction, results on rate and muscular contraction, Fig. 8 caption and fit"
+  },
+  "hayes2025": {
+   "citation": "Hayes J, et al. Skin adaptation in lower limb amputees assessed through Raman spectroscopy and mechanical characterization. J R Soc Interface 2025;22:20240475. doi:10.1098/rsif.2024.0475",
+   "url": "https://europepmc.org/article/PMC/PMC11706637",
+   "licence": "CC BY 4.0",
+   "opened": "full text XML: sections 2.2 and 3.2, participants"
+  },
+  "mira2018": {
+   "citation": "Mîra A, Carton A-K, Muller S, Payan Y. A biomechanical breast model evaluated with respect to MRI data collected in three different positions. Clin Biomech 2018;60:191–199. arXiv:1811.10221",
+   "url": "https://arxiv.org/abs/1811.10221",
+   "licence": "arXiv non-exclusive distribution licence; numbers only",
+   "opened": "arXiv PDF (text layer): sections on the fascial system, contact and boundary conditions, Table 1, the reduced search intervals and the discussion of fitted moduli",
+   "note": {
+    "zh": "一名 59 岁、A 罩杯的志愿者。最佳参数组写在公式里，文本层读不出来，所以这里只用文中写出的数：筋膜模量的搜索区间 80–250 kPa（步长 40 kPa）、乳房 0.2–0.3 kPa、皮肤 4 kPa。",
+    "en": "One volunteer, 59 years, A cup. The best parameter set is typeset as a formula the text layer does not render, so only numbers written in the text are used: the fascia modulus search interval 80–250 kPa (40 kPa steps), breast 0.2–0.3 kPa, skin 4 kPa."
    }
   }
  },

@@ -174,6 +174,8 @@ export interface MixOptions {
   /** 皮肤刚度混入边界四面体的方式：'voigt' 按体积比例算术平均（面内受拉时的上界），'none' 不混入。 */
   /** How skin stiffness enters boundary tetrahedra: 'voigt' = arithmetic mean by volume share (the upper bound, right for in-plane tension), 'none' = not at all. */
   skin?: 'voigt' | 'none'
+  /** 'phase3' = 第三阶段的混合式 fill·((1 − fs)·E_m + fs·E_s)、质量不计皮肤，只为前后对照 / 'phase3' = the phase-3 blend fill·((1 − fs)·E_m + fs·E_s) with no skin mass, for before/after comparison only */
+  skinBlend?: 'phase4' | 'phase3'
   /** 用零重力参考形状（需要 rest0）而不是预应力 / use the zero-gravity reference (needs rest0) instead of the pre-stress */
   useRest0?: boolean
   /** false = 不要应变硬化（κ = 0）/ false = no strain stiffening (κ = 0) */
@@ -235,30 +237,39 @@ export function solverInput(soft: LoadedSoft, mix: MixOptions = {}): SolverInput
     const ym = m.young * (mix.scale?.[m.id] ?? 1), ys = fs ? skinMat!.young * (mix.scale?.[skinMat!.id] ?? 1) : 0
     // 刚度的折减系数有一个比质量高的下限（"幽灵刚度"）：几乎全在体外的四面体上的结点又轻又软，快速运动时会甩出去十几厘米
     // stiffness gets a higher floor than mass ("ghost stiffness"): nodes of tetrahedra almost wholly outside the body are light and soft and would be flung out by many centimetres in fast motion
-    const young = Math.max(STIFF_FILL, fill) * ((1 - fs) * ym + fs * ys)
+    // 体积比例（Voigt）：fs 是皮肤占整个四面体的比例，皮肤层在体内，所以 fs ≤ fill，其余组织占 fill − fs。
+    // 第三阶段以前写成 fill·((1 − fs)·E_m + fs·E_s)：皮肤又被乘了一次 fill，表面四面体（fill ≈ 0.2–0.9）里皮肤的 E·V 少了这么多倍。
+    // Volume shares (Voigt): fs is the skin's share of the whole tetrahedron and the skin layer lies inside the body, so
+    // fs ≤ fill and the other tissue takes fill − fs. Up to phase 3 this read fill·((1 − fs)·E_m + fs·E_s): the skin was
+    // multiplied by fill a second time, and its E·V in surface tetrahedra (fill ≈ 0.2–0.9) was short by that factor.
+    // fill 只来自 9 个采样点，比按面积算的皮肤比例粗；皮肤比例更大时以它为准 / fill comes from nine samples only, coarser than the area-based skin share; where the skin share is larger it wins
+    const legacy = mix.skinBlend === 'phase3'
+    const sk = legacy ? Math.max(STIFF_FILL, fill) * Math.min(1, fs) : Math.min(1, fs), ff = legacy ? Math.max(STIFF_FILL, fill) : Math.max(STIFF_FILL, fill, sk)
+    const young = (ff - sk) * ym + sk * ys
     const l = lame(young, m.poisson)
     const og = ogdenOf.get(soft.tetMaterial[e]!)
     if (og !== undefined) {
-      // Ogden 材料：偏量部分由 Ogden 项给出（按体内比例和非皮肤比例加权），μ 只留混入的皮肤；λ 仍按整个混合物
-      // an Ogden material: the deviatoric part comes from the Ogden terms (weighted by fill and the non-skin share), μ keeps only the blended skin; λ still from the whole mixture
+      // Ogden 材料：偏量部分由 Ogden 项给出（按非皮肤的体内比例加权），μ 只留混入的皮肤；λ 仍按整个混合物
+      // an Ogden material: the deviatoric part comes from the Ogden terms (weighted by the non-skin share inside), μ keeps only the blended skin; λ still from the whole mixture
       ogMat[e] = og
-      ogScale[e] = Math.max(STIFF_FILL, fill) * (1 - fs) * (mix.scale?.[m.id] ?? 1)
-      l.mu = lame(Math.max(STIFF_FILL, fill) * fs * ys, m.poisson).mu
+      ogScale[e] = (ff - sk) * (mix.scale?.[m.id] ?? 1)
+      l.mu = lame(sk * ys, m.poisson).mu
     }
     // 混合物的四次项和 Maxwell 支路同样按体积比例加权（Voigt）：κ 按 μ 加权，τ 按支路模量加权
     // the quartic term and the Maxwell branch of the mixture are volume-weighted likewise (Voigt): κ weighted by μ, τ by branch modulus
-    const wm = og !== undefined ? 0 : (1 - fs) * ym, ws = fs * ys
-    if (wm + ws > 0) stiffening[e] = (wm * kap(m) + ws * (fs ? kap(skinMat!) : 0)) / (wm + ws)
+    const wm = og !== undefined ? 0 : (ff - sk) * ym, ws = sk * ys
+    if (wm + ws > 0) stiffening[e] = (wm * kap(m) + ws * (sk ? kap(skinMat!) : 0)) / (wm + ws)
     if (mix.viscous !== false) {
       const gm = wm * (m.branchRatio ?? 0), gs = ws * (skinMat?.branchRatio ?? 0)
       if (gm + gs > 0) {
-        branchModulus[e] = (fill * (gm + gs)) / (2 * (1 + m.poisson))
+        branchModulus[e] = (gm + gs) / (2 * (1 + m.poisson))
         branchTau[e] = (gm * (m.branchTau ?? 1) + gs * (skinMat?.branchTau ?? 1)) / (gm + gs)
       }
     }
     mu[e] = l.mu
     lambda[e] = l.lambda
-    density[e] = fill * m.density
+    // 皮肤比例大于 fill 时质量也按它算（与刚度一致）/ where the skin share exceeds fill, mass follows it too (as stiffness does)
+    density[e] = legacy ? fill * m.density : (Math.max(fill, sk) - sk) * m.density + sk * (skinMat?.density ?? m.density)
     const mi = soft.tetMuscle[e]!
     if (mi !== NO_MUSCLE) {
       muscle[e] = mi
@@ -310,6 +321,13 @@ export class SoftBody {
   constructor(readonly soft: LoadedSoft, opts: SolverOptions = {}, readonly mix: MixOptions = {}) {
     const useRest0 = !!mix.useRest0 && !!soft.rest0
     this.solver = new SoftSolver(solverInput(soft, mix), { gravity: soft.data.gravity, prestressGravity: useRest0 ? null : soft.data.gravity, ...opts })
+    // 没有指定子步数时按刚度比定（第四阶段）：99 % 分位的刚度比不超过 0.5、且不少于 8。全身 27 mm 笼子上仰卧的稳态位移
+    // 2 个子步时大 14 %，4 个以上与 20 个相差不到 0.3 %；刚度比偏大时（体模混入皮肤、16 个子步）系统还会停不下来。
+    // Without a given substep count it follows the stiffness ratio (phase 4): the 99th percentile within 0.5, and at
+    // least 8. On the whole-body 27 mm cage the steady supine displacement is 14 % too large with 2 substeps and within
+    // 0.3 % of 20 substeps from 4 on; with too large a ratio (the phantom with skin blended in, 16 substeps) the system
+    // does not come to rest at all.
+    if (opts.substeps === undefined) this.solver.substeps = Math.max(8, this.solver.substepsFor(1 / 60))
     const N = soft.data.nodeCount
     this.displacement = new Float32Array(N * 3)
     this.rot = new Float32Array(N * 9)

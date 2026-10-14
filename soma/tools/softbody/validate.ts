@@ -21,8 +21,8 @@ import { type RenderItem, render, sheet } from '../rig/render.ts'
 import { couple, press, surfaceSamples } from '../../src/softbody/press.ts'
 import { OUT, ROOT, build, loadBody, readMaterials, withRest0 } from './build.ts'
 import { bodyInside } from './cage.ts'
-import { blockDomain, cantilever, framesToWithin, punch } from './numerics.ts'
-import { type PhantomCase, phantom } from './phantom.ts'
+import { block, blockDomain, cantilever, framesToWithin, punch } from './numerics.ts'
+import { type PhantomCase, buildPhantom, phantom, settlePosture } from './phantom.ts'
 import { type Site, buildSite, linkToCoarse } from './site.ts'
 
 const DIR = join(OUT, 'validation')
@@ -66,7 +66,12 @@ async function load(bodyId: string, cell: number, region?: string, rest0 = false
   return { body, rig, soft, skin, skinPoints: soft.embedded.get(soft.data.skin.part)!, normals: computeNormals(skin), area, stats: r.stats, ...(info ? { rest0: info } : {}) }
 }
 
-const newBody = (L: Loaded, substeps = 10, mix: MixOptions = {}, opts: SolverOptions = {}): SoftBody => new SoftBody(L.soft, { substeps, damping: readMaterials().damping.rate, ...opts }, mix)
+// 不给子步数时用 SoftBody 的规则（刚度比，第四阶段；男性全身 27 mm 笼子上是 13）。第三阶段固定 10 个：皮肤补上以后，
+// 髋屈 40° 一帧内弹回的那一步在 10 个子步时发散（速度 56 m/s，然后 NaN），13 个时不发散。
+// Without a substep count, the rule of SoftBody (stiffness ratio, phase 4; 13 on the male whole-body 27 mm cage). Phase 3
+// fixed 10: with the skin restored, the one-frame snap back from 40° of hip flexion diverges at 10 substeps (56 m/s,
+// then NaN) and not at 13.
+const newBody = (L: Loaded, substeps?: number, mix: MixOptions = {}, opts: SolverOptions = {}): SoftBody => new SoftBody(L.soft, { ...(substeps ? { substeps } : {}), damping: readMaterials().damping.rate, ...opts }, mix)
 /** 第一阶段的做法，留作对照：逐单元体积约束、硬锚点、没有硬化和粘弹性 / phase 1, kept for comparison: per-tetrahedron volume constraints, hard anchors, no stiffening, no viscoelasticity */
 const PHASE1: [MixOptions, SolverOptions] = [{ anchors: 'hard', stiffening: false, viscous: false }, { volume: 'tet', damping: 6 }]
 
@@ -264,7 +269,7 @@ async function wholeBody(): Promise<Record<string, unknown>> {
     b.solver.prestressGravity = null
     return b
   }
-  const lag0 = swing(noG(newBody(L))), lagP1 = swing(noG(newBody(L, 10, PHASE1[0], PHASE1[1]))), lagNoBranch = swing(noG(newBody(L, 10, { viscous: false }))), lag1 = swing(sb)
+  const lag0 = swing(noG(newBody(L))), lagP1 = swing(noG(newBody(L, 10, PHASE1[0], PHASE1[1]))), lagNoBranch = swing(noG(newBody(L, undefined, { viscous: false }))), lag1 = swing(sb)
   const row = (l: { skin: number[]; node: number[]; node99: number[] }): unknown => ({ skinPeak: Math.max(...l.skin), skinAt0_5s: l.skin[29], skinAt1s: l.skin[59], skinAt2s: l.skin[119], skinAt4s: l.skin[239], nodePeak: Math.max(...l.node), node99thPercentilePeak: Math.max(...l.node99), nodeAt4s: l.node[239] })
   out.jiggle = {
     motion: 'hip_L flexion 40° in 0.15 s, then held; corrective displacement in mm: of skin vertices (largest), of cage nodes (largest and 99th percentile)',
@@ -769,7 +774,7 @@ async function contact(): Promise<Record<string, unknown>> {
     views.push(render([flat], view), render([dent, ball], view), render([dent, ball], side))
     out[`${name}Render`] = { depthMm: r.depthMm, forceN: r.forceN, peakPressureKPa: r.peakPressureKPa }
   }
-  const RENDERS = join(ROOT, 'data', 'raw', 'pipeline-scratch', 'softbody3')
+  const RENDERS = join(ROOT, 'data', 'raw', 'pipeline-scratch', 'softbody4')
   mkdirSync(RENDERS, { recursive: true })
   sheet(views.slice(0, 3), 3).save(join(RENDERS, 'forearm-sphere-5N-before-after.png'))
   sheet(views.slice(3, 6), 3).save(join(RENDERS, 'male-chest-sphere-5N-before-after.png'))
@@ -831,25 +836,260 @@ async function timing(): Promise<Record<string, unknown>> {
   return { cpu: 'Bun, one thread, machine shared with other jobs', rows }
 }
 
-// ── 第三阶段：乳房体模（不读女性数据）/ phase 3: the breast phantom (no female data read) ──
+// ── 第四阶段：小压头（疼痛工具的球、zheng1999 的 9 mm 平头），第三阶段对第四阶段的皮肤表示 / phase 4: small probes (the pain tool's sphere, the 9 mm flat punch of zheng1999), phase-3 against phase-4 skin ──
+/** 射线与皮肤的第一个交点及该处的外法线 / the first hit of a ray on the skin, with the outward normal there */
+function skinHit(L: Loaded, o: [number, number, number], d: [number, number, number]): { site: [number, number, number]; normal: [number, number, number] } | null {
+  const p = L.skin.positions, idx = L.skin.indices
+  let best = Infinity, hit: { site: [number, number, number]; normal: [number, number, number] } | null = null
+  for (let t = 0; t < idx.length; t += 3) {
+    const a = idx[t]! * 3, b = idx[t + 1]! * 3, c = idx[t + 2]! * 3
+    const e1 = [p[b]! - p[a]!, p[b + 1]! - p[a + 1]!, p[b + 2]! - p[a + 2]!], e2 = [p[c]! - p[a]!, p[c + 1]! - p[a + 1]!, p[c + 2]! - p[a + 2]!]
+    const q = [d[1] * e2[2]! - d[2] * e2[1]!, d[2] * e2[0]! - d[0] * e2[2]!, d[0] * e2[1]! - d[1] * e2[0]!]
+    const det = e1[0]! * q[0]! + e1[1]! * q[1]! + e1[2]! * q[2]!
+    if (Math.abs(det) < 1e-14) continue
+    const sv = [o[0] - p[a]!, o[1] - p[a + 1]!, o[2] - p[a + 2]!]
+    const u = (sv[0]! * q[0]! + sv[1]! * q[1]! + sv[2]! * q[2]!) / det
+    if (u < 0 || u > 1) continue
+    const r = [sv[1]! * e1[2]! - sv[2]! * e1[1]!, sv[2]! * e1[0]! - sv[0]! * e1[2]!, sv[0]! * e1[1]! - sv[1]! * e1[0]!]
+    const v = (d[0] * r[0]! + d[1] * r[1]! + d[2] * r[2]!) / det
+    if (v < 0 || u + v > 1) continue
+    const dist = (e2[0]! * r[0]! + e2[1]! * r[1]! + e2[2]! * r[2]!) / det
+    if (dist <= 0 || dist >= best) continue
+    best = dist
+    const n = [e1[1]! * e2[2]! - e1[2]! * e2[1]!, e1[2]! * e2[0]! - e1[0]! * e2[2]!, e1[0]! * e2[1]! - e1[1]! * e2[0]!]
+    const l = Math.hypot(n[0]!, n[1]!, n[2]!)
+    hit = { site: [o[0] + d[0] * dist, o[1] + d[1] * dist, o[2] + d[2] * dist], normal: [n[0]! / l, n[1]! / l, n[2]! / l] }
+  }
+  return hit
+}
+
+/**
+ * zheng1999 的部位：盖在左桡骨上、肘关节以远约 10 cm 的软组织，探头垂直于骨面。这里取桡骨在该高度的截面中心，从前臂轴线
+ * 指向它的方向（垂直于轴线）向外打到皮肤。
+ * The site of zheng1999: the soft tissue over the left radius about 10 cm distal to the elbow joint, the probe
+ * perpendicular to the bone. Here: the centre of the radius's cross-section at that level, and the direction from the
+ * forearm axis to it (perpendicular to the axis), cast outward to the skin.
+ */
+function radiusSite(L: Loaded): { site: [number, number, number]; normal: [number, number, number]; radiusCentre: [number, number, number] } {
+  const c = (id: string): [number, number, number] => L.rig.joints.find((j) => j.id === id)!.center
+  const e = c('elbow_L'), w = c('wrist_L')
+  const ax = [w[0] - e[0], w[1] - e[1], w[2] - e[2]], len = Math.hypot(ax[0]!, ax[1]!, ax[2]!)
+  const u = ax.map((x) => x / len) as [number, number, number]
+  const part = L.body.data.parts.find((p) => /^left radius$/i.test(p.name))
+  const bone = part ? L.body.meshes.get(part.id) : undefined
+  if (!bone) throw new Error('softbody: the male body has no part named "Left radius"')
+  const s = [0, 0, 0]
+  let n = 0
+  for (let i = 0; i < bone.positions.length; i += 3) {
+    const t = (bone.positions[i]! - e[0]) * u[0] + (bone.positions[i + 1]! - e[1]) * u[1] + (bone.positions[i + 2]! - e[2]) * u[2]
+    if (Math.abs(t - 0.1) > 0.01) continue
+    for (let k = 0; k < 3; k++) s[k] = s[k]! + bone.positions[i + k]!
+    n++
+  }
+  if (n < 3) throw new Error(`softbody: only ${n} vertices of the radius lie 10 cm from the elbow`)
+  const rc = s.map((x) => x / n) as [number, number, number]
+  const t = (rc[0] - e[0]) * u[0] + (rc[1] - e[1]) * u[1] + (rc[2] - e[2]) * u[2]
+  const off = [rc[0] - e[0] - u[0] * t, rc[1] - e[1] - u[1] * t, rc[2] - e[2] - u[2] * t], ol = Math.hypot(off[0]!, off[1]!, off[2]!)
+  const dir = off.map((x) => x / ol) as [number, number, number]
+  const h = skinHit(L, rc, dir)
+  if (!h) throw new Error('softbody: no skin found outward of the radius')
+  return { ...h, radiusCentre: rc }
+}
+
+async function smallProbe(): Promise<Record<string, unknown>> {
+  const out: Record<string, unknown> = {}
+  const L = await load('male', 0.027)
+  const { body, rig } = L
+  const rigBin = (await loadBody('male')).rigBin
+  const inBody = bodyInside(L.skin)
+  const fa = forearmSites(L).proximalThird!
+  const z = radiusSite(L)
+  const sites: Record<string, { site: [number, number, number]; normal: [number, number, number] }> = {
+    zhengRadius10cm: { site: z.site, normal: z.normal },
+    painProximalThird: { site: [L.skin.positions[fa * 3]!, L.skin.positions[fa * 3 + 1]!, L.skin.positions[fa * 3 + 2]!], normal: [L.normals[fa * 3]!, L.normals[fa * 3 + 1]!, L.normals[fa * 3 + 2]!] },
+  }
+  const variants = [['phase3', 'vertex', 'phase3'], ['phase4', 'area', 'phase4']] as const
+  const views: ReturnType<typeof render>[] = []
+  for (const [name, { site, normal }] of Object.entries(sites)) {
+    const res: Record<string, unknown> = { site, normal }
+    for (const [label, share, blend] of variants) {
+      const t0 = performance.now()
+      // zheng1999：9 mm 平头，先加 0.5 N 预载，再到 1、2、3.75 N（该文只用 0.5 N 到 5 N 的 75 % 之间的数据）
+      // zheng1999: 9 mm flat punch, a 0.5 N preload, then 1, 2 and 3.75 N (that paper used data between 0.5 N and 75 % of 5 N)
+      const SF = buildSite(body, rig, rigBin, site, normal, 0.0045, { cell: 0.0018, inBody, skinShare: share, mix: { skinBlend: blend } })
+      const flat = [0.5, 1, 2, 3.75].map((f) => pressRow(press(SF.domain, { kind: 'flat', radiusMm: 4.5 }, { forceN: f })) as { depthMm: number; forceN: number; flags: string[] })
+      const pre = flat[0]!, okRows = flat.filter((r) => !r.flags.includes('force-not-reached:tissue-crushed-or-bottomed-out'))
+      const last = okRows[okRows.length - 1]!
+      const slope = last !== pre && last.depthMm > pre.depthMm ? r3((last.forceN - pre.forceN) / (last.depthMm - pre.depthMm)) : null
+      // 疼痛工具：半径 5 mm 的球 / the pain tool: a 5 mm sphere
+      const SS = buildSite(body, rig, rigBin, site, normal, 0.005, { inBody, skinShare: share, mix: { skinBlend: blend } })
+      const sphere = [1, 2, 5].map((f) => pressRow(press(SS.domain, { kind: 'sphere', radiusMm: 5 }, { forceN: f })))
+      res[label] = { tissueThicknessMm: mm(SF.domain.thickness ?? 0), flat9mm: { cellMm: 1.8, rows: flat, slopeNPerMmFromPreload: slope }, sphere5mm: { cellMm: mm(SS.domain.cell), rows: sphere }, seconds: r3((performance.now() - t0) / 1000) }
+      console.log(name, label, JSON.stringify(res[label]))
+      if (name === 'painProximalThird') {
+        // 渲染：只画压入点周围细分过的皮肤（颜色 = 位移），斜看和侧看；同样 0.17 N（第三阶段压溃前的最大力），第四阶段另加它能到的最大力
+        // renders: only the subdivided skin round the site (colour = displacement), oblique and side-on; both at 0.17 N (the largest force of phase 3 before the crush), phase 4 also at the most it reaches
+        for (const req of label === 'phase3' ? [0.17] : [0.17, 2]) {
+          const r = press(SS.domain, { kind: 'sphere', radiusMm: 5 }, { forceN: req })
+          const n = SS.domain.inward, dep = r.depthMm * 1e-3 - 0.005
+          const centre: [number, number, number] = [site[0] + n[0] * dep, site[1] + n[1] * dep, site[2] + n[2] * dep]
+          const patch = dentPatch(SS, L.skin, 0.02, 0.0008)
+          const dent = patchItem(patch.rest, patch.pos, patch.indices, 0.004), ball = sphereItem(centre, 0.005, [150, 150, 160])
+          const view = { yaw: 35, pitch: 25, center: site, halfHeight: 0.02, width: 420, height: 420 }
+          // 侧看：视线垂直于压入方向 / side-on: looking across the pressing direction
+          const side = { yaw: (Math.atan2(n[0], n[2]) * 180) / Math.PI + 90, pitch: 0, center: site, halfHeight: 0.015, width: 420, height: 420 }
+          views.push(render([dent, ball], view), render([dent, ball], side))
+          res[`${label}Render${req}N`] = { depthMm: r.depthMm, forceN: r.forceN, flags: r.flags }
+        }
+      }
+    }
+    out[name] = res
+  }
+  out.zhengSite = { radiusCentre: z.radiusCentre }
+  const RENDERS = join(ROOT, 'data', 'raw', 'pipeline-scratch', 'softbody4')
+  mkdirSync(RENDERS, { recursive: true })
+  // 一行一种：第三阶段 0.17 N、第四阶段 0.17 N、第四阶段的最大力（请求 2 N）；左斜看，右侧看 / one row each: phase 3 at 0.17 N, phase 4 at 0.17 N, phase 4 at the most it reaches (2 N requested); oblique left, side-on right
+  sheet(views, 2).save(join(RENDERS, 'forearm-sphere5mm-phase3-vs-phase4.png'))
+  return out
+}
+
+// ── 第四阶段：子步数与稳态偏软 / phase 4: substep count and the too-soft steady state ──
+async function substeps(): Promise<Record<string, unknown>> {
+  const out: Record<string, unknown> = {}
+  // (a) 自重悬臂梁（截面 4 个单元，E = 20 kPa，ρ = 1000）：刚度比 Π 与挠度 / (a) self-weight cantilever (4 cells across, E = 20 kPa, ρ = 1000): stiffness ratio Π and deflection
+  const E = 20e3, rho = 1000, g = 0.5, h = 0.04, Lb = 0.24
+  const cant = (nA: number, sub: number): { pi: number; tip: number } => {
+    const cell = h / nA
+    const b = block([Math.round(Lb / cell), nA, nA], cell, E, 0.49, rho, (x) => x < 1e-6, { gravity: [0, -g, 0], substeps: sub, damping: 8, volume: 'node' })
+    const pi = b.solver.stiffnessRatio(0, 0.99) * (DT / sub) ** 2
+    b.solver.settle(DT, 2e-6, 8000)
+    let sum = 0, c = 0
+    for (let i = 0; i < b.nodes.length / 3; i++) if (Math.abs(b.nodes[i * 3]! - Lb) < 1e-6) (sum += b.solver.x[i * 3 + 1]! - b.nodes[i * 3 + 1]!), c++
+    return { pi, tip: -sum / c }
+  }
+  const rows: unknown[] = []
+  for (const nA of [4, 8]) {
+    const ref = cant(nA, nA === 4 ? 256 : 128).tip
+    for (const sub of nA === 4 ? [2, 4, 8, 16, 32] : [8, 16, 32]) {
+      const r = cant(nA, sub)
+      rows.push({ cellsAcross: nA, substeps: sub, stiffnessRatioP99: r3(r.pi), deflectionOverConverged: r3(r.tip / ref) })
+    }
+  }
+  out.cantilever = { what: 'self-weight cantilever, ν = 0.49, nodal volume; deflection over the run with 256 (4 across) or 128 (8 across) substeps; Π = h²·μ̃·V·Σw‖∇N‖² (99th percentile over tetrahedra)', rows }
+  console.log('cantilever', JSON.stringify(out.cantilever))
+  // (b) 全身笼子 27 mm：仰卧（预应力下重力从站立转到仰卧）时皮肤的位移 / (b) whole-body cage 27 mm: skin displacement on lying supine (gravity turned from standing to supine under the pre-stress)
+  const L = await load('male', 0.027)
+  const wb: unknown[] = []
+  let ratio: Record<string, number> = {}
+  for (const sub of [2, 4, 8, 10, 20]) {
+    const sb = newBody(L, sub)
+    const s = sb.solver
+    if (sub === 10) ratio = { p50: r3(s.stiffnessRatio(0, 0.5) * (DT / 10) ** 2), p99: r3(s.stiffnessRatio(0, 0.99) * (DT / 10) ** 2), max: r3(s.stiffnessRatio(0, 1) * (DT / 10) ** 2), p99MusclesFullyActive: r3(s.stiffnessRatio(1, 0.99) * (DT / 10) ** 2), substepsForP99Within0_5: s.substepsFor(DT), substepsForP99Within0_5MusclesActive: s.substepsFor(DT, 0.5, 1) }
+    s.gravity = [0, 0, -9.81]
+    let frames = 0
+    for (; frames < 3000; frames++) {
+      sb.step(DT)
+      if (frames > 60 && s.maxSpeed() < 2e-4) break
+    }
+    const pts = L.skinPoints, d = sb.displacement
+    let mean = 0, max = 0
+    for (let i = 0; i < pts.tet.length; i++) {
+      let x = 0, y = 0, z = 0
+      for (let k = 0; k < 4; k++) {
+        const nn = L.soft.tets[pts.tet[i]! * 4 + k]! * 3, b = pts.bary[i * 4 + k]!
+        x += b * d[nn]!
+        y += b * d[nn + 1]!
+        z += b * d[nn + 2]!
+      }
+      const m = Math.hypot(x, y, z)
+      mean += m / pts.tet.length
+      max = Math.max(max, m)
+    }
+    wb.push({ substeps: sub, frames, skinMeanMm: mm(mean), skinMaxMm: mm(max), maxSpeed: s.maxSpeed() })
+    console.log('whole body supine', JSON.stringify(wb[wb.length - 1]))
+  }
+  out.wholeBodySupine = { what: 'male whole-body cage 27 mm, pre-stress, gravity turned to supine without a support plane; steady skin displacement by substep count; stiffness ratios at 10 substeps', stiffnessRatioAt10Substeps: ratio, rows: wb }
+  return out
+}
+
+// ── 乳房体模（不读女性数据）：底面边界条件、三维的体位重力、体积 / the breast phantom (no female data read): base condition, 3D posture gravity, volume ──
 async function breastPhantom(): Promise<Record<string, unknown>> {
-  const base: PhantomCase = { volumeMl: 262, cell: 0.014, base: 'bonded', shear: 357.1 }
+  const sk = readMaterials().materials.find((m) => m.id === 'skin')!
+  const skin = { young: sk.young, thickness: sk.basis.thickness?.value ?? 0.00113, stiffening: sk.stiffening ?? 0 }
+  // mira2018：浅筋膜深层 0.1 mm 厚，模量的搜索区间 80–250 kPa / mira2018: deep layer of the superficial fascia 0.1 mm thick, modulus searched over 80–250 kPa
+  const f80 = { young: 80e3, thickness: 1e-4 }, f250 = { young: 250e3, thickness: 1e-4 }
+  const base: PhantomCase = { volumeMl: 262, cell: 0.01, base: 'bonded', shear: 357.1 }
+  // mira2018 拟合到的乳房皮肤（连同浅筋膜浅层）：2 mm 厚的壳，E = 4 kPa / the breast skin fitted by mira2018 (with the superficial layer of the superficial fascia): a 2 mm shell, E = 4 kPa
+  const bskin = { young: 4000, thickness: 0.002 }
+  const big = { volumeMl: 1140, cell: 0.014 }
   const cases: [string, Partial<PhantomCase>][] = [
-    ['262 mL, 14 mm, bonded (as the phase-2 model)', {}], ['cell 7 mm', { cell: 0.007 }], ['cell 5 mm', { cell: 0.005 }],
-    ['shear 166.6 Pa (softest published)', { shear: 166.6 }], ['base sliding (frictionless, bilateral)', { base: 'sliding' }],
-    ['supine gravity tilted 45° from the wall normal', { tiltDeg: 45 }], ['sliding and tilted 45°', { base: 'sliding', tiltDeg: 45 }],
-    ['600 mL', { volumeMl: 600 }], ['600 mL, tilted 45°', { volumeMl: 600, tiltDeg: 45 }],
+    ['262 mL, bonded, no skin (phases 2–3)', {}],
+    ['262 mL, bonded, no skin, cell 7 mm', { cell: 0.007 }],
+    ['262 mL, sliding with a central patch pinned, no skin (phase-3 upper bound)', { base: 'slidingCentre' }],
+    ['262 mL, sliding, rim pinned, no skin', { base: 'sliding' }],
+    ['262 mL, sliding, forearm skin of materials.json', { base: 'sliding', skin }],
+    ['262 mL, bonded, mira2018 breast skin', { skin: bskin }],
+    ['262 mL, sliding, mira2018 breast skin', { base: 'sliding', skin: bskin }],
+    ['262 mL, sliding, mira2018 breast skin, cell 7 mm', { base: 'sliding', skin: bskin, cell: 0.007 }],
+    ['262 mL, fascia 80 kPa × 0.1 mm, mira2018 breast skin', { base: 'fascia', fascia: f80, skin: bskin }],
+    ['262 mL, fascia 250 kPa × 0.1 mm, mira2018 breast skin', { base: 'fascia', fascia: f250, skin: bskin }],
+    ['262 mL, sliding, mira2018 breast skin, wall turned 30° outward', { base: 'sliding', skin: bskin, wallTiltDeg: 30 }],
+    ['262 mL, sliding, mira2018 breast skin, shear 166.6 Pa', { base: 'sliding', skin: bskin, shear: 166.6 }],
+    ['1140 mL, bonded, no skin', { ...big }],
+    ['1140 mL, bonded, mira2018 breast skin', { ...big, skin: bskin }],
+    ['1140 mL, sliding, mira2018 breast skin', { ...big, base: 'sliding', skin: bskin }],
+    ['1140 mL, fascia 80 kPa, mira2018 breast skin', { ...big, base: 'fascia', fascia: f80, skin: bskin }],
+    ['1140 mL, sliding, mira2018 breast skin, wall turned 30° outward', { ...big, base: 'sliding', skin: bskin, wallTiltDeg: 30 }],
+    ['1140 mL, sliding, mira2018 breast skin, shear 166.6 Pa', { ...big, base: 'sliding', skin: bskin, shear: 166.6 }],
   ]
-  const rows = cases.map(([label, c]) => ({ label, ...phantom({ ...base, ...c }) }))
-  for (const r of rows) console.log('phantom', JSON.stringify(r))
-  return { what: 'hemisphere of breast tissue on a rigid wall, gravity from prone (away from the wall) to supine (towards it, optionally tilted); nipple = top of the dome; displacement prone → supine', published: { meanMm: 69.7, source: 'proneSupine2016' }, rows }
+  const rows = cases.map(([label, c]) => {
+    const r = phantom({ ...base, ...c })
+    console.log('phantom', label, JSON.stringify(r))
+    return { label, ...r }
+  })
+  // 渲染：俯卧、仰卧、站立、外侧卧，从外侧看（身体坐标系，y 向头、z 向前）/ renders: prone, supine, standing, lateral, seen from the side (body frame, y cranial, z anterior)
+  const images: ReturnType<typeof render>[] = []
+  for (const c of [{ ...base }, { ...base, base: 'sliding' as const, skin: bskin }, { ...base, ...big, base: 'sliding' as const, skin: bskin, wallTiltDeg: 30 }]) {
+    const m = buildPhantom(c)
+    const surf = phantomSurface(m)
+    for (const p of ['prone', 'supine', 'standing', 'lateral'] as const) {
+      const { x } = settlePosture(m, p)
+      const pos = new Float32Array(surf.length * 3)
+      const half = m.nodes[m.nipple * 3]!
+      surf.forEach((i, k) => pos.set(m.toBody([x[i * 3]! - half, x[i * 3 + 1]!, x[i * 3 + 2]! - m.nodes[m.nipple * 3 + 2]!]), k * 3))
+      images.push(render([{ positions: pos, indices: Uint32Array.from({ length: surf.length }, (_, i) => i), color: [230, 190, 170] }], { yaw: 90, pitch: 10, center: [0, 0, 0.05], halfHeight: 0.13, width: 360, height: 360 }))
+    }
+  }
+  const RENDERS = join(ROOT, 'data', 'raw', 'pipeline-scratch', 'softbody4')
+  mkdirSync(RENDERS, { recursive: true })
+  sheet(images, 4).save(join(RENDERS, 'breast-phantom-prone-supine-standing-lateral.png'))
+  return {
+    what: 'hemisphere of breast tissue on a rigid wall; postures by a 3D gravity vector in the body frame (x lateral, y cranial, z anterior); each posture solved from the unloaded shape; pairs give nipple / mean tissue displacement in mm',
+    published: { meanMm: 69.7, source: 'proneSupine2016', ownPhantomInitialTreMm: 19.3, ownPhantomVolumeL: 1.14 },
+    rows,
+  }
+}
+
+/** 体模表面的三角形汤（只出现一次的面）/ the phantom's surface as a triangle soup (faces used once) */
+function phantomSurface(m: ReturnType<typeof buildPhantom>): number[] {
+  const count = new Map<string, number[]>()
+  const T = m.tets.length / 4
+  for (let e = 0; e < T; e++) for (let k = 0; k < 4; k++) {
+    const f = [0, 1, 2, 3].filter((c) => c !== k).map((c) => m.tets[e * 4 + c]!)
+    const key = [...f].sort((a, b) => a - b).join(',')
+    if (count.has(key)) count.set(key, [])
+    else count.set(key, f)
+  }
+  const out: number[] = []
+  for (const f of count.values()) out.push(...f)
+  return out
 }
 
 if (import.meta.main) {
   mkdirSync(DIR, { recursive: true })
   const which = process.argv[2] ?? 'all'
   // 'breast' 读女性身体：女性身体在重建时不要跑它（'all' 也会跑它）/ 'breast' reads the female body: do not run it while the female body is being rebuilt ('all' runs it too)
-  const groups: Record<string, () => Promise<Record<string, unknown>>> = { numerics, body: wholeBody, forearm, abdomen, breast, equilibrium, contact, stability, timing, breastPhantom }
+  const groups: Record<string, () => Promise<Record<string, unknown>>> = { numerics, body: wholeBody, forearm, abdomen, breast, equilibrium, contact, stability, timing, breastPhantom, smallProbe, substeps }
   for (const [name, run] of Object.entries(groups)) {
     if (which !== 'all' && which !== name) continue
     const t0 = performance.now()

@@ -1193,6 +1193,51 @@ export class SoftSolver {
     return maxFrames
   }
 
+  /**
+   * 偏量约束的"刚度比" Π_e = h²·μ̃_e·V_e·Σ_i w_i‖∇N_i‖² 的最大值（h = 1 时的值，乘 h² 即得）。μ̃ 是小应变时这个四面体所有
+   * 偏量项的模量之和（μ·激活倍数 + 2·G₁ + Ogden 的 μ₀ + 纤维模量）。偏量约束的乘子每个子步从零开始，稳态时每个四面体的刚度
+   * 被打折约 1/(1 + Π_e)：子步太少时稳态偏软（自重悬臂梁，截面 4 或 8 个单元：Π = 8 时挠度多 66–85 %，Π = 2 时多 13–15 %，
+   * Π = 0.5 时多 1.3–1.6 %，见第四阶段测试）。
+   * The largest "stiffness ratio" of the deviatoric constraints, Π_e = h²·μ̃_e·V_e·Σ_i w_i‖∇N_i‖², at h = 1 (multiply by
+   * h²). μ̃ sums the small-strain moduli of every deviatoric term of the tetrahedron (μ × activation factor + 2·G₁ +
+   * Ogden μ₀ + fibre modulus). The deviatoric multipliers restart from zero every substep, so at steady state each
+   * tetrahedron's stiffness is discounted by about 1/(1 + Π_e): too few substeps make the steady state too soft (the
+   * self-weight cantilever, 4 or 8 cells across, sags 66–85 % more at Π = 8, 13–15 % more at Π = 2 and 1.3–1.6 % more
+   * at Π = 0.5; see the phase-4 tests).
+   * `activation` = 1 时按肌肉完全激活估计（最坏情况）；`quantile` < 1 时取分位数而不是最大值（最大的那些是几乎全在体外的表面碎片，
+   * 不在传力路径上）。
+   * With `activation` = 1 the muscles are taken as fully active (the worst case); with `quantile` < 1 a quantile is
+   * returned instead of the maximum (the largest belong to surface scraps almost wholly outside the body, off the load path).
+   */
+  stiffnessRatio(activation: 0 | 1 = 0, quantile = 1): number {
+    this.prepare()
+    const T = this.tets, B = this.B, w = this.invMass
+    const all = new Float64Array(this.active.length)
+    for (let k = 0; k < this.active.length; k++) {
+      const e = this.active[k]!, o = e * 9, q = this.qual[e]!
+      if (q === 0) continue
+      const act = activation && this.stiffen ? this.stiffen[e]! : this.actScale[e]!
+      let mu = this.mu[e]! * act + (this.branchG ? 2 * this.branchG[e]! : 0) + (this.fibreK ? this.fibreK[e]! * act : 0)
+      if (this.ogdenMat && this.ogdenMat[e]! >= 0) mu += this.ogdenTerms[this.ogdenMat[e]!]!.mu0 * this.ogdenScale![e]! * act
+      // ∇N_1..3 = B 的行，∇N_0 = −它们的和 / ∇N_1..3 are the rows of B, ∇N_0 is minus their sum
+      const gx = -(B[o]! + B[o + 3]! + B[o + 6]!), gy = -(B[o + 1]! + B[o + 4]! + B[o + 7]!), gz = -(B[o + 2]! + B[o + 5]! + B[o + 8]!)
+      let s = w[T[e * 4]!]! * (gx * gx + gy * gy + gz * gz)
+      for (let r = 0; r < 3; r++) s += w[T[e * 4 + r + 1]!]! * (B[o + r * 3]! ** 2 + B[o + r * 3 + 1]! ** 2 + B[o + r * 3 + 2]! ** 2)
+      all[k] = mu * q * this.restVolume[e]! * s
+    }
+    all.sort()
+    return all.length ? all[Math.min(all.length - 1, Math.floor(quantile * all.length))]! : 0
+  }
+
+  /**
+   * 让偏量约束的刚度比（缺省取 99 % 分位）不超过 `maxRatio` 所需的最少子步数（一帧 dt 秒）。缺省 0.5：自重悬臂梁的稳态误差约 2 %。
+   * The fewest substeps that keep the deviatoric stiffness ratio (the 99th percentile by default) within `maxRatio` for a
+   * frame of dt seconds. The default 0.5 leaves about 2 % steady-state error on the self-weight cantilever.
+   */
+  substepsFor(dt: number, maxRatio = 0.5, activation: 0 | 1 = 0, quantile = 0.99): number {
+    return Math.max(1, Math.ceil(dt * Math.sqrt(this.stiffnessRatio(activation, quantile) / maxRatio)))
+  }
+
   maxSpeed(): number {
     let m = 0
     const v = this.v

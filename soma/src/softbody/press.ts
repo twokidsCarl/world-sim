@@ -230,11 +230,26 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
       if (Math.abs(next - depth) < 1e-6) break
       depth = next
       f = settle(depth)
-      if (!Number.isFinite(f) || axisPeak(axis()) > CRUSH || (depth > d0 && f < 0.7 * f0)) {
-        // 压溃：退回上一个深度，报告那里的力 / crushed: back to the previous depth, whose force is reported
+      // 压溃 = 不是有限数、轴线应变超过上限，或者压得更深力反而掉了三成 / crushed = not finite, axial strain beyond the limit, or deeper with 30 % less force
+      const crushed = (q: number, prev: number, deeper: boolean): boolean => !Number.isFinite(q) || axisPeak(axis()) > CRUSH || (deeper && q < 0.7 * prev)
+      if (crushed(f, f0, depth > d0)) {
+        // 压溃：在上一个深度和这一个之间二分，找应变不超过上限的最深处，报告那里的力（第三阶段直接退回上一个深度，
+        // 割线法一步跨得大时报告的力只有能达到的一部分：前臂上半径 5 mm 的球 0.34 N 对 0.84 N）
+        // crushed: bisect between the previous depth and this one for the deepest depth within the strain limit and
+        // report the force there (phase 3 went straight back to the previous depth, so after a long secant step it
+        // reported a fraction of what is reachable: 0.34 N against 0.84 N for a 5 mm sphere on the forearm)
+        let lo = d0, hi = depth, flo = f0
+        for (let b = 0; b < 4; b++) {
+          const mid = (lo + hi) / 2
+          s.reset()
+          at = 0
+          const fm = settle(mid)
+          if (crushed(fm, flo, true)) hi = mid
+          else (lo = mid), (flo = fm)
+        }
         s.reset()
         at = 0
-        depth = d0
+        depth = lo
         f = settle(depth)
         bottomed = true
         break

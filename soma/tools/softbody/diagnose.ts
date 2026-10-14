@@ -10,13 +10,14 @@
 //   bun tools/softbody/diagnose.ts forearm [cell] [mihaiFat]   两个前臂点、三个深度 / both forearm sites at three depths
 //   bun tools/softbody/diagnose.ts pain              疼痛工具的球形压头 / the pain tool's spherical probe
 //   bun tools/softbody/diagnose.ts abdomen [cells]   腹部 R2 的网格依赖 / mesh dependence at abdominal R2
+//   bun tools/softbody/diagnose.ts crush [cell]      第四阶段：小压头下的组织状态，第三、四阶段的皮肤表示对照 / phase 4: the tissue under a small probe, phase-3 against phase-4 skin
 
 import type { MixOptions } from '../../src/softbody/body.ts'
-import { press } from '../../src/softbody/press.ts'
+import { press, surfaceSamples } from '../../src/softbody/press.ts'
 import { computeNormals } from '../pipeline/geometry.ts'
-import { loadBody } from './build.ts'
+import { loadBody, readMaterials } from './build.ts'
 import { bodyInside } from './cage.ts'
-import { buildSite } from './site.ts'
+import { type Site, buildSite } from './site.ts'
 
 const which = process.argv[2] ?? 'all'
 const { body, rig, rigBin } = await loadBody('male')
@@ -211,4 +212,90 @@ if (which === 'pain') {
     })
     console.log(label, 'cell', S.domain.cell, rows.join(' | '), 's', ((performance.now() - t0) / 1000).toFixed(0))
   }
+}
+
+if (which === 'crush') {
+  // 半径 5 mm 的球压在前臂近端三分之一处：皮肤在压头周围 8 mm 内的 E·V（与应有值之比）、承担一半接触力的结点数、
+  // 轴线附近四面体的最小 J、脂肪里的硬化倍数 1 + κ·c；第三阶段（按顶点分皮肤、混合式里皮肤再乘 fill）对第四阶段
+  // a 5 mm sphere on the proximal third of the forearm: the skin's E·V within 8 mm of the probe (over what it should be), the nodes
+  // carrying half the contact force, the smallest J near the axis and the stiffening factor 1 + κ·c in fat; phase 3 (skin shared by
+  // vertex, skin multiplied by fill again in the blend) against phase 4
+  const cell = Number(process.argv[3] ?? 0.002)
+  const { site, normal } = siteOf(sites.proximalThird)
+  const skinE = readMaterials().materials.find((m) => m.id === 'skin')!
+  for (const [label, share, blend] of [['phase 3', 'vertex', 'phase3'], ['phase 4', 'area', 'phase4']] as const) {
+    const S = buildSite(body, rig, rigBin, site, normal, 0.005, { cell, inBody, skinShare: share, mix: { skinBlend: blend } })
+    const sv = skinEV(S, site, skinE.young, skinE.basis.thickness?.value ?? 0.00113, blend === 'phase3')
+    for (const d of [2, 3.5, 5]) {
+      const r = press(S.domain, { kind: 'sphere', radiusMm: 5 }, { depthMm: d })
+      const st = underProbe(S, site)
+      console.log(`${label} cell ${cell * 1000} mm, depth ${d} mm: F ${r.forceN} N, axial strain ${r.peakStrain}; skin E·V within 8 mm ${(sv * 100).toFixed(1)} % of area × thickness × E; nodes carrying half the force ${st.half}; min J ${st.jmin.toFixed(2)}; fat mean 1 + κc ${st.fatStiff.toFixed(2)}`)
+    }
+  }
+}
+
+/** 压入点 8 mm 内皮肤的 E·V 与"皮肤面积 × 厚度 × E"之比 / the skin's E·V within 8 mm of the site over "skin area × thickness × E" */
+function skinEV(S: Site, site: [number, number, number], E: number, t: number, phase3: boolean): number {
+  const soft = S.soft
+  // 本处皮肤面积：皮肤三角形在 8 mm 球内的部分（细分采样）/ local skin area: the part of the skin triangles inside the 8 mm ball (by subdivision)
+  const sp = surfaceSamples(skin.positions, skin.indices, site, 0.008, 0.0005)
+  let area = 0
+  for (const a of sp.area) area += a
+  // 混合后的皮肤 E·V，按 body.ts 的两种混合式由 tetSkin 和 fill 重算 / the blended skin E·V, recomputed from tetSkin and fill by the two blends of body.ts
+  let ev = 0
+  const a = soft.data.lattice.cell, tv = a ** 3 / 12
+  for (let e = 0; e < soft.data.tetCount; e++) {
+    let cx = 0, cy = 0, cz = 0
+    for (let k = 0; k < 4; k++) {
+      const q = soft.tets[e * 4 + k]! * 3
+      cx += soft.nodes[q]! / 4
+      cy += soft.nodes[q + 1]! / 4
+      cz += soft.nodes[q + 2]! / 4
+    }
+    if (Math.hypot(cx - site[0], cy - site[1], cz - site[2]) > 0.008) continue
+    const fs = soft.tetSkin[e]! / 255, fill = Math.max(0.12, soft.tetFill[e]! / 255)
+    ev += tv * E * (phase3 ? fill * Math.min(1, fs) : Math.min(1, fs))
+  }
+  return ev / (area * t * E)
+}
+
+/** 压头下的状态：承担一半力的结点数、轴线 5 mm 内四面体的最小 J、脂肪四面体平均的 1 + κ·c / the state under the probe */
+function underProbe(S: Site, site: [number, number, number]): { half: number; jmin: number; fatStiff: number } {
+  const s = S.domain.solver as unknown as { tets: Uint32Array; x: Float64Array; ref: Float64Array; B: Float64Array; kappa: Float64Array | null; probePointForce: Float32Array; tetCount: number }
+  const pts = S.domain.samples.points, pf = s.probePointForce
+  const nodeF = new Map<number, number>()
+  let tot = 0
+  for (let i = 0; i < pf.length; i++) for (let k = 0; k < 4; k++) {
+    const b = pts.bary[i * 4 + k]!
+    if (!(b > 0)) continue
+    const n = s.tets[pts.tet[i]! * 4 + k]!
+    nodeF.set(n, (nodeF.get(n) ?? 0) + b * pf[i]!)
+    tot += b * pf[i]!
+  }
+  const fs = [...nodeF.values()].sort((a, b) => b - a)
+  let acc = 0, half = fs.length
+  for (let k = 0; k < fs.length; k++) if ((acc += fs[k]!) >= 0.5 * tot) {
+    half = k + 1
+    break
+  }
+  const n = S.domain.inward, fat = S.soft.data.materials.findIndex((m) => m.id === 'fat')
+  let jmin = Infinity, fsum = 0, fcnt = 0
+  for (let e = 0; e < s.tetCount; e++) {
+    const q = [0, 1, 2, 3].map((k) => s.tets[e * 4 + k]! * 3)
+    const c = [0, 1, 2].map((r) => q.reduce((t, i) => t + s.ref[i + r]! / 4, 0) - site[r]!)
+    const al = c[0]! * n[0] + c[1]! * n[1] + c[2]! * n[2]
+    if (al < -0.002 || al > 0.012 || Math.hypot(c[0]! - al * n[0], c[1]! - al * n[1], c[2]! - al * n[2]) > 0.005) continue
+    const D = [1, 2, 3].flatMap((k) => [0, 1, 2].map((r) => s.x[q[k]! + r]! - s.x[q[0]! + r]!))
+    // D 按列存（列 = 边）；F = D·B / D stored by column (columns = edges); F = D·B
+    const B = s.B, o = e * 9, F: number[] = []
+    for (let r = 0; r < 3; r++) for (let col = 0; col < 3; col++) F.push(D[r]! * B[o + col]! + D[3 + r]! * B[o + 3 + col]! + D[6 + r]! * B[o + 6 + col]!)
+    const J = F[0]! * (F[4]! * F[8]! - F[5]! * F[7]!) - F[1]! * (F[3]! * F[8]! - F[5]! * F[6]!) + F[2]! * (F[3]! * F[7]! - F[4]! * F[6]!)
+    jmin = Math.min(jmin, J)
+    if (S.soft.tetMaterial[e] === fat) {
+      const c2 = F.reduce((t, f) => t + f * f, 0) + J * J - 4 * J
+      fsum += 1 + (s.kappa ? s.kappa[e]! : 0) * c2
+      fcnt++
+    }
+  }
+  return { half, jmin, fatStiff: fcnt ? fsum / fcnt : 1 }
 }
