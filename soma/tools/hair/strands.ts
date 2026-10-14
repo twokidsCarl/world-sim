@@ -4,7 +4,7 @@
 // gravity), then a short offline PBD settle (inextensible, bending, gravity, collisions with the skin), then waves and
 // a blunt cut.
 
-import { type HeadFrame, azimuth, fromHeadDir, toHead } from './frame.ts'
+import { type HeadFrame, azimuth, fromHead, fromHeadDir, toHead } from './frame.ts'
 import { type V3, add, dot, gauss, len, mix, norm, rng, scale, sub, type Surface, tangential, cross } from './geom.ts'
 import type { Root } from './sample.ts'
 
@@ -96,7 +96,7 @@ export function styleRule(id: ScalpStyle, f: HeadFrame, P: Record<string, any>, 
       lift: (20 * Math.PI) / 180,
       turn: 0.45,
       hangs: false,
-      volume: 0.0035,
+      volume: 0.0025,
       settle: { steps: 16, bend: 0.6, gravity: 0.3 },
       wave: { amplitude: 0, length: waveLength },
     }
@@ -117,10 +117,10 @@ export function styleRule(id: ScalpStyle, f: HeadFrame, P: Record<string, any>, 
       const low: V3 = norm([0, -1, -0.25])
       return norm(mix(low, top, wTop))
     },
-    lift: (15 * Math.PI) / 180,
+    lift: (25 * Math.PI) / 180,
     turn: 0.3,
     hangs: true,
-    volume: 0.022,
+    volume: 0.03,
     settle: { steps: 90, bend: 0.08, gravity: 1 },
     wave: { amplitude, length: waveLength },
   }
@@ -142,6 +142,19 @@ function collide(surface: Surface, p: V3, margin: number, reach = 0.006): { p: V
   return { p, n: c.normal }
 }
 
+/**
+ * 脸前禁区（长发）：额以下、颧以前、脸宽以内的点推到脸宽之外，长发不会有一缕挂在眼前。推向根所在的一侧。
+ * The keep-out in front of the face (long hair): points below the forehead, in front of the cheekbones and within the
+ * face's width are pushed out beyond that width, so no lock of long hair hangs in front of the eyes. They go to the
+ * side of their root.
+ */
+export function faceKeepOut(f: HeadFrame, p: V3, side: number): V3 {
+  const l = toHead(f, p)
+  const W = 0.09
+  if (l[2] < 0.02 || l[1] > 0.055 || l[1] < -0.15 || Math.abs(l[0]) >= W) return p
+  return fromHead(f, [(Math.sign(l[0]) || side) * W, l[1], l[2]])
+}
+
 /** 层的边距：根部为 0，2 厘米内渐增到该层的距离 / layer margin: 0 at the root, growing to the layer's distance within 2 cm */
 const marginAt = (layer: number, volume: number, s: number): number => 0.0006 + volume * layer * smooth(0, 0.025, s)
 
@@ -160,6 +173,7 @@ export function growStrand(f: HeadFrame, surface: Surface, rule: StyleRule, root
     return [dot(d, f.x), dot(d, f.y), dot(d, f.z)]
   }
   const down: V3 = scale(f.y, -1)
+  const side = lRoot[0] >= 0 ? 1 : -1
   let flow = norm(tangential(toWorld(rule.flow(lRoot, nHead(root.n))), root.n))
   // 一点随机的偏转 / a little random deflection
   flow = norm(add(flow, scale(norm(cross(root.n, flow)), 0.18 * gauss(r))))
@@ -171,7 +185,7 @@ export function growStrand(f: HeadFrame, surface: Surface, rule: StyleRule, root
   for (let k = 1; k < N; k++) {
     let p = add(pts[k - 1]!, scale(d, seg))
     const c = collide(surface, p, marginAt(layer, rule.volume, k * seg))
-    p = c.p
+    p = rule.hangs ? faceKeepOut(f, c.p, side) : c.p
     if (c.n) n = c.n
     pts.push(p)
     const near = !!c.n
@@ -186,10 +200,11 @@ export function growStrand(f: HeadFrame, surface: Surface, rule: StyleRule, root
     if (near && !rule.hangs) target = norm(add(target, scale(n, -0.15)))
     d = norm(mix(d, target, rule.turn))
   }
-  settle(surface, rule, pts, layer, seg, held)
+  settle(f, surface, rule, pts, layer, seg, held, side)
   if (cutY) {
     // 剪齐：到剪口高度为止 / the blunt cut: stop at the cut height
-    const cut = cutY(azimuth(lRoot))
+    // 剪口高度每根差 ±1.2 厘米：梢不齐成一条线 / the cut height varies ±1.2 cm per strand, so the tips do not form a line
+    const cut = cutY(azimuth(lRoot)) + 0.012 * gauss(r)
     // 剪口高度、离中线太远（搭在肩上往外滑的发丝），或者长度到了 / the cut height, too far from the midline (strands sliding outward over the shoulder), or the full length
     let arc = 0
     let k = pts.findIndex((p, i) => p[1] < cut || Math.abs(toHead(f, p)[0]) > 0.14 || (i > 0 && (arc += len(sub(p, pts[i - 1]!))) > L0))
@@ -211,7 +226,7 @@ function wavePhase(p: V3): number {
 }
 
 /** PBD 沉降：根和第一段固定，距离约束、弯曲（隔一个点的距离）、重力、碰撞 / PBD settle: root and first segment fixed; distance, bending (distance to the point after next), gravity, collisions */
-function settle(surface: Surface, rule: StyleRule, pts: V3[], layer: number, seg: number, held: boolean[]): void {
+function settle(f: HeadFrame, surface: Surface, rule: StyleRule, pts: V3[], layer: number, seg: number, held: boolean[], side: number): void {
   const N = pts.length
   const rest2 = pts.slice(0, N - 2).map((p, i) => len(sub(pts[i + 2]!, p)))
   const vel: V3[] = pts.map(() => [0, 0, 0])
@@ -232,7 +247,13 @@ function settle(surface: Surface, rule: StyleRule, pts: V3[], layer: number, seg
       }
       for (let i = 0; i < N - 2; i++) project(pts, i, i + 2, rest2[i]!, rule.settle.bend, held)
     }
-    if (step % 2 === 0 || step === rule.settle.steps - 1) for (let i = 2; i < N; i++) if (!held[i]) pts[i] = collide(surface, pts[i]!, marginAt(layer, rule.volume, i * seg)).p
+    if (step % 2 === 0 || step === rule.settle.steps - 1) {
+      for (let i = 2; i < N; i++) {
+        if (held[i]) continue
+        const q = collide(surface, pts[i]!, marginAt(layer, rule.volume, i * seg)).p
+        pts[i] = rule.hangs ? faceKeepOut(f, q, side) : q
+      }
+    }
     for (let i = 2; i < N; i++) vel[i] = scale(sub(pts[i]!, prev[i]!), 1 / dt)
   }
 }
@@ -272,14 +293,19 @@ export function resample(pts: V3[], n: number): V3[] {
 /** 波纹：沿副法线的正弦位移，根部为零、5 厘米内长到满幅，然后再推出皮肤 / waves: a sine offset along the binormal, zero at the root and full within 5 cm, then pushed out of the skin again */
 export function addWaves(f: HeadFrame, surface: Surface, rule: StyleRule, s: Strand, phase: number): V3[] {
   if (rule.wave.amplitude <= 0) return s.pts
+  const lr = toHead(f, s.root.p)
+  const side = lr[0] >= 0 ? 1 : -1
+  // 脸旁的发丝波纹小一些（前面 40%，耳后满幅）/ smaller waves beside the face (40 % at the front, full behind the ears)
+  const faceWave = 0.4 + 0.6 * smooth(60, 110, Math.abs(azimuth(lr)))
   const out: V3[] = [s.pts[0]!]
   let arc = 0
   for (let i = 1; i < s.pts.length; i++) {
     arc += len(sub(s.pts[i]!, s.pts[i - 1]!))
     const t = norm(sub(s.pts[i]!, s.pts[i - 1]!))
     const b = norm(cross(t, outward(f, s.pts[i]!)))
-    const a = rule.wave.amplitude * smooth(0, 0.05, arc) * Math.sin((2 * Math.PI * arc) / rule.wave.length + phase)
-    out.push(collide(surface, add(s.pts[i]!, scale(b, a)), marginAt(s.layer, rule.volume, arc) * 0.8).p)
+    const a = rule.wave.amplitude * faceWave * smooth(0, 0.05, arc) * Math.sin((2 * Math.PI * arc) / rule.wave.length + phase)
+    const q = collide(surface, add(s.pts[i]!, scale(b, a)), marginAt(s.layer, rule.volume, arc) * 0.8).p
+    out.push(rule.hangs ? faceKeepOut(f, q, side) : q)
   }
   // 最后再查一遍，搜得远一些（耳前的凹处最近点可能在近 1 厘米外）/ a last pass searching further (in the hollow in front of the ear the closest point can be nearly 1 cm away)
   for (let i = 1; i < out.length; i++) out[i] = collide(surface, out[i]!, 0.0004, 0.012).p

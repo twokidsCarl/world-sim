@@ -43,9 +43,9 @@ const SPECS: Record<HairPieceId, LodSpec[]> = {
     { clusters: 0.045, segments: 2, minWidth: 0.014, maxWidth: 0.034, tipWidth: 0.6, orient: 'scalp', clearance: 0.001, maxDistance: Infinity },
   ],
   long: [
-    { clusters: 0.4, segments: 14, minWidth: 0.008, maxWidth: 0.022, tipWidth: 0.45, orient: 'scalp', clearance: 0.0005, maxDistance: 1.2, smooth: 4 },
-    { clusters: 0.13, segments: 8, minWidth: 0.011, maxWidth: 0.032, tipWidth: 0.45, orient: 'scalp', clearance: 0.0008, maxDistance: 3, smooth: 4 },
-    { clusters: 0.05, segments: 5, minWidth: 0.016, maxWidth: 0.045, tipWidth: 0.5, orient: 'scalp', clearance: 0.0012, maxDistance: Infinity, smooth: 4 },
+    { clusters: 0.6, segments: 12, minWidth: 0.005, maxWidth: 0.014, tipWidth: 0.35, orient: 'scalp', clearance: 0.0005, maxDistance: 1.2, smooth: 4 },
+    { clusters: 0.2, segments: 7, minWidth: 0.008, maxWidth: 0.024, tipWidth: 0.4, orient: 'scalp', clearance: 0.0008, maxDistance: 3, smooth: 4 },
+    { clusters: 0.07, segments: 5, minWidth: 0.012, maxWidth: 0.036, tipWidth: 0.45, orient: 'scalp', clearance: 0.0012, maxDistance: Infinity, smooth: 4 },
   ],
   brows: [
     { clusters: 0.34, segments: 3, minWidth: 0.0006, maxWidth: 0.0018, tipWidth: 0.6, orient: 'skin', clearance: 0.00015, maxDistance: 1.5 },
@@ -236,7 +236,7 @@ async function buildBody(body: 'male' | 'female', P: Params): Promise<void> {
         diameter,
         count,
         spread: id === 'brows' ? 0.0003 : 0.0024,
-        clump: id === 'brows' ? 0.2 : 0.55,
+        clump: id === 'brows' ? 0.2 : id === 'long' ? 0.75 : 0.55,
         wander: id === 'long' ? 0.0012 : id === 'short' ? 0.0006 : 0.0001,
         seed: seed * 31 + t,
       })
@@ -295,8 +295,7 @@ async function buildBody(body: 'male' | 'female', P: Params): Promise<void> {
     skinVertexCount: b.skin.positions.length / 3,
     offsetUnit: OFFSET_UNIT,
     atlas: { a: 'atlas-a.png', b: 'atlas-b.png', size: ATLAS_SIZE, depthRange: DEPTH_RANGE },
-    // 两个人体都缺省短发：女性长发还在改进（发片成条、侧面体积不足），可用 hair=long 选 / both bodies default to short: the female long style is still being improved (ribbon-like cards, little volume at the sides) and can be chosen with hair=long
-    defaultStyle: 'short',
+    defaultStyle: body === 'male' ? 'short' : 'long',
     hides: [`${pre}FJ2813`, `${pre}FJ2812`],
     pieces,
     scalp: { file: 'scalp.bin', vertices: scalpVerts.length },

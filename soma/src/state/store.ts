@@ -253,7 +253,7 @@ export interface AppState {
   gaze: GazeSetting
   /** 写实的眼自发眨眼、有微扫视（缺省）；false 静止（截图、测试用）/ The lifelike eyes blink and make microsaccades (default); false = still (for screenshots, tests). */
   blink: boolean
-  /** 写实模式的发型；null = 这副人体的默认（见 hair.json 的 defaultStyle，现在都是短发）/ The lifelike hair style; null = this body's default (defaultStyle in hair.json, short for both at present). */
+  /** 写实模式的发型；null = 这副人体的默认（见 hair.json 的 defaultStyle：男短、女长）/ The lifelike hair style; null = this body's default (defaultStyle in hair.json: short for the male, long for the female). */
   hairStyle: HairStyle | null
   /** 写实模式的发色 / The lifelike hair colour. */
   hairColor: HairColour

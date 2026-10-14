@@ -12,7 +12,7 @@ const STYLES: { id: HairStyle; zh: string; en: string }[] = [
 ]
 
 /** 各人体的默认发型（与 hair.json 的 defaultStyle 一致）/ each body's default style (as defaultStyle in hair.json) */
-const BODY_DEFAULT: Record<string, HairStyle> = { male: 'short', female: 'short' }
+const BODY_DEFAULT: Record<string, HairStyle> = { male: 'short', female: 'long' }
 
 export function HairPanel() {
   const style = useApp((s) => s.hairStyle)
