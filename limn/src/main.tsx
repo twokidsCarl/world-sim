@@ -6,7 +6,7 @@ createRoot(document.getElementById('root')!).render(<App />)
 
 // 供控制台调试应用的句柄 / Handle for poking at the app from the console.
 import { useStore } from './state/store'
-import { stage } from './ui/Stage'
+import { stage, viewFor } from './ui/Stage'
 import { renderFigure } from './render/export'
 
 /** 把当前画面按成品图渲染并存到本地缓存目录 / Render the current scene as a finished figure and save it in the local cache. */
@@ -67,4 +67,27 @@ async function sheet(round: string, size = 520, only?: string[], turn = 0): Prom
   sheetState.running = false
 }
 
-Object.assign(window, { limn: { stage, store: useStore, snap, refine, sheet, sheetState } })
+/**
+ * 量一帧要多久（毫秒）：把最近一次的视图快速画 n 遍、完整画 n 遍，各取中位数。读一个像素来等 GPU 画完。不依赖页面在不在前台。
+ * Measure how long a frame takes (ms): the last view drawn quickly n times and in full n times, the median of each. Reading a pixel waits for the GPU. It does not depend on the page being in front.
+ */
+function bench(n = 5): { fast: number; full: number } | null {
+  const r = stage.renderer
+  if (!r) return null
+  // 页面在后台时一帧也没画过，用当前的视角现算一个 / when the page is in the background nothing has been drawn, so the view is worked out from the current look
+  const s = useStore.getState()
+  const view = viewFor(r, s, r.canvas.width / Math.max(1, r.canvas.height))
+  const time = (fast: boolean) => {
+    const ts: number[] = []
+    for (let i = 0; i < n; i++) {
+      const t0 = performance.now()
+      r.render(view, s.style, fast)
+      r.gl.readPixels(0, 0, 1, 1, r.gl.RGBA, r.gl.UNSIGNED_BYTE, new Uint8Array(4))
+      ts.push(performance.now() - t0)
+    }
+    return Math.round(ts.sort((a, b) => a - b)[n >> 1]!)
+  }
+  return { fast: time(true), full: time(false) }
+}
+
+Object.assign(window, { limn: { stage, store: useStore, snap, refine, sheet, sheetState, bench } })

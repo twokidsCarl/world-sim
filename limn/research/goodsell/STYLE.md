@@ -308,6 +308,16 @@ limn 这一轮的数：
 - **三处收尾**（`out/A5-three-fixes.jpg`）：刺头的扇形分瓣（`exaggerate` 的 `ripple`：头顶的高度随离轴的距离起伏，绕轴对称）；小泡外面的蛋白拉成细长的须（`arrange.whiskers`，夸张，有说明）；syn3A 两个细胞连通（各自越过中间平面的部分去掉）。
 - 仍然不对的：流感转过去之后里面露出一大片蓝色的内壁（八条杆只占腔的一部分）；流感的刺头分瓣不明显；新冠的刺之间还有深色空隙。
 
+### B3：收尾
+
+- 新冠刺后面、流感刺后面的底色改用新的实例标志 10：只画在切面后面一段距离以外，不再在刺上压出一道深色圆圈。新冠刺之间现在是深一号的品红。
+- 流感刺头分瓣加强（`ripple` 15/24，`lobes` 10）。
+- 加载中拖动过，加载完不把视角重置回正面（只对目录里的模型）。
+- 示意的环境总共不超过 250 万个球；拖动时几百万个球以上的场景用一半分辨率画。
+- 新工具 `limn.bench()` 不依赖页面在前台，量一帧多久。量到（毫秒，拖动/松手）：外泌体 63/316，HIV 65/392，新冠 24/147，寨卡 28/169，支原体 56/145。外泌体和 HIV 的模型本身就有一千一百万到一千五百万个球，松手后的完整重画仍然慢。
+- Illustrate 对照页 2.80（没变）。量尺（M7）主色距离：流感 0.083，新冠 0.083，HIV 0.119（环境的颜色把它拉远了），支原体 0.088，syn3A 0.078，寨卡 0.131。
+- 补了两条测试（刺头分瓣、底色的标志）。须、两个细胞连通、拖动时不画环境仍没有测试。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -606,3 +616,13 @@ The user turned the Zika card: the background was a thin sheet behind the cut, w
 - The rendering helper can take a second picture from a turned direction, so this fault is checked every time from now on.
 - **Three loose ends** (`out/A5-three-fixes.jpg`): fanned lobes on spike heads (`ripple` in `exaggerate`: the height of the head rises and falls with distance from the axis, symmetric about it); the proteins outside the vesicle drawn out as whiskers (`arrange.whiskers`, an exaggeration, with a note); the two syn3A cells joined (what of each lay past the plane between them is removed).
 - Still wrong: turned, the influenza virion shows a large area of blue inner wall (the eight rods fill only part of the cavity); the lobes on influenza's spike heads hardly show; dark gaps remain between the coronavirus spikes.
+
+### B3: loose ends
+
+- The grounds behind the coronavirus and influenza spikes use a new instance flag 10: drawn only some way behind the cut, so they no longer lay a dark circle over the spikes. Between coronavirus spikes there is now a deeper magenta.
+- Stronger lobes on influenza spike heads (`ripple` 15/24, `lobes` 10).
+- A drag during loading is no longer reset to the front once the model has loaded (catalogue models only).
+- The schematic environment is held to 2.5 million spheres in all; while dragging, scenes of several million spheres are drawn at half resolution.
+- A new helper, `limn.bench()`, measures frame time without the page being in front. Measured (ms, dragging/settled): exosome 63/316, HIV 65/392, coronavirus 24/147, Zika 28/169, mycoplasma 56/145. The exosome and HIV models themselves hold eleven to fifteen million spheres, and the full redraw after release is still slow.
+- Illustrate comparison 2.80 (unchanged). Measure (M7) palette distance: influenza 0.083, coronavirus 0.083, HIV 0.119 (the environment's colours pull it away), mycoplasma 0.088, syn3A 0.078, Zika 0.131.
+- Two tests added (spike-head lobes, the ground flag). Whiskers, the joined cells and leaving the environment out while dragging still have none.

@@ -201,3 +201,22 @@ describe('small molecules as dots, bead fibres at true width', () => {
     expect(item.instances.ids[1]).not.toBe(item.instances.ids[3])
   })
 })
+
+describe('a ground laid behind', () => {
+  it('marks its copies with flag 10 and carries how far behind the cut it starts', async () => {
+    const { buildItem } = await import('../src/scene/build')
+    const { defaultColoring } = await import('../src/style/assign')
+    const { TONE_LANDSCAPE } = await import('../src/style/palettes')
+    const op = (x: number) => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, 0, 0, 1])
+    const mol = {
+      atomCount: 1, pos: new Float32Array([0, 0, 0]), element: new Uint8Array([6]), chainOf: new Uint16Array(1), residue: new Uint32Array(1), isTrace: new Uint8Array(1),
+      chains: [{ id: 'G', entity: 0, start: 0, count: 1 }], entities: [{ kind: 'protein', description: 'ground' }],
+      assemblies: [{ id: '1', groups: [{ chains: [0], operators: [op(0), op(30)] }] }],
+    } as never
+    const item = buildItem(mol, defaultColoring(mol), TONE_LANDSCAPE, { assembly: '1', molecule: 0, perCopy: true, oneId: true, ground: 42 })
+    for (const k of [0, 1]) {
+      expect(item.instances.data[k * 16 + 15]).toBe(10)
+      expect(item.instances.data[k * 16 + 12]).toBe(42)
+    }
+  })
+})

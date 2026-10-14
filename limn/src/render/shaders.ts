@@ -83,6 +83,11 @@ void main() {
   // 3 = 永不切掉（叠在密度图里的原子模型）/ 3 = never cut away (an atomic model shown inside a density map)
   if (mc.w > 2.5 && mc.w < 3.5) {
     zcut = -1.0e30;
+  } else if (mc.w > 9.5) {
+    // 10 = 垫在后面的底色：比切面再往后退 mc.x 才留下，免得它在切面上的那一圈边压在对象前面；切片背面不切
+    // 10 = a ground laid behind: kept only from mc.x behind the cut, so that its rim on the cut plane does not lie over the subject; not cut at the back of a slab
+    zcut = view.z + mc.x;
+    v_keep = u_fogKeep.x;
   } else if (mc.w > 7.5 && mc.w < 8.5) {
     if (u_layer.x > 0.0) {
       float t = clamp((u_layer.y - view.z) / max(u_layer.y - u_layer.z, 1.0e-3), 0.0, 0.999);
@@ -112,7 +117,7 @@ void main() {
   // a slab: a molecule is kept or dropped whole by its centre, so every molecule in the slab is complete; except what is never cut (flag 3)
   // 纤维（标志 8）的切片厚一倍半：他画里的 DNA 是长长的一股，从前面的分子后面穿过去
   // a fibre (flag 8) gets a slab two and a half times as deep: in his paintings DNA runs long, passing behind the molecules in front
-  if (zcut > u_clipFront || r <= 0.0 || (zcut < (mc.w > 7.5 ? u_clipBack - (u_clipFront - u_clipBack) * 1.5 : u_clipBack) && !(mc.w > 2.5 && mc.w < 3.5) && (mc.w < 5.5 || mc.w > 7.5))) {
+  if (zcut > u_clipFront || r <= 0.0 || (zcut < (mc.w > 7.5 ? u_clipBack - (u_clipFront - u_clipBack) * 1.5 : u_clipBack) && !(mc.w > 2.5 && mc.w < 3.5) && (mc.w < 5.5 || (mc.w > 7.5 && mc.w < 9.5)))) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }

@@ -39,6 +39,8 @@ export interface Panel {
   perCopy?: boolean
   /** 示意的环境：拖动时不画（见 RenderItem.decor）/ a schematic environment: not drawn while dragging (see RenderItem.decor) */
   decor?: boolean
+  /** 垫在后面的底色，比切面再退这么多（Å）才画（见 Placement.ground）/ a ground laid behind, drawn only this far (Å) behind the cut (see Placement.ground) */
+  ground?: number
   /** 当两个面板共有一种蛋白质时，把本面板转到与第一个一致 / turns this panel to match the first one, when they share a protein */
   align: Float32Array | null
   /** 全景里的膜蛋白：OPM 给出的膜内取向 / for a membrane protein in a landscape: its orientation in the membrane from OPM */
@@ -269,6 +271,8 @@ const EXAGGERATE = () => useStore.getState().exaggerate
  */
 /** 环境铺到对象半径的多少倍；数量是按 1.5 倍定的，铺得更开时按面积补 / how many subject radii the environment reaches; counts were set for 1.5 and are topped up by area when it reaches farther */
 const SPREAD = 1.8
+/** 示意的环境最多这么多个球：再多，拖动和完整重画都会慢下来 / at most this many spheres of schematic environment: more, and both dragging and the full redraw slow down */
+const ENV_BUDGET = 2_500_000
 async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assemblies: string[], mainAssembly: string, notes: Note[], busy: (name: string) => void): Promise<Panel[]> {
   const env = entry.environment!
   // replace：模型里名字匹配的那些东西拿掉，由下面生成的线代替（模型里的 DNA 弯而密，他画的直而稀）
@@ -327,12 +331,19 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
   const placed: { p: V3; r: number }[] = []
   const panels: Panel[] = []
   const source = (id: string, link: string | undefined): PanelSpec['source'] => ({ id, kind: 'model', title: id, method: tIn('zh', 'method.schematicEnvironment'), methodEn: tIn('en', 'method.schematicEnvironment'), resolution: null, year: null, tier: 'estimated', licence: 'CC0 1.0', attribution: 'RCSB PDB', citation: id, link })
-  // 大的先摆 / larger ones are placed first
-  for (const p of env.proteins) {
+  // 先量每种蛋白有多少个球（每个残基一个），算出整个环境要压到几成 / first count each kind's spheres (one per residue), to work out how far the whole environment must be scaled down
+  // 每个残基一个球：环境里要摆上万份，按原子画不动；平滑之后轮廓差不多
+  // one sphere per residue: the environment holds thousands of copies, too many to draw atom by atom, and after smoothing the outline is much the same
+  const coarse = await Promise.all(env.proteins.map(async (p) => {
     busy(p.pdb)
-    // 每个残基一个球：环境里要摆上万份，按原子画不动；平滑之后轮廓差不多
-    // one sphere per residue: the environment holds thousands of copies, too many to draw atom by atom, and after smoothing the outline is much the same
-    const m = coarsen(await loadMolecule({ kind: 'pdb', id: p.pdb }))
+    return coarsen(await loadMolecule({ kind: 'pdb', id: p.pdb }))
+  }))
+  const sizes = coarse.map((m) => m.atomCount)
+  const total = env.proteins.reduce((n, p, i) => n + p.count * volume * sizes[i]!, 0)
+  const envScale = (_atoms: number) => Math.min(1, ENV_BUDGET / Math.max(1, total))
+  // 大的先摆 / larger ones are placed first
+  for (const [pi, p] of env.proteins.entries()) {
+    const m = coarse[pi]!
     m.assemblies = m.assemblies.slice()
     const c: V3 = [0, 0, 0]
     for (let i = 0; i < m.atomCount; i++) for (let k = 0; k < 3; k++) c[k]! += m.pos[i * 3 + k]! / m.atomCount
@@ -344,8 +355,10 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
       nr++
     }
     const r = Math.sqrt(r2 / Math.max(1, nr)) * 1.25
-    // 份数按体积补，但总共不超过一千两百万个球 / copies are topped up by volume, to at most twelve million spheres in all
-    const ops = scatter(Math.min(Math.round(p.count * volume), Math.floor(12_000_000 / Math.max(1, m.atomCount))), r, c, box, rand, placed)
+    // 份数按体积补，但整个环境合起来不超过 ENV_BUDGET 个球：按各种蛋白要的球数等比例压下去
+    // copies are topped up by volume, but the whole environment stays within ENV_BUDGET spheres: every kind is scaled down in the same proportion
+    const wanted = Math.round(p.count * volume)
+    const ops = scatter(Math.max(1, Math.round(wanted * envScale(m.atomCount))), r, c, box, rand, placed)
     m.assemblies.push({ id: 'inferred', groups: [{ chains: m.chains.map((_, i) => i), operators: ops }] })
     const roles: Role[] = m.entities.map(() => 'extracellular')
     panels.push({
@@ -388,7 +401,7 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
     strandPanel({ ...env.fringe, count: Math.min(7000, Math.round(env.fringe.count * 20)) }, { centre: c0, hx: rim + t, hy: rim + t, z0: -(rim + t), z1: rim + t, exclude: rim - 16, within: rim + t + 14 }, 'fringe')
     // 乱线后面垫一层深一号的同色（一个球壳，切开后是后面的半个碗）：线之间露出的是它，不是白纸
     // a deeper shade of the same hue lies behind the strands (a spherical shell, of which the cut leaves the bowl at the back): it shows between them where paper would
-    panels.push(groundShell('fringe-ground', c0, rim + t * 0.8, [Math.max(0.2, env.fringe.lch[0] - 0.2), env.fringe.lch[1], env.fringe.lch[2]], source('ground', undefined)))
+    panels.push(groundShell('fringe-ground', c0, rim + t * 0.8, [Math.max(0.2, env.fringe.lch[0] - 0.2), env.fringe.lch[1], env.fringe.lch[2]], source('ground', undefined), 0.04))
   }
   notes.push({ key: env.replace ? 'note.rethreaded' : env.inside ? 'note.filledInside' : 'note.environment', params: { basis: env.basis, basisEn: env.basisEn } })
   // 填在对象里面的（inside、replace）是对象的一部分，拖动时照画；周围的是陪衬 / what fills the subject's inside (inside, replace) is part of it and drawn while dragging; what surrounds it is decoration
@@ -403,13 +416,13 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
  * copies of that protein are removed (the patch of membrane each carries stays), and a new panel
  * is returned.
  */
-function respike(entry: CatalogEntry, model: Molecule, assembly: string, notes: Note[]): Panel | null {
+function respike(entry: CatalogEntry, model: Molecule, assembly: string, notes: Note[]): Panel[] {
   const re = new RegExp(entry.respike!.pattern, 'i')
   const asm = model.assemblies.find((a) => a.id === assembly)
-  if (!asm) return null
+  if (!asm) return []
   const is = (ci: number) => re.test(model.entities[model.chains[ci]!.entity]!.description) && model.entities[model.chains[ci]!.entity]!.kind !== 'lipid'
   const group = asm.groups.find((g) => g.chains.some(is))
-  if (!group || group.operators.length === 0) return null
+  if (!group || group.operators.length === 0) return []
   const chains = group.chains.filter(is)
   const at = (m: Float32Array, p: V3): V3 => [m[0]! * p[0] + m[4]! * p[1] + m[8]! * p[2] + m[12]!, m[1]! * p[0] + m[5]! * p[1] + m[9]! * p[2] + m[13]!, m[2]! * p[0] + m[6]! * p[1] + m[10]! * p[2] + m[14]!]
   // 膜的中心：所有膜块位置的平均 / the membrane's centre: the mean position of all its patches
@@ -458,7 +471,11 @@ function respike(entry: CatalogEntry, model: Molecule, assembly: string, notes: 
   }
   // 刺衬在后面：切片的背面不切它，前排的刺之间露出的是后面那一圈刺（深一号的色调），不是底色
   // the spikes line the back: the back of the slab does not cut them, so between the spikes in front the ring behind shows (in a deeper tone) and not the ground
-  return { spec, mol: sub, coloring, align: null, keepBack: true }
+  // 刺后面垫一只深一号的碗（见 groundShell）：刺之间露出的是刺的深色，不是环境的底色
+  // a bowl of a deeper shade lies behind the spikes (see groundShell): between spikes their own deep tone shows, not the environment's ground
+  const own = coloring.override.find((c) => c) ?? [0.6, 0.15, 330]
+  const ground = groundShell(`${entry.id}:spike-ground`, centre, template.distance + 55, [own[0] - 0.28, own[1] * 0.8, own[2]], spec.source)
+  return [ground, { spec, mol: sub, coloring, align: null, keepBack: true }]
 }
 
 /**
@@ -468,7 +485,7 @@ function respike(entry: CatalogEntry, model: Molecule, assembly: string, notes: 
  * removes the half towards the viewer and the rest lines the back like a bowl, so that gaps between
  * things show it and not paper. It is a solid, and holds from any angle.
  */
-function groundShell(id: string, centre: V3, radius: number, lch: [number, number, number], source: PanelSpec['source']): Panel {
+function groundShell(id: string, centre: V3, radius: number, lch: [number, number, number], source: PanelSpec['source'], back = 0.3): Panel {
   const size = Math.max(9, radius / 40)
   const ops = fibonacciSphere(Math.round((4 * Math.PI * radius * radius) / (size * size))).map((d) => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, centre[0] + d[0] * radius, centre[1] + d[1] * radius, centre[2] + d[2] * radius, 1]))
   const m: Molecule = {
@@ -479,7 +496,7 @@ function groundShell(id: string, centre: V3, radius: number, lch: [number, numbe
   }
   return {
     spec: { label: '底色', labelEn: 'ground', source: { ...source, id }, assembly: 'inferred', entities: [{ entityId: 'ground', role: 'soluble', name: '底色', nameEn: 'ground', description: 'ground', organism: '' }], reason: '' },
-    mol: m, coloring: { roles: ['soluble'], hueShift: [0], nudge: [0], override: [lch] }, align: null, keepBack: true, oneId: true,
+    mol: m, coloring: { roles: ['soluble'], hueShift: [0], nudge: [0], override: [lch] }, align: null, keepBack: true, oneId: true, ground: radius * back,
   }
 }
 
@@ -722,7 +739,7 @@ function strung(entry: CatalogEntry, model: Molecule, assembly: string, notes: N
     // a still deeper shade of the same hue lines the cavity's wall (see groundShell): it shows in the gaps between beads, which is what sets them apart one from another
     {
       const l = lch as number[]
-      extra.push(groundShell(`${entry.id}:cavity`, mid, cavity + 8, [l[0]! - 0.2, l[1]! * 0.9, l[2]!], extra[0]!.spec.source))
+      extra.push(groundShell(`${entry.id}:cavity`, mid, cavity + 8, [l[0]! - 0.2, l[1]! * 0.9, l[2]!], extra[0]!.spec.source, 0.04))
     }
     for (const g of asm.groups) g.chains = g.chains.filter((ci) => !re.test(model.entities[model.chains[ci]!.entity]!.description))
     asm.groups = asm.groups.filter((g) => g.chains.length > 0)
@@ -839,7 +856,7 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
       const sub = subMolecule(model, [...chosen.g, ...chosen.g.flatMap((ci) => sugarOf.get(ci) ?? [])], `${model.id}:${id}`, titleEn)
       // 糖链和它所在的蛋白同色：他把糖链画成蛋白轮廓的一部分，不另外上色 / glycans take the colour of the protein they sit on: he paints them as part of the protein's outline, not in a colour of their own
       // 夸张：柄拉长收细、头放宽（只有刺，M2 不动）/ exaggeration: stalk stretched and narrowed, head widened (spikes only, not M2)
-      const tpl = EXAGGERATE() && id !== 'M2' ? exaggerate(sub, templateOf(sub, sub.chains.map((_, i) => i).filter((i) => !/glycan/i.test(sub.entities[sub.chains[i]!.entity]!.description)), membrane.centre), id === 'neuraminidase' ? { stretch: 1.25, stalk: 0.5, head: 1.15, split: 0.5 } : { stretch: 1.4, stalk: 0.75, head: 1.0, split: 0.55, lobes: 6, ripple: [9, 26] }) : chosen.t
+      const tpl = EXAGGERATE() && id !== 'M2' ? exaggerate(sub, templateOf(sub, sub.chains.map((_, i) => i).filter((i) => !/glycan/i.test(sub.entities[sub.chains[i]!.entity]!.description)), membrane.centre), id === 'neuraminidase' ? { stretch: 1.25, stalk: 0.5, head: 1.15, split: 0.5 } : { stretch: 1.4, stalk: 0.75, head: 1.05, split: 0.55, lobes: 10, ripple: [15, 24] }) : chosen.t
       const own = lch(sub.entities.find((e) => !/glycan/i.test(e.description)) ?? sub.entities[0]!)
       const panel = make(sub, `${model.id}:${id}`, title, titleEn, placeTemplate(tpl, membrane.centre, where), () => own, (e) => [e.description, e.description])
       panel.spec.source = { ...panel.spec.source, kind: 'model', method: tIn('zh', 'method.idealisedPlacement'), methodEn: tIn('en', 'method.idealisedPlacement'), licence: tIn('zh', 'licence.none'), licenceEn: tIn('en', 'licence.none'), attribution: '', citation: '', link: undefined }
@@ -853,7 +870,7 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
     outside[0]!.spec.source = { ...outside[0]!.spec.source, kind: 'model', method: tIn('zh', 'method.idealisedPlacement'), methodEn: tIn('en', 'method.idealisedPlacement'), licence: tIn('zh', 'licence.none'), licenceEn: tIn('en', 'licence.none'), attribution: '', citation: '', link: undefined }
     // 刺的后面垫一只深靛色的碗（见 groundShell）：柄之间的缝里露出的是它，不是白纸（他的画里那里是深靛色的后排刺）
     // a bowl of deep indigo lies behind the spikes (see groundShell): the slits between stalks show it and not paper (in his painting the darker rows behind show there)
-    outside.unshift(groundShell(`${model.id}:ground`, membrane.centre, membrane.mid + 19 + 168, [0.42, 0.09, 285], outside[0]!.spec.source))
+    outside.unshift(groundShell(`${model.id}:ground`, membrane.centre, membrane.mid + 19 + 168, [0.42, 0.09, 285], outside[0]!.spec.source, 0.16))
     tilts.sort((a, b) => a - b)
     if (EXAGGERATE()) notes.push({ key: 'note.exaggerated' })
     notes.push({ key: 'note.idealised', params: { ha: ha.length, na: na.length, m2: m2.length, tilt: Math.round(tilts[Math.floor(tilts.length / 2)] ?? 0) } })
@@ -1078,6 +1095,8 @@ export const useStore = create<State>((set, get) => ({
       return
     }
     set({ busy: say('busy.downloading', { name: pick(entry.title, entry.titleEn) }), error: '' })
+    // 加载中拖动过：加载完不把视角重置回正面 / dragged while loading: the view is not reset to the front once loaded
+    const rotAtStart = get().rot
     try {
       const src = entry.source
       const notes: Note[] = []
@@ -1171,8 +1190,8 @@ export const useStore = create<State>((set, get) => ({
       if (mesoscale && !entry.points) notes.push({ key: 'note.publishedModel' })
       // 数据里没有的部分，按已知结构推断着补上，各自是一个面板，和模型在同一个坐标系里
       // what the data lacks is filled in by inference from known structures, each part a panel of its own in the model's coordinate frame
-      const respiked = entry.respike && get().drawing === 'painted' ? respike(entry, mol, assembly, notes) : null
-      const inferred: Panel[] = respiked ? [respiked] : entry.infer ? await influenzaInterior(entry.infer, mol, notes, (name) => set({ busy: say('busy.downloading', { name }) }), get().drawing === 'painted', entry.colors ?? []) : []
+      const respiked = entry.respike && get().drawing === 'painted' ? respike(entry, mol, assembly, notes) : []
+      const inferred: Panel[] = respiked.length ? respiked : entry.infer ? await influenzaInterior(entry.infer, mol, notes, (name) => set({ busy: say('busy.downloading', { name }) }), get().drawing === 'painted', entry.colors ?? []) : []
       if (entry.arrange && get().drawing === 'painted') inferred.push(...arrange(entry, mol, assembly, notes))
       // 里面重画的东西不参与“对象有多大”的计算（否则环境的范围会跟着变），所以放到环境之后再加进来
       // what is redrawn inside takes no part in working out how large the subject is (or the environment's range would shift with it), so it joins after the environment
@@ -1225,6 +1244,7 @@ export const useStore = create<State>((set, get) => ({
         panels: [{ spec, mol, coloring, align: null, ...(!mesoscale && surroundings.length ? { noCut: true } : {}) }, ...inferred],
         colorings: [coloring, ...inferred.map((p) => p.coloring)],
         ...freshLook(),
+        ...(get().rot !== rotAtStart && get().spec?.catalog === id ? { rot: get().rot } : {}),
         // 很大的模型默认放大到中间一块：整个画出来时每个分子只有几个像素，什么也看不清
         // a very large model opens zoomed in on its middle: drawn whole, each molecule is a few pixels and nothing can be made out
         // 周围铺了环境的，画面跟着环境变大了，按同样的比例放大回来，对象在画面里的大小不变

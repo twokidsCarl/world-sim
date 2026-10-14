@@ -68,6 +68,8 @@ export interface Placement {
    * The model's beads are twice as wide as real nucleic acid and draw as fat tubes.
    */
   trueFibre?: boolean
+  /** 垫在后面的底色：比切面再往后退这么多（Å）才画，切片背面不切（实例标志 10）/ a ground laid behind: drawn only this far (Å) behind the cut, and not cut at the back of a slab (instance flag 10) */
+  ground?: number
   /** 剖开时不切它（叠在密度图里的原子模型）/ left whole by a cut (an atomic model shown inside a density map) */
   noCut?: boolean
 }
@@ -231,6 +233,10 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
         for (let r = 0; r < 3; r++) for (let col = 0; col < 4; col++) data[k + r * 4 + col] = m[col * 4 + r]!
         const centre = p.center ?? (p.perCopy || p.strand ? ([m[0]! * c[0]! + m[4]! * c[1]! + m[8]! * c[2]! + m[12]!, m[1]! * c[0]! + m[5]! * c[1]! + m[9]! * c[2]! + m[13]!, m[2]! * c[0]! + m[6]! * c[1]! + m[10]! * c[2]! + m[14]!] as const) : null)
         if (p.noCut) data[k + 15] = 3
+        else if (p.ground) {
+          data[k + 12] = p.ground
+          data[k + 15] = 10
+        }
         // 用线段连起来的东西（核酸的走向）：按每个球、每段线自己的深度来切，不按整体的中心 / things joined by segments (the course of a nucleic acid) are cut sphere by sphere and segment by segment at their own depth, not by a centre of the whole
         else if (p.perCopy && mol.segments?.length) data[k + 15] = 5
         // 一整张不分块的膜（只有一份、球很多的脂质）：没有“整体的中心”可言，按球来切 / a membrane in one piece (lipids in a single copy with very many spheres) has no meaningful centre and is cut sphere by sphere
