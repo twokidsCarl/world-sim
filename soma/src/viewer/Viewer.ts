@@ -102,6 +102,7 @@ import type { LoadedSkinUv } from '../look/load.ts'
 import { EyeLook, LookEyes } from '../look/eyes.ts'
 import { fitEye, type EyeFit, type M3 } from '../look/eyesFit.ts'
 import { pupilTarget } from '../look/eyesLife.ts'
+import { HairLayer } from '../hair/layer.ts'
 import { FLY_MIN_FILL, FLY_MIN_RADIUS, FLY_SPEED, displacementOf, ensureLumenData, fillingOf, lumenCandidates, registerLumenGeometry, reportFly, segmentIds, showCanal, useLumen, type LumenData, type LumenState } from '../lumen/state.ts'
 
 const LEGACY_SORT = typeof location !== 'undefined' && new URLSearchParams(location.search).get('sort') === 'origin'
@@ -170,6 +171,13 @@ export interface BenchResult {
   size: [number, number]
 }
 
+/** 跟随皮肤的覆盖层（皱纹层、疼痛分布层、写实皮肤、毛发……）/ An overlay that follows the skin (wrinkles, pain map, lifelike skin, hair …). */
+interface Follower {
+  patch: Pick<SkinPatch, 'setPositions' | 'setInfluences' | 'setOffset'> & { mesh: Object3D }
+  setSkinning(mode: SkinningMode): void
+  dispose(): void
+}
+
 /** 所选部件超过这个数量时不再绘制透视色（它会使绘制调用翻倍）。 */
 /** Above this many selected parts the see-through tint is skipped (it doubles their draw calls). */
 const XRAY_MAX = 300
@@ -215,6 +223,8 @@ export type ViewState = Pick<
   | 'gaze'
   | 'blink'
   | 'skinUv'
+  | 'hairStyle'
+  | 'hairColor'
   | 'shape'
   | 'shapeControls'
 >
@@ -316,7 +326,12 @@ export class Viewer {
   /** 已加载的各系统 GLB 的字节哈希（文件名 → sha256 前 16 位）/ Byte hashes of the system GLBs loaded so far (file name → first 16 hex of sha256). */
   private glbHashes = new Map<string, string>()
   /** 贴在皮肤本体上、跟着它变形的覆盖网格（皱纹细节、疼痛分布）/ Overlay meshes on the skin proper that deform with it (wrinkle detail, pain map). */
-  private followers: { patch: SkinPatch; setSkinning(mode: SkinningMode): void; dispose(): void }[] = []
+  private followers: Follower[] = []
+  /** 写实模式的毛发层（src/hair/）；它替代的外壳在写实模式下藏起来 / the lifelike hair layer (src/hair/); the shells it replaces are hidden in lifelike mode */
+  private hair: HairLayer | null = null
+  private hairCovers = ''
+  private hairDirty = false
+  private hideWithHair: { from: ReadonlySet<string>; covers: string; set: ReadonlySet<string> } | null = null
   private detailLayer: FaceDetailLayer | null = null
   // —— 皮肤的开口 / the skin's openings ——
   private openings: FaceOpenings | null = null
@@ -824,6 +839,8 @@ export class Viewer {
     this.throughShown = false
     this.detailLayer = null
     this.lookSkin = null
+    this.hair = null
+    this.hairCovers = ''
     this.appliedSkinUv = null
     this.lookUvPerSkin = null
     this.lookEyes = null
@@ -1182,11 +1199,13 @@ export class Viewer {
       p.skinOpaque !== s.skinOpaque ||
       p.look !== s.look ||
       p.skinUv !== s.skinUv ||
+      this.hairDirty ||
       skinDrawnOpaque(p, this.mainSkin) !== skinDrawnOpaque(s, this.mainSkin) ||
       p.selection !== s.selection
     this.stimDirty = false
     this.lumenDirty = false
     this.eyesDirty = false
+    this.hairDirty = false
     const explodeChanged =
       !p ||
       p.explode !== s.explode ||
@@ -1198,6 +1217,8 @@ export class Viewer {
     this.syncDetail(s)
     this.syncLook(s)
     this.syncEyes(s)
+    // 发型、发色变了：只告诉毛发层 / hair style or colour changed: only the hair layer needs telling
+    if (this.hair && (!p || p.hairStyle !== s.hairStyle || p.hairColor !== s.hairColor)) this.syncHair(this.lookShowing())
     // 写实外观：皮肤画成不透明时才去取 UV 网格 / lifelike look: the UV mesh is fetched only once the skin is drawn opaque
     if (this.source === useApp.getState && s.look && !s.skinUv && skinDrawnOpaque(s, this.mainSkin)) void useApp.getState().ensureSkinUv()
     // 皮肤不透明时要藏哪些部件，写在管线报告里：第一次用到时去取 / which parts to hide under an opaque skin is in the pipeline report: fetched on first use
@@ -1285,7 +1306,7 @@ export class Viewer {
           adjacentMode: s.adjacentMode,
           // 通路上的部件像被选中一样总是显示 / parts on the pathway are always shown, like selected ones
           selected: this.stimParts.size ? new Set([...s.selection.set, ...this.stimParts]) : s.selection.set,
-          unfitted: skinDrawnOpaque(s, this.mainSkin) ? this.hideWithOpaqueSkin(s) : null,
+          unfitted: skinDrawnOpaque(s, this.mainSkin) ? this.withHairCovers(this.hideWithOpaqueSkin(s)) : null,
           forced: this.throughOpenings(s),
         },
         this.display,
@@ -1430,7 +1451,7 @@ export class Viewer {
     return i >= 0 && this.inst[i]! >= 0 && this.skinGeometry.has(i) ? i : -1
   }
 
-  private applyRigToFollower(patch: SkinPatch): void {
+  private applyRigToFollower(patch: Follower['patch']): void {
     const rig = this.appliedRig
     const i = this.mainSkinIndex()
     if (!rig || i < 0 || !this.batches) return
@@ -1439,7 +1460,7 @@ export class Viewer {
   }
 
   /** 把一块覆盖网格挂到皮肤上：当前的位置、绑定、蒙皮方式和爆炸位移都跟上 / Attach an overlay to the skin: current positions, rig, skinning mode and explode offset all follow. */
-  private addFollower(f: { patch: SkinPatch; setSkinning(mode: SkinningMode): void; dispose(): void }): void {
+  private addFollower(f: Follower): void {
     const i = this.mainSkinIndex()
     if (i < 0 || !this.batches) return
     const b = this.batches.partBuffers(this.inst[i]!)
@@ -1451,7 +1472,7 @@ export class Viewer {
     this.root.add(f.patch.mesh)
   }
 
-  private removeFollower(f: { patch: SkinPatch; dispose(): void }): void {
+  private removeFollower(f: Follower): void {
     this.followers = this.followers.filter((x) => x !== f)
     this.root.remove(f.patch.mesh)
     f.dispose()
@@ -1760,6 +1781,47 @@ export class Viewer {
     }
     if (show && !this.lookUvPerSkin && this.appliedSkinUv) this.lookUvPerSkin = LookSkin.uvPerSkinVertex(this.appliedSkinUv)
     this.detailLayer?.useLook(show ? this.skinLook : null, show ? this.lookUvPerSkin : null)
+    this.syncHair(show)
+  }
+
+  /** 毛发层：写实外观第一次显示时才建（数据随后才取）/ The hair layer: built the first time the lifelike look shows (its data are fetched after that). */
+  private syncHair(show: boolean): void {
+    if (!show && !this.hair) return
+    const i = this.mainSkinIndex()
+    if (i < 0) return
+    const s = this.source()
+    if (!this.hair) {
+      const base = new URL('hair/', new URL(this.baseUrl, location.href)).href
+      this.hair = new HairLayer(base, this.skinGeometry.get(i)!, this.skinning, () => this.hairChanged())
+      this.addFollower(this.hair)
+    }
+    this.hair.set({ show, style: s.hairStyle, colour: s.hairColor })
+  }
+
+  /** 毛发层有变化：重画；它替代的外壳变了就重算显示 / The hair layer changed: redraw; if the shells it replaces changed, recompute the display. */
+  private hairChanged(): void {
+    this.dirty = true
+    const covers = this.hair?.covers().join() ?? ''
+    if (covers !== this.hairCovers) {
+      this.hairCovers = covers
+      this.hairDirty = true
+      this.syncNeeded = true
+    }
+  }
+
+  /** 皮肤不透明时藏的部件，加上毛发正在替代的外壳 / The parts hidden under an opaque skin, plus the shells the hair currently replaces. */
+  private withHairCovers(set: ReadonlySet<string>): ReadonlySet<string> {
+    if (!this.hairCovers) return set
+    const h = this.hideWithHair
+    if (h && h.from === set && h.covers === this.hairCovers) return h.set
+    const out = new Set([...set, ...this.hairCovers.split(',')])
+    this.hideWithHair = { from: set, covers: this.hairCovers, set: out }
+    return out
+  }
+
+  /** 毛发层的状态（验证用）/ State of the hair layer (verification). */
+  hairState(): ReturnType<HairLayer['info']> | null {
+    return this.hair?.info() ?? null
   }
 
   /** 按当前表情设各层权重；只有皮肤画成不透明（且不是体表图）时才显示 / Set the layer weights from the current expression; shown only while the skin is drawn opaque (and not as a skin map). */

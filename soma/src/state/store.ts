@@ -14,6 +14,8 @@ import { fetchJson } from '../anatomy/load.ts'
 import { loadDetail, type LoadedDetail } from '../pain/detail.ts'
 import { type LoadedSkinUv, loadSkinUv } from '../look/load.ts'
 import { DEFAULT_IRIS, type GazeSetting, type IrisName } from '../look/types.ts'
+import type { HairStyle } from '../look/types.ts'
+import { DEFAULT_HAIR_COLOUR, type HairColour } from '../hair/colour.ts'
 import { loadFace, type AUs, type LoadedFace } from '../pain/face.ts'
 import { loadSkinMaps, regionParts, regionsForParts, type LoadedSkinMaps, type SkinMapId } from '../anatomy/skinmaps.ts'
 import type { Provenance, SystemId } from '../anatomy/types.ts'
@@ -251,6 +253,10 @@ export interface AppState {
   gaze: GazeSetting
   /** 写实的眼自发眨眼、有微扫视（缺省）；false 静止（截图、测试用）/ The lifelike eyes blink and make microsaccades (default); false = still (for screenshots, tests). */
   blink: boolean
+  /** 写实模式的发型；null = 这副人体的默认（见 hair.json 的 defaultStyle，现在都是短发）/ The lifelike hair style; null = this body's default (defaultStyle in hair.json, short for both at present). */
+  hairStyle: HairStyle | null
+  /** 写实模式的发色 / The lifelike hair colour. */
+  hairColor: HairColour
   selection: Selection
   hover: string | null
   explode: number
@@ -315,6 +321,8 @@ export interface AppState {
   setIris(iris: IrisName): void
   setGaze(gaze: GazeSetting): void
   setBlink(on: boolean): void
+  setHairStyle(style: HairStyle | null): void
+  setHairColor(colour: HairColour): void
   ensureSkinReport(): void
   setStimSettings(patch: Partial<StimSettings>): void
   setStimArmed(on: boolean): void
@@ -499,6 +507,8 @@ export const useApp = create<AppState>()((set, get) => ({
   iris: DEFAULT_IRIS,
   gaze: 'camera',
   blink: true,
+  hairStyle: null,
+  hairColor: DEFAULT_HAIR_COLOUR,
   rig: null,
   rigStatus: 'idle',
   rigMessage: '',
@@ -837,6 +847,8 @@ export const useApp = create<AppState>()((set, get) => ({
   setIris: (iris) => set({ iris }),
   setGaze: (gaze) => set({ gaze }),
   setBlink: (blink) => set({ blink }),
+  setHairStyle: (hairStyle) => set({ hairStyle }),
+  setHairColor: (hairColor) => set({ hairColor }),
   rejectFace: (message) => set({ face: null, faceStatus: 'error', faceMessage: message }),
   setStimSettings: (patch) =>
     set((s) => {
