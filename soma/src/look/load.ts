@@ -23,10 +23,14 @@ export interface LoadedSkinColour {
   lut: Uint16Array
   /** 部位贴图 RGBA8，第 0 行是 v = 0 / the region map, RGBA8, row 0 is v = 0 */
   regions: { width: number; height: number; data: Uint8Array }
+  /** 唇红的查找表（half-float 位模式）；旧数据里没有 / the vermilion's table (half-float bits); absent in older data */
+  lutLip?: Uint16Array | null
   /** 细节贴图、微细起伏贴图（RGBA8）和预积分表（half-float 位模式）；旧数据里没有 / the detail map, micro-relief tile (RGBA8) and pre-integrated table (half-float bits); absent in older data */
   detail?: { width: number; height: number; data: Uint8Array } | null
   micro?: { width: number; height: number; data: Uint8Array } | null
   preint?: Uint16Array | null
+  /** 指腹贴图（RGBA8）/ the pad map (RGBA8) */
+  pads?: { width: number; height: number; data: Uint8Array } | null
 }
 
 /** 核对颜色数据的尺寸；不对就抛错 / Check the sizes of the colour data; throws when they are wrong. */
@@ -54,8 +58,13 @@ export async function loadSkinColour(dataset: string): Promise<LoadedSkinColour 
     return r.ok ? new Uint8Array(await r.arrayBuffer()) : null
   }
   try {
-    const [detail, micro, preint] = await Promise.all([bytes(data.detail?.file), bytes(data.micro?.file), bytes(data.preintegrated?.file)])
+    const [detail, micro, preint, lip, pads] = await Promise.all([bytes(data.detail?.file), bytes(data.micro?.file), bytes(data.preintegrated?.file), bytes(data.lut.lipFile), bytes(data.pads?.file)])
     Object.assign(out, checkSkinDetail(data, detail ? await decodePngRgba(detail) : null, micro ? await decodePngRgba(micro) : null, preint))
+    if (lip && lip.byteLength === data.lut.size * data.lut.size * 8) out.lutLip = new Uint16Array(lip.slice().buffer)
+    if (pads) {
+      const img = await decodePngRgba(pads)
+      if (img.width === data.pads?.size && img.height === data.pads.size) out.pads = img
+    }
   } catch (e) {
     console.warn('[soma] lifelike skin detail unavailable:', e)
   }

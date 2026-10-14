@@ -10,8 +10,10 @@ Bake the per-region melanin and blood multipliers into one texture on the MHR UV
 通道 / channels
     R  黑色素倍数 m：m = 2^((R − 128) / 32) / melanin multiplier
     G  血量倍数 b：b = 2^((G − 128) / 32) / blood multiplier
-    B  手足掌权重 p：黑色素在对数空间里拉向一个与肤色无关的固定值，Cm = Cm^(1−p) · Cmpalm^p
-       palmoplantar weight p: melanin is pulled in log space to a fixed value independent of skin tone
+    B  结构：128 + 127·(p − q)。p 是手足掌权重（黑色素在对数空间里拉向一个与肤色无关的固定值，Cm = Cm^(1−p) · Cmpalm^p），
+       q 是唇红权重（改用唇红自己的查找表）；两者不重叠
+       structure: 128 + 127·(p − q). p is the palmoplantar weight (melanin is pulled in log space to a fixed value
+       independent of skin tone), q the vermilion weight (switching to the vermilion's own table); the two never overlap
     A  粗糙度 × 255 / roughness × 255
 
 做法 / How
@@ -43,6 +45,7 @@ MHR_UV = 'data/raw/look/mhr-lod0-uv.bin'
 PREVIEW = 'data/raw/skin/maps'
 LOG_SCALE = 32.0  # 每个倍频程 32 级 / 32 steps per octave
 THICK_MM = 40.0   # 细节贴图里厚度的上限 / the thickness limit in the detail map
+PAD_RHO_MM = 10.0  # 指腹贴图里距离的上限 / the distance limit in the pad map
 KAPPA_MAX = 0.5   # 曲率上限 mm⁻¹，与 tools/look/preintegrated.ts 相同 / curvature limit in mm⁻¹, as in tools/look/preintegrated.ts
 # 每个部位的微细起伏：(幅度, 类型)；类型 0 = 身体的细毛孔和皮沟，0.5 = 面部毛孔，1 = 皮嵴。都是假设（面部毛孔的尺寸和密度见 micro.ts）
 # micro-relief per region: (amplitude, type); type 0 = the body's fine pores and furrows, 0.5 = facial pores, 1 = ridges.
@@ -50,7 +53,7 @@ KAPPA_MAX = 0.5   # 曲率上限 mm⁻¹，与 tools/look/preintegrated.ts 相�
 RELIEF = {
     'skin': (0.6, 0.0), 'cheek': (1.0, 0.5), 'forehead': (0.9, 0.5), 'nose': (1.25, 0.5), 'ears': (0.5, 0.0), 'eyelids': (0.45, 0.0),
     'lips': (0.25, 0.0), 'dorsalForearm': (0.8, 0.0), 'elbowsKnees': (1.1, 0.0), 'backOfHand': (1.0, 0.0), 'palmsSoles': (0.9, 1.0),
-    'fingertips': (1.0, 1.0), 'nails': (0.06, 0.0), 'areola': (0.7, 0.0), 'genitalia': (0.8, 0.0),
+    'fingertips': None, 'nails': (0.06, 0.0), 'areola': (0.7, 0.0), 'genitalia': (0.8, 0.0),
 }
 
 
@@ -151,6 +154,10 @@ def seg_dist(P, a, b):
     return np.linalg.norm(P - (a + t[:, None] * ab), axis=1), ((P - a) @ ab) / max(ab @ ab, 1e-12)
 
 
+def perp_rows(v, d):
+    return v - (v @ d)[:, None] * d[None, :]
+
+
 def unit(v):
     return v / max(np.linalg.norm(v), 1e-12)
 
@@ -221,11 +228,15 @@ class Layers:
         self.mel = self.mel * (1 - w) + np.log2(r['melanin']) * w
         self.blood = self.blood * (1 - w) + np.log2(r['blood']) * w
         self.rough = self.rough * (1 - w) + r.get('roughness', 0.5) * w
+        if name == 'lips':
+            palm = -1.0  # 唇红：B 通道的负半边 / vermilion: the negative half of channel B
         if palm is not None:
             self.palm = self.palm * (1 - w) + palm * w
-        amp, kind = RELIEF[name]
-        self.relief = self.relief * (1 - w) + amp * w
-        self.rtype = self.rtype * (1 - w) + kind * w
+        # None：这一层不改起伏（指腹的皮嵴归掌侧和指腹贴图管）/ None: this layer leaves the relief alone (finger-pad ridges belong to the palmar side and the pad map)
+        if RELIEF[name] is not None:
+            amp, kind = RELIEF[name]
+            self.relief = self.relief * (1 - w) + amp * w
+            self.rtype = self.rtype * (1 - w) + kind * w
         self.names.append(name)
         self.ids[w > 0.5] = len(self.names) - 1
 
@@ -256,6 +267,8 @@ def bake(body, colour):
     N = np.einsum('nk,nkj->nj', bary, VN[corners])
     N /= np.maximum(np.linalg.norm(N, axis=1, keepdims=True), 1e-12)
     L = Layers(len(texel))
+    pad_rho = np.zeros(len(texel))
+    pad_w = np.zeros(len(texel))
     x, y, z = X[:, 0], X[:, 1], X[:, 2]
 
     # ── 面部 / face ──
@@ -362,8 +375,28 @@ def bake(body, colour):
             d, t = seg_dist(X, a, b)
             dd = unit(b - a)
             v = unit(perp(palm_n, dd))
-            w = soft(d, 0.011, 0.015) * ramp(t, 0.4, 0.55) * soft(t, 1.0, 1.15) * ramp(-(N @ v), 0.35, 0.65)
+            # 过渡放宽，指甲和指腹之间不出现一圈硬边 / wider transitions, so no hard ring shows between nail and pad
+            w = soft(d, 0.010, 0.016) * ramp(t, 0.3, 0.6) * soft(t, 1.0, 1.2) * ramp(-(N @ v), 0.2, 0.7)
             L.add('nails', w, R['nails'])
+        # 指腹的涡状皮嵴：每个指腹一个中心，记下到中心的距离（毫米）和权重，着色器按距离画出一圈圈的嵴
+        # whorl-like ridges on the finger pads: one core per pad; record the distance to the core (mm) and a weight, and the shader draws rings of ridges by that distance
+        for kind, chain in hand_digits:
+            a, b = chain[-2], chain[-1]
+            d, t = seg_dist(X, a, b)
+            dd = unit(b - a)
+            v = unit(perp(palm_n, dd))
+            pw = soft(d, 0.012, 0.016) * ramp(t, 0.0, 0.25) * soft(t, 1.0, 1.2) * ramp(N @ v, -0.25, 0.35) * in_hand
+            sel = pw > 0.5
+            if sel.sum() < 5:
+                continue
+            # 中心：远节 55% 处，掌侧表面上 / the core: 55% along the distal phalanx, on the palmar surface
+            axis_pt = a + 0.55 * (b - a)
+            rad = float(np.median(np.linalg.norm(perp_rows(X[sel] - axis_pt, dd), axis=1)))
+            core = axis_pt + v * rad
+            rho = np.linalg.norm(X - core, axis=1)
+            take = pw > pad_w
+            pad_rho[take] = rho[take]
+            pad_w[take] = pw[take]
         # 膝前 / anterior knee
         pat, knee = J[f'patella_{s}'], J[f'knee_{s}']
         kant = unit(pat - knee)
@@ -416,7 +449,7 @@ def bake(body, colour):
     mel = L.mel + np.log2(1 + mo['melanin'] * np.clip(nm, -1.2, 1.2))
     blood = L.blood + np.log2(1 + mo['blood'] * np.clip(nb, -1.2, 1.2))
 
-    vals = np.stack([128 + LOG_SCALE * mel, 128 + LOG_SCALE * blood, 255 * L.palm, 255 * L.rough], axis=1)
+    vals = np.stack([128 + LOG_SCALE * mel, 128 + LOG_SCALE * blood, 128 + 127 * L.palm, 255 * L.rough], axis=1)
     img = np.zeros((SIZE * SIZE, 4))
     mask = np.zeros(SIZE * SIZE, bool)
     img[texel] = vals
@@ -469,15 +502,26 @@ def bake(body, colour):
         if sel.any():
             thin[name] = round(float(np.median(th_t[sel])), 1)
 
+    # ── 指腹贴图：R 到涡心的距离 / PAD_RHO_MM，G 权重 / the pad map: R distance to the whorl core / PAD_RHO_MM, G weight ──
+    pvals = np.stack([255 * np.clip(pad_rho * 1000 / PAD_RHO_MM, 0, 1), 255 * np.clip(pad_w, 0, 1), np.zeros(len(texel))], axis=1)
+    pimg = np.zeros((SIZE * SIZE, 3))
+    pimg[texel] = pvals
+    pmask = np.zeros(SIZE * SIZE, bool)
+    pmask[texel] = True
+    pimg = push_pull(pimg.reshape(SIZE, SIZE, 3), pmask.reshape(SIZE, SIZE))
+    pout = np.clip(np.round(pimg), 0, 255).astype(np.uint8)
+    Image.fromarray(pout, 'RGB').save(f'{bdir}/look/skin-pads.png', optimize=True)
+
     # ── 运行时说明 / runtime description ──
     meta = {
         'schema': 1,
         'skin': skin_id,
-        'lut': {'file': 'skin-lut.bin', **{k: colour['lut'][k] for k in ('size', 'cmMax', 'chdMax')}},
+        'lut': {'file': 'skin-lut.bin', **{k: colour['lut'][k] for k in ('lipFile', 'size', 'cmMax', 'chdMax')}},
         'regions': {'file': 'skin-regions.png', 'size': SIZE, 'logScale': LOG_SCALE, 'rowOrder': 'row 0 is v = 0',
                     'palmMelanin': R['palmsSoles']['palmMelanin']},
         'detail': {'file': 'skin-detail.png', 'size': SIZE, 'rowOrder': 'row 0 is v = 0', 'reliefMax': 1.5, 'thicknessMaxMm': THICK_MM, 'kappaMax': KAPPA_MAX,
                    'channels': 'R relief amplitude / reliefMax; G relief type (0 body, 0.5 facial pores, 1 ridges); B sqrt(thickness / thicknessMaxMm); A sqrt(curvature / kappaMax)'},
+        'pads': {'file': 'skin-pads.png', 'size': SIZE, 'rhoMaxMm': PAD_RHO_MM, 'ridgeMm': 0.45, 'channels': 'R distance to the finger-pad whorl core / rhoMaxMm, G pad weight'},
         'micro': {'file': 'skin-micro.png', 'size': 512, 'tileMm': 10, 'channels': 'R facial pores, G body micro-relief, B ridges; height = (x − 128) / 127'},
         'preintegrated': {'file': 'skin-preint.bin', 'width': 128, 'height': 32, 'kappaMax': KAPPA_MAX, 'format': 'RGBA half-float; u = N·L·0.5 + 0.5, v = sqrt(curvature / kappaMax)'},
         'tone': {k: colour['tone'][k] for k in ('cmMax', 'default', 'nistMax', 'bloodChd')},

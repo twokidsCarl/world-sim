@@ -94,13 +94,14 @@ export function toneMelanin(tone: number, cmMax: number): number {
 }
 
 /** 几个写实皮肤材质共用的贴图槽：换数据时把所有节点的贴图一起换掉 / Texture slots shared by every lifelike skin material: new data swap the texture of every node at once. */
-type Slot = 'lut' | 'regions' | 'detail' | 'micro' | 'preint'
+type Slot = 'lut' | 'lutLip' | 'regions' | 'detail' | 'micro' | 'preint' | 'pads'
 
 const halfOf = (v: number[]): Uint16Array => new Uint16Array(v.map((x) => DataUtils.toHalfFloat(x)))
 
 function fallbackTexture(slot: Slot): DataTexture {
   switch (slot) {
-    case 'lut': {
+    case 'lut':
+    case 'lutLip': {
       const c = new Color(FALLBACK_ALBEDO)
       return lutTexture(halfOf([c.r, c.g, c.b, 1]), 1)
     }
@@ -111,6 +112,8 @@ function fallbackTexture(slot: Slot): DataTexture {
       return regionTexture(new Uint8Array([0, 0, 255, 1]), 1, 1)
     case 'micro':
       return regionTexture(new Uint8Array([128, 128, 128, 255]), 1, 1, true)
+    case 'pads':
+      return regionTexture(new Uint8Array([0, 0, 0, 255]), 1, 1)
     case 'preint':
       return lutTexture(halfOf([0, 0, 0, 1]), 1)
   }
@@ -142,19 +145,21 @@ export class SkinLook {
   readonly microStrength = uniform(1)
   /** 腔体遮蔽的强度 / cavity occlusion strength */
   readonly cavityStrength = uniform(0.6)
+  /** 指腹贴图里距离的上限（毫米）/ the distance limit in the pad map (mm) */
+  readonly padRhoMaxMm = uniform(10)
   /** 预积分漫反射：1 开 0 关（没有表时为 0）/ pre-integrated diffuse: 1 on, 0 off (0 without a table) */
   readonly preintOn = uniform(0)
   /** 静止姿势下每个皮肤顶点的位置和法线（三平面映射用），由写实皮肤层第一次建立时记下
    * rest-pose position and normal per skin vertex (for the triplanar mapping), taken when the lifelike skin layer is first built */
   rest: { position: Float32Array; normal: Float32Array } | null = null
   private readonly textures: Record<Slot, DataTexture>
-  private readonly nodes: Record<Slot, N[]> = { lut: [], regions: [], detail: [], micro: [], preint: [] }
+  private readonly nodes: Record<Slot, N[]> = { lut: [], lutLip: [], regions: [], detail: [], micro: [], preint: [], pads: [] }
   private readonly materials = new Set<Material>()
   private colour: LoadedSkinColour | null = null
   private tone: number | null = null
 
   constructor() {
-    this.textures = { lut: fallbackTexture('lut'), regions: fallbackTexture('regions'), detail: fallbackTexture('detail'), micro: fallbackTexture('micro'), preint: fallbackTexture('preint') }
+    this.textures = { lut: fallbackTexture('lut'), lutLip: fallbackTexture('lutLip'), regions: fallbackTexture('regions'), detail: fallbackTexture('detail'), micro: fallbackTexture('micro'), preint: fallbackTexture('preint'), pads: fallbackTexture('pads') }
   }
 
   /** 现在用的颜色数据 / the colour data in use */
@@ -172,12 +177,15 @@ export class SkinLook {
     if (colour === this.colour) return
     this.colour = colour
     const old = { ...this.textures }
-    const next: Record<Slot, DataTexture> = { lut: fallbackTexture('lut'), regions: fallbackTexture('regions'), detail: fallbackTexture('detail'), micro: fallbackTexture('micro'), preint: fallbackTexture('preint') }
+    const next: Record<Slot, DataTexture> = { lut: fallbackTexture('lut'), lutLip: fallbackTexture('lutLip'), regions: fallbackTexture('regions'), detail: fallbackTexture('detail'), micro: fallbackTexture('micro'), preint: fallbackTexture('preint'), pads: fallbackTexture('pads') }
     if (colour) {
       const d = colour.data
       next.lut.dispose()
       next.regions.dispose()
       next.lut = lutTexture(colour.lut, d.lut.size)
+      next.lutLip.dispose()
+      // 没有唇红表时唇红也用皮肤的表 / without a vermilion table the vermilion uses the skin's
+      next.lutLip = lutTexture(colour.lutLip ?? colour.lut, d.lut.size)
       next.regions = regionTexture(colour.regions.data, colour.regions.width, colour.regions.height)
       this.cmMax.value = d.lut.cmMax
       this.chdMax.value = d.lut.chdMax
@@ -192,6 +200,11 @@ export class SkinLook {
         next.detail = regionTexture(colour.detail.data, colour.detail.width, colour.detail.height)
         this.reliefMax.value = d.detail.reliefMax
         this.thicknessMaxMm.value = d.detail.thicknessMaxMm
+      }
+      if (colour.pads && d.pads) {
+        next.pads.dispose()
+        next.pads = regionTexture(colour.pads.data, colour.pads.width, colour.pads.height)
+        this.padRhoMaxMm.value = d.pads.rhoMaxMm
       }
       if (colour.micro) {
         next.micro.dispose()
@@ -254,9 +267,11 @@ const TILE_M = 0.01
 const MICRO_PX = 512
 /** 每层高度 ±1 对应的起伏（米）：面部毛孔、身体纹理、皮嵴、大尺度的皮沟（视觉上定的，假设）
  * relief (m) of height ±1 per layer: facial pores, body texture, ridges, large-scale furrows (set by eye; assumed) */
-const AMP = { pores: 60e-6, body: 14e-6, ridges: 40e-6, macro: 25e-6 }
+const AMP = { pores: 60e-6, body: 14e-6, ridges: 40e-6, macro: 25e-6, pads: 25e-6 }
 /** 大尺度皮沟用身体纹理放大的倍数 / scale-up of the body texture used for the large-scale furrows */
 const MACRO_SCALE = 3.7
+/** 指腹涡状嵴的嵴距（毫米），与平铺的皮嵴相同 / ridge spacing of the finger-pad whorls (mm), the same as the tiled ridges */
+const PAD_RIDGE_MM = 0.45
 /** 双瓣镜面（UE 次表面配置的缺省值）/ dual-lobe specular (the defaults of UE's subsurface profile) */
 const LOBE = { rough0: 0.75, rough1: 1.3, mix: 0.85 }
 
@@ -266,13 +281,18 @@ export function makeSkinMaterial(look: SkinLook, opts: SkinMaterialOptions = {})
   const det: N = look.sample('detail', uv())
   const melMul: N = exp2(reg.r.mul(255).sub(128).div(look.logScale))
   const bloodMul: N = exp2(reg.g.mul(255).sub(128).div(look.logScale))
+  // B = 128 + 127·(手足掌 − 唇红) / B = 128 + 127·(palmoplantar − vermilion)
+  const bSigned: N = reg.b.mul(255).sub(128).div(127)
+  const palmW: N = clamp(bSigned, 0, 1)
+  const lipW: N = clamp(bSigned.negate(), 0, 1)
   // 手足掌：黑色素在对数空间里拉向固定值 / palms and soles: melanin pulled to a fixed value in log space
   const lnCm: N = log(max((look.toneCm as N).mul(melMul), float(1e-6)))
-  const cm: N = exp(mix(lnCm, look.palmLnCm, reg.b))
+  const cm: N = exp(mix(lnCm, look.palmLnCm, palmW))
   const chd: N = (look.bloodChd as N).mul(bloodMul)
   const n1: N = (look.lutSize as N).sub(1)
   const at: N = (vec2 as N)(sqrt(clamp(cm.div(look.cmMax), 0, 1)).mul(n1).add(0.5), sqrt(clamp(chd.div(look.chdMax), 0, 1)).mul(n1).add(0.5)).div(look.lutSize)
-  const albedo: N = look.sample('lut', at).rgb
+  // 唇红用自己的表（更薄的等效表皮）/ the vermilion uses its own table (a thinner effective epidermis)
+  const albedo: N = mix(look.sample('lut', at).rgb, look.sample('lutLip', at).rgb, lipW)
 
   // ── 三平面微细起伏 / triplanar micro-relief ──
   const rest: N = varying(attribute('restPosition', 'vec3'))
@@ -290,23 +310,27 @@ export function makeSkinMaterial(look: SkinLook, opts: SkinMaterialOptions = {})
   const fadeFine: N = float(1).sub(smoothstep(1.2e-4, 5e-4, foot))
   const fadeMacro: N = float(1).sub(smoothstep(6e-4, 2.5e-3, foot))
   // 各层的权重（无量纲，腔体用）和以米计的幅度 / per-layer weights (unitless, for the cavity) and amplitudes in metres
-  const kn: N = (vec3 as N)(wFace, wBody.add(wFace.mul(0.15)), wRidge).mul(amp).mul(fadeFine)
+  // 指腹：按到涡心的距离画一圈圈的嵴（tools/look/skin_regions.py 的指腹贴图），平铺的皮嵴在那里让位
+  // finger pads: rings of ridges by the distance to the whorl core (the pad map of tools/look/skin_regions.py); the tiled ridges give way there
+  const pad: N = look.sample('pads', uv())
+  const padW: N = pad.g
+  const kn: N = (vec3 as N)(wFace, wBody.add(wFace.mul(0.15)), wRidge.mul(float(1).sub(padW))).mul(amp).mul(fadeFine)
   const km: N = kn.mul((vec3 as N)(AMP.pores, AMP.body, AMP.ridges))
   const e = 1 / MICRO_PX
   const q: N = rest.div(TILE_M)
   // 一个轴面：在 (cu, cv) 取三次，得到高度和对 cu、cv 的导数（每块贴图为单位）/ one plane: three taps at (cu, cv) give the heights and their derivatives in cu, cv (per tile)
-  const plane = (cu: N, cv: N, k: N): { h: N; du: N; dv: N } => {
+  const plane = (cu: N, cv: N, k: N): { h: N; hv: N; du: N; dv: N } => {
     const h0: N = look.sample('micro', (vec2 as N)(cu, cv)).rgb.mul(255 / 127).sub(128 / 127)
     const hu: N = look.sample('micro', (vec2 as N)(cu.add(e), cv)).rgb.mul(255 / 127).sub(128 / 127)
     const hv: N = look.sample('micro', (vec2 as N)(cu, cv.add(e))).rgb.mul(255 / 127).sub(128 / 127)
-    return { h: dot(h0, k), du: dot(hu.sub(h0), k).div(e), dv: dot(hv.sub(h0), k).div(e) }
+    return { h: dot(h0, k), hv: h0, du: dot(hu.sub(h0), k).div(e), dv: dot(hv.sub(h0), k).div(e) }
   }
-  const tri = (qq: N, k: N, scale: number): { grad: N; h: N } => {
+  const tri = (qq: N, k: N, scale: number): { grad: N; h: N; hv: N } => {
     const px = plane(qq.y, qq.z, k), py = plane(qq.x, qq.z, k), pz = plane(qq.x, qq.y, k)
     const gx: N = (vec3 as N)(0, px.du, px.dv).mul(w.x)
     const gy: N = (vec3 as N)(py.du, 0, py.dv).mul(w.y)
     const gz: N = (vec3 as N)(pz.du, pz.dv, 0).mul(w.z)
-    return { grad: gx.add(gy).add(gz).div(TILE_M * scale), h: px.h.mul(w.x).add(py.h.mul(w.y)).add(pz.h.mul(w.z)) }
+    return { grad: gx.add(gy).add(gz).div(TILE_M * scale), h: px.h.mul(w.x).add(py.h.mul(w.y)).add(pz.h.mul(w.z)), hv: px.hv.mul(w.x).add(py.hv.mul(w.y)).add(pz.hv.mul(w.z)) }
   }
   const fine = tri(q, km, 1)
   // 大尺度皮沟只在身体类型的皮肤上（面部的大皱纹由皱纹层管）/ large-scale furrows only on body-type skin (the face's large wrinkles belong to the wrinkle layer)
@@ -315,7 +339,14 @@ export function makeSkinMaterial(look: SkinLook, opts: SkinMaterialOptions = {})
   // Mikkelsen 2010：由高度的屏幕导数改法线 / Mikkelsen 2010: bend the normal by the screen derivatives of the height
   const nBase: N = ((opts.normalNode ?? normalView) as N).normalize()
   const sx: N = dFdx(positionView), sy: N = dFdy(positionView)
-  const dHx: N = dot(grad, dRx), dHy: N = dot(grad, dRy)
+  // 涡状嵴的相位：距离 / 嵴距，再用平铺皮嵴的高度扰动一点，出现分叉和断头 / whorl phase: distance / ridge spacing, perturbed a little by the tiled ridge height so bifurcations and ends appear
+  // 导数按解析式：d cos(2πφ) = −2π sin(2πφ) dφ，dφ 取平滑的距离项的屏幕导数，避免 2×2 像素块
+  // the derivative analytically: d cos(2πφ) = −2π sin(2πφ) dφ, with dφ the screen derivative of the smooth distance term, which avoids 2×2 pixel blocks
+  const rhoPhase: N = pad.r.mul(look.padRhoMaxMm).div(PAD_RIDGE_MM)
+  const phase: N = rhoPhase.add(fine.hv.z.mul(0.3))
+  const slope: N = phase.mul(2 * Math.PI).sin().mul(-2 * Math.PI)
+  const kPad: N = padW.mul(amp).mul(fadeFine).mul(AMP.pads)
+  const dHx: N = dot(grad, dRx).add(kPad.mul(slope).mul(dFdx(rhoPhase))), dHy: N = dot(grad, dRy).add(kPad.mul(slope).mul(dFdy(rhoPhase)))
   const r1: N = cross(sy, nBase), r2: N = cross(nBase, sx)
   const fDet: N = dot(sx, r1)
   const surfGrad: N = sign(fDet).mul(r1.mul(dHx).add(r2.mul(dHy)))

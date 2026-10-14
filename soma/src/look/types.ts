@@ -53,9 +53,9 @@ export interface SkinColourData {
   skin: string
   /** 64×64 RGBA half-float，行是血量 v、列是黑色素 u；Cm = cmMax·u²，Chd = chdMax·v²；线性 sRGB 漫反射（不含表面反射）
    * 64×64 RGBA half-float, rows are blood v, columns melanin u; Cm = cmMax·u², Chd = chdMax·v²; linear-sRGB diffuse (surface reflection excluded) */
-  lut: { file: string; size: number; cmMax: number; chdMax: number }
-  /** RGBA8 PNG，第 0 行是 v = 0。R、G：黑色素、血量倍数 2^((x − 128) / logScale)；B：手足掌权重；A：粗糙度
-   * RGBA8 PNG, row 0 is v = 0. R, G: melanin and blood multipliers 2^((x − 128) / logScale); B: palmoplantar weight; A: roughness */
+  lut: { file: string; size: number; cmMax: number; chdMax: number; /** 唇红自己的表（更薄的等效表皮），同样的轴 / the vermilion's own table (a thinner effective epidermis), same axes */ lipFile?: string }
+  /** RGBA8 PNG，第 0 行是 v = 0。R、G：黑色素、血量倍数 2^((x − 128) / logScale)；B：128 + 127·(手足掌权重 − 唇红权重)；A：粗糙度
+   * RGBA8 PNG, row 0 is v = 0. R, G: melanin and blood multipliers 2^((x − 128) / logScale); B: 128 + 127·(palmoplantar weight − vermilion weight); A: roughness */
   regions: { file: string; size: number; logScale: number; rowOrder: string; palmMelanin: number }
   /** 色调滑块：Cm = cmMax·(tone/100)²；default 是 NIST 的中位数，nistMax 以上是外推
    * the tone slider: Cm = cmMax·(tone/100)²; default is the NIST median; above nistMax is extrapolation */
@@ -65,6 +65,8 @@ export interface SkinColourData {
   /** 细节贴图 RGBA8 PNG（第 0 行是 v = 0）：R 起伏幅度 / reliefMax，G 起伏类型（0 身体、0.5 面部毛孔、1 皮嵴），B sqrt(厚度 / thicknessMaxMm)，A sqrt(曲率 / kappaMax)
    * the detail map, RGBA8 PNG (row 0 is v = 0): R relief amplitude / reliefMax, G relief type (0 body, 0.5 facial pores, 1 ridges), B sqrt(thickness / thicknessMaxMm), A sqrt(curvature / kappaMax) */
   detail?: { file: string; size: number; rowOrder: string; reliefMax: number; thicknessMaxMm: number; kappaMax: number; channels: string }
+  /** 指腹贴图 RGB PNG：R 到涡心的距离 / rhoMaxMm，G 权重 / the pad map, RGB PNG: R distance to the whorl core / rhoMaxMm, G weight */
+  pads?: { file: string; size: number; rhoMaxMm: number; ridgeMm: number; channels: string }
   /** 可平铺的微细起伏高度贴图（RGB PNG，tileMm 毫米一块）/ the tileable micro-relief height map (RGB PNG, one tile = tileMm mm) */
   micro?: { file: string; size: number; tileMm: number; channels: string }
   /** 预积分皮肤散射表（RGBA half-float）/ the pre-integrated skin scattering table (RGBA half-float) */
@@ -73,7 +75,7 @@ export interface SkinColourData {
 }
 
 /** 色调滑块的缺省值（与 skin-colour.json 的 tone.default 相同；数据到之前用它）/ the tone slider's default (equal to tone.default in skin-colour.json; used until the data arrive) */
-export const DEFAULT_TONE = 12
+export const DEFAULT_TONE = 23
 // —— 写实的眼 / the lifelike eyes ——
 
 /** 虹膜颜色的预设（颜色见 src/look/eyes.ts 的 IRIS_COLOURS）/ The iris colour presets (colours in IRIS_COLOURS of src/look/eyes.ts). */
