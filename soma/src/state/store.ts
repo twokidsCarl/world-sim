@@ -13,6 +13,7 @@ import { defaultSettings, kindSpec, withKind, type StimSettings } from '../pain/
 import { fetchJson } from '../anatomy/load.ts'
 import { loadDetail, type LoadedDetail } from '../pain/detail.ts'
 import { type LoadedSkinUv, loadSkinUv } from '../look/load.ts'
+import { DEFAULT_IRIS, type GazeSetting, type IrisName } from '../look/types.ts'
 import { loadFace, type AUs, type LoadedFace } from '../pain/face.ts'
 import { loadSkinMaps, regionParts, regionsForParts, type LoadedSkinMaps, type SkinMapId } from '../anatomy/skinmaps.ts'
 import type { Provenance, SystemId } from '../anatomy/types.ts'
@@ -245,6 +246,9 @@ export interface AppState {
   look: boolean
   /** 写实皮肤的色调 0–100（黑色素，见 src/look/skinMaterial.ts）；null = 数据的缺省值 / Lifelike skin tone 0–100 (melanin, see src/look/skinMaterial.ts); null = the data's default. */
   tone: number | null
+  /** 写实的眼：虹膜颜色和注视（见 src/look/eyes.ts）/ The lifelike eyes: iris colour and gaze (see src/look/eyes.ts). */
+  iris: IrisName
+  gaze: GazeSetting
   selection: Selection
   hover: string | null
   explode: number
@@ -306,6 +310,8 @@ export interface AppState {
   ensureSkinUv(): Promise<LoadedSkinUv | null>
   setLook(on: boolean): void
   setTone(tone: number | null): void
+  setIris(iris: IrisName): void
+  setGaze(gaze: GazeSetting): void
   ensureSkinReport(): void
   setStimSettings(patch: Partial<StimSettings>): void
   setStimArmed(on: boolean): void
@@ -487,6 +493,8 @@ export const useApp = create<AppState>()((set, get) => ({
   skinOpaque: false,
   look: true,
   tone: null,
+  iris: DEFAULT_IRIS,
+  gaze: 'camera',
   rig: null,
   rigStatus: 'idle',
   rigMessage: '',
@@ -822,6 +830,8 @@ export const useApp = create<AppState>()((set, get) => ({
   },
   setLook: (look) => set({ look }),
   setTone: (tone) => set({ tone: tone === null ? null : Math.min(100, Math.max(0, Math.round(tone))) }),
+  setIris: (iris) => set({ iris }),
+  setGaze: (gaze) => set({ gaze }),
   rejectFace: (message) => set({ face: null, faceStatus: 'error', faceMessage: message }),
   setStimSettings: (patch) =>
     set((s) => {

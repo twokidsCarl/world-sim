@@ -24,6 +24,7 @@ import { sayFrame, setSayPaused } from './say.ts'
 import { setSpeechPaused, speechFrame } from './speech.ts'
 import type { FaceData } from './types.ts'
 import { resolveStyle } from './visemeTrack.ts'
+import { lidTravel } from '../look/eyesFit.ts'
 
 /** 情绪表情从无到满强度的过渡时间，秒（假设）/ Seconds for an emotion to go from nothing to full strength (an assumption). */
 export const EMOTION_SECONDS = 0.35
@@ -194,6 +195,36 @@ export function setFacePaused(paused: boolean): void {
   setSpeechPaused(paused)
   setSayPaused(paused)
   if (!paused) lastNow = 0
+}
+
+/**
+ * 睑随垂直注视（写实的眼转动时）：每只眼的上下睑缘该移动多少由 lidTravel 给出（Mastropietro 等 2009），换成睑的通道激活——
+ * 上睑上移用上睑提肌通道，下移用眼轮匝肌睑部（上睑）通道，下睑上移用眼轮匝肌睑部（下睑）通道；激活 = 移动量 ÷ 通道的行程。
+ * 下睑下移没有对应的通道，就不动。返回要加到通道上的量（与表情的激活相加，最多到 1）。
+ * Lids following vertical gaze (while the lifelike eyes turn): lidTravel (Mastropietro et al. 2009) gives how far each eye's
+ * upper and lower margins should move, turned into lid-channel activations — the upper lid up through the levator palpebrae
+ * channel, down through the orbicularis oculi palpebral (upper lid) channel, the lower lid up through the palpebral (lower lid)
+ * channel; activation = travel ÷ the channel's excursion. No channel lowers the lower lid, so it stays. Returns the amounts to add
+ * to the channels (summed with the expression's activations, capped at 1).
+ */
+export function lidGazeChannels(face: Pick<FaceData, 'channels'>, eyes: readonly { side: 'L' | 'R'; pitch: number; pupilDistance: number }[]): Activations {
+  const out: Activations = {}
+  const channel = (muscle: string, side: string) => face.channels.find((c) => c.muscle === muscle && c.side === side && c.excursion > 0)
+  for (const e of eyes) {
+    const { upper, lower } = lidTravel(e.pitch, e.pupilDistance)
+    const mm = 1000
+    const lift = upper > 0 ? channel('levator_palpebrae', e.side) : channel('orbicularis_oculi_palpebral_upper', e.side)
+    if (lift && Math.abs(upper) > 1e-3) out[lift.id] = Math.min(1, Math.abs(upper) / (lift.excursion * mm))
+    const low = lower > 0 ? channel('orbicularis_oculi_palpebral_lower', e.side) : undefined
+    if (low && lower > 1e-3) out[low.id] = Math.min(1, lower / (low.excursion * mm))
+  }
+  return out
+}
+
+/** 把睑随注视的量加到通道激活上（就地修改，最多到 1）/ Add the lid coupling to channel activations (in place, capped at 1). */
+export function addLidGaze(channels: Activations, extra: Activations): Activations {
+  for (const [id, v] of Object.entries(extra)) channels[id] = Math.min(1, (channels[id] ?? 0) + v)
+  return channels
 }
 
 /** 测试用：清掉模块内的状态 / For tests: clear the module's state. */

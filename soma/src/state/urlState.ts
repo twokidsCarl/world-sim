@@ -48,6 +48,11 @@
 //   look   0                                      不透明皮肤不用写实外观，改回解剖配色（缺省是写实）
 //                                                 an opaque skin without the lifelike look, in the anatomical colours (lifelike is the default)
 //   tone   0–100                                  写实皮肤的色调（黑色素；只写不在缺省值的）/ the lifelike skin tone (melanin; written only when not the default)
+//   iris   blue                                   写实的眼的虹膜颜色：brown（缺省）dark hazel green blue grey
+//                                                 iris colour of the lifelike eyes: brown (default) dark hazel green blue grey
+//   gaze   c | 20,-10                             写实的眼的注视：c 看相机（缺省）；或固定角度 yaw,pitch（度；yaw 正 = 向人体左侧，pitch 正 = 向上）
+//                                                 gaze of the lifelike eyes: c = at the camera (default); or fixed angles yaw,pitch
+//                                                 (degrees; positive yaw = towards the body's left, positive pitch = up)
 //   shape  h1.80,b28,l0,c0                        体型：h 身高（米）、b BMI、l 腿长比例（SD）、c 躯干体格（SD）；只写不在默认值的项，
 //                                                 超出该人体可用范围的值会被截断
 //                                                 body shape: h stature (m), b BMI, l leg length (SD), c central build (SD); only non-default
@@ -76,6 +81,8 @@
 import type { SystemId } from '../anatomy/types.ts'
 import { formatShapeParam, parseShapeParam, type ShapeControls } from '../anatomy/shape.ts'
 import { formatStimParam, parseStimParam, type StimParam } from '../pain/stimulus.ts'
+import { formatGaze, parseGaze } from '../look/eyesFit.ts'
+import { IRIS_NAMES, type GazeSetting, type IrisName } from '../look/types.ts'
 import type { SectionAxis } from './display.ts'
 
 export const SYSTEM_CODES: Record<SystemId, string> = {
@@ -100,7 +107,7 @@ const AXES: Record<string, SectionAxis> = { a: 'axial', c: 'coronal', s: 'sagitt
 const MAPS = { d: 'dermatome', n: 'cutaneousNerve' } as const
 const BODIES = new Set(['male', 'female', 'fixture', 'stress'])
 /** 本模块负责的参数名；其余的原样保留 / Parameter names owned here; all others pass through. */
-export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'say', 'drive', 'style', 'skin', 'look', 'tone', 'shape', 'stim', 'src', 'cmp'] as const
+export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'say', 'drive', 'style', 'skin', 'look', 'tone', 'shape', 'stim', 'src', 'cmp', 'iris', 'gaze'] as const
 /** 超过这个数量的部件 id 不写进 URL / Part id lists longer than this are not written to the URL. */
 export const MAX_URL_IDS = 60
 export const MAX_URL_DOFS = 40
@@ -144,6 +151,10 @@ export interface UrlState {
   look?: boolean
   /** 写实皮肤的色调 0–100 / the lifelike skin tone 0–100 */
   tone?: number
+  /** 虹膜颜色；缺省（棕）不写 / iris colour; the default (brown) is not written */
+  iris?: IrisName
+  /** 注视；看相机（缺省）不写 / gaze; the camera (default) is not written */
+  gaze?: GazeSetting
   /** 体型控制量（未限幅）/ shape controls (not yet clamped). */
   shape?: ShapeControls
   /** 一个刺激及其部位 / one stimulus and its site */
@@ -209,6 +220,17 @@ export function parseUrl(search: string): ParsedUrl {
         const t = Number(value)
         if (value === '' || !Number.isFinite(t) || t < 0 || t > 100) warn(`${key}: 应为 0–100 的数 / expected a number from 0 to 100`)
         else state.tone = Math.round(t)
+        break
+      }
+      case 'iris': {
+        if ((IRIS_NAMES as readonly string[]).includes(value)) state.iris = value as IrisName
+        else warn(`${key}: 应为 ${IRIS_NAMES.join(' | ')} / expected ${IRIS_NAMES.join(' | ')}`)
+        break
+      }
+      case 'gaze': {
+        const g = parseGaze(value)
+        if (g === null) warn(`${key}: 应为 c 或 yaw,pitch（度）/ expected c or yaw,pitch (degrees)`)
+        else state.gaze = g
         break
       }
       case 'tab': {
@@ -424,6 +446,11 @@ export function formatUrl(state: UrlState, passthrough: readonly [string, string
   if (state.skin) put('skin', '1')
   if (state.look === false) put('look', '0')
   if (state.tone !== undefined) put('tone', String(Math.round(state.tone)))
+  if (state.iris && state.iris !== 'brown') put('iris', state.iris)
+  if (state.gaze) {
+    const g = formatGaze(state.gaze)
+    if (g) put('gaze', g)
+  }
   if (state.shape && Object.keys(state.shape).length) put('shape', formatShapeParam(state.shape))
   if (state.stim) put('stim', formatStimParam(state.stim))
   if (state.src) put('src', '1')
