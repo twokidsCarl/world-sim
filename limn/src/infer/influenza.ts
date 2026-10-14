@@ -228,17 +228,8 @@ export function rnpBundle(rnp: Molecule, polymerase: Molecule, centre: V3, cavit
     const ringR = fill ? Math.max(rodR * 2.05, cavity - rodR * 1.05) : rodR * 2.05
     spots.push({ nt: s.nt, x: Math.cos(a + 0.22) * ringR, y: Math.sin(a + 0.22) * ringR })
   })
-  if (fill) {
-    // 填满时换一种排法：八条杆整条排在切面（过中心、垂直于 e1 的平面）后面，前排四条并排，后面两排错开。
-    // 这样从正面剖开看，前排是完整的、并排的几列，像 Goodsell 画的那样；不会有哪条杆被从中间劈开。
-    // when filling, a different layout: the eight rods lie whole behind the cut plane (through the centre, across e1), four side by side in the front row and two rows behind them staggered.
-    // Cut from the front, the front row then shows as whole columns side by side, as Goodsell paints them, and no rod is split down its middle.
-    const d = rodR * 2.02
-    const rows: [number, number[]][] = [[-rodR * 1.05, [-1.5, -0.5, 0.5, 1.5]], [-rodR * 1.05 - d * 0.87, [-1, 0, 1]], [-rodR * 1.05 - d * 1.74, [0]]]
-    const nts = order.map((o) => o.nt)
-    spots.length = 0
-    for (const [depth, xs] of rows) for (const x of xs) spots.push({ nt: nts[spots.length] ?? nts[nts.length - 1]!, x: depth, y: x * d })
-  }
+  // 填满时也用 7+1 的排法（周围七条摊开到贴着内壁）。原来换成“整条排在切面后面”的排法，只有正面一个视角是满的，转到背后杆全被切掉
+  // filling also uses the 7+1 layout (the seven around spread out to the wall). A layout that put every rod behind the cut plane was full from the front only, and turned to the back all the rods were cut away
   for (const s of spots) {
     const off = Math.hypot(s.x, s.y)
     // 这个位置上沿杆方向放得下多长：弦长，再给杆的粗细和顶端的聚合酶留出余地
