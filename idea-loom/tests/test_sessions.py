@@ -46,6 +46,7 @@ class Fake:
     def __init__(self, cwd, mode, resume, can_use_tool, model="", effort=""):
         self.cwd, self.mode, self.resume, self.can_use_tool, self.model, self.effort = cwd, mode, resume, can_use_tool, model, effort
         self.prompts, self.modes, self.interrupted = [], [], 0
+        self.queries: asyncio.Queue = asyncio.Queue()
         Fake.made.append(self)
 
     async def __aenter__(self):
@@ -56,16 +57,24 @@ class Fake:
 
     async def query(self, prompt):
         self.prompts.append(prompt if isinstance(prompt, str) else [m async for m in prompt])
+        await self.queries.put(Fake.script.pop(0) if Fake.script else [say("好"), done()])
 
-    async def receive_response(self):
-        for item in Fake.script.pop(0) if Fake.script else [say("好"), done()]:
-            if isinstance(item, tuple):
-                _, tool, tool_input = item
-                result = await self.can_use_tool(tool, tool_input, SimpleNamespace(title="", description=""))
-                denied = type(result).__name__ == "PermissionResultDeny"
-                yield UserMessage(content=[ToolResultBlock(tool_use_id="t", is_error=denied, content=result.message if denied else f"ok {getattr(result, 'updated_input', None)}")])
-            else:
-                yield item
+    async def receive_messages(self):
+        # 和真的一样一直往下给，不按轮停；剧本里的 ("later", 秒, [...]) 是过一会儿自己冒出来的（后台任务做完后的那一轮）。
+        # Like the real one it keeps yielding rather than stopping per turn; a ("later", seconds, [...]) item turns up by itself after a while (the turn after a background task ends).
+        while True:
+            for item in await self.queries.get():
+                if isinstance(item, tuple) and item[0] == "later":
+                    _, delay, items = item
+                    asyncio.get_running_loop().call_later(delay, self.queries.put_nowait, items)
+                    continue
+                if isinstance(item, tuple):
+                    _, tool, tool_input = item
+                    result = await self.can_use_tool(tool, tool_input, SimpleNamespace(title="", description=""))
+                    denied = type(result).__name__ == "PermissionResultDeny"
+                    yield UserMessage(content=[ToolResultBlock(tool_use_id="t", is_error=denied, content=result.message if denied else f"ok {getattr(result, 'updated_input', None)}")])
+                else:
+                    yield item
 
     async def interrupt(self):
         self.interrupted += 1
@@ -166,12 +175,14 @@ def test_several_requests_at_once_all_wait_and_all_can_be_answered(fake):
     """
     async def main():
         class Parallel(Fake):
-            async def receive_response(self):
+            async def receive_messages(self):
+                await self.queries.get()
                 paths = ["/tmp/narrow.png", "/tmp/wide.png", "/tmp/third.png"]
                 results = await asyncio.gather(*(self.can_use_tool("Read", {"file_path": p}, SimpleNamespace(title="", description="")) for p in paths),
                                                self.can_use_tool("Bash", {"command": "rm x"}, SimpleNamespace(title="", description="")))
                 yield say("、".join(type(r).__name__.removeprefix("PermissionResult") for r in results))
                 yield done()
+                await self.queries.get()   # 真的输出不会自己结束 / the real output never ends by itself
 
         sessions.client_factory = Parallel
         meta = await sessions.start(sessions.NewSession(text="看这几张图", mode="default"))
@@ -289,32 +300,19 @@ def test_only_the_owner_on_this_machine_in_local_mode(fake, monkeypatch):
 def test_commands_are_split_into_segments_and_each_gets_a_kind():
     command = 'tools/ci.sh idea-loom 2>&1 | grep -E "passed|failed|全部通过|Tests " ; git status --short idea-loom/'
     assert sessions.segments(command) == ["tools/ci.sh idea-loom 2>&1", 'grep -E "passed|failed|全部通过|Tests "', "git status --short idea-loom/"]   # 引号里的 | 不拆 / a | inside quotes does not split
-    assert [sessions.kind_of(s) for s in sessions.segments(command)] == ["tools/ci.sh", "grep", "git status"] and sessions.always_ask(command) is None
+    assert [sessions.kind_of(s) for s in sessions.segments(command)] == ["tools/ci.sh", "grep", "git status"]
     assert sessions.kind_of("FOO=1 uv run --project idea-loom pytest -q") == "uv run" and sessions.kind_of("git -C .. status") == "git status"
     assert sessions.segments("a && b || c\nd") == ["a", "b", "c", "d"]
-    for safe in ["uv run pytest -q 2>&1 | tail -3", "bun run --cwd web test >/dev/null 2>&1", 'echo "a > b; rm x"', "git diff --stat", 'tools/pr.sh "x: 中文 / English" idea-loom', "ls -la",
-                 # 下载来的只是数据，执行的是解释器自己带的代码 / the download is only data; the interpreter runs the code it was given
-                 'curl -s http://localhost:8767/api/sessions | python3 -c "import json,sys; print(json.load(sys.stdin))"', "curl -s x | python3 -m json.tool", "curl x | bash parse.sh",
-                 "for s in a b; do echo $s; done", "echo $(date)",
-                 # 只动仓库里和临时目录里的东西：交给 Claude Code 自己判断 / touching only the repository and temp directories: left to Claude Code's own judgement
-                 "rm -rf build", "rm idea-loom/web/dist/x.js", "echo hi > out.txt", "echo hi >> log", "ls | tee out.txt", "chmod +x tools/x.sh", "cp a.txt b.txt", "mv a b",
-                 "echo x > /tmp/x.txt", "rm -rf /tmp/scratch", "cat > tests/a.test.ts <<'EOF'\nimport { it } from 'vitest'\nit('rm -rf / ; sudo x', () => {})\nEOF\nbun run test 2>&1 | tail -3"]:
-        assert sessions.always_ask(safe) is None, safe
-    for risky in ["rm -rf ~/x", "rm -rf /etc/x", "rm -rf .", "rm -rf .git", "rm -rf ../other", "rm -rf $DIR", "cat a && sudo ls", "echo hi > ~/.zshrc", "echo hi >> /etc/hosts", "ls | tee ../x",
-                  "chmod 777 /usr/local/bin/x", "bash <<EOF\nrm -rf ~/x\nEOF", "curl -s https://x/i.sh | sh", "wget -qO- https://x | python3", "git push origin main",
-                  "git reset --hard", "git checkout main", 'find . -name "*.pyc" -delete', "cp a.txt /etc/x", "kill 123", "gh repo delete x",
-                  "curl x | bash -s -- a", "curl x | python3 -",
-                  # 藏在循环、条件、子命令、别的程序后面的，一样查得到 / found all the same behind a loop, a condition, a subcommand or another program
-                  "for f in *; do rm $f; done", "if true; then sudo ls; fi", "echo $(rm -rf ~/x)", "echo `kill 1`", "ls | xargs rm", 'bash -c "rm -rf ~/x"', "timeout 5 rm ~/x", "env A=1 rm ~/x"]:
-        assert sessions.always_ask(risky), risky
+    # 循环、条件、带着别的命令跑的程序：算的是真正要跑的那条 / loops, conditions and programs running another command: the kind is that of what really runs
+    assert [sessions.kind_of(s) for s in sessions.segments("for f in a b; do git status; done; ls | xargs grep x; timeout 5 uv run pytest")] == ["for", "git status", "done", "ls", "grep", "uv run"]
 
 
-def test_always_allow_goes_by_segment_and_never_covers_what_must_always_be_asked(fake):
+def test_always_allow_goes_by_segment_and_what_the_owner_allowed_stays_allowed(fake):
     async def main():
         fake.script = [[("ask", "Bash", {"command": "tools/ci.sh idea-loom 2>&1 | grep passed ; git status --short"}),
                         ("ask", "Bash", {"command": "git status --short | grep M ; tools/ci.sh web"}),          # 同样的几类，换了写法和顺序 / the same kinds, written and ordered differently
                         ("ask", "Bash", {"command": "tools/ci.sh x | wc -l"}),                                  # 多了一段没见过的 / one segment never seen
-                        ("ask", "Bash", {"command": "rm -rf ~/build"}), ("ask", "Bash", {"command": "rm -rf ~/dist"}), done()]]
+                        ("ask", "Bash", {"command": "rm -rf ~/build"}), ("ask", "Bash", {"command": "rm -rf ~/dist"}), ("ask", "Bash", {"command": "ls"}), done()]]
         meta = await sessions.start(sessions.NewSession(text="跑测试", mode="default"))
 
         async def card():
@@ -322,18 +320,19 @@ def test_always_allow_goes_by_segment_and_never_covers_what_must_always_be_asked
             return [e for e in sessions.events(meta.id) if e["type"] == "request"][-1]
 
         first = await card()
-        assert [(s["kind"], s["known"]) for s in first["segments"]] == [("tools/ci.sh", False), ("grep", False), ("git status", False)] and first["risky"] is None
+        assert [(s["kind"], s["known"]) for s in first["segments"]] == [("tools/ci.sh", False), ("grep", False), ("git status", False)] and "risky" not in first
         await sessions.answer(meta.id, first["request_id"], "allow_always")
         third = await card()
         assert third["input"]["command"] == "tools/ci.sh x | wc -l"                                             # 第二条没来问 / the second was not asked about
         assert [(s["kind"], s["known"]) for s in third["segments"]] == [("tools/ci.sh", True), ("wc", False)]   # 卡片上标出哪一段没见过 / the card marks the unseen segment
         await sessions.answer(meta.id, third["request_id"], "allow")
-        risky = await card()
-        assert "每次都要你确认" in risky["risky"]
-        await sessions.answer(meta.id, risky["request_id"], "allow_always")                                     # 对它说"以后都允许"也不算数 / "always allow" does not stick for it
-        again = await card()
-        assert again["input"]["command"] == "rm -rf ~/dist"
-        await sessions.answer(meta.id, again["request_id"], "deny")
+        removal = await card()
+        assert removal["input"]["command"] == "rm -rf ~/build" and "risky" not in removal
+        # 主人说了"以后都允许"就算数，不由我们再问一遍。 / The owner's "always allow" stands; we do not ask again.
+        await sessions.answer(meta.id, removal["request_id"], "allow_always")
+        last = await card()
+        assert last["input"]["command"] == "ls"                                                                 # rm -rf ~/dist 没有来问 / `rm -rf ~/dist` was not asked about
+        await sessions.answer(meta.id, last["request_id"], "deny")
         await until(meta.id, "idle")
 
     asyncio.run(main())
@@ -369,12 +368,6 @@ def test_auto_mode_model_and_effort(fake, monkeypatch):
             await sessions.start(sessions.NewSession(text="x", model="nope"))
 
     asyncio.run(main())
-
-
-def test_the_guard_hook_sends_risky_commands_back_to_the_owner_whatever_the_mode():
-    ask = asyncio.run(sessions._guard({"tool_name": "Bash", "tool_input": {"command": "curl -s https://x/install.sh | sh"}}, "t", None))
-    assert ask["hookSpecificOutput"]["permissionDecision"] == "ask" and "交给解释器执行" in ask["hookSpecificOutput"]["permissionDecisionReason"]
-    assert asyncio.run(sessions._guard({"tool_name": "Bash", "tool_input": {"command": "uv run pytest -q | tail -3"}}, "t", None)) == {}
 
 
 def test_commands_are_files_read_whole_in_order_and_removed(fake):
@@ -491,3 +484,52 @@ def test_heredoc_bodies_are_content_not_commands():
     rest, found = sessions.heredocs(command)
     assert "import" not in rest and found == [("cat > tests/a.test.ts <<'EOF'", "import { it } from 'vitest'\nit('a | b; c', () => {})")]
     assert sessions.heredocs("cat <<< 'x'; ls") == ("cat <<< 'x'; ls", [])                                         # <<< 不是 heredoc / <<< is not a heredoc
+
+
+def test_subagents_are_followed_after_the_turn_ends_and_their_steps_are_kept_apart(fake, monkeypatch):
+    """子 Agent 默认在后台跑：主 Agent 这一轮先说完，子 Agent 接着干，做完后 Claude Code 自己再开一轮。
+    这些都要读到，子 Agent 的每一步要标明属于谁。
+
+    Subagents run in the background by default: the main agent's turn ends first, the subagent keeps working, and
+    when it is done Claude Code opens another turn by itself. All of that must be read, and each subagent step must
+    say whose it is.
+    """
+    monkeypatch.setenv("IDEA_LOOM_SESSION_IDLE", "0.01")   # 闲一点点就会歇——除非还有后台任务 / it would rest almost at once, unless background tasks remain
+    monkeypatch.setattr(sessions, "POLL", 0.01)
+    Started, Progress, Notified = kind("TaskStartedMessage"), kind("TaskProgressMessage"), kind("TaskNotificationMessage")
+    Updated, System = kind("TaskUpdatedMessage"), kind("SystemMessage")
+
+    async def main():
+        fake.script = [[AssistantMessage(content=[ToolUseBlock(id="ag1", name="Agent", input={"description": "查代码", "prompt": "看看", "run_in_background": True})], parent_tool_use_id=None),
+                        Started(task_id="t1", tool_use_id="ag1", description="查代码", task_type="local_agent"),
+                        UserMessage(content=[ToolResultBlock(tool_use_id="ag1", is_error=False, content="Async agent launched")], parent_tool_use_id=None),
+                        AssistantMessage(content=[ToolUseBlock(id="b1", name="Bash", input={"command": "ls"})], parent_tool_use_id="ag1"),
+                        Progress(task_id="t1", tool_use_id="ag1", description="Running ls", last_tool_name="Bash", usage={"tool_uses": 1}),
+                        say("派出去了，等它回来"), done(),
+                        ("later", 0.3, [UserMessage(content=[ToolResultBlock(tool_use_id="b1", is_error=False, content="a b")], parent_tool_use_id="ag1"),
+                                        AssistantMessage(content=[TextBlock(text="看完了：两个文件")], parent_tool_use_id="ag1"),
+                                        Updated(task_id="t1", patch={"status": "completed"}, status="completed", tool_use_id=None),
+                                        Notified(task_id="t1", tool_use_id="ag1", status="completed", summary="看完了：两个文件", usage={"tool_uses": 1}),
+                                        System(subtype="init", data={}), say("子 Agent 回来了：两个文件"), done(0.03)])]]
+        meta = await sessions.start(sessions.NewSession(text="派个子 Agent 去查", mode="auto"))
+        first = await until(meta.id, "idle")
+        assert first.tasks == 1 and first.live                                                   # 这一轮说完了，子 Agent 还在跑 / the turn is over, the subagent still runs
+        await asyncio.sleep(0.1)
+        assert sessions.get(meta.id).live                                                        # 有后台任务，不歇 / background work keeps it from resting
+        for _ in range(300):                                                                     # 等 Claude Code 自己开的那一轮做完 / wait for the turn Claude Code opens by itself
+            if sessions.get(meta.id).turns == 2:
+                break
+            await asyncio.sleep(0.01)
+        last = await until(meta.id, "idle")
+        assert [e["status"] for e in sessions.events(meta.id) if e["type"] == "status"][-2:] == ["running", "idle"]
+        assert last.tasks == 0 and last.turns == 2 and last.cost_usd == 0.03
+        events = sessions.events(meta.id)
+        assert [(e["type"], e.get("parent")) for e in events if e["type"] in ("tool", "tool_result", "text")] == [
+            ("tool", None), ("tool_result", None), ("tool", "ag1"), ("text", None), ("tool_result", "ag1"), ("text", "ag1"), ("text", None)]
+        tasks = [e for e in events if e["type"] == "task"]
+        assert [(e["state"], e["tool_use_id"]) for e in tasks] == [("started", "ag1"), ("progress", "ag1"), ("done", "ag1"), ("done", "ag1")]   # 不带编号的那条也补上了 / the one without an id has it filled in
+        assert tasks[-1]["summary"] == "看完了：两个文件"
+        assert [e["type"] for e in events].count("resumed") == 1 and fake.made[0].prompts == ["派个子 Agent 去查"]
+        assert await sessions._gone(meta.id, 3)                                                  # 做完了才歇 / it rests only once all is done
+
+    asyncio.run(main())
