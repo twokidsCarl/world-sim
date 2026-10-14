@@ -1,0 +1,2084 @@
+{
+ "_doc": {
+  "zh": "写实皮肤的颜色模型：拟合 NIST 前臂反射光谱得到的参数、各部位的倍数和色调滑块的范围。由 tools/look/skin_colour.py 生成；每个数都标了 sourced（文献）、assumed（假设）或 computed（本工具算出）。查找表在 public/anatomy/<body>/look/skin-lut.bin。",
+  "en": "The colour model of the lifelike skin: parameters fitted to the NIST forearm reflectance spectra, the region multipliers and the range of the tone slider. Built by tools/look/skin_colour.py; every number is marked sourced (literature), assumed or computed (by this tool). The lookup table is public/anatomy/<body>/look/skin-lut.bin."
+ },
+ "calibration": {
+  "data": "NIST Reference Data Set of Human Skin Reflectance (Cooksey, Allen & Tsai 2017, J Res NIST 122:26, doi:10.6028/jres.122.026; data doi:10.18434/M38597)",
+  "credit": {
+   "zh": "数据来自美国国家标准与技术研究院（NIST）；这里只用了它的光谱算出下面的数，没有改动或再分发原始数据。",
+   "en": "Data from the National Institute of Standards and Technology (NIST); its spectra were only used to compute the numbers below; the original data are neither modified nor redistributed."
+  },
+  "site": "inner right forearm, 25 mm circle; 8°/hemispherical reflectance factor",
+  "subjects": 100,
+  "fitRange": [
+   400.0,
+   778.0
+  ],
+  "note": {
+   "zh": "模型（含表面反射）对每人拟合 Cm、Chd，其余参数全体共用。ITA° 分组按 Del Bino 等 2006；NIST 里没有 ITA° < −30 的人，深色一端是外推。",
+   "en": "The model (surface reflection included) fits Cm and Chd per subject; the other parameters are shared. ITA° groups after Del Bino et al. 2006; NIST has nobody with ITA° < −30, so the deep end is extrapolated."
+  },
+  "spectralRms400to700": {
+   "mean": 0.0098,
+   "median": 0.0091,
+   "max": 0.0218
+  },
+  "dE2000": {
+   "mean": 1.09,
+   "median": 0.99,
+   "max": 2.91
+  },
+  "lutDE2000": {
+   "mean": 1.28,
+   "max": 3.06,
+   "tolerance": 3.5
+  },
+  "repeatScanDE2000": {
+   "mean": 1.11,
+   "max": 2.69,
+   "note": {
+    "zh": "同一人三次扫描之间的平均色差：测量本身的噪声底",
+    "en": "mean colour difference between one subject's three scans: the noise floor of the measurement"
+   }
+  },
+  "groups": [
+   {
+    "group": "very light",
+    "itaRange": [
+     55,
+     90
+    ],
+    "n": 18,
+    "spectralRmsMean": 0.0102,
+    "spectralRmsMax": 0.0196,
+    "dE2000Mean": 0.98,
+    "dE2000Max": 2.11,
+    "lutDE2000Mean": 1.17,
+    "lutDE2000Max": 2.25
+   },
+   {
+    "group": "light",
+    "itaRange": [
+     41,
+     55
+    ],
+    "n": 63,
+    "spectralRmsMean": 0.01,
+    "spectralRmsMax": 0.0218,
+    "dE2000Mean": 1.14,
+    "dE2000Max": 2.91,
+    "lutDE2000Mean": 1.31,
+    "lutDE2000Max": 3.06
+   },
+   {
+    "group": "intermediate",
+    "itaRange": [
+     28,
+     41
+    ],
+    "n": 10,
+    "spectralRmsMean": 0.0078,
+    "spectralRmsMax": 0.0133,
+    "dE2000Mean": 0.74,
+    "dE2000Max": 1.4,
+    "lutDE2000Mean": 0.94,
+    "lutDE2000Max": 1.45
+   },
+   {
+    "group": "tan",
+    "itaRange": [
+     10,
+     28
+    ],
+    "n": 4,
+    "spectralRmsMean": 0.0113,
+    "spectralRmsMax": 0.019,
+    "dE2000Mean": 1.37,
+    "dE2000Max": 2.21,
+    "lutDE2000Mean": 1.55,
+    "lutDE2000Max": 2.25
+   },
+   {
+    "group": "brown",
+    "itaRange": [
+     -30,
+     10
+    ],
+    "n": 5,
+    "spectralRmsMean": 0.0093,
+    "spectralRmsMax": 0.0106,
+    "dE2000Mean": 1.38,
+    "dE2000Max": 1.57,
+    "lutDE2000Mean": 1.64,
+    "lutDE2000Max": 1.84
+   },
+   {
+    "group": "dark",
+    "itaRange": [
+     -90,
+     -30
+    ],
+    "n": 0
+   }
+  ],
+  "worst": [
+   {
+    "subject": 3,
+    "dE2000": 2.91,
+    "spectralRms": 0.0116,
+    "ita": 41.2
+   },
+   {
+    "subject": 57,
+    "dE2000": 2.85,
+    "spectralRms": 0.0135,
+    "ita": 49.7
+   },
+   {
+    "subject": 97,
+    "dE2000": 2.45,
+    "spectralRms": 0.014,
+    "ita": 43.3
+   },
+   {
+    "subject": 29,
+    "dE2000": 2.35,
+    "spectralRms": 0.0176,
+    "ita": 43.9
+   },
+   {
+    "subject": 33,
+    "dE2000": 2.27,
+    "spectralRms": 0.0183,
+    "ita": 52.2
+   }
+  ]
+ },
+ "model": {
+  "fixed": {
+   "oxygenSaturation": {
+    "value": 0.7,
+    "provenance": "sourced",
+    "source": "Donner et al. 2008"
+   },
+   "epidermisThicknessMm": {
+    "value": 0.25,
+    "provenance": "sourced",
+    "source": "Donner et al. 2008"
+   },
+   "refractiveIndex": {
+    "value": 1.4,
+    "provenance": "sourced",
+    "source": "Donner et al. 2008"
+   },
+   "surfaceReflection": {
+    "value": 0.02778,
+    "provenance": "computed",
+    "note": {
+     "zh": "n = 1.4、8° 入射的菲涅尔反射率",
+     "en": "Fresnel reflectance at 8° incidence for n = 1.4"
+    }
+   },
+   "internalReflection": {
+    "value": 0.52899,
+    "provenance": "computed",
+    "note": {
+     "zh": "n = 1.4 的半球平均菲涅尔反射率（Saunderson 修正用）",
+     "en": "hemispherically averaged Fresnel reflectance for n = 1.4 (for Saunderson's correction)"
+    }
+   },
+   "bloodHaemoglobinGPerL": {
+    "value": 150.0,
+    "provenance": "sourced",
+    "source": "Prahl, OMLC hemoglobin compilation"
+   },
+   "melaninSpectra": {
+    "value": "eu 6.6e10·λ^−3.33, pheo 2.9e14·λ^−4.75, baseline 0.0244 + 8.53·exp(−(λ−154)/66.2) mm⁻¹",
+    "provenance": "sourced",
+    "source": "Donner & Jensen 2006"
+   },
+   "haemoglobinSpectra": {
+    "value": "Gratzer/Kollias molar extinction compiled by Prahl (OMLC); used locally, not committed",
+    "provenance": "sourced"
+   }
+  },
+  "fitted": {
+   "betaM": {
+    "value": 0.0,
+    "provenance": "computed",
+    "lowerBound": 0.0,
+    "upperBound": 1.0,
+    "atBound": true,
+    "note": {
+     "zh": "真黑素在黑色素中的比例（Donner 等 2008 的 βm）",
+     "en": "eumelanin share of melanin (βm of Donner et al. 2008)"
+    }
+   },
+   "scatterA500": {
+    "value": 5.19141,
+    "provenance": "computed",
+    "lowerBound": 0.5,
+    "upperBound": 30.0,
+    "atBound": false,
+    "note": {
+     "zh": "表皮 500 nm 处的约化散射系数 mm⁻¹（真皮取一半）",
+     "en": "epidermal reduced scattering at 500 nm, mm⁻¹ (half in the dermis)"
+    }
+   },
+   "scatterPower": {
+    "value": 0.0,
+    "provenance": "computed",
+    "lowerBound": 0.0,
+    "upperBound": 4.0,
+    "atBound": true,
+    "note": {
+     "zh": "约化散射的幂律指数 μs' ∝ (λ/500)^−b（Jacques 2013 的形式）",
+     "en": "power of the reduced scattering, μs' ∝ (λ/500)^−b (the form of Jacques 2013)"
+    }
+   },
+   "epidermalBloodRatio": {
+    "value": 0.30182,
+    "provenance": "computed",
+    "lowerBound": 0.0,
+    "upperBound": 0.5,
+    "atBound": false,
+    "note": {
+     "zh": "表皮血量与真皮血量之比（Donner 等 2008 的 Che 表示表皮—真皮交界的起伏）",
+     "en": "ratio of epidermal to dermal blood (Che of Donner et al. 2008, standing for the corrugated junction)"
+    }
+   },
+   "caroteneMuA451": {
+    "value": 0.0561,
+    "provenance": "computed",
+    "lowerBound": 0.0,
+    "upperBound": 2.0,
+    "atBound": false,
+    "note": {
+     "zh": "β-胡萝卜素在 451 nm 的吸收系数 mm⁻¹",
+     "en": "β-carotene absorption at 451 nm, mm⁻¹"
+    }
+   },
+   "vesselRadiusMm": {
+    "value": 0.00526,
+    "provenance": "computed",
+    "lowerBound": 0.0005,
+    "upperBound": 0.1,
+    "atBound": false,
+    "note": {
+     "zh": "血管包装效应的等效血管半径 mm",
+     "en": "effective vessel radius of the packaging effect, mm"
+    }
+   }
+  },
+  "fittedNote": {
+   "zh": "共用参数是使 100 条光谱整体残差最小的\"等效值\"，不是各自的生理测量：βm 落到 0（拟合要比真黑素更陡的吸收谱），散射幂律指数很小（比 Jacques 2013 的 1.4 平得多）。把它们固定到文献值会让平均色差从约 1 升到 2–3 ΔE00。查找表只在 NIST 的范围内是标定过的。",
+   "en": "The shared parameters are the \"effective\" values that minimise the residual over all 100 spectra, not physiological measurements each: βm goes to 0 (the fit wants an absorption steeper than eumelanin's) and the scattering power is small (much flatter than Jacques 2013's 1.4). Pinning them to literature values raises the mean colour difference from about 1 to 2–3 ΔE00. The table is calibrated only within the NIST range."
+  }
+ },
+ "lut": {
+  "file": "skin-lut.bin",
+  "size": 64,
+  "format": "RGBA half-float, row v (blood) by column u (melanin), linear sRGB, alpha 1",
+  "cmMax": 0.5,
+  "chdMax": 0.3,
+  "axes": "Cm = cmMax·u², Chd = chdMax·v²",
+  "content": "diffuse reflectance below the surface (rs removed), D65, CIE 1931 2°"
+ },
+ "colorimetry": {
+  "rgbToXyz": [
+   [
+    0.412521,
+    0.35758,
+    0.1803346
+   ],
+   [
+    0.2127061,
+    0.71516,
+    0.0721339
+   ],
+   [
+    0.0193369,
+    0.1191933,
+    0.9497623
+   ]
+  ],
+  "whiteXyz": [
+   0.9504356,
+   1.0,
+   1.0882926
+  ],
+  "note": {
+   "zh": "线性 sRGB → XYZ 的矩阵（IEC 61966-2-1，按 D65 × CIE 1931 2° 积分得到的白点归一）和 CIELAB 用的白点；测试用它把查找表的颜色换回 CIELAB",
+   "en": "the linear-sRGB → XYZ matrix (IEC 61966-2-1, renormalised to the white integrated from D65 × CIE 1931 2°) and the white used for CIELAB; the tests use it to turn table colours back into CIELAB"
+  }
+ },
+ "tone": {
+  "cmMax": 0.3126,
+  "default": 12,
+  "nistMax": 45.6,
+  "bloodChd": 0.03119,
+  "mapping": "Cm = cmMax·(tone/100)²",
+  "provenance": "computed",
+  "note": {
+   "zh": "缺省 12 是 NIST 100 人 Cm 的中位数；血量取 NIST 中位数。tone 高于 46 超出 NIST 的范围，是外推。",
+   "en": "The default 12 is the median Cm of the 100 NIST subjects; blood is the NIST median. Tone above 46 lies beyond the NIST range and is extrapolated."
+  }
+ },
+ "regions": {
+  "forehead": {
+   "melanin": 1.0,
+   "blood": 2.824,
+   "roughness": 0.45,
+   "provenance": "computed (blood) / assumed (melanin)",
+   "source": "Xiao et al. 2017, Skin Res Technol 23:21, table 2 (geometric mean of the four groups)",
+   "note": {
+    "zh": "把 Xiao 等 2017 表 2 中该部位相对上臂内侧的 ΔL*Δa*Δb* 加到 NIST 中位数的颜色上，用本模型反推，四个人群取几何平均。额头和颊部的黑色素倍数定为 1（假设；它们的 b* 几乎不变），只反推血量；模型的血量变化给不出那么大的 a*，残差见 regionFits。粗糙度是假设",
+    "en": "the ΔL*Δa*Δb* of this site relative to the inner arm in table 2 of Xiao et al. 2017, added to the colour of the NIST median and inverted with this model, geometric mean of the four groups. For forehead and cheek melanin is held at 1 (assumed; their b* barely changes) and only blood is inverted; the model's blood cannot produce that much a*, see the residuals in regionFits. The roughness is assumed"
+   }
+  },
+  "cheek": {
+   "melanin": 1.0,
+   "blood": 1.996,
+   "roughness": 0.45,
+   "provenance": "computed (blood) / assumed (melanin)",
+   "source": "Xiao et al. 2017, Skin Res Technol 23:21, table 2 (geometric mean of the four groups)",
+   "note": {
+    "zh": "把 Xiao 等 2017 表 2 中该部位相对上臂内侧的 ΔL*Δa*Δb* 加到 NIST 中位数的颜色上，用本模型反推，四个人群取几何平均。额头和颊部的黑色素倍数定为 1（假设；它们的 b* 几乎不变），只反推血量；模型的血量变化给不出那么大的 a*，残差见 regionFits。粗糙度是假设",
+    "en": "the ΔL*Δa*Δb* of this site relative to the inner arm in table 2 of Xiao et al. 2017, added to the colour of the NIST median and inverted with this model, geometric mean of the four groups. For forehead and cheek melanin is held at 1 (assumed; their b* barely changes) and only blood is inverted; the model's blood cannot produce that much a*, see the residuals in regionFits. The roughness is assumed"
+   }
+  },
+  "backOfHand": {
+   "melanin": 1.252,
+   "blood": 1.861,
+   "roughness": 0.5,
+   "provenance": "computed",
+   "source": "Xiao et al. 2017, Skin Res Technol 23:21, table 2 (geometric mean of the four groups)",
+   "note": {
+    "zh": "把 Xiao 等 2017 表 2 中该部位相对上臂内侧的 ΔL*Δa*Δb* 加到 NIST 中位数的颜色上，用本模型反推，四个人群取几何平均。额头和颊部的黑色素倍数定为 1（假设；它们的 b* 几乎不变），只反推血量；模型的血量变化给不出那么大的 a*，残差见 regionFits。粗糙度是假设",
+    "en": "the ΔL*Δa*Δb* of this site relative to the inner arm in table 2 of Xiao et al. 2017, added to the colour of the NIST median and inverted with this model, geometric mean of the four groups. For forehead and cheek melanin is held at 1 (assumed; their b* barely changes) and only blood is inverted; the model's blood cannot produce that much a*, see the residuals in regionFits. The roughness is assumed"
+   }
+  },
+  "lips": {
+   "melanin": 0.7,
+   "blood": 7.819,
+   "roughness": 0.35,
+   "source": "Chinese Journal of Tissue Engineering Research, WPRIM wpr-698623 (abstract): vermilion vs cheek, n=202; cheek vs inner arm from Xiao et al. 2017",
+   "fit": {
+    "cheek": {
+     "dE2000": 3.11
+    },
+    "vermilion": {
+     "dE2000": 5.18
+    }
+   },
+   "provenance": "computed (blood) / assumed (melanin, roughness)",
+   "note": {
+    "zh": "颊部相对上臂内侧取 Xiao 等 2017 四个人群的平均差，唇红相对颊部取摘要里的差，加到 NIST 中位数的颜色上，只反推血量；黑色素取颊部的 0.7（Sun 等 2025 综述：唇红黑素细胞较少，倍数是假设），粗糙度 0.35 是假设",
+    "en": "cheek vs inner arm: the mean difference over the four groups of Xiao et al. 2017; vermilion vs cheek: the difference in the abstract; added to the colour of the NIST median, only blood inverted; melanin 0.7 of the cheek's (Sun et al. 2025 review: fewer melanocytes in the vermilion; the factor is assumed), roughness 0.35 assumed"
+   }
+  },
+  "nose": {
+   "melanin": 1.0,
+   "blood": 2.295,
+   "roughness": 0.42,
+   "provenance": "assumed",
+   "note": {
+    "zh": "鼻部：取颊部的值，血量再加 15%、皮脂多更光（假设）",
+    "en": "nose: the cheek values, 15% more blood and oilier, so glossier (assumed)"
+   }
+  },
+  "ears": {
+   "melanin": 1.1,
+   "blood": 1.5,
+   "roughness": 0.5,
+   "provenance": "assumed",
+   "note": {
+    "zh": "耳廓：皮薄、血管浅（假设）",
+    "en": "auricle: thin skin with shallow vessels (assumed)"
+   }
+  },
+  "eyelids": {
+   "melanin": 1.3,
+   "blood": 1.4,
+   "roughness": 0.45,
+   "provenance": "assumed",
+   "note": {
+    "zh": "眼睑：最薄的皮肤，色素和静脉显得更深（假设）",
+    "en": "eyelids: the thinnest skin; pigment and veins show darker (assumed)"
+   }
+  },
+  "fingertips": {
+   "melanin": 1.0,
+   "blood": 1.6,
+   "roughness": 0.5,
+   "provenance": "assumed",
+   "note": {
+    "zh": "指尖：远节血管丰富，照片里明显更红（假设；没有找到数值）",
+    "en": "fingertips: the richly vascular distal phalanx looks clearly redder in photographs (assumed; no numbers found)"
+   }
+  },
+  "nails": {
+   "melanin": 0.3,
+   "blood": 2.0,
+   "roughness": 0.3,
+   "provenance": "assumed",
+   "note": {
+    "zh": "甲床：透过甲板看到的粉色甲床，甲板光滑（假设；没有找到数值）",
+    "en": "nail beds: the pink bed seen through a smooth nail plate (assumed; no numbers found)"
+   }
+  },
+  "areola": {
+   "melanin": 2.5,
+   "blood": 1.3,
+   "roughness": 0.5,
+   "provenance": "assumed",
+   "note": {
+    "zh": "乳晕：明显更深（方向见 Pawson 和 Petrakis 1975、Silva 等 2020 的新生儿数据；成人倍数是假设）",
+    "en": "areola: clearly darker (direction from Pawson & Petrakis 1975 and the neonatal data of Silva et al. 2020; the adult multiplier is assumed)"
+   }
+  },
+  "genitalia": {
+   "melanin": 1.8,
+   "blood": 1.4,
+   "roughness": 0.5,
+   "provenance": "assumed",
+   "note": {
+    "zh": "外生殖器（阴囊、阴茎、大阴唇）：色素沉着（假设；没有找到数值）",
+    "en": "external genitalia (scrotum, penis, labia majora): hyperpigmented (assumed; no numbers found)"
+   }
+  },
+  "elbowsKnees": {
+   "melanin": 1.3,
+   "blood": 1.2,
+   "roughness": 0.55,
+   "provenance": "assumed",
+   "note": {
+    "zh": "肘、膝伸侧：色素和红斑指数更高（Lee 等 2024 只给了排序，倍数是假设）",
+    "en": "extensor elbows and knees: higher melanin and erythema indices (Lee et al. 2024 give only the ranking; the multipliers are assumed)"
+   }
+  },
+  "dorsalForearm": {
+   "melanin": 1.3,
+   "blood": 1.1,
+   "roughness": 0.5,
+   "provenance": "assumed",
+   "note": {
+    "zh": "前臂背侧等日晒部位：黑色素更多（Alaluf 等 2002 说最多到 2 倍；取 1.3 是假设）",
+    "en": "dorsal forearm and other sun-exposed sites: more melanin (Alaluf et al. 2002 report up to 2×; 1.3 is assumed)"
+   }
+  },
+  "palmsSoles": {
+   "melanin": 1.0,
+   "blood": 1.2,
+   "roughness": 0.6,
+   "provenance": "computed (melanin) / assumed (blood, roughness)",
+   "note": {
+    "zh": "手掌、足底：黑色素拉向一个与肤色无关的浅值（Phan 等 2022），角质厚、较粗糙；血量倍数是假设",
+    "en": "palms and soles: melanin pulled to a light value independent of skin tone (Phan et al. 2022), thick and rough stratum corneum; the blood multiplier is assumed"
+   },
+   "palmMelanin": 0.01789,
+   "source": "Phan et al. 2022, J Biomed Opt 27:036002 (palm L* 60.8, n=15)"
+  },
+  "mottling": {
+   "melanin": 0.08,
+   "blood": 0.15,
+   "provenance": "assumed",
+   "note": {
+    "zh": "低频斑驳：黑色素 ±8%、血量 ±15%，3–10 cm 尺度（假设）",
+    "en": "low-frequency mottling: melanin ±8%, blood ±15%, 3–10 cm scales (assumed)"
+   }
+  }
+ },
+ "regionFits": {
+  "Caucasian (n=187)": {
+   "forehead": {
+    "melanin": 1.0,
+    "blood": 2.72,
+    "dE2000": 3.21
+   },
+   "cheek": {
+    "melanin": 1.0,
+    "blood": 2.575,
+    "dE2000": 3.58
+   },
+   "backOfHand": {
+    "melanin": 1.237,
+    "blood": 1.715,
+    "dE2000": 0.54
+   }
+  },
+  "Chinese (n=202)": {
+   "forehead": {
+    "melanin": 1.0,
+    "blood": 2.814,
+    "dE2000": 2.04
+   },
+   "cheek": {
+    "melanin": 1.0,
+    "blood": 1.858,
+    "dE2000": 3.1
+   },
+   "backOfHand": {
+    "melanin": 1.334,
+    "blood": 1.749,
+    "dE2000": 0.95
+   }
+  },
+  "Kurdish (n=145)": {
+   "forehead": {
+    "melanin": 1.0,
+    "blood": 2.777,
+    "dE2000": 2.39
+   },
+   "cheek": {
+    "melanin": 1.0,
+    "blood": 2.13,
+    "dE2000": 3.44
+   },
+   "backOfHand": {
+    "melanin": 0.853,
+    "blood": 2.083,
+    "dE2000": 0.41
+   }
+  },
+  "Thai (n=426)": {
+   "forehead": {
+    "melanin": 1.0,
+    "blood": 2.992,
+    "dE2000": 1.89
+   },
+   "cheek": {
+    "melanin": 1.0,
+    "blood": 1.557,
+    "dE2000": 2.37
+   },
+   "backOfHand": {
+    "melanin": 1.748,
+    "blood": 1.92,
+    "dE2000": 0.79
+   }
+  }
+ },
+ "subjects": [
+  {
+   "subject": 1,
+   "cm": 0.00369,
+   "chd": 0.03685,
+   "lab": [
+    66.75,
+    8.46,
+    12.96
+   ],
+   "ita": 52.3,
+   "spectralRms": 0.0122,
+   "dE2000": 1.29,
+   "lutDE2000": 1.53,
+   "repeatDE2000": 1.02
+  },
+  {
+   "subject": 2,
+   "cm": 0.00109,
+   "chd": 0.01961,
+   "lab": [
+    71.41,
+    8.76,
+    14.29
+   ],
+   "ita": 56.3,
+   "spectralRms": 0.0126,
+   "dE2000": 0.96,
+   "lutDE2000": 1.01,
+   "repeatDE2000": 1.08
+  },
+  {
+   "subject": 3,
+   "cm": 0.00507,
+   "chd": 0.0858,
+   "lab": [
+    61.18,
+    13.01,
+    12.77
+   ],
+   "ita": 41.2,
+   "spectralRms": 0.0116,
+   "dE2000": 2.91,
+   "lutDE2000": 3.06,
+   "repeatDE2000": 2.69
+  },
+  {
+   "subject": 4,
+   "cm": 0.00115,
+   "chd": 0.0395,
+   "lab": [
+    67.59,
+    11.72,
+    13.91
+   ],
+   "ita": 51.7,
+   "spectralRms": 0.0121,
+   "dE2000": 1.81,
+   "lutDE2000": 1.88,
+   "repeatDE2000": 1.5
+  },
+  {
+   "subject": 5,
+   "cm": 0.00518,
+   "chd": 0.01769,
+   "lab": [
+    69.21,
+    9.7,
+    16.73
+   ],
+   "ita": 49.0,
+   "spectralRms": 0.0152,
+   "dE2000": 1.79,
+   "lutDE2000": 1.83,
+   "repeatDE2000": 1.31
+  },
+  {
+   "subject": 6,
+   "cm": 0.05539,
+   "chd": 0.11519,
+   "lab": [
+    47.59,
+    11.52,
+    20.31
+   ],
+   "ita": -6.8,
+   "spectralRms": 0.0106,
+   "dE2000": 1.57,
+   "lutDE2000": 1.84,
+   "repeatDE2000": 0.9
+  },
+  {
+   "subject": 7,
+   "cm": 0.00572,
+   "chd": 0.03451,
+   "lab": [
+    66.0,
+    9.57,
+    13.88
+   ],
+   "ita": 49.0,
+   "spectralRms": 0.0082,
+   "dE2000": 1.32,
+   "lutDE2000": 1.55,
+   "repeatDE2000": 1.68
+  },
+  {
+   "subject": 8,
+   "cm": 0.02469,
+   "chd": 0.05209,
+   "lab": [
+    57.08,
+    10.98,
+    20.57
+   ],
+   "ita": 19.0,
+   "spectralRms": 0.0091,
+   "dE2000": 0.96,
+   "lutDE2000": 1.2,
+   "repeatDE2000": 0.42
+  },
+  {
+   "subject": 9,
+   "cm": 0.00657,
+   "chd": 0.06614,
+   "lab": [
+    62.39,
+    10.98,
+    15.63
+   ],
+   "ita": 38.4,
+   "spectralRms": 0.0061,
+   "dE2000": 0.35,
+   "lutDE2000": 0.79,
+   "repeatDE2000": 1.97
+  },
+  {
+   "subject": 10,
+   "cm": 0.00237,
+   "chd": 0.04568,
+   "lab": [
+    66.38,
+    9.84,
+    14.03
+   ],
+   "ita": 49.4,
+   "spectralRms": 0.005,
+   "dE2000": 0.18,
+   "lutDE2000": 0.62,
+   "repeatDE2000": 0.96
+  },
+  {
+   "subject": 11,
+   "cm": 0.00681,
+   "chd": 0.02801,
+   "lab": [
+    66.55,
+    8.67,
+    15.31
+   ],
+   "ita": 47.2,
+   "spectralRms": 0.0066,
+   "dE2000": 0.57,
+   "lutDE2000": 0.89,
+   "repeatDE2000": 1.88
+  },
+  {
+   "subject": 12,
+   "cm": 0.00058,
+   "chd": 0.033,
+   "lab": [
+    69.05,
+    8.58,
+    12.99
+   ],
+   "ita": 55.7,
+   "spectralRms": 0.008,
+   "dE2000": 0.64,
+   "lutDE2000": 0.89,
+   "repeatDE2000": 0.84
+  },
+  {
+   "subject": 13,
+   "cm": 0.00509,
+   "chd": 0.01318,
+   "lab": [
+    70.59,
+    7.8,
+    16.93
+   ],
+   "ita": 50.6,
+   "spectralRms": 0.0098,
+   "dE2000": 0.85,
+   "lutDE2000": 0.91,
+   "repeatDE2000": 0.56
+  },
+  {
+   "subject": 14,
+   "cm": 0.00072,
+   "chd": 0.01381,
+   "lab": [
+    72.88,
+    8.3,
+    11.89
+   ],
+   "ita": 62.5,
+   "spectralRms": 0.0114,
+   "dE2000": 2.11,
+   "lutDE2000": 2.25,
+   "repeatDE2000": 1.8
+  },
+  {
+   "subject": 15,
+   "cm": 0.0035,
+   "chd": 0.02769,
+   "lab": [
+    68.26,
+    9.49,
+    14.96
+   ],
+   "ita": 50.7,
+   "spectralRms": 0.0072,
+   "dE2000": 0.61,
+   "lutDE2000": 0.82,
+   "repeatDE2000": 0.95
+  },
+  {
+   "subject": 16,
+   "cm": 0.0029,
+   "chd": 0.01245,
+   "lab": [
+    72.11,
+    6.84,
+    14.55
+   ],
+   "ita": 56.6,
+   "spectralRms": 0.0052,
+   "dE2000": 0.31,
+   "lutDE2000": 0.66,
+   "repeatDE2000": 1.28
+  },
+  {
+   "subject": 17,
+   "cm": 0.04607,
+   "chd": 0.07167,
+   "lab": [
+    50.68,
+    11.03,
+    19.1
+   ],
+   "ita": 2.0,
+   "spectralRms": 0.0077,
+   "dE2000": 1.39,
+   "lutDE2000": 1.74,
+   "repeatDE2000": 0.45
+  },
+  {
+   "subject": 18,
+   "cm": 0.00626,
+   "chd": 0.03174,
+   "lab": [
+    66.29,
+    9.58,
+    16.53
+   ],
+   "ita": 44.6,
+   "spectralRms": 0.0074,
+   "dE2000": 0.39,
+   "lutDE2000": 0.62,
+   "repeatDE2000": 0.6
+  },
+  {
+   "subject": 19,
+   "cm": 0.00211,
+   "chd": 0.02691,
+   "lab": [
+    69.01,
+    8.71,
+    12.01
+   ],
+   "ita": 57.7,
+   "spectralRms": 0.0107,
+   "dE2000": 1.37,
+   "lutDE2000": 1.61,
+   "repeatDE2000": 0.77
+  },
+  {
+   "subject": 20,
+   "cm": 0.00536,
+   "chd": 0.02454,
+   "lab": [
+    67.86,
+    8.27,
+    14.98
+   ],
+   "ita": 50.0,
+   "spectralRms": 0.0056,
+   "dE2000": 0.46,
+   "lutDE2000": 0.8,
+   "repeatDE2000": 0.68
+  },
+  {
+   "subject": 21,
+   "cm": 0.00084,
+   "chd": 0.02836,
+   "lab": [
+    69.65,
+    7.87,
+    12.31
+   ],
+   "ita": 57.9,
+   "spectralRms": 0.0092,
+   "dE2000": 0.94,
+   "lutDE2000": 1.18,
+   "repeatDE2000": 1.26
+  },
+  {
+   "subject": 22,
+   "cm": 0.0001,
+   "chd": 0.02352,
+   "lab": [
+    71.22,
+    10.1,
+    14.6
+   ],
+   "ita": 55.5,
+   "spectralRms": 0.0196,
+   "dE2000": 1.78,
+   "lutDE2000": 1.73,
+   "repeatDE2000": 0.51
+  },
+  {
+   "subject": 23,
+   "cm": 0.00319,
+   "chd": 0.0117,
+   "lab": [
+    72.26,
+    7.66,
+    16.2
+   ],
+   "ita": 54.0,
+   "spectralRms": 0.0151,
+   "dE2000": 1.24,
+   "lutDE2000": 1.26,
+   "repeatDE2000": 0.47
+  },
+  {
+   "subject": 24,
+   "cm": 0.00163,
+   "chd": 0.04931,
+   "lab": [
+    66.23,
+    10.74,
+    13.99
+   ],
+   "ita": 49.2,
+   "spectralRms": 0.0058,
+   "dE2000": 0.49,
+   "lutDE2000": 0.75,
+   "repeatDE2000": 0.99
+  },
+  {
+   "subject": 25,
+   "cm": 0.00697,
+   "chd": 0.01307,
+   "lab": [
+    69.28,
+    6.58,
+    14.73
+   ],
+   "ita": 52.6,
+   "spectralRms": 0.013,
+   "dE2000": 1.38,
+   "lutDE2000": 1.63,
+   "repeatDE2000": 1.66
+  },
+  {
+   "subject": 26,
+   "cm": 0.00464,
+   "chd": 0.04085,
+   "lab": [
+    66.03,
+    9.49,
+    15.9
+   ],
+   "ita": 45.2,
+   "spectralRms": 0.0056,
+   "dE2000": 0.64,
+   "lutDE2000": 0.73,
+   "repeatDE2000": 1.89
+  },
+  {
+   "subject": 27,
+   "cm": 0.00492,
+   "chd": 0.05519,
+   "lab": [
+    64.1,
+    9.86,
+    12.41
+   ],
+   "ita": 48.6,
+   "spectralRms": 0.0155,
+   "dE2000": 1.89,
+   "lutDE2000": 2.09,
+   "repeatDE2000": 0.92
+  },
+  {
+   "subject": 28,
+   "cm": 0.01099,
+   "chd": 0.0179,
+   "lab": [
+    66.12,
+    9.17,
+    18.58
+   ],
+   "ita": 41.0,
+   "spectralRms": 0.0088,
+   "dE2000": 0.99,
+   "lutDE2000": 1.13,
+   "repeatDE2000": 1.0
+  },
+  {
+   "subject": 29,
+   "cm": 0.00698,
+   "chd": 0.07186,
+   "lab": [
+    61.89,
+    10.21,
+    12.35
+   ],
+   "ita": 43.9,
+   "spectralRms": 0.0176,
+   "dE2000": 2.35,
+   "lutDE2000": 2.52,
+   "repeatDE2000": 1.1
+  },
+  {
+   "subject": 30,
+   "cm": 0.00016,
+   "chd": 0.0185,
+   "lab": [
+    72.27,
+    6.96,
+    12.3
+   ],
+   "ita": 61.1,
+   "spectralRms": 0.0081,
+   "dE2000": 0.64,
+   "lutDE2000": 0.88,
+   "repeatDE2000": 0.65
+  },
+  {
+   "subject": 31,
+   "cm": 0.01099,
+   "chd": 0.02714,
+   "lab": [
+    64.77,
+    8.7,
+    18.22
+   ],
+   "ita": 39.0,
+   "spectralRms": 0.0063,
+   "dE2000": 0.47,
+   "lutDE2000": 0.7,
+   "repeatDE2000": 1.36
+  },
+  {
+   "subject": 32,
+   "cm": 0.0055,
+   "chd": 0.03833,
+   "lab": [
+    65.62,
+    10.7,
+    15.15
+   ],
+   "ita": 45.9,
+   "spectralRms": 0.0062,
+   "dE2000": 1.18,
+   "lutDE2000": 1.34,
+   "repeatDE2000": 0.56
+  },
+  {
+   "subject": 33,
+   "cm": 0.00567,
+   "chd": 0.03783,
+   "lab": [
+    65.59,
+    8.76,
+    12.08
+   ],
+   "ita": 52.2,
+   "spectralRms": 0.0183,
+   "dE2000": 2.27,
+   "lutDE2000": 2.47,
+   "repeatDE2000": 1.3
+  },
+  {
+   "subject": 34,
+   "cm": 0.00574,
+   "chd": 0.0436,
+   "lab": [
+    65.07,
+    9.12,
+    13.72
+   ],
+   "ita": 47.7,
+   "spectralRms": 0.0134,
+   "dE2000": 1.22,
+   "lutDE2000": 1.43,
+   "repeatDE2000": 0.69
+  },
+  {
+   "subject": 35,
+   "cm": 0.0046,
+   "chd": 0.01466,
+   "lab": [
+    70.42,
+    7.86,
+    15.95
+   ],
+   "ita": 52.0,
+   "spectralRms": 0.0074,
+   "dE2000": 0.64,
+   "lutDE2000": 0.82,
+   "repeatDE2000": 1.81
+  },
+  {
+   "subject": 36,
+   "cm": 0.00468,
+   "chd": 0.01627,
+   "lab": [
+    70.05,
+    8.11,
+    16.91
+   ],
+   "ita": 49.9,
+   "spectralRms": 0.0119,
+   "dE2000": 0.82,
+   "lutDE2000": 0.86,
+   "repeatDE2000": 1.2
+  },
+  {
+   "subject": 37,
+   "cm": 0.01859,
+   "chd": 0.01502,
+   "lab": [
+    63.35,
+    7.87,
+    19.55
+   ],
+   "ita": 34.3,
+   "spectralRms": 0.0041,
+   "dE2000": 0.44,
+   "lutDE2000": 0.75,
+   "repeatDE2000": 1.04
+  },
+  {
+   "subject": 38,
+   "cm": 0.01087,
+   "chd": 0.01358,
+   "lab": [
+    67.15,
+    7.63,
+    18.45
+   ],
+   "ita": 42.9,
+   "spectralRms": 0.0051,
+   "dE2000": 0.21,
+   "lutDE2000": 0.62,
+   "repeatDE2000": 0.55
+  },
+  {
+   "subject": 39,
+   "cm": 0.01419,
+   "chd": 0.04909,
+   "lab": [
+    61.25,
+    9.95,
+    18.41
+   ],
+   "ita": 31.4,
+   "spectralRms": 0.0047,
+   "dE2000": 0.42,
+   "lutDE2000": 0.57,
+   "repeatDE2000": 1.49
+  },
+  {
+   "subject": 40,
+   "cm": 0.0009,
+   "chd": 0.06826,
+   "lab": [
+    64.36,
+    11.43,
+    11.6
+   ],
+   "ita": 51.1,
+   "spectralRms": 0.0101,
+   "dE2000": 1.91,
+   "lutDE2000": 2.13,
+   "repeatDE2000": 0.68
+  },
+  {
+   "subject": 41,
+   "cm": 0.03263,
+   "chd": 0.06033,
+   "lab": [
+    54.94,
+    10.23,
+    19.18
+   ],
+   "ita": 14.4,
+   "spectralRms": 0.0028,
+   "dE2000": 0.29,
+   "lutDE2000": 0.61,
+   "repeatDE2000": 0.77
+  },
+  {
+   "subject": 42,
+   "cm": 0.0001,
+   "chd": 0.01389,
+   "lab": [
+    73.64,
+    8.13,
+    13.16
+   ],
+   "ita": 60.9,
+   "spectralRms": 0.0142,
+   "dE2000": 1.42,
+   "lutDE2000": 1.45,
+   "repeatDE2000": 1.17
+  },
+  {
+   "subject": 43,
+   "cm": 0.00264,
+   "chd": 0.02607,
+   "lab": [
+    69.0,
+    7.71,
+    12.7
+   ],
+   "ita": 56.2,
+   "spectralRms": 0.0122,
+   "dE2000": 1.14,
+   "lutDE2000": 1.39,
+   "repeatDE2000": 1.26
+  },
+  {
+   "subject": 44,
+   "cm": 0.06486,
+   "chd": 0.28266,
+   "lab": [
+    43.16,
+    12.52,
+    17.36
+   ],
+   "ita": -21.5,
+   "spectralRms": 0.0094,
+   "dE2000": 1.17,
+   "lutDE2000": 1.48,
+   "repeatDE2000": 0.58
+  },
+  {
+   "subject": 45,
+   "cm": 0.00512,
+   "chd": 0.05333,
+   "lab": [
+    64.13,
+    11.31,
+    14.49
+   ],
+   "ita": 44.3,
+   "spectralRms": 0.0076,
+   "dE2000": 1.32,
+   "lutDE2000": 1.48,
+   "repeatDE2000": 1.4
+  },
+  {
+   "subject": 46,
+   "cm": 0.00613,
+   "chd": 0.02795,
+   "lab": [
+    66.91,
+    8.63,
+    14.76
+   ],
+   "ita": 48.9,
+   "spectralRms": 0.008,
+   "dE2000": 0.74,
+   "lutDE2000": 1.02,
+   "repeatDE2000": 1.24
+  },
+  {
+   "subject": 47,
+   "cm": 0.00164,
+   "chd": 0.02758,
+   "lab": [
+    69.32,
+    9.46,
+    13.69
+   ],
+   "ita": 54.7,
+   "spectralRms": 0.0067,
+   "dE2000": 0.68,
+   "lutDE2000": 0.86,
+   "repeatDE2000": 1.69
+  },
+  {
+   "subject": 48,
+   "cm": 0.00379,
+   "chd": 0.02335,
+   "lab": [
+    68.95,
+    8.18,
+    14.86
+   ],
+   "ita": 51.9,
+   "spectralRms": 0.0042,
+   "dE2000": 0.22,
+   "lutDE2000": 0.62,
+   "repeatDE2000": 0.99
+  },
+  {
+   "subject": 49,
+   "cm": 0.00784,
+   "chd": 0.03022,
+   "lab": [
+    65.7,
+    10.28,
+    17.43
+   ],
+   "ita": 42.0,
+   "spectralRms": 0.0097,
+   "dE2000": 0.99,
+   "lutDE2000": 1.09,
+   "repeatDE2000": 1.14
+  },
+  {
+   "subject": 50,
+   "cm": 0.00403,
+   "chd": 0.01825,
+   "lab": [
+    69.97,
+    8.61,
+    17.09
+   ],
+   "ita": 49.4,
+   "spectralRms": 0.0158,
+   "dE2000": 1.19,
+   "lutDE2000": 1.18,
+   "repeatDE2000": 0.87
+  },
+  {
+   "subject": 51,
+   "cm": 0.00156,
+   "chd": 0.03286,
+   "lab": [
+    68.3,
+    10.09,
+    12.47
+   ],
+   "ita": 55.7,
+   "spectralRms": 0.0064,
+   "dE2000": 1.43,
+   "lutDE2000": 1.61,
+   "repeatDE2000": 1.08
+  },
+  {
+   "subject": 52,
+   "cm": 0.00131,
+   "chd": 0.03313,
+   "lab": [
+    68.77,
+    8.68,
+    14.05
+   ],
+   "ita": 53.2,
+   "spectralRms": 0.0058,
+   "dE2000": 0.81,
+   "lutDE2000": 0.94,
+   "repeatDE2000": 1.95
+  },
+  {
+   "subject": 53,
+   "cm": 0.0009,
+   "chd": 0.03288,
+   "lab": [
+    69.02,
+    10.25,
+    15.64
+   ],
+   "ita": 50.6,
+   "spectralRms": 0.0186,
+   "dE2000": 1.51,
+   "lutDE2000": 1.47,
+   "repeatDE2000": 0.69
+  },
+  {
+   "subject": 54,
+   "cm": 0.00253,
+   "chd": 0.02321,
+   "lab": [
+    69.55,
+    9.54,
+    14.04
+   ],
+   "ita": 54.3,
+   "spectralRms": 0.0098,
+   "dE2000": 1.26,
+   "lutDE2000": 1.4,
+   "repeatDE2000": 1.68
+  },
+  {
+   "subject": 55,
+   "cm": 0.0067,
+   "chd": 0.02253,
+   "lab": [
+    67.59,
+    10.56,
+    19.38
+   ],
+   "ita": 42.2,
+   "spectralRms": 0.0218,
+   "dE2000": 2.09,
+   "lutDE2000": 2.04,
+   "repeatDE2000": 0.68
+  },
+  {
+   "subject": 56,
+   "cm": 0.00073,
+   "chd": 0.02009,
+   "lab": [
+    71.49,
+    8.4,
+    13.51
+   ],
+   "ita": 57.8,
+   "spectralRms": 0.0097,
+   "dE2000": 0.54,
+   "lutDE2000": 0.69,
+   "repeatDE2000": 0.86
+  },
+  {
+   "subject": 57,
+   "cm": 0.0001,
+   "chd": 0.0877,
+   "lab": [
+    62.79,
+    12.74,
+    10.86
+   ],
+   "ita": 49.7,
+   "spectralRms": 0.0135,
+   "dE2000": 2.85,
+   "lutDE2000": 3.04,
+   "repeatDE2000": 0.81
+  },
+  {
+   "subject": 58,
+   "cm": 0.00262,
+   "chd": 0.05528,
+   "lab": [
+    65.05,
+    10.73,
+    13.6
+   ],
+   "ita": 47.9,
+   "spectralRms": 0.0066,
+   "dE2000": 0.76,
+   "lutDE2000": 1.05,
+   "repeatDE2000": 1.09
+  },
+  {
+   "subject": 59,
+   "cm": 0.00337,
+   "chd": 0.03164,
+   "lab": [
+    67.84,
+    10.08,
+    16.3
+   ],
+   "ita": 47.6,
+   "spectralRms": 0.0122,
+   "dE2000": 1.09,
+   "lutDE2000": 1.09,
+   "repeatDE2000": 0.63
+  },
+  {
+   "subject": 60,
+   "cm": 0.00409,
+   "chd": 0.02058,
+   "lab": [
+    69.21,
+    9.3,
+    14.8
+   ],
+   "ita": 52.4,
+   "spectralRms": 0.0069,
+   "dE2000": 1.35,
+   "lutDE2000": 1.48,
+   "repeatDE2000": 1.06
+  },
+  {
+   "subject": 61,
+   "cm": 0.03473,
+   "chd": 0.07073,
+   "lab": [
+    53.54,
+    11.43,
+    21.55
+   ],
+   "ita": 9.3,
+   "spectralRms": 0.0097,
+   "dE2000": 1.36,
+   "lutDE2000": 1.49,
+   "repeatDE2000": 0.39
+  },
+  {
+   "subject": 62,
+   "cm": 0.0027,
+   "chd": 0.0269,
+   "lab": [
+    68.85,
+    9.5,
+    14.24
+   ],
+   "ita": 52.9,
+   "spectralRms": 0.0066,
+   "dE2000": 0.78,
+   "lutDE2000": 0.95,
+   "repeatDE2000": 0.57
+  },
+  {
+   "subject": 63,
+   "cm": 0.00249,
+   "chd": 0.02061,
+   "lab": [
+    70.2,
+    7.81,
+    13.44
+   ],
+   "ita": 56.4,
+   "spectralRms": 0.0062,
+   "dE2000": 0.48,
+   "lutDE2000": 0.83,
+   "repeatDE2000": 1.65
+  },
+  {
+   "subject": 64,
+   "cm": 0.00921,
+   "chd": 0.02409,
+   "lab": [
+    66.11,
+    8.52,
+    17.88
+   ],
+   "ita": 42.0,
+   "spectralRms": 0.007,
+   "dE2000": 0.45,
+   "lutDE2000": 0.63,
+   "repeatDE2000": 1.61
+  },
+  {
+   "subject": 65,
+   "cm": 0.00093,
+   "chd": 0.04295,
+   "lab": [
+    67.24,
+    11.05,
+    13.26
+   ],
+   "ita": 52.4,
+   "spectralRms": 0.0079,
+   "dE2000": 1.18,
+   "lutDE2000": 1.34,
+   "repeatDE2000": 1.49
+  },
+  {
+   "subject": 66,
+   "cm": 0.00467,
+   "chd": 0.01977,
+   "lab": [
+    69.11,
+    6.86,
+    13.56
+   ],
+   "ita": 54.6,
+   "spectralRms": 0.0136,
+   "dE2000": 1.39,
+   "lutDE2000": 1.62,
+   "repeatDE2000": 0.9
+  },
+  {
+   "subject": 67,
+   "cm": 0.00679,
+   "chd": 0.01286,
+   "lab": [
+    69.71,
+    6.91,
+    17.74
+   ],
+   "ita": 48.0,
+   "spectralRms": 0.0082,
+   "dE2000": 0.54,
+   "lutDE2000": 0.66,
+   "repeatDE2000": 0.64
+  },
+  {
+   "subject": 68,
+   "cm": 0.00226,
+   "chd": 0.03778,
+   "lab": [
+    67.39,
+    9.31,
+    13.08
+   ],
+   "ita": 53.1,
+   "spectralRms": 0.0085,
+   "dE2000": 0.65,
+   "lutDE2000": 0.95,
+   "repeatDE2000": 1.25
+  },
+  {
+   "subject": 69,
+   "cm": 0.00742,
+   "chd": 0.01385,
+   "lab": [
+    68.99,
+    8.51,
+    18.34
+   ],
+   "ita": 46.0,
+   "spectralRms": 0.0116,
+   "dE2000": 1.17,
+   "lutDE2000": 1.22,
+   "repeatDE2000": 0.37
+  },
+  {
+   "subject": 70,
+   "cm": 0.01139,
+   "chd": 0.08444,
+   "lab": [
+    59.39,
+    11.52,
+    16.76
+   ],
+   "ita": 29.3,
+   "spectralRms": 0.0053,
+   "dE2000": 0.45,
+   "lutDE2000": 0.82,
+   "repeatDE2000": 1.77
+  },
+  {
+   "subject": 71,
+   "cm": 0.00051,
+   "chd": 0.05214,
+   "lab": [
+    66.33,
+    11.28,
+    12.49
+   ],
+   "ita": 52.6,
+   "spectralRms": 0.0062,
+   "dE2000": 1.31,
+   "lutDE2000": 1.47,
+   "repeatDE2000": 1.18
+  },
+  {
+   "subject": 72,
+   "cm": 0.0302,
+   "chd": 0.07249,
+   "lab": [
+    54.36,
+    12.61,
+    22.15
+   ],
+   "ita": 11.1,
+   "spectralRms": 0.0142,
+   "dE2000": 2.04,
+   "lutDE2000": 2.13,
+   "repeatDE2000": 1.52
+  },
+  {
+   "subject": 73,
+   "cm": 0.00715,
+   "chd": 0.02896,
+   "lab": [
+    66.12,
+    11.13,
+    18.06
+   ],
+   "ita": 41.8,
+   "spectralRms": 0.0177,
+   "dE2000": 1.8,
+   "lutDE2000": 1.83,
+   "repeatDE2000": 1.33
+  },
+  {
+   "subject": 74,
+   "cm": 0.00154,
+   "chd": 0.0171,
+   "lab": [
+    71.7,
+    8.3,
+    14.18
+   ],
+   "ita": 56.8,
+   "spectralRms": 0.0115,
+   "dE2000": 0.84,
+   "lutDE2000": 0.93,
+   "repeatDE2000": 1.22
+  },
+  {
+   "subject": 75,
+   "cm": 0.01008,
+   "chd": 0.02785,
+   "lab": [
+    65.12,
+    8.28,
+    16.08
+   ],
+   "ita": 43.2,
+   "spectralRms": 0.01,
+   "dE2000": 0.88,
+   "lutDE2000": 1.1,
+   "repeatDE2000": 1.03
+  },
+  {
+   "subject": 76,
+   "cm": 0.00368,
+   "chd": 0.07495,
+   "lab": [
+    62.56,
+    11.99,
+    13.29
+   ],
+   "ita": 43.4,
+   "spectralRms": 0.0097,
+   "dE2000": 1.77,
+   "lutDE2000": 1.99,
+   "repeatDE2000": 1.02
+  },
+  {
+   "subject": 77,
+   "cm": 0.00126,
+   "chd": 0.02189,
+   "lab": [
+    70.77,
+    7.91,
+    13.67
+   ],
+   "ita": 56.6,
+   "spectralRms": 0.0077,
+   "dE2000": 0.37,
+   "lutDE2000": 0.65,
+   "repeatDE2000": 0.81
+  },
+  {
+   "subject": 78,
+   "cm": 0.00317,
+   "chd": 0.02815,
+   "lab": [
+    68.42,
+    8.47,
+    13.64
+   ],
+   "ita": 53.5,
+   "spectralRms": 0.0091,
+   "dE2000": 0.59,
+   "lutDE2000": 0.9,
+   "repeatDE2000": 0.82
+  },
+  {
+   "subject": 79,
+   "cm": 0.00263,
+   "chd": 0.02314,
+   "lab": [
+    69.5,
+    8.76,
+    13.45
+   ],
+   "ita": 55.4,
+   "spectralRms": 0.0072,
+   "dE2000": 0.85,
+   "lutDE2000": 1.1,
+   "repeatDE2000": 0.69
+  },
+  {
+   "subject": 80,
+   "cm": 0.00469,
+   "chd": 0.01604,
+   "lab": [
+    69.96,
+    8.3,
+    15.88
+   ],
+   "ita": 51.5,
+   "spectralRms": 0.0078,
+   "dE2000": 0.83,
+   "lutDE2000": 0.99,
+   "repeatDE2000": 0.49
+  },
+  {
+   "subject": 81,
+   "cm": 0.00161,
+   "chd": 0.03642,
+   "lab": [
+    67.79,
+    11.54,
+    14.38
+   ],
+   "ita": 51.1,
+   "spectralRms": 0.0146,
+   "dE2000": 1.79,
+   "lutDE2000": 1.86,
+   "repeatDE2000": 2.43
+  },
+  {
+   "subject": 82,
+   "cm": 0.00316,
+   "chd": 0.03169,
+   "lab": [
+    67.99,
+    9.17,
+    15.72
+   ],
+   "ita": 48.9,
+   "spectralRms": 0.0088,
+   "dE2000": 0.81,
+   "lutDE2000": 0.86,
+   "repeatDE2000": 0.85
+  },
+  {
+   "subject": 83,
+   "cm": 0.00318,
+   "chd": 0.03074,
+   "lab": [
+    68.0,
+    7.73,
+    12.69
+   ],
+   "ita": 54.8,
+   "spectralRms": 0.014,
+   "dE2000": 1.48,
+   "lutDE2000": 1.68,
+   "repeatDE2000": 0.99
+  },
+  {
+   "subject": 84,
+   "cm": 0.01297,
+   "chd": 0.03507,
+   "lab": [
+    62.88,
+    10.85,
+    19.42
+   ],
+   "ita": 33.6,
+   "spectralRms": 0.0116,
+   "dE2000": 1.17,
+   "lutDE2000": 1.21,
+   "repeatDE2000": 2.35
+  },
+  {
+   "subject": 85,
+   "cm": 0.01018,
+   "chd": 0.03618,
+   "lab": [
+    63.82,
+    11.13,
+    19.01
+   ],
+   "ita": 36.0,
+   "spectralRms": 0.0133,
+   "dE2000": 1.4,
+   "lutDE2000": 1.45,
+   "repeatDE2000": 1.44
+  },
+  {
+   "subject": 86,
+   "cm": 0.0001,
+   "chd": 0.03484,
+   "lab": [
+    68.78,
+    9.72,
+    11.59
+   ],
+   "ita": 58.3,
+   "spectralRms": 0.0068,
+   "dE2000": 1.08,
+   "lutDE2000": 1.35,
+   "repeatDE2000": 2.18
+  },
+  {
+   "subject": 87,
+   "cm": 0.00582,
+   "chd": 0.04126,
+   "lab": [
+    65.26,
+    9.68,
+    14.74
+   ],
+   "ita": 46.0,
+   "spectralRms": 0.0059,
+   "dE2000": 0.6,
+   "lutDE2000": 0.9,
+   "repeatDE2000": 1.61
+  },
+  {
+   "subject": 88,
+   "cm": 0.0001,
+   "chd": 0.01816,
+   "lab": [
+    72.46,
+    8.25,
+    13.49
+   ],
+   "ita": 59.0,
+   "spectralRms": 0.0164,
+   "dE2000": 0.81,
+   "lutDE2000": 0.86,
+   "repeatDE2000": 0.49
+  },
+  {
+   "subject": 89,
+   "cm": 0.0001,
+   "chd": 0.03419,
+   "lab": [
+    69.13,
+    9.93,
+    13.55
+   ],
+   "ita": 54.7,
+   "spectralRms": 0.0111,
+   "dE2000": 0.62,
+   "lutDE2000": 0.75,
+   "repeatDE2000": 0.49
+  },
+  {
+   "subject": 90,
+   "cm": 0.01221,
+   "chd": 0.04018,
+   "lab": [
+    62.5,
+    10.94,
+    18.54
+   ],
+   "ita": 34.0,
+   "spectralRms": 0.0094,
+   "dE2000": 1.0,
+   "lutDE2000": 1.14,
+   "repeatDE2000": 1.52
+  },
+  {
+   "subject": 91,
+   "cm": 0.00094,
+   "chd": 0.04722,
+   "lab": [
+    66.73,
+    10.55,
+    13.29
+   ],
+   "ita": 51.5,
+   "spectralRms": 0.0077,
+   "dE2000": 0.53,
+   "lutDE2000": 0.85,
+   "repeatDE2000": 0.71
+  },
+  {
+   "subject": 92,
+   "cm": 0.0001,
+   "chd": 0.03494,
+   "lab": [
+    68.98,
+    9.55,
+    13.37
+   ],
+   "ita": 54.9,
+   "spectralRms": 0.0092,
+   "dE2000": 0.36,
+   "lutDE2000": 0.63,
+   "repeatDE2000": 0.75
+  },
+  {
+   "subject": 93,
+   "cm": 0.00657,
+   "chd": 0.01697,
+   "lab": [
+    68.63,
+    9.54,
+    16.77
+   ],
+   "ita": 48.0,
+   "spectralRms": 0.0097,
+   "dE2000": 1.77,
+   "lutDE2000": 1.82,
+   "repeatDE2000": 0.83
+  },
+  {
+   "subject": 94,
+   "cm": 0.00644,
+   "chd": 0.0245,
+   "lab": [
+    67.35,
+    8.74,
+    16.58
+   ],
+   "ita": 46.3,
+   "spectralRms": 0.0059,
+   "dE2000": 0.23,
+   "lutDE2000": 0.54,
+   "repeatDE2000": 0.67
+  },
+  {
+   "subject": 95,
+   "cm": 0.00414,
+   "chd": 0.01419,
+   "lab": [
+    70.69,
+    8.09,
+    14.59
+   ],
+   "ita": 54.8,
+   "spectralRms": 0.0068,
+   "dE2000": 1.38,
+   "lutDE2000": 1.55,
+   "repeatDE2000": 0.96
+  },
+  {
+   "subject": 96,
+   "cm": 0.02003,
+   "chd": 0.0394,
+   "lab": [
+    59.52,
+    12.23,
+    22.38
+   ],
+   "ita": 23.0,
+   "spectralRms": 0.019,
+   "dE2000": 2.21,
+   "lutDE2000": 2.25,
+   "repeatDE2000": 0.76
+  },
+  {
+   "subject": 97,
+   "cm": 0.0001,
+   "chd": 0.09981,
+   "lab": [
+    61.85,
+    13.86,
+    12.56
+   ],
+   "ita": 43.3,
+   "spectralRms": 0.014,
+   "dE2000": 2.45,
+   "lutDE2000": 2.63,
+   "repeatDE2000": 1.17
+  },
+  {
+   "subject": 98,
+   "cm": 0.05147,
+   "chd": 0.08444,
+   "lab": [
+    49.31,
+    11.28,
+    20.45
+   ],
+   "ita": -1.9,
+   "spectralRms": 0.0091,
+   "dE2000": 1.4,
+   "lutDE2000": 1.66,
+   "repeatDE2000": 1.33
+  },
+  {
+   "subject": 99,
+   "cm": 0.00697,
+   "chd": 0.05269,
+   "lab": [
+    63.54,
+    11.02,
+    17.18
+   ],
+   "ita": 38.2,
+   "spectralRms": 0.0081,
+   "dE2000": 0.75,
+   "lutDE2000": 0.86,
+   "repeatDE2000": 1.52
+  },
+  {
+   "subject": 100,
+   "cm": 0.00377,
+   "chd": 0.01995,
+   "lab": [
+    69.54,
+    8.4,
+    13.99
+   ],
+   "ita": 54.4,
+   "spectralRms": 0.0064,
+   "dE2000": 0.94,
+   "lutDE2000": 1.17,
+   "repeatDE2000": 1.36
+  }
+ ],
+ "sources": [
+  "Cooksey CC, Allen DW, Tsai BK (2017) Reference data set of human skin reflectance. J Res NIST 122:26. doi:10.6028/jres.122.026; data doi:10.18434/M38597",
+  "Donner C, Jensen HW (2006) A spectral BSSRDF for shading human skin. EGSR 2006. doi:10.2312/EGWR/EGSR06/409-417",
+  "Donner C, Weyrich T, d'Eon E, Ramamoorthi R, Rusinkiewicz S (2008) A layered, heterogeneous reflectance model for acquiring and rendering human skin. ACM TOG 27(5):140",
+  "Jacques SL (2013) Optical properties of biological tissues: a review. Phys Med Biol 58:R37. doi:10.1088/0031-9155/58/11/R37",
+  "Svaasand LO et al. (1995) Tissue parameters determining the visual appearance of normal skin and port-wine stains. Lasers Med Sci 10:55",
+  "Saunderson JL (1942) Calculation of the color of pigmented plastics. JOSA 32:727",
+  "Prahl S, Tabulated molar extinction coefficient for hemoglobin in water (OMLC), compiled from Gratzer and Kollias",
+  "CIE 1931 2° colour matching functions and CIE D65 (CIE datasets, CC BY-SA 4.0)",
+  "Sharma G, Wu W, Dalal EN (2005) The CIEDE2000 color-difference formula. Color Res Appl 30:21",
+  "Chardon A et al. (1991) Skin colour typology and suntanning pathways. Int J Cosmet Sci 13:191; Del Bino S et al. (2006) Pigment Cell Res 19:606",
+  "Xiao K et al. (2017) Characterising the variations in ethnic skin colours: a new calibrated data base for human skin. Skin Res Technol 23:21. doi:10.1111/srt.12295",
+  "Measurement and correlation analysis of vermilion and facial skin color. Chinese Journal of Tissue Engineering Research (WPRIM wpr-698623; abstract)",
+  "Phan T et al. (2022) Quantifying the confounding effect of pigmentation on measured skin tissue optical properties. J Biomed Opt 27:036002. doi:10.1117/1.JBO.27.3.036002",
+  "Sun F, Liu Y, Zhang T (2025) Aging of the human lip. J Cosmet Dermatol 24:e70310. doi:10.1111/jocd.70310",
+  "Lee EJ et al. (2024) Skin color analysis of various body parts in 53 Korean women. J Clin Med 13:2500. doi:10.3390/jcm13092500",
+  "Alaluf S et al. (2002) Ethnic variation in melanin content and composition in photoexposed and photoprotected human skin. Pigment Cell Res 15:112",
+  "Pawson IG, Petrakis NL (1975) Comparisons of breast pigmentation among women of different racial groups. Hum Biol 47:441; Silva PC et al. (2020) Melanin index in the skin of preterm newborns. Skin Res Technol 26:356"
+ ]
+}

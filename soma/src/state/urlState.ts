@@ -47,6 +47,7 @@
 //   skin   1                                      皮肤画成不透明（看表情）/ skin drawn opaque (to read the expression)
 //   look   0                                      不透明皮肤不用写实外观，改回解剖配色（缺省是写实）
 //                                                 an opaque skin without the lifelike look, in the anatomical colours (lifelike is the default)
+//   tone   0–100                                  写实皮肤的色调（黑色素；只写不在缺省值的）/ the lifelike skin tone (melanin; written only when not the default)
 //   shape  h1.80,b28,l0,c0                        体型：h 身高（米）、b BMI、l 腿长比例（SD）、c 躯干体格（SD）；只写不在默认值的项，
 //                                                 超出该人体可用范围的值会被截断
 //                                                 body shape: h stature (m), b BMI, l leg length (SD), c central build (SD); only non-default
@@ -99,7 +100,7 @@ const AXES: Record<string, SectionAxis> = { a: 'axial', c: 'coronal', s: 'sagitt
 const MAPS = { d: 'dermatome', n: 'cutaneousNerve' } as const
 const BODIES = new Set(['male', 'female', 'fixture', 'stress'])
 /** 本模块负责的参数名；其余的原样保留 / Parameter names owned here; all others pass through. */
-export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'say', 'drive', 'style', 'skin', 'look', 'shape', 'stim', 'src', 'cmp'] as const
+export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'say', 'drive', 'style', 'skin', 'look', 'tone', 'shape', 'stim', 'src', 'cmp'] as const
 /** 超过这个数量的部件 id 不写进 URL / Part id lists longer than this are not written to the URL. */
 export const MAX_URL_IDS = 60
 export const MAX_URL_DOFS = 40
@@ -141,6 +142,8 @@ export interface UrlState {
   skin?: boolean
   /** false：不透明皮肤用解剖配色；缺省（写实）不写 / false: an opaque skin in the anatomical colours; the default (lifelike) is not written */
   look?: boolean
+  /** 写实皮肤的色调 0–100 / the lifelike skin tone 0–100 */
+  tone?: number
   /** 体型控制量（未限幅）/ shape controls (not yet clamped). */
   shape?: ShapeControls
   /** 一个刺激及其部位 / one stimulus and its site */
@@ -200,6 +203,12 @@ export function parseUrl(search: string): ParsedUrl {
         const f = flag(value)
         if (f === null) warn(`${key}: 应为 1 或 0 / expected 1 or 0`)
         else if (!f) state.look = false
+        break
+      }
+      case 'tone': {
+        const t = Number(value)
+        if (value === '' || !Number.isFinite(t) || t < 0 || t > 100) warn(`${key}: 应为 0–100 的数 / expected a number from 0 to 100`)
+        else state.tone = Math.round(t)
         break
       }
       case 'tab': {
@@ -414,6 +423,7 @@ export function formatUrl(state: UrlState, passthrough: readonly [string, string
   if (state.style) put('style', state.style)
   if (state.skin) put('skin', '1')
   if (state.look === false) put('look', '0')
+  if (state.tone !== undefined) put('tone', String(Math.round(state.tone)))
   if (state.shape && Object.keys(state.shape).length) put('shape', formatShapeParam(state.shape))
   if (state.stim) put('stim', formatStimParam(state.stim))
   if (state.src) put('src', '1')

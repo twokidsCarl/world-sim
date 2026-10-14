@@ -118,6 +118,7 @@ export function snapshot(s: AppState): UrlState {
   if (s.speechStyle) out.style = s.speechStyle
   if (s.skinOpaque) out.skin = true
   if (!s.look) out.look = false
+  if (s.tone !== null) out.tone = s.tone
   // 接触来自软组织物理的钝压由 phys= 记录（见 src/softbody/client.ts），不再写 stim= / a pressure whose contact came from the soft-tissue physics is recorded by phys= (see src/softbody/client.ts), not stim=
   if (s.stim && !s.stim.contact) out.stim = { settings: s.stim.settings, site: s.stim.siteRef }
   if (Object.keys(s.shapeControls).length) out.shape = s.shape ? nonDefaultControls(s.shape.data, s.shapeControls) : { ...s.shapeControls }
@@ -196,6 +197,7 @@ export async function restoreFromUrl(state: UrlState): Promise<string[]> {
   if (state.src) app.setColorMode('source')
   if (state.skin) app.setSkinOpaque(true)
   if (state.look === false) app.setLook(false)
+  if (state.tone !== undefined) app.setTone(state.tone)
   if (state.pain !== undefined || state.au) {
     // 只恢复表情（保持在给定强度）；声音必须由用户手势触发，这里绝不出声
     // only the expression is restored (held at the given level); sound needs a user gesture and is never started here

@@ -243,6 +243,8 @@ export interface AppState {
   skinOpaque: boolean
   /** 不透明的皮肤用写实外观（缺省）；false 用解剖配色 / An opaque skin takes the lifelike look (default); false = the anatomical colours. */
   look: boolean
+  /** 写实皮肤的色调 0–100（黑色素，见 src/look/skinMaterial.ts）；null = 数据的缺省值 / Lifelike skin tone 0–100 (melanin, see src/look/skinMaterial.ts); null = the data's default. */
+  tone: number | null
   selection: Selection
   hover: string | null
   explode: number
@@ -303,6 +305,7 @@ export interface AppState {
   /** 取写实皮肤的 UV 网格（已取过则直接返回）/ Fetch the lifelike skin's UV mesh (no-op once tried). */
   ensureSkinUv(): Promise<LoadedSkinUv | null>
   setLook(on: boolean): void
+  setTone(tone: number | null): void
   ensureSkinReport(): void
   setStimSettings(patch: Partial<StimSettings>): void
   setStimArmed(on: boolean): void
@@ -483,6 +486,7 @@ export const useApp = create<AppState>()((set, get) => ({
   lastVoice: null,
   skinOpaque: false,
   look: true,
+  tone: null,
   rig: null,
   rigStatus: 'idle',
   rigMessage: '',
@@ -817,6 +821,7 @@ export const useApp = create<AppState>()((set, get) => ({
     return pendingSkinUv
   },
   setLook: (look) => set({ look }),
+  setTone: (tone) => set({ tone: tone === null ? null : Math.min(100, Math.max(0, Math.round(tone))) }),
   rejectFace: (message) => set({ face: null, faceStatus: 'error', faceMessage: message }),
   setStimSettings: (patch) =>
     set((s) => {

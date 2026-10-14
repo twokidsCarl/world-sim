@@ -39,3 +39,31 @@ export interface SkinUvData {
 
 /** 量化 UV 的分母 / denominator of the quantised UV */
 export const UV_SCALE = 65535
+
+/**
+ * public/anatomy/<body>/look/skin-colour.json：写实皮肤的颜色数据（tools/look/skin_colour.py 和 skin_regions.py 生成）。
+ * 底色 = 查找表(Cm, Chd)，Cm = 色调的黑色素 × 部位倍数（手足掌在对数空间里拉向 palmMelanin），Chd = bloodChd × 部位倍数。
+ *
+ * public/anatomy/<body>/look/skin-colour.json: the colour data of the lifelike skin (built by
+ * tools/look/skin_colour.py and skin_regions.py). Albedo = table(Cm, Chd), with Cm = the tone's melanin × the
+ * region multiplier (palms and soles pulled to palmMelanin in log space) and Chd = bloodChd × the region multiplier.
+ */
+export interface SkinColourData {
+  schema: 1
+  skin: string
+  /** 64×64 RGBA half-float，行是血量 v、列是黑色素 u；Cm = cmMax·u²，Chd = chdMax·v²；线性 sRGB 漫反射（不含表面反射）
+   * 64×64 RGBA half-float, rows are blood v, columns melanin u; Cm = cmMax·u², Chd = chdMax·v²; linear-sRGB diffuse (surface reflection excluded) */
+  lut: { file: string; size: number; cmMax: number; chdMax: number }
+  /** RGBA8 PNG，第 0 行是 v = 0。R、G：黑色素、血量倍数 2^((x − 128) / logScale)；B：手足掌权重；A：粗糙度
+   * RGBA8 PNG, row 0 is v = 0. R, G: melanin and blood multipliers 2^((x − 128) / logScale); B: palmoplantar weight; A: roughness */
+  regions: { file: string; size: number; logScale: number; rowOrder: string; palmMelanin: number }
+  /** 色调滑块：Cm = cmMax·(tone/100)²；default 是 NIST 的中位数，nistMax 以上是外推
+   * the tone slider: Cm = cmMax·(tone/100)²; default is the NIST median; above nistMax is extrapolation */
+  tone: { cmMax: number; default: number; nistMax: number; bloodChd: number }
+  /** 表面外反射（8° 菲涅尔）；查找表里不含它 / the external surface reflection (Fresnel at 8°); not in the table */
+  surfaceReflection: number
+  source: { zh: string; en: string }
+}
+
+/** 色调滑块的缺省值（与 skin-colour.json 的 tone.default 相同；数据到之前用它）/ the tone slider's default (equal to tone.default in skin-colour.json; used until the data arrive) */
+export const DEFAULT_TONE = 12

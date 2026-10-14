@@ -206,6 +206,7 @@ export type ViewState = Pick<
   | 'skinHide'
   | 'skinOpaque'
   | 'look'
+  | 'tone'
   | 'skinUv'
   | 'shape'
   | 'shapeControls'
@@ -1585,6 +1586,7 @@ export class Viewer {
   /** 写实皮肤层：UV 数据到了（或换了）就重建；可见性由 updateLook 管 / The lifelike skin layer: rebuilt when its UV data arrive or change; visibility is updateLook's job. */
   private syncLook(s: ViewState): void {
     this.lookWanted = s.look
+    if (this.skinLook.setTone(s.tone)) this.dirty = true
     if (s.skinUv === this.appliedSkinUv && (this.lookSkin || !s.skinUv)) return
     const i = this.mainSkinIndex()
     if (s.skinUv && i < 0) return // 皮肤还没加载，下次再来 / the skin is not loaded yet; try again later

@@ -2,6 +2,7 @@ import type { AnatomyGraph } from '../anatomy/graph.ts'
 import { CONSTRUCTION_COLOR, CONSTRUCTION_LABEL, PROVENANCE_LABEL, provenanceColor } from '../anatomy/labels.ts'
 import { skinDrawnOpaque, type SectionAxis } from '../state/display.ts'
 import { isSolo, useApp } from '../state/store.ts'
+import { DEFAULT_TONE } from '../look/types.ts'
 import { Icon } from './Icon.tsx'
 import { SkinMapPanel } from './SkinMapPanel.tsx'
 import { LumenPanel } from './LumenPanel.tsx'
@@ -24,6 +25,9 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
   const nerveBoost = useApp((s) => s.nerveBoost)
   const skinOpaque = useApp((s) => s.skinOpaque)
   const look = useApp((s) => s.look)
+  const tone = useApp((s) => s.tone)
+  const toneData = useApp((s) => s.skinUv?.colour?.data.tone)
+  const toneDefault = toneData?.default ?? DEFAULT_TONE
   const mainSkin = graph.mainSkinId()
   const opaqueNow = useApp((s) => skinDrawnOpaque(s, mainSkin))
   const skinHide = useApp((s) => s.skinHide)
@@ -105,6 +109,33 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
                 <input type="checkbox" checked={look} onChange={(e) => app.setLook(e.target.checked)} />
                 写实外观 <span className="en">Lifelike look</span>
               </label>
+            )}
+            {skinOpaque && look && (
+              <div className="slider-row" title="Skin tone: epidermal melanin of a two-layer skin model fitted to the NIST skin reflectance data; double-click to reset">
+                <span>
+                  肤色 <span className="en">Skin tone</span>
+                </span>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={tone ?? toneDefault}
+                  aria-label="肤色（黑色素）/ skin tone (melanin)"
+                  onChange={(e) => {
+                    const v = Number(e.target.value)
+                    app.setTone(v === toneDefault ? null : v)
+                  }}
+                  onDoubleClick={() => app.setTone(null)}
+                />
+                <span className="value">{tone ?? toneDefault}</span>
+              </div>
+            )}
+            {skinOpaque && look && toneData && (tone ?? toneDefault) > toneData.nistMax && (
+              <p className="hint">
+                比 NIST 数据里最深的肤色还深：这一段是模型外推的。
+                <span className="en"> Deeper than the deepest skin in the NIST data: this part is extrapolated by the model.</span>
+              </p>
             )}
             {opaqueNow && hiddenNames.length > 0 && (
               <p className="hint">

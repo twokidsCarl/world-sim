@@ -25,6 +25,8 @@ export class LookSkin {
     private readonly skinning: SkinningData,
     dropVertices: ArrayLike<number> | null = null,
   ) {
+    // 颜色数据随 UV 一起到（没有就是均匀肤色）/ the colour data arrive with the UVs (none: a uniform tone)
+    look.setColour(uv.colour ?? null)
     this.material = makeSkinMaterial(look)
     // 与皮肤共面：往相机方向偏一点压住它，但让皱纹层（−1/−2）和疼痛分布层（−2/−4）仍在上面
     // coplanar with the skin: biased towards the camera to sit over it, while the wrinkle layer (−1/−2) and the pain map (−2/−4) still sit above
