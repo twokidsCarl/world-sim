@@ -274,7 +274,7 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 ## 接下来
 
 1. 女性面容（女性的头发和眉毛、下颌、嘴唇）；女性外阴；腋窝的两层皮碰撞求解；让神经和筋膜等薄结构与新皮肤、分开的脚趾相容。
-2. 软组织物理：四面体化，XPBD，先在一个部位验证。
+2. 软组织物理：四面体化，XPBD，先在一个部位验证。代码在 `src/softbody/`、`tools/softbody/`，材料和对照数据在 `data/curated/softbody/`，**还没有接到界面上**。第三阶段（只用男性身体）：零重力参考形状在全身笼子上反解收敛，受重力后皮肤离发布的网格不到 0.3 mm；一万帧稳定性、各区域体积和 CPU 耗时见 `validation-report.json`；按压接口 `press()` 有球形压头和平板，接触压强按结点计算，有收敛和对称的测试；求解器可以用 Ogden 型（整数指数）脂肪，但没有默认启用。**与已发表数据仍不符**：前臂压入力约为实测的 0.55–0.64 倍（数值求解和网格都已收敛，差距来自受试者与本模型的几何，该文自己的模型用同一组材料在 P3 只差 5.7%）；乳房俯卧到仰卧的位移小 4–5 倍（体模显示主要因为乳房底面粘在胸壁上、乳房体积和体位方向，不是网格）；腹部压入在浅处偏软（单元 3.5 mm 时 5 mm 深处为实测的 0.58 倍，10–20 mm 在 ±25% 内）；半径 5 mm 的球形压头在前臂上只到约 0.2 N 就把脂肪压溃，疼痛工具要的几牛顿的压力刺激还做不到。
 3. 手术操作：切开、牵拉、出血、缝合。
 
 ---
@@ -555,5 +555,5 @@ The full list is in each body's `cautions`. The main ones:
 ## Next
 
 1. The female face (female hair and eyebrows, jaw, lips); the female vulva; a two-sheet collision solve for the axillae; making thin structures such as nerves and fasciae consistent with the new skins and the separate toes.
-2. Soft-tissue physics: tetrahedral meshes, XPBD, validated on one region first.
+2. Soft-tissue physics: tetrahedral meshes, XPBD, validated on one region first. The code is in `src/softbody/` and `tools/softbody/`, materials and reference data in `data/curated/softbody/`; **not yet wired into the UI**. Phase 3 (male body only): the zero-gravity reference solves to convergence on the whole-body cage, and under gravity the skin lands within 0.3 mm of the shipped mesh; ten thousand frames of stability, volume by region and CPU timings are in `validation-report.json`; the pressing interface `press()` has a spherical probe and a flat plate, contact pressure is computed per node, with tests of convergence and symmetry; the solver can use an Ogden-type (integer exponents) fat, not enabled by default. **Still at odds with published data**: forearm indentation force is about 0.55–0.64 of the measured one (solve and mesh are converged; the gap comes from the geometry of the subject against this model, and the paper's own model with the same materials misses P3 by only 5.7 %); prone-to-supine breast displacement is 4–5 times too small (a phantom shows the main causes are the breast's base bonded to the chest wall, breast volume and the direction of posture, not the mesh); abdominal indentation is too soft when shallow (0.58 of the measured force at 5 mm with 3.5 mm cells; within ±25 % at 10–20 mm); a 5 mm spherical probe crushes the forearm fat at about 0.2 N, so the pressure stimulus of a few newtons that the pain tool needs is not yet possible.
 3. Surgical actions: incision, retraction, bleeding, suturing.

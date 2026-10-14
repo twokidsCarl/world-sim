@@ -183,6 +183,15 @@ export interface SolverInput {
   /** 每个四面体的 Maxwell 支路：模量 G₁（帕）和松弛时间 τ（秒）；G₁ = 0 表示没有 / per tetrahedron Maxwell branch: modulus G₁ (Pa) and relaxation time τ (s); G₁ = 0 = none */
   branchModulus?: ArrayLike<number>
   branchTau?: ArrayLike<number>
+  /**
+   * Ogden 型偏量能（第三阶段，文件头第 5 条）：terms[k] 是一种材料的各项 (C_p, m_p)，m_p 为非零整数；
+   * material[e] 是四面体用哪一种（−1 = 没有），scale[e] 是它在四面体里的权重（体内比例 × 非皮肤比例）。
+   * 有 Ogden 能的四面体，mu 只含其余部分（混入的皮肤）。
+   * Ogden-type deviatoric energy (phase 3, header item 5): terms[k] are the (C_p, m_p) of one material, m_p a non-zero
+   * integer; material[e] says which one a tetrahedron uses (−1 = none) and scale[e] its weight in the tetrahedron
+   * (fill × the non-skin share). For a tetrahedron with Ogden energy, mu holds the rest only (the blended skin).
+   */
+  ogden?: { terms: { c: number[]; m: number[] }[]; material: ArrayLike<number>; scale: ArrayLike<number> }
 }
 
 export interface SolverOptions {
@@ -318,6 +327,10 @@ export class SoftSolver {
   private readonly kappa: Float64Array | null
   private readonly branchG: Float64Array | null
   private readonly branchTau: Float64Array | null
+  private readonly ogdenTerms: { c: number[]; m: number[]; mu0: number }[]
+  private readonly ogdenMat: Int16Array | null
+  private readonly ogdenScale: Float64Array | null
+  private readonly scratch = new Float64Array(9)
   /** Maxwell 支路的粘性应变（对称偏量，6 个分量：xx yy zz xy xz yz）/ viscous strain of the Maxwell branch (symmetric deviatoric, six components: xx yy zz xy xz yz) */
   readonly viscous: Float64Array | null
   private readonly anchorK: Float64Array | null
@@ -352,6 +365,13 @@ export class SoftSolver {
     this.activeStrain = opts.activeStrain ?? 0.3
     this.anchors = input.anchors && input.anchors.tet.length ? input.anchors : null
     this.inverseRest(this.rest, this.B0)
+    // Ogden 项：小应变剪切模量 μ₀ = Σ C_p·m_p（Mihai 等 2015 的 μ₀ 式在 b → 0 的极限）/ Ogden terms: small-strain shear modulus μ₀ = Σ C_p·m_p (the b → 0 limit of the μ₀ formula of Mihai et al. 2015)
+    this.ogdenTerms = (input.ogden?.terms ?? []).map((q) => ({ c: q.c, m: q.m, mu0: q.c.reduce((s, c, k) => s + c * q.m[k]!, 0) }))
+    for (const q of this.ogdenTerms) {
+      if (!(q.mu0 > 0) || q.m.some((m) => !Number.isInteger(m) || m === 0)) throw new Error(`softbody: Ogden terms need non-zero integer exponents and a positive small-strain shear modulus Σ C_p·m_p (got ${q.mu0})`)
+    }
+    this.ogdenMat = input.ogden ? Int16Array.from(input.ogden.material) : null
+    this.ogdenScale = input.ogden ? Float64Array.from(input.ogden.scale) : null
     const live: number[] = []
     for (let e = 0; e < t; e++) {
       const a = this.tets[e * 4]!, b = this.tets[e * 4 + 1]!, c = this.tets[e * 4 + 2]!, d = this.tets[e * 4 + 3]!
@@ -365,7 +385,8 @@ export class SoftSolver {
       this.mass[c] = this.mass[c]! + m
       this.mass[d] = this.mass[d]! + m
       // 四个结点都是运动学结点、或没有刚度的四面体不参与求解 / tetrahedra with four kinematic nodes or no stiffness are not solved
-      if (this.mu[e]! > 0 && !(this.pinned[a] && this.pinned[b] && this.pinned[c] && this.pinned[d])) live.push(e)
+      const og = this.ogdenMat && this.ogdenMat[e]! >= 0 && this.ogdenScale![e]! > 0
+      if ((this.mu[e]! > 0 || og) && !(this.pinned[a] && this.pinned[b] && this.pinned[c] && this.pinned[d])) live.push(e)
     }
     this.active = Uint32Array.from(live)
     for (let i = 0; i < n; i++) this.invMass[i] = this.pinned[i] || !(this.mass[i]! > 0) ? 0 : 1 / this.mass[i]!
@@ -660,10 +681,12 @@ export class SoftSolver {
       const mu = this.mu[e]! * this.actScale[e]! * qe, la = this.lam[e]! * this.actScale[e]! * share * qe
       const g1m = bG ? bG[e]! * qe : 0
       let jPrev = 1
-      for (let pass = 0; pass < 3; pass++) {
+      const og = this.ogdenMat ? this.ogdenMat[e]! : -1, ow = og >= 0 ? this.ogdenScale![e]! * this.actScale[e]! * qe : 0
+      for (let pass = 0; pass < 4; pass++) {
         // 结点体积模式下，逐单元这一遍只在单元快被压扁时才需要（体积下限）/ with nodal volume constraints the per-tetrahedron pass is needed only when the element is nearly crushed (the volume floor)
         if (pass === 1 && !(la > 0) && jPrev > 0.5) continue
-        if (pass === 2 && !(g1m > 0)) break
+        if (pass === 2 && !(g1m > 0)) continue
+        if (pass === 3 && !(ow > 0)) break
         const d00 = x[b]! - x[a]!, d01 = x[c]! - x[a]!, d02 = x[d]! - x[a]!
         const d10 = x[b + 1]! - x[a + 1]!, d11 = x[c + 1]! - x[a + 1]!, d12 = x[d + 1]! - x[a + 1]!
         const d20 = x[b + 2]! - x[a + 2]!, d21 = x[c + 2]! - x[a + 2]!, d22 = x[d + 2]! - x[a + 2]!
@@ -680,6 +703,7 @@ export class SoftSolver {
         let c2: number, comp: number
         if (pass === 0) {
           jPrev = J
+          if (!(mu > 0)) continue
           // C_D：P = F + (J − 2)·cof F，"C²" = I_C + J² − 4J
           c2 = f00 * f00 + f01 * f01 + f02 * f02 + f10 * f10 + f11 * f11 + f12 * f12 + f20 * f20 + f21 * f21 + f22 * f22 + J * J - 4 * J
           if (!(c2 > 0)) continue
@@ -703,7 +727,7 @@ export class SoftSolver {
           p00 = h00; p01 = h01; p02 = h02
           p10 = h10; p11 = h11; p12 = h12
           p20 = h20; p21 = h21; p22 = h22
-        } else {
+        } else if (pass === 2) {
           // Maxwell 支路：Q = dev E − E_v，"C²" = Q:Q，P = F·Q，柔度 1/(2·G₁·V)
           // the Maxwell branch: Q = dev E − E_v, "C²" = Q:Q, P = F·Q, compliance 1/(2·G₁·V)
           const e00 = 0.5 * (f00 * f00 + f10 * f10 + f20 * f20 - 1), e11 = 0.5 * (f01 * f01 + f11 * f11 + f21 * f21 - 1), e22 = 0.5 * (f02 * f02 + f12 * f12 + f22 * f22 - 1)
@@ -720,6 +744,18 @@ export class SoftSolver {
           p10 = f10 * q00 + f11 * q01 + f12 * q02; p11 = f10 * q01 + f11 * q11 + f12 * q12; p12 = f10 * q02 + f11 * q12 + f12 * q22
           p20 = f20 * q00 + f21 * q01 + f22 * q02; p21 = f20 * q01 + f21 * q11 + f22 * q12; p22 = f20 * q02 + f21 * q12 + f22 * q22
           comp = (c2 * ih2) / (2 * g1m * vol)
+        } else {
+          // Ogden 偏量能，写成能量约束："C²" = 2Ψ/μ₀，P/μ₀，柔度 1/(μ₀·V)（推导见 ogdenEnergy）
+          // the Ogden deviatoric energy as an energy constraint: "C²" = 2Ψ/μ₀, P/μ₀, compliance 1/(μ₀·V) (derivation at ogdenEnergy)
+          const T0 = this.ogdenTerms[og]!, P = this.scratch
+          const psi = ogdenEnergy(f00, f01, f02, f10, f11, f12, f20, f21, f22, J, h00, h01, h02, h10, h11, h12, h20, h21, h22, T0.c, T0.m, P)
+          if (!(psi > 1e-12 * T0.mu0)) continue
+          const k = ow / T0.mu0
+          c2 = 2 * k * psi
+          p00 = P[0]! * k; p01 = P[1]! * k; p02 = P[2]! * k
+          p10 = P[3]! * k; p11 = P[4]! * k; p12 = P[5]! * k
+          p20 = P[6]! * k; p21 = P[7]! * k; p22 = P[8]! * k
+          comp = (c2 * ih2) / (T0.mu0 * vol)
         }
         // 结点 k 的梯度 = P·(B 的第 k−1 行)ᵀ / gradient of node k = P·(row k−1 of B)ᵀ
         const g1x = p00 * b00 + p01 * b01 + p02 * b02, g1y = p10 * b00 + p11 * b01 + p12 * b02, g1z = p20 * b00 + p21 * b01 + p22 * b02
@@ -1056,7 +1092,7 @@ export class SoftSolver {
     const N = this.nodeCount, T = this.tets
     this.jdx = new Float64Array(N * 3)
     const cnt = new Float64Array(N)
-    const perTet = 1 + (this.volumeMode === 'tet' || this.volumeBlend > 0 ? 1 : 0) + (this.branchG ? 1 : 0) + (this.fibreK ? 1 : 0)
+    const perTet = 1 + (this.volumeMode === 'tet' || this.volumeBlend > 0 ? 1 : 0) + (this.branchG ? 1 : 0) + (this.fibreK ? 1 : 0) + (this.ogdenMat ? 1 : 0)
     const nodal = this.volumeMode === 'node' && this.volumeBlend < 1
     const seen = new Int32Array(N).fill(-1)
     for (let i = 0; i < N; i++) {
@@ -1234,6 +1270,13 @@ export class SoftSolver {
         }
         el += this.restVolume[e]! * this.branchG[e]! * this.qual[e]! * qq
       }
+      const og = this.ogdenMat ? this.ogdenMat[e]! : -1
+      if (og >= 0) {
+        // Ogden 偏量能 / the Ogden deviatoric energy
+        const h = [F[4]! * F[8]! - F[5]! * F[7]!, F[5]! * F[6]! - F[3]! * F[8]!, F[3]! * F[7]! - F[4]! * F[6]!, F[2]! * F[7]! - F[1]! * F[8]!, F[0]! * F[8]! - F[2]! * F[6]!, F[1]! * F[6]! - F[0]! * F[7]!, F[1]! * F[5]! - F[2]! * F[4]!, F[2]! * F[3]! - F[0]! * F[5]!, F[0]! * F[4]! - F[1]! * F[3]!]
+        const q = this.ogdenTerms[og]!
+        el += this.restVolume[e]! * this.ogdenScale![e]! * this.actScale[e]! * this.qual[e]! * ogdenEnergy(F[0]!, F[1]!, F[2]!, F[3]!, F[4]!, F[5]!, F[6]!, F[7]!, F[8]!, J, h[0]!, h[1]!, h[2]!, h[3]!, h[4]!, h[5]!, h[6]!, h[7]!, h[8]!, q.c, q.m, this.scratch)
+      }
       if (share < 1) for (let k = 0; k < 4; k++) nodalS[T[e * 4 + k]!] = nodalS[T[e * 4 + k]!]! + this.kdet[e]! * det3(D[0]!, D[1]!, D[2]!, D[3]!, D[4]!, D[5]!, D[6]!, D[7]!, D[8]!)
     }
     if (this.volumeMode === 'node' && this.volumeBlend < 1) for (let i = 0; i < this.nodeCount; i++) {
@@ -1243,6 +1286,71 @@ export class SoftSolver {
     }
     return { kinetic: kin, elastic: el, potential: pot, total: kin + el + pot }
   }
+}
+
+// ogdenEnergy 的工作区（避免热循环里分配）/ work space of ogdenEnergy (no allocation in the hot loop)
+const OG = { C: new Float64Array(9), Ci: new Float64Array(9), R: new Float64Array(9), T: new Float64Array(9), F: new Float64Array(9) }
+function mul3(A: Float64Array, B: Float64Array, out: Float64Array): void {
+  for (let r = 0; r < 3; r++) {
+    const a0 = A[r * 3]!, a1 = A[r * 3 + 1]!, a2 = A[r * 3 + 2]!
+    out[r * 3] = a0 * B[0]! + a1 * B[3]! + a2 * B[6]!
+    out[r * 3 + 1] = a0 * B[1]! + a1 * B[4]! + a2 * B[7]!
+    out[r * 3 + 2] = a0 * B[2]! + a1 * B[5]! + a2 * B[8]!
+  }
+}
+/** R ← base^k（k ≥ 0），用 T 作中转 / R ← base^k (k ≥ 0), with T as a buffer */
+function pow3(base: Float64Array, k: number, R: Float64Array, T: Float64Array): void {
+  R.fill(0)
+  R[0] = R[4] = R[8] = 1
+  for (let i = 0; i < k; i++) {
+    mul3(R, base, T)
+    R.set(T)
+  }
+}
+
+/**
+ * Ogden 型偏量能密度及其第一 Piola 应力（Mihai 等 2015 的写法，指数为整数时不必求主伸长）：
+ *     Ψ = Σ_p C_p/(2·m_p)·(tr C̄^{m_p} − 3),   C̄ = J^{−2/3}·C,  C = FᵀF
+ *     Σ_i λ̄_i^{2m} = tr C̄^m，所以  P = ∂Ψ/∂F = Σ_p C_p·J^{−2m_p/3}·(F·C^{m_p−1} − tr(C^{m_p})/3·F^{−T})
+ * 小应变剪切模量 μ₀ = Σ C_p·m_p。F^{−T} = cof F / J（h 是 cof F）。J ≤ 0.05 时返回 0（交给体积下限）。P 写入 out（行主序）。
+ * The Ogden-type deviatoric energy density and its first Piola stress (the form of Mihai et al. 2015; with integer
+ * exponents no principal stretches are needed): formulas above, Σ_i λ̄_i^{2m} = tr C̄^m. Small-strain shear modulus
+ * μ₀ = Σ C_p·m_p. F^{−T} = cof F / J (h is cof F). Returns 0 for J ≤ 0.05 (left to the volume floor). P goes to out (row-major).
+ */
+export function ogdenEnergy(f00: number, f01: number, f02: number, f10: number, f11: number, f12: number, f20: number, f21: number, f22: number, J: number, h00: number, h01: number, h02: number, h10: number, h11: number, h12: number, h20: number, h21: number, h22: number, c: number[], m: number[], out: Float64Array): number {
+  out.fill(0)
+  if (!(J > 0.05)) return 0
+  const { C, Ci, R, T, F } = OG
+  // C = FᵀF（对称）/ C = FᵀF (symmetric)
+  C[0] = f00 * f00 + f10 * f10 + f20 * f20; C[1] = C[3] = f00 * f01 + f10 * f11 + f20 * f21; C[2] = C[6] = f00 * f02 + f10 * f12 + f20 * f22
+  C[4] = f01 * f01 + f11 * f11 + f21 * f21; C[5] = C[7] = f01 * f02 + f11 * f12 + f21 * f22; C[8] = f02 * f02 + f12 * f12 + f22 * f22
+  let haveInv = false
+  F[0] = f00; F[1] = f01; F[2] = f02; F[3] = f10; F[4] = f11; F[5] = f12; F[6] = f20; F[7] = f21; F[8] = f22
+  const iJ = 1 / J
+  let psi = 0
+  for (let p = 0; p < c.length; p++) {
+    const mp = m[p]!, cp = c[p]!
+    if (mp <= 0 && !haveInv) {
+      const d = J * J
+      Ci[0] = (C[4]! * C[8]! - C[5]! * C[7]!) / d; Ci[1] = Ci[3] = (C[2]! * C[7]! - C[1]! * C[8]!) / d; Ci[2] = Ci[6] = (C[1]! * C[5]! - C[2]! * C[4]!) / d
+      Ci[4] = (C[0]! * C[8]! - C[2]! * C[6]!) / d; Ci[5] = Ci[7] = (C[2]! * C[3]! - C[0]! * C[5]!) / d; Ci[8] = (C[0]! * C[4]! - C[1]! * C[3]!) / d
+      haveInv = true
+    }
+    // R = C^{m−1}，tr C^m = tr(R·C) / R = C^{m−1}, tr C^m = tr(R·C)
+    if (mp >= 1) pow3(C, mp - 1, R, T)
+    else pow3(Ci, 1 - mp, R, T)
+    let tr = 0
+    for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) tr += R[a * 3 + b]! * C[b * 3 + a]!
+    const sc = Math.pow(J, (-2 * mp) / 3)
+    psi += (cp / (2 * mp)) * (sc * tr - 3)
+    const k = cp * sc, t3 = (tr / 3) * iJ
+    // F·C^{m−1} − tr/3·F^{−T}（cof F = h）/ F·C^{m−1} − tr/3·F^{−T} (cof F = h)
+    mul3(F, R, T)
+    out[0] = out[0]! + k * (T[0]! - t3 * h00); out[1] = out[1]! + k * (T[1]! - t3 * h01); out[2] = out[2]! + k * (T[2]! - t3 * h02)
+    out[3] = out[3]! + k * (T[3]! - t3 * h10); out[4] = out[4]! + k * (T[4]! - t3 * h11); out[5] = out[5]! + k * (T[5]! - t3 * h12)
+    out[6] = out[6]! + k * (T[6]! - t3 * h20); out[7] = out[7]! + k * (T[7]! - t3 * h21); out[8] = out[8]! + k * (T[8]! - t3 * h22)
+  }
+  return psi
 }
 
 /** E、ν → 线性剪切模量 μ 和 Lamé λ。 E, ν → linear shear modulus μ and Lamé λ. */

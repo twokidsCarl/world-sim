@@ -25,6 +25,23 @@
     "caveat": {
      "zh": "单个受试者；该点在前臂上的确切位置没有在打开的文字里给出，本项目取前臂掌侧中段。",
      "en": "One subject; the exact position of the site on the forearm is not given in the text opened, so the mid volar forearm is used here."
+    },
+    "paperModel": {
+     "where": "Table 8 (P2, 27 skin–fat–muscle combinations in the paper's own subject-specific model); section 2.3 (site selection)",
+     "selection": {
+      "zh": "P2 选在手–前臂体表脂肪最厚的区域；受试者坐着，前臂放在水平支撑台上；模型里支撑面、模型底面和肱骨近端完全固定。",
+      "en": "P2 is the region of greatest fat thickness on the hand–forearm surface; the subject sat with the forearm on a horizontal support; in the model the support plane, the model base and the proximal humerus are fully fixed."
+     },
+     "peakForceErrorBySet": {
+      "Skin2–Fat1–Muscle3 (the phase-2 set of this project)": 0.352,
+      "Skin2–Fat2–Muscle3": 0.286,
+      "Skin3–Fat2–Muscle3 (the paper's transfer set)": 0.216,
+      "Skin3–Fat3–Muscle3 (best at P2)": 0.037
+     },
+     "note": {
+      "zh": "表中是绝对误差，正负号没有给出。即使在该文自己的解剖几何上，本项目第二阶段的材料组合在 P2 也差 35%。",
+      "en": "The table gives absolute errors without sign. Even on the paper's own anatomy, the material set of phase 2 of this project misses P2 by 35 %."
+     }
     }
    },
    {
@@ -47,6 +64,22 @@
     "caveat": {
      "zh": "同上。",
      "en": "As above."
+    },
+    "paperModel": {
+     "where": "Table 10 (P3, post hoc screening of all 27 combinations) and Table 9",
+     "selection": {
+      "zh": "P3 选在肌肉最厚的区域。",
+      "en": "P3 is the region of greatest muscle thickness."
+     },
+     "peakForceErrorBySet": {
+      "Skin2–Fat1–Muscle3 (the phase-2 set of this project)": 0.057,
+      "Skin2–Fat2–Muscle3 (best at P3)": 0.044,
+      "Skin3–Fat2–Muscle3 (the paper's transfer set)": 0.192
+     },
+     "note": {
+      "zh": "在该文的几何上，本项目的材料组合在 P3 差 5.7%；本模型在自己的前臂上差 36%，所以 P3 的差距来自几何（受试者与本模型的层厚、到骨的距离、曲率），不是材料。",
+      "en": "On the paper's geometry the material set of this project misses P3 by 5.7 %; this model misses it by 36 % on its own forearm, so the gap at P3 comes from geometry (layer thicknesses, depth to bone and curvature of the subject against this model), not from the material."
+     }
     }
    },
    {
@@ -176,6 +209,10 @@
       166.6,
       357.1
      ]
+    },
+    "phase3": {
+     "zh": "第三阶段没有在女性身体上重跑（女性身体正在重建，按要求不读）。原因的分析用不读人体数据的体模（tools/softbody/phantom.ts），结果在 validation-report.json 的 ours.breastPhantom。",
+     "en": "Not rerun on the female body in phase 3 (the female body is being rebuilt and was not to be read). The causes were analysed on a phantom that reads no body data (tools/softbody/phantom.ts); results under ours.breastPhantom of validation-report.json."
     }
    }
   ],
@@ -2199,6 +2236,484 @@
     }
    },
    "seconds": 616
+  },
+  "equilibrium": {
+   "cell": 0.027,
+   "nodes": 12090,
+   "tets": 55603,
+   "inverseSolve": {
+    "residualsMm": [
+     16.71,
+     1.24,
+     0.26,
+     0.02
+    ],
+    "converged": true
+   },
+   "inverseSeconds": 72.471,
+   "forwardUnderGravity": {
+    "frames": 1141,
+    "nodeLargestMm": 0.54,
+    "nodeMeanMm": 0.04,
+    "skinLargestMm": 0.27,
+    "skinMeanMm": 0.02,
+    "largestReferenceShiftMm": 16.88,
+    "volumeRatioByMaterial": {
+     "fat": 1,
+     "muscle": 0.9998,
+     "abdomen": 1.0002,
+     "thorax": 1.0056,
+     "other": 1
+    },
+    "maxSpeed": 0.000019989096253947434
+   },
+   "seconds": 147
+  },
+  "contact": {
+   "forearmSphere": {
+    "site": [
+     0.26421424746513367,
+     0.9644516706466675,
+     0.14539162814617157
+    ],
+    "normal": [
+     -0.09812098741531372,
+     0.14868535101413727,
+     0.984004557132721
+    ],
+    "sphere5mmCell2mm": {
+     "tissueThicknessMm": 13.5,
+     "tets": 20988,
+     "solveSeconds": 40.005,
+     "rows": [
+      {
+       "depthMm": 3.46,
+       "forceN": 0.177,
+       "meanPressureKPa": 5.38,
+       "peakPressureKPa": 6.81,
+       "contactAreaMm2": 32.9,
+       "peakStrain": 0.42,
+       "strainAt2_5_10mm": [
+        0.406,
+        0.357,
+        0.159
+       ],
+       "valid": false,
+       "flags": [
+        "force-not-reached:tissue-crushed-or-bottomed-out",
+        "strain-beyond-model-range"
+       ],
+       "frames": 1013
+      },
+      {
+       "depthMm": 3.46,
+       "forceN": 0.177,
+       "meanPressureKPa": 5.38,
+       "peakPressureKPa": 6.81,
+       "contactAreaMm2": 32.9,
+       "peakStrain": 0.42,
+       "strainAt2_5_10mm": [
+        0.406,
+        0.357,
+        0.159
+       ],
+       "valid": false,
+       "flags": [
+        "force-not-reached:tissue-crushed-or-bottomed-out",
+        "strain-beyond-model-range"
+       ],
+       "frames": 1273
+      },
+      {
+       "depthMm": 3.46,
+       "forceN": 0.177,
+       "meanPressureKPa": 5.38,
+       "peakPressureKPa": 6.81,
+       "contactAreaMm2": 32.9,
+       "peakStrain": 0.42,
+       "strainAt2_5_10mm": [
+        0.406,
+        0.357,
+        0.159
+       ],
+       "valid": false,
+       "flags": [
+        "force-not-reached:tissue-crushed-or-bottomed-out",
+        "strain-beyond-model-range"
+       ],
+       "frames": 1273
+      }
+     ]
+    },
+    "sphere5mmCell2.5mm": {
+     "tissueThicknessMm": 15,
+     "tets": 16920,
+     "solveSeconds": 44.457,
+     "rows": [
+      {
+       "depthMm": 5.64,
+       "forceN": 0.516,
+       "meanPressureKPa": 40.35,
+       "peakPressureKPa": 2.49,
+       "contactAreaMm2": 12.8,
+       "peakStrain": 0.594,
+       "strainAt2_5_10mm": [
+        0.593,
+        0.492,
+        0.303
+       ],
+       "valid": false,
+       "flags": [
+        "force-not-reached:tissue-crushed-or-bottomed-out",
+        "probe-under-resolved",
+        "strain-beyond-model-range"
+       ],
+       "frames": 1462
+      },
+      {
+       "depthMm": 5.64,
+       "forceN": 0.516,
+       "meanPressureKPa": 40.35,
+       "peakPressureKPa": 2.49,
+       "contactAreaMm2": 12.8,
+       "peakStrain": 0.594,
+       "strainAt2_5_10mm": [
+        0.593,
+        0.492,
+        0.303
+       ],
+       "valid": false,
+       "flags": [
+        "not-converged",
+        "force-not-reached:tissue-crushed-or-bottomed-out",
+        "probe-under-resolved",
+        "strain-beyond-model-range"
+       ],
+       "frames": 1783
+      },
+      {
+       "depthMm": 5.64,
+       "forceN": 0.516,
+       "meanPressureKPa": 40.35,
+       "peakPressureKPa": 2.49,
+       "contactAreaMm2": 12.8,
+       "peakStrain": 0.594,
+       "strainAt2_5_10mm": [
+        0.593,
+        0.492,
+        0.303
+       ],
+       "valid": false,
+       "flags": [
+        "not-converged",
+        "force-not-reached:tissue-crushed-or-bottomed-out",
+        "probe-under-resolved",
+        "strain-beyond-model-range"
+       ],
+       "frames": 1783
+      }
+     ]
+    }
+   },
+   "chestSphere": {
+    "site": [
+     0.09299691021442413,
+     1.2719069719314575,
+     0.18904350697994232
+    ],
+    "normal": [
+     0.33195409178733826,
+     0.5156229138374329,
+     0.7898983955383301
+    ],
+    "sphere5mmCell2mm": {
+     "tissueThicknessMm": 15,
+     "tets": 20982,
+     "solveSeconds": 19.378,
+     "rows": [
+      {
+       "depthMm": 2.1,
+       "forceN": 0.055,
+       "meanPressureKPa": 2.03,
+       "peakPressureKPa": 2.39,
+       "contactAreaMm2": 27,
+       "peakStrain": 0.408,
+       "strainAt2_5_10mm": [
+        0.332,
+        0.24,
+        0.021
+       ],
+       "valid": false,
+       "flags": [
+        "force-not-reached:tissue-crushed-or-bottomed-out",
+        "strain-beyond-model-range"
+       ],
+       "frames": 570
+      },
+      {
+       "depthMm": 2.1,
+       "forceN": 0.055,
+       "meanPressureKPa": 2.03,
+       "peakPressureKPa": 2.39,
+       "contactAreaMm2": 27,
+       "peakStrain": 0.408,
+       "strainAt2_5_10mm": [
+        0.332,
+        0.24,
+        0.021
+       ],
+       "valid": false,
+       "flags": [
+        "force-not-reached:tissue-crushed-or-bottomed-out",
+        "strain-beyond-model-range"
+       ],
+       "frames": 490
+      },
+      {
+       "depthMm": 2.1,
+       "forceN": 0.055,
+       "meanPressureKPa": 2.03,
+       "peakPressureKPa": 2.39,
+       "contactAreaMm2": 27,
+       "peakStrain": 0.408,
+       "strainAt2_5_10mm": [
+        0.332,
+        0.24,
+        0.021
+       ],
+       "valid": false,
+       "flags": [
+        "force-not-reached:tissue-crushed-or-bottomed-out",
+        "strain-beyond-model-range"
+       ],
+       "frames": 490
+      }
+     ]
+    }
+   },
+   "forearmPlate": {
+    "cellMm": 6,
+    "rows": [
+     {
+      "depthMm": 3.88,
+      "forceN": 2.008,
+      "meanPressureKPa": 0.84,
+      "peakPressureKPa": 2.2,
+      "contactAreaMm2": 2393.4,
+      "peakStrain": 0.176,
+      "strainAt2_5_10mm": [
+       0.176,
+       0.139,
+       0.13
+      ],
+      "valid": true,
+      "flags": [],
+      "frames": 1188
+     },
+     {
+      "depthMm": 6.96,
+      "forceN": 4.999,
+      "meanPressureKPa": 2.06,
+      "peakPressureKPa": 3.85,
+      "contactAreaMm2": 2426,
+      "peakStrain": 0.265,
+      "strainAt2_5_10mm": [
+       0.265,
+       0.204,
+       0.205
+      ],
+      "valid": false,
+      "flags": [
+       "not-converged"
+      ],
+      "frames": 1573
+     }
+    ]
+   },
+   "leftRight": {
+    "siteL": [
+     0.26421424746513367,
+     0.9644516706466675,
+     0.14539162814617157
+    ],
+    "siteR": [
+     -0.2592140734195709,
+     0.9548593163490295,
+     0.14678449928760529
+    ],
+    "mirrorMismatchMm": 10.91,
+    "forceL": 0.127,
+    "forceR": 0.126,
+    "peakKPaL": 5.4,
+    "peakKPaR": 6.43
+   },
+   "forearmRender": {
+    "depthMm": 3.46,
+    "forceN": 0.177,
+    "peakPressureKPa": 6.81
+   },
+   "chestRender": {
+    "depthMm": 2.1,
+    "forceN": 0.055,
+    "peakPressureKPa": 2.39
+   },
+   "seconds": 272
+  },
+  "stability": {
+   "frames": 10000,
+   "substeps": 100000,
+   "finite": true,
+   "largestDisplacementMm": 101.92,
+   "largestVolumeDeviationDuringRun": 0.013,
+   "afterReturn": {
+    "residualMm": 1.04,
+    "volumeRatioByMaterial": {
+     "fat": 1,
+     "muscle": 1,
+     "abdomen": 1,
+     "thorax": 1,
+     "other": 1
+    },
+    "maxSpeed": 0.00026418221019830403
+   },
+   "seconds": 607,
+   "msPerFrame": 57.078
+  },
+  "timing": {
+   "cpu": "Bun, one thread, machine shared with other jobs",
+   "rows": [
+    {
+     "cage": "whole body 27 mm",
+     "nodes": 12090,
+     "tets": 55603,
+     "substeps": 10,
+     "msPerFrame": 43.561,
+     "msPerSubstep": 4.356
+    },
+    {
+     "cage": "whole body 20 mm",
+     "nodes": 26316,
+     "tets": 128357,
+     "substeps": 10,
+     "msPerFrame": 93.722,
+     "msPerSubstep": 9.372
+    },
+    {
+     "cage": "chest region 14 mm",
+     "nodes": 25514,
+     "tets": 134415,
+     "substeps": 10,
+     "msPerFrame": 91.702,
+     "msPerSubstep": 9.17
+    },
+    {
+     "cage": "forearm region 12 mm",
+     "nodes": 1941,
+     "tets": 8753,
+     "substeps": 10,
+     "msPerFrame": 6.237,
+     "msPerSubstep": 0.624
+    },
+    {
+     "cage": "press() site cage, probe 13 mm, cell 4.3 mm",
+     "nodes": 7004,
+     "tets": 34621,
+     "substeps": 8,
+     "msPerFrame": 16.627,
+     "msPerSubstep": 2.078
+    },
+    {
+     "cage": "press() site cage, probe 5 mm, cell 2 mm",
+     "nodes": 4446,
+     "tets": 20988,
+     "substeps": 8,
+     "msPerFrame": 8.124,
+     "msPerSubstep": 1.016
+    }
+   ],
+   "seconds": 29
+  },
+  "breastPhantom": {
+   "what": "hemisphere of breast tissue on a rigid wall, gravity from prone (away from the wall) to supine (towards it, optionally tilted); nipple = top of the dome; displacement prone → supine",
+   "published": {
+    "meanMm": 69.7,
+    "source": "proneSupine2016"
+   },
+   "rows": [
+    {
+     "label": "262 mL, 14 mm, bonded (as the phase-2 model)",
+     "nippleMm": 11.6,
+     "meanTissueMm": 6.8,
+     "volumeRatio": 0.9934,
+     "tets": 576,
+     "frames": 265
+    },
+    {
+     "label": "cell 7 mm",
+     "nippleMm": 12.7,
+     "meanTissueMm": 6.8,
+     "volumeRatio": 0.9938,
+     "tets": 4584,
+     "frames": 247
+    },
+    {
+     "label": "cell 5 mm",
+     "nippleMm": 13,
+     "meanTissueMm": 6.7,
+     "volumeRatio": 0.9939,
+     "tets": 12630,
+     "frames": 240
+    },
+    {
+     "label": "shear 166.6 Pa (softest published)",
+     "nippleMm": 25.4,
+     "meanTissueMm": 14.9,
+     "volumeRatio": 0.9862,
+     "tets": 576,
+     "frames": 312
+    },
+    {
+     "label": "base sliding (frictionless, bilateral)",
+     "nippleMm": 18.7,
+     "meanTissueMm": 11.6,
+     "volumeRatio": 0.9948,
+     "tets": 576,
+     "frames": 303
+    },
+    {
+     "label": "supine gravity tilted 45° from the wall normal",
+     "nippleMm": 21.5,
+     "meanTissueMm": 13,
+     "volumeRatio": 0.9954,
+     "tets": 576,
+     "frames": 290
+    },
+    {
+     "label": "sliding and tilted 45°",
+     "nippleMm": 55.2,
+     "meanTissueMm": 46.3,
+     "volumeRatio": 0.9967,
+     "tets": 576,
+     "frames": 360
+    },
+    {
+     "label": "600 mL",
+     "nippleMm": 21.3,
+     "meanTissueMm": 12.2,
+     "volumeRatio": 0.9917,
+     "tets": 1324,
+     "frames": 287
+    },
+    {
+     "label": "600 mL, tilted 45°",
+     "nippleMm": 38.1,
+     "meanTissueMm": 22.6,
+     "volumeRatio": 0.9941,
+     "tets": 1324,
+     "frames": 325
+    }
+   ],
+   "seconds": 7
   }
  }
 }

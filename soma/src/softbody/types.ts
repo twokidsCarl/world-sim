@@ -79,6 +79,12 @@ export interface SoftMaterial {
   /** 快的 Maxwell 支路：模量与 μ 之比、松弛时间（秒）；省略 = 没有 / the fast Maxwell branch: its modulus over μ and its relaxation time (s); omitted = none */
   branchRatio?: number
   branchTau?: number
+  /**
+   * Ogden 型偏量能（Mihai 等 2015 的写法，m_p 为整数，帕）：给出时它取代 neo-Hookean 的偏量部分，young/poisson 只定体积项 λ。
+   * Ogden-type deviatoric energy (the form of Mihai et al. 2015, integer m_p, Pa): when given it replaces the neo-Hookean
+   * deviatoric part, and young/poisson set the volume term λ only.
+   */
+  ogden?: { c: number[]; m: number[] }
   /** true = 不求解（骨：四个结点都钉住的四面体）/ true = not solved (bone: tetrahedra with four pinned nodes) */
   rigid?: boolean
 }

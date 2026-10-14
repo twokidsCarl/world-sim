@@ -35,7 +35,7 @@ export function readMaterials(): MaterialsFile {
 
 /** 求解器用的材料：去掉出处说明，只留数值 / the materials as the solver uses them: numbers only, without the provenance notes */
 export function solverMaterials(file: MaterialsFile): SoftMaterial[] {
-  return file.materials.map(({ id, name, young, poisson, density, youngActive, fibreYoung, rigid, stiffening, branchRatio, branchTau }) => ({ id, name, young, poisson, density, ...(youngActive ? { youngActive } : {}), ...(fibreYoung ? { fibreYoung } : {}), ...(rigid ? { rigid } : {}), ...(stiffening ? { stiffening } : {}), ...(branchRatio ? { branchRatio, branchTau } : {}) }))
+  return file.materials.map(({ id, name, young, poisson, density, youngActive, fibreYoung, rigid, stiffening, branchRatio, branchTau, ogden }) => ({ id, name, young, poisson, density, ...(youngActive ? { youngActive } : {}), ...(fibreYoung ? { fibreYoung } : {}), ...(rigid ? { rigid } : {}), ...(stiffening ? { stiffening } : {}), ...(branchRatio ? { branchRatio, branchTau } : {}), ...(ogden ? { ogden: { c: ogden.c, m: ogden.m } } : {}) }))
 }
 
 /** 具名区域的盒子，由关节中心定出 / the box of a named region, from joint centres */

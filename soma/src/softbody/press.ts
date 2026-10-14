@@ -34,8 +34,14 @@ import { type PointSet, type SoftSolver, type Vec3 } from './solver.ts'
 export const EDGE_COMPENSATION = 0.25
 
 export interface PressProbe {
-  /** 'flat' = 平头圆柱；'sphere' = 球；'hemisphere' = 半球头的圆杆（压入超过半径时杆身也接触）/ 'flat' = flat-ended cylinder; 'sphere' = a ball; 'hemisphere' = a rod with a hemispherical tip (its shaft touches too once the depth exceeds the radius) */
-  kind: 'flat' | 'sphere' | 'hemisphere'
+  /**
+   * 'flat' = 平头圆柱；'sphere' = 球；'hemisphere' = 半球头的圆杆（压入超过半径时杆身也接触）；'plate' = 平板：半径为 radiusMm 的圆板，
+   * 比接触区大，没有边缘补偿（板的边不压到组织上）。
+   * 'flat' = flat-ended cylinder; 'sphere' = a ball; 'hemisphere' = a rod with a hemispherical tip (its shaft touches
+   * too once the depth exceeds the radius); 'plate' = a flat plate: a disc of radius radiusMm larger than the contact,
+   * without edge compensation (the plate's edge does not bear on the tissue).
+   */
+  kind: 'flat' | 'sphere' | 'hemisphere' | 'plate'
   radiusMm: number
 }
 
@@ -74,14 +80,14 @@ export interface PressResult {
   forceN: number
   /** 力 ÷ 接触面积 / force ÷ contact area */
   meanPressureKPa: number
-  /** 接触压强在半个单元的尺度上平滑后的最大值 / the largest contact pressure after smoothing over half a cell */
+  /** 结点上接触压强的最大值（分辨率一个单元）/ the largest contact pressure at a node (resolution: one cell) */
   peakPressureKPa: number
   contactAreaMm2: number
   /** 压头轴线上、原表面以下 z 毫米处沿轴向的压应变（正 = 压缩）/ compressive strain along the axis at z mm below the original surface (positive = compression) */
   strainAtDepth(zMm: number): number
   /** 轴线上的最大压应变 / the largest compressive strain on the axis */
   peakStrain: number
-  /** 压强沿半径的分布（平滑后），千帕 / the radial pressure profile (smoothed), kPa */
+  /** 压强沿半径的分布（按结点），千帕 / the radial pressure profile (by node), kPa */
   pressureProfile: { rMm: number; kPa: number }[]
   /** false = 结果在验证过的范围之外或数值上不可靠；原因在 flags 里 / false = outside the validated range or numerically unreliable; the reasons are in `flags` */
   valid: boolean
@@ -129,8 +135,8 @@ export function massScale(lambdaMax: number, density: number, cell: number, h: n
 export function press(d: PressDomain, probe: PressProbe, request: PressRequest, o: PressOptions = {}): PressResult {
   const s = d.solver, a = probe.radiusMm * 1e-3
   const n = d.inward, site = d.site
-  const flat = probe.kind === 'flat'
-  const comp = flat && o.edgeCompensation !== false ? Math.min(EDGE_COMPENSATION * d.cell, 0.4 * a) : 0
+  const flat = probe.kind === 'flat' || probe.kind === 'plate'
+  const comp = probe.kind === 'flat' && o.edgeCompensation !== false ? Math.min(EDGE_COMPENSATION * d.cell, 0.4 * a) : 0
   const centre = (depth: number): Vec3 => {
     const off = flat ? depth : depth - a
     return [site[0] + n[0] * off, site[1] + n[1] * off, site[2] + n[2] * off]
@@ -240,9 +246,8 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
     }
   }
 
-  // ── 接触压强：各采样点的法向力在半个单元的尺度上平滑 / contact pressure: the normal forces of the samples, smoothed over half a cell ──
-  const m = d.samples.area.length, pf = s.probePointForce, sp = d.samples.positions
-  const rs = Math.max(0.5 * d.cell, 0.25 * a)
+  // ── 接触面积和接触压强 / contact area and contact pressure ──
+  const m = d.samples.area.length, pf = s.probePointForce
   let area = 0
   const q = [0, 0, 0], c = s.probe.shape.center
   const touching = new Uint8Array(m), radial = new Float32Array(m)
@@ -256,24 +261,36 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
     const gap = flat ? (off < a ? along : Infinity) : probe.kind === 'hemisphere' && along < 0 ? off - a : Math.hypot(rx, ry, rz) - a
     if (gap < Math.max(1e-4, 0.015 * a)) (touching[i] = 1), (area += d.samples.area[i]!)
   }
-  const smooth = (i: number): number => {
-    let fs = 0, as = 0
-    for (let j = 0; j < m; j++) {
-      const dist = Math.hypot(sp[i * 3]! - sp[j * 3]!, sp[i * 3 + 1]! - sp[j * 3 + 1]!, sp[i * 3 + 2]! - sp[j * 3 + 2]!)
-      if (dist > rs) continue
-      fs += pf[j]!
-      as += d.samples.area[j]!
+  // 各采样点的力不唯一（一个四面体里有许多采样点，约束是冗余的，Gauss–Seidel 的顺序决定力落在哪个点上），但分到结点上的
+  // 合力唯一（等于结点处的弹性力）：压强按结点算 = Σ bₖ·fᵢ / Σ bₖ·Aᵢ，分辨率就是一个单元。
+  // The force of an individual sample is not unique (many samples share a tetrahedron, the constraints are redundant and
+  // the Gauss–Seidel order decides which sample carries it), but the force gathered on a node is (it equals the elastic
+  // force there): pressure is computed per node, Σ bₖ·fᵢ / Σ bₖ·Aᵢ, at the resolution of one cell.
+  const pts = d.samples.points, nodeF = new Map<number, number>(), nodeA = new Map<number, number>(), nodeT = new Map<number, number>(), nodeR = new Map<number, number>()
+  for (let i = 0; i < m; i++) {
+    const ai = d.samples.area[i]!
+    for (let k = 0; k < 4; k++) {
+      const b = pts.bary[i * 4 + k]!
+      if (!(b > 0)) continue
+      const node = s.tets[pts.tet[i]! * 4 + k]!
+      nodeF.set(node, (nodeF.get(node) ?? 0) + b * pf[i]!)
+      nodeA.set(node, (nodeA.get(node) ?? 0) + b * ai)
+      nodeT.set(node, (nodeT.get(node) ?? 0) + (touching[i] ? b * ai : 0))
+      nodeR.set(node, (nodeR.get(node) ?? 0) + b * ai * radial[i]!)
     }
-    return as > 0 ? fs / as : 0
   }
+  let aMax = 0
+  for (const v of nodeA.values()) aMax = Math.max(aMax, v)
   let peak = 0
   const bins = 8, sum = new Float64Array(bins), cnt = new Float64Array(bins)
-  for (let i = 0; i < m; i++) {
-    if (!touching[i] && pf[i] === 0) continue
-    const pr = smooth(i)
-    if (touching[i]) peak = Math.max(peak, pr)
-    const b = Math.min(bins - 1, Math.floor((radial[i]! / a) * bins))
-    if (radial[i]! < a) (sum[b] = sum[b]! + pr * d.samples.area[i]!), (cnt[b] = cnt[b]! + d.samples.area[i]!)
+  for (const [node, an] of nodeA) {
+    // 只看采样面积够大的结点（至少最大者的四分之一），免得只沾到一点皮肤的结点给出离谱的比值
+    // only nodes with enough sampled area (a quarter of the largest at least), so that a node grazing the skin gives no absurd ratio
+    if (an < 0.25 * aMax) continue
+    const pr = nodeF.get(node)! / an, r = nodeR.get(node)! / an
+    if (nodeT.get(node)! > 0.5 * an) peak = Math.max(peak, pr)
+    const b = Math.min(bins - 1, Math.floor((r / a) * bins))
+    if (r < a) (sum[b] = sum[b]! + pr * an), (cnt[b] = cnt[b]! + an)
   }
   const pressureProfile = Array.from({ length: bins }, (_, b) => ({ rMm: Math.round(((b + 0.5) / bins) * a * 1e5) / 100, kPa: cnt[b]! > 0 ? Math.round(sum[b]! / cnt[b]! / 10) / 100 : 0 }))
 
@@ -290,7 +307,7 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
   if (!converged) flags.push('not-converged')
   if (bottomed) flags.push('force-not-reached:tissue-crushed-or-bottomed-out')
   if (!Number.isFinite(f)) flags.push('not-finite')
-  if (a / d.cell < 2.5) flags.push('probe-under-resolved')
+  if (probe.kind !== 'plate' && a / d.cell < 2.5) flags.push('probe-under-resolved')
   if (peakStrain > (o.validatedStrain ?? 0.4)) flags.push('strain-beyond-model-range')
   if (meanP / 1000 > (o.validatedPressureKPa ?? 45)) flags.push('pressure-beyond-validated-range')
   if (d.thickness !== undefined && depth > 0.6 * d.thickness) flags.push('depth-beyond-60%-of-tissue-thickness')
