@@ -105,6 +105,7 @@ class Job(BaseModel):
     pr_url: Optional[str] = None
     restart_needed: bool = False
     cost_usd: float = 0
+    tokens: dict[str, int] = Field(default_factory=dict)  # 这个作业累计的 token：输入、输出、缓存读、缓存写 / tokens used by this job so far: input, output, cache read, cache write
     pid: Optional[int] = None
     queued: Optional[str] = None  # 排着队等 worker 来做的那一步（plan / execute / finish）/ the step waiting for the worker
     waiting: Optional[str] = None  # 为什么还没轮到它，给人看 / why it has not started yet, for a person
@@ -564,12 +565,13 @@ def _claude(job: Job, prompt: str, tools: str, allowed: list[str], limit: int) -
     if final["type"] != "done":
         raise JobError(str(final.get("message") or "Claude 没有做完"))
     job.cost_usd = round(job.cost_usd + float(final.get("cost_usd") or 0), 4)
+    job.tokens = llm.add_tokens(job.tokens, final["tokens"])
     for denial in (parser.result or {}).get("permission_denials") or []:
         tool, args = denial.get("tool_name", ""), denial.get("tool_input") or {}
         text = f"{tool}: {args.get('command') or args.get('file_path') or ''}"[:200]
         if text not in job.denied:
             job.denied.append(text)
-    llm.log_call("job", model(), time.monotonic() - started, {"cost_usd": final.get("cost_usd"), "output_tokens": final.get("output_tokens")}, ok=True)
+    llm.log_call("job", model(), time.monotonic() - started, {"cost_usd": final.get("cost_usd"), **final["tokens"]}, ok=True)
     return parser
 
 
@@ -594,7 +596,7 @@ def run_plan(job_id: str) -> None:
         parser = _claude(job, prompt, "Read,Grep,Glob", ["Read", "Grep", "Glob"], LIMIT_SECONDS["planning"])
     except JobError as e:
         return _fail(job, f"出方案时出错：{e}")
-    job = Job.model_validate({**get(job_id).model_dump(), "cost_usd": job.cost_usd})
+    job = Job.model_validate({**get(job_id).model_dump(), "cost_usd": job.cost_usd, "tokens": job.tokens})
     if job.phase == "cancelled":
         return
     job.plan = parser.final().get("text", "").strip()
@@ -617,7 +619,7 @@ def run_execute(job_id: str) -> None:
         parser = _claude(job, prompt, "Read,Grep,Glob,Edit,Write,Bash", _allowed(job.directory), LIMIT_SECONDS["running"])
     except JobError as e:
         return _fail(job, f"动手时出错：{e}")
-    job = Job.model_validate({**get(job_id).model_dump(), "cost_usd": job.cost_usd, "denied": job.denied})
+    job = Job.model_validate({**get(job_id).model_dump(), "cost_usd": job.cost_usd, "tokens": job.tokens, "denied": job.denied})
     if job.phase == "cancelled":
         return
     try:
@@ -708,7 +710,7 @@ def _finish(job_id: str) -> None:
             _claude(job, prompt, "Read,Grep,Glob,Edit,Write,Bash", _allowed(job.directory), LIMIT_SECONDS["running"])
         except JobError as e:
             return _fail(job, f"修的时候出错：{e}")
-        job = Job.model_validate({**get(job_id).model_dump(), "cost_usd": job.cost_usd, "denied": job.denied, "repairs": job.repairs})
+        job = Job.model_validate({**get(job_id).model_dump(), "cost_usd": job.cost_usd, "tokens": job.tokens, "denied": job.denied, "repairs": job.repairs})
         if job.phase == "cancelled":
             return
         job.changed = dirty(job.directory, repo)

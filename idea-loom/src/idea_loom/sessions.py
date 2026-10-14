@@ -113,6 +113,9 @@ class Meta(BaseModel):
     status: Literal["idle", "running", "waiting", "closed", "error"] = "idle"
     sdk_session: Optional[str] = None  # SDK 的会话编号，重启后靠它接上 / the SDK's session id, used to pick up after a restart
     cost_usd: float = 0
+    # 整个会话累计的 token（输入、输出、缓存读、缓存写），每轮说完时更新。
+    # Tokens used by the whole session so far (input, output, cache read, cache write), updated as each turn ends.
+    tokens: dict[str, int] = Field(default_factory=dict)
     turns: int = 0
     tasks: int = 0  # 后台还在跑的任务（子 Agent、后台命令）有几个 / how many background tasks (subagents, background commands) are still running
     waiting_for: Optional[str] = None  # 在等你回答什么，一句话 / what awaits your answer, in a sentence
@@ -146,6 +149,14 @@ class _Live:
         self.turn_done = asyncio.Event()
         self.turn_started = time.monotonic()
         self.reader: Optional[asyncio.Task[None]] = None
+        # token 的账：modelUsage 是这个进程里的累计，所以要知道进程开始时会话已经用了多少（base，第一轮说完才定），
+        # 和已经记进 runs/llm.jsonl 的有多少（logged）。replies 是还没等到结果的这几条回复，用来在干活时报一个估计。
+        # Token bookkeeping: modelUsage is cumulative within this process, so we need what the session had used when the
+        # process started (base, settled when the first turn ends) and how much is already in runs/llm.jsonl (logged).
+        # replies holds the replies not yet covered by a result, for an estimate while it works.
+        self.usage_base: Optional[dict[str, int]] = None
+        self.logged: dict[str, int] = dict(meta.tokens)
+        self.replies: dict[str, dict[str, int]] = {}
 
 
 # 只在测试里用：没有真的子进程时，会话"进程"是当前事件循环里的一个任务。
@@ -515,6 +526,7 @@ def _convert(live: _Live, message: Any) -> None:
         # 子 Agent 的每一步都带着派它的那次工具调用的编号；界面按它把这一步放到那个子 Agent 下面。
         # Each step of a subagent carries the id of the tool call that launched it; the UI uses it to put the step under that subagent.
         parent = {"parent": message.parent_tool_use_id} if getattr(message, "parent_tool_use_id", None) else {}
+        _reply_usage(live, message)
         for block in message.content:
             name = type(block).__name__
             if name == "TextBlock" and block.text.strip():
@@ -530,12 +542,56 @@ def _convert(live: _Live, message: Any) -> None:
     elif kind == "ResultMessage":
         live.meta.sdk_session = message.session_id or live.meta.sdk_session
         live.meta.cost_usd = round(float(message.total_cost_usd or live.meta.cost_usd), 4)  # 这是整个会话累计的 / cumulative for the whole session
+        _result_usage(live, message)
         live.meta.turns += 1
-        _emit(live, {"type": "result", "is_error": bool(message.is_error), "cost_usd": live.meta.cost_usd, "subtype": str(message.subtype or "")})
+        _emit(live, {"type": "result", "is_error": bool(message.is_error), "cost_usd": live.meta.cost_usd, "tokens": live.meta.tokens, "subtype": str(message.subtype or "")})
     elif kind == "RateLimitEvent":
         info = message.rate_limit_info
         resets, name, used = getattr(info, "resets_at", None), getattr(info, "rate_limit_type", None), getattr(info, "utilization", None)
         gates.note_usage({"status": getattr(info, "status", ""), "resetsAt": resets, "unifiedWindows": {str(name): {"utilization": used, "resetsAt": resets}} if name else {}})
+
+
+def _reply_usage(live: _Live, message: Any) -> None:
+    """一条回复的 token 先记下来，告诉界面现在大概用到多少了。一条回复按内容块拆成几条消息，用量相同或递增，按编号只算一次、取大的。
+
+    Note the tokens of one reply and tell the UI roughly where the count stands. A reply comes split into several
+    messages by content block with the same or growing usage, so it counts once per id, taking the larger figures.
+    """
+    usage, reply = getattr(message, "usage", None), getattr(message, "message_id", None) or getattr(message, "uuid", None)
+    if not isinstance(usage, dict) or not reply:
+        return
+    now = llm.tokens_of({"usage": usage})
+    before = live.replies.get(str(reply), {})
+    merged = {k: max(now[k], int(before.get(k) or 0)) for k in llm.TOKEN_KEYS}
+    if merged != before:
+        live.replies[str(reply)] = merged
+        _emit(live, {"type": "usage", "tokens": llm.add_tokens(live.meta.tokens, *live.replies.values()), "estimate": True})
+
+
+def _result_usage(live: _Live, message: Any) -> None:
+    """一轮说完：按结果里的数把会话的累计 token 定下来。
+
+    结果里的 modelUsage 是这个进程（这次 query）到现在的累计，包括子 Agent；它不说自己是不是接着上一个进程的数
+    往下记的（续上的会话有时会从记录里的总数接着记），所以进程的第一轮用这一轮主循环的用量判断一下：累计至少是
+    "以前的 + 这一轮的"，就是接着记的；否则是从零记的，要加上以前的。没有 modelUsage 时，usage 只是这一轮的，直接加上。
+
+    A turn has ended: settle the session's cumulative tokens from the result. The result's modelUsage is the running
+    total of this process (this query) so far, subagents included. It does not say whether it carries on from the
+    previous process's total (a resumed session sometimes continues from the total in its transcript), so the first turn
+    of a process decides with this turn's main-loop usage: a total of at least "earlier + this turn" carries on; anything
+    less started from zero and the earlier tokens are added. Without modelUsage, usage covers this turn only and is added.
+    """
+    per_model, usage = getattr(message, "model_usage", None), getattr(message, "usage", None)
+    live.replies.clear()
+    if per_model:
+        current = llm.tokens_of({"modelUsage": per_model})
+        if live.usage_base is None:
+            before, turn = llm.add_tokens(live.meta.tokens), llm.tokens_of({"usage": usage or {}})
+            carried_on = sum(current.values()) >= sum(before.values()) + sum(turn.values())
+            live.usage_base = llm.add_tokens() if carried_on else before
+        live.meta.tokens = llm.add_tokens(live.usage_base, current)
+    elif isinstance(usage, dict):
+        live.meta.tokens = llm.add_tokens(live.meta.tokens, llm.tokens_of({"usage": usage}))
 
 
 TERMINAL = {"completed", "failed", "stopped", "killed"}
@@ -584,7 +640,11 @@ def _begin(live: _Live, by_itself: bool) -> None:
 
 
 def _end(live: _Live) -> None:
-    llm.log_call("session", "claude-code", time.monotonic() - live.turn_started, {"cost_usd": None}, ok=True)
+    # 记这一轮新用掉的 token，和 Claude Code 的会话编号：统计时靠它认出这一轮也在 Claude Code 自己的记录里，不重复算。
+    # Log the tokens this turn added, and Claude Code's session id: the statistics use it to see that this turn is also in Claude Code's own records and not count it twice.
+    spent = {k: v - int(live.logged.get(k) or 0) for k, v in llm.add_tokens(live.meta.tokens).items()}
+    live.logged = dict(live.meta.tokens)
+    llm.log_call("session", "claude-code", time.monotonic() - live.turn_started, {"cost_usd": None, "session": live.meta.sdk_session, **spent}, ok=True)
     _set(live, "idle")
     live.busy, live.idle_since = False, time.monotonic()
     live.turn_done.set()

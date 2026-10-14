@@ -183,20 +183,40 @@ def parse_output(stdout: str, schema: Optional[dict]) -> str | dict:
     return structured
 
 
+# 记 token 用的四项，名字和 Claude Code 的 usage 一样。 / The four token counts kept, named as in Claude Code's usage.
+TOKEN_KEYS = ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")
+_CAMEL = {"inputTokens": "input_tokens", "outputTokens": "output_tokens", "cacheReadInputTokens": "cache_read_input_tokens", "cacheCreationInputTokens": "cache_creation_input_tokens"}
+
+
+def tokens_of(result: dict[str, Any]) -> dict[str, int]:
+    """一条结果里的 token：有 modelUsage 就按模型加起来（它连子 Agent 和压缩都算上），没有就用 usage（只算主循环）。
+
+    The tokens of one result: summed over models from modelUsage when present (it includes subagents and
+    compaction), otherwise taken from usage (the main loop only).
+    """
+    per_model = result.get("modelUsage") if isinstance(result.get("modelUsage"), dict) else None
+    if per_model:
+        out = dict.fromkeys(TOKEN_KEYS, 0)
+        for numbers in per_model.values():
+            for camel, key in _CAMEL.items():
+                out[key] += int((numbers or {}).get(camel) or 0) if isinstance(numbers, dict) else 0
+        return out
+    usage = result.get("usage") if isinstance(result.get("usage"), dict) else {}
+    return {key: int(usage.get(key) or 0) for key in TOKEN_KEYS}
+
+
+def add_tokens(*parts: dict[str, Any]) -> dict[str, int]:
+    """几份 token 逐项相加。 / Add several token counts item by item."""
+    return {key: sum(int(p.get(key) or 0) for p in parts) for key in TOKEN_KEYS}
+
+
 def usage_of(stdout: str) -> dict[str, Any]:
     """从输出里取用量和费用；取不到的项留空。 / Pull usage and cost from the output; missing items stay empty."""
     try:
         data = result_object(stdout)
     except LLMError:
         return {}
-    usage = data.get("usage") if isinstance(data.get("usage"), dict) else {}
-    return {
-        "cost_usd": data.get("total_cost_usd"),
-        "input_tokens": usage.get("input_tokens"),
-        "output_tokens": usage.get("output_tokens"),
-        "cache_read_input_tokens": usage.get("cache_read_input_tokens"),
-        "cache_creation_input_tokens": usage.get("cache_creation_input_tokens"),
-    }
+    return {"cost_usd": data.get("total_cost_usd"), **tokens_of(data)}
 
 
 def log_call(purpose: str, model: str, seconds: float, usage: dict[str, Any], ok: bool) -> None:

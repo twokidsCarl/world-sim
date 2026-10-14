@@ -391,7 +391,7 @@ def _run(ctx: _Running, binary: str) -> None:
     _by_conversation.pop(ctx.conversation_id, None)
     ctx.emit({**final, "seconds": seconds})
     if final["type"] == "done":
-        llm.log_call("assistant", model(), seconds, {"cost_usd": final.get("cost_usd"), "output_tokens": final.get("output_tokens")}, ok=True)
+        llm.log_call("assistant", model(), seconds, {"cost_usd": final.get("cost_usd"), **final["tokens"]}, ok=True)
     _running.pop(ctx.token, None)
     _by_conversation.pop(ctx.conversation_id, None)
 

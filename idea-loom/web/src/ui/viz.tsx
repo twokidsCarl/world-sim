@@ -2,6 +2,7 @@
 // The few small charts the statistics page uses: bars, a heat grid, a timeline strip.
 // Numbers are always written in text ink; colour is for the marks only.
 import type { ReactNode } from 'react'
+import type { TokenUsage } from '../api'
 import type { Lang } from '../i18n'
 
 // 项目的颜色按固定顺序分配，跟着项目走，不跟着排名走。第九个以后归到"其它"的灰。
@@ -31,6 +32,27 @@ export function compact(n: number, lang: Lang): string {
   if (n >= 1e8) return `${digits(n / 1e8)} 亿`
   if (n >= 1e4) return `${digits(n / 1e4)} 万`
   return n.toLocaleString('zh-CN')
+}
+
+// 一行写完：输入 · 输出 · 缓存（读和写加在一起）；一个都没有时是空串。
+// On one line: input · output · cache (read and write together); an empty string when there is none.
+export function usageLine(tokens: TokenUsage | null | undefined, lang: Lang): string {
+  const n = (x: number | undefined) => x ?? 0
+  const input = n(tokens?.input_tokens)
+  const output = n(tokens?.output_tokens)
+  const cache = n(tokens?.cache_read_input_tokens) + n(tokens?.cache_creation_input_tokens)
+  if (input + output + cache === 0) return ''
+  return lang === 'en'
+    ? `in ${compact(input, lang)} · out ${compact(output, lang)} · cache ${compact(cache, lang)}`
+    : `输入 ${compact(input, lang)} · 输出 ${compact(output, lang)} · 缓存 ${compact(cache, lang)}`
+}
+
+// 鼠标停上去看的完整数字，缓存分开读和写。 / The full figures shown on hover, with the cache split into read and write.
+export function usageTitle(tokens: TokenUsage | null | undefined, lang: Lang): string {
+  const n = (x: number | undefined) => (x ?? 0).toLocaleString(lang === 'en' ? 'en-US' : 'zh-CN')
+  return lang === 'en'
+    ? `input ${n(tokens?.input_tokens)} · output ${n(tokens?.output_tokens)} · cache read ${n(tokens?.cache_read_input_tokens)} · cache write ${n(tokens?.cache_creation_input_tokens)} tokens`
+    : `输入 ${n(tokens?.input_tokens)} · 输出 ${n(tokens?.output_tokens)} · 缓存读 ${n(tokens?.cache_read_input_tokens)} · 缓存写 ${n(tokens?.cache_creation_input_tokens)} token`
 }
 
 export function duration(seconds: number, lang: Lang): string {

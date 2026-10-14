@@ -8,6 +8,8 @@ from __future__ import annotations
 import os
 from typing import Any, Optional
 
+from ..llm import tokens_of
+
 TOOL_PREFIX = "mcp__loom__"
 
 
@@ -91,5 +93,6 @@ class StreamParser:
             "text": self.text or str(r.get("result") or ""),
             "cost_usd": r.get("total_cost_usd"),
             "output_tokens": usage.get("output_tokens"),
+            "tokens": tokens_of(r),  # 输入、输出、缓存四项 / input, output and the two cache counts
             "steps": len(self.steps),
         }

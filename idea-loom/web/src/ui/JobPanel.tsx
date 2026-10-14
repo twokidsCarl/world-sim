@@ -4,6 +4,7 @@ import { Markdown } from '../assistant/Markdown'
 import { label, plural } from '../i18n'
 import { formatTime } from '../state/derive'
 import { useLang, useT } from '../state/store'
+import { usageLine, usageTitle } from './viz'
 
 const ACTIVE = ['planning', 'running', 'testing', 'pr']
 const TONE: Record<string, string> = { plan_ready: 'w-accepted', merged: 'w-done', failed: 'j-failed' }
@@ -84,7 +85,7 @@ export function JobPanel({ jobId, onChange }: { jobId: string; onChange?: () => 
         </span>
         <span className="muted small">
           {t('在', 'In')} <code>{job.directory}/</code> · {t('开始于', 'started')} {formatTime(job.created_at)}
-          {job.cost_usd > 0 && t(` · 约 ${job.cost_usd.toFixed(2)} 美元`, ` · about $${job.cost_usd.toFixed(2)}`)}
+          {usageLine(job.tokens, lang) && <span className="num" title={usageTitle(job.tokens, lang)}> · {usageLine(job.tokens, lang)}</span>}
         </span>
         {active && (
           <button disabled={busy} onClick={() => void act(() => api.jobAction(job.job_id, 'cancel'))}>

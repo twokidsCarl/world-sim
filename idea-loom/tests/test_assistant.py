@@ -40,7 +40,16 @@ def test_parser_folds_text_steps_and_result():
         out += p.feed(obj)
     assert [e["type"] for e in out] == ["text", "step", "step", "step", "step", "text"]
     assert [(e["id"], e["state"]) for e in out if e["type"] == "step"] == [("t1", "running"), ("t1", "done"), ("t2", "running"), ("t2", "refused")]
-    assert p.final() == {"type": "done", "text": "你好", "cost_usd": 0.02, "output_tokens": 40, "steps": 2}
+    assert p.final() == {"type": "done", "text": "你好", "cost_usd": 0.02, "output_tokens": 40, "steps": 2,
+                         "tokens": {"input_tokens": 0, "output_tokens": 40, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0}}
+
+
+def test_tokens_come_from_model_usage_when_there_is_one():
+    # modelUsage 连子 Agent 一起算，比只算主循环的 usage 全。 / modelUsage includes subagents, so it is fuller than usage, which covers the main loop only.
+    p = StreamParser()
+    p.feed({**fc.result("好"), "modelUsage": {"claude-opus-5-5": {"inputTokens": 10, "outputTokens": 50, "cacheReadInputTokens": 900, "cacheCreationInputTokens": 30},
+                                              "claude-haiku-5-5": {"inputTokens": 5, "outputTokens": 7, "cacheReadInputTokens": 0, "cacheCreationInputTokens": 0}}})
+    assert p.final()["tokens"] == {"input_tokens": 15, "output_tokens": 57, "cache_read_input_tokens": 900, "cache_creation_input_tokens": 30}
 
 
 def test_parser_reports_a_cut_off_or_failed_answer():

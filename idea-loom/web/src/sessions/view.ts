@@ -1,5 +1,6 @@
 // 把会话的事件流折叠成界面要画的东西：一条条消息、工具步骤、等你回答的卡片。
 // Fold a session's event stream into what the UI draws: messages, tool steps and the cards awaiting your answer.
+import type { TokenUsage } from '../api'
 
 export type SessionEvent = { seq: number; type: string; [key: string]: unknown }
 
@@ -25,11 +26,12 @@ export type View = {
   status: 'idle' | 'running' | 'waiting' | 'closed' | 'error'
   waitingFor: string | null
   mode: string | null
-  cost: number
+  // 用掉的 token：一轮说完时是准数，干活时是边干边加的估计。 / Tokens used: exact when a turn ends, a running estimate while it works.
+  tokens: TokenUsage | null
   lastSeq: number
 }
 
-export const emptyView = (): View => ({ items: [], status: 'idle', waitingFor: null, mode: null, cost: 0, lastSeq: 0 })
+export const emptyView = (): View => ({ items: [], status: 'idle', waitingFor: null, mode: null, tokens: null, lastSeq: 0 })
 
 function lastIndex(items: Item[], test: (item: Item) => boolean): number {
   for (let i = items.length - 1; i >= 0; i--) if (test(items[i]!)) return i
@@ -89,14 +91,15 @@ export function fold(view: View, events: SessionEvent[]): View {
       interrupted = true
       next.items.push({ kind: 'note', seq: e.seq, tone: 'muted', code: 'interrupted', message: '' })
     } else if (e.type === 'result') {
-      next.cost = Number(e.cost_usd ?? next.cost)
+      if (e.tokens) next.tokens = e.tokens as TokenUsage
       // 它自己开的一轮什么都没说就结束了：那句"接着做"的提示收回。 / A turn it opened by itself ended without a word: take back the "carries on" note.
       const last = next.items[next.items.length - 1]
       if (last?.kind === 'note' && last.code === 'resumed') next.items = next.items.slice(0, -1)
       // 打断之后的那个"出错"的结果是打断本身，不算出错。 / The "error" result right after an interrupt is the interrupt itself, not a failure.
       if (e.is_error && !interrupted) next.items.push({ kind: 'note', seq: e.seq, tone: 'bad', code: 'failed', message: String(e.subtype ?? '') })
       interrupted = false
-    } else if (e.type === 'error') next.items.push({ kind: 'note', seq: e.seq, tone: 'bad', code: 'error', message: String(e.message ?? '') })
+    } else if (e.type === 'usage') next.tokens = (e.tokens as TokenUsage | undefined) ?? next.tokens
+    else if (e.type === 'error') next.items.push({ kind: 'note', seq: e.seq, tone: 'bad', code: 'error', message: String(e.message ?? '') })
     else if (e.type === 'status') {
       next.status = e.status as View['status']
       next.waitingFor = (e.waiting_for as string | null) ?? null
