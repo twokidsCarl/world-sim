@@ -15,7 +15,7 @@ export interface ScalpGroom {
 }
 
 /** 每平方厘米几根引导发丝 / guide strands per cm² */
-const GUIDES_PER_CM2: Record<ScalpStyle, number> = { short: 9, long: 9 }
+export const GUIDES_PER_CM2: Record<ScalpStyle, number> = { short: 9, long: 9 }
 
 /** 肩线高度（世界 y）：肩峰附近皮肤的最高处 / shoulder line height (world y): the highest skin near the acromion */
 export function shoulderY(b: BodyData, f: HeadFrame): number {

@@ -172,6 +172,29 @@ export function makeHairMaterial(look: HairLook, atlasA: Texture, atlasB: Textur
   const side: N = normalize(cross(normalFlat, T0))
   const T: N = normalize(T0.mul(cos(angle)).add(side.mul(sin(angle)))).toVar('hairTangent')
 
+  const { C, albedo } = fibreColour(look, o, id, cardRandom)
+
+  // 遮挡：贴图深度（靠里的发丝暗）、层（贴头皮的暗）、发根（靠近头皮的一段暗）
+  // occlusion: atlas depth (inner strands darker), layer (those against the scalp darker), root (the stretch near the scalp darker)
+  const ao: N = mix(float(0.45), float(1), smoothstep(0.15, 0.85, depth))
+    .mul(mix(float(1 - o.layerShadow), float(1), layer))
+    .mul(mix(float(1 - o.rootShadow), float(1), smoothstep(0, 0.3, rootTip)))
+    .toVar('hairAo')
+
+  const m = hairMaterial(T, C, albedo, ao, id, o)
+  // 覆盖率：多级纹理越远平均得越淡，按层级补回一点，远处的头发不会变稀 / coverage: mips average it thinner with distance; a little is added back per level so distant hair does not thin out
+  const texel: N = coord.mul(size)
+  const lod: N = max(log2(max(length(dFdx(texel)), length(dFdy(texel)))), 0)
+  // 发片的根端淡入，免得每张发片的起点成一条硬边 / the card's root end fades in, so each card's start does not show as a hard edge
+  const rootFade: N = o.rootFade > 0 ? smoothstep(0, o.rootFade, rootTip) : float(1)
+  const tipFade: N = o.tipFade > 0 ? float(1).sub(smoothstep(0.8, 1, rootTip).mul(o.tipFade)) : float(1)
+  m.opacityNode = clamp(cov.mul(lod.mul(0.35).add(1)).mul(rootFade).mul(tipFade), 0, 1) as N
+  m.alphaTest = 0.2
+  return m
+}
+
+/** 纤维颜色和多次散射的反照率（发片、发丝共用）/ fibre colour and multiple-scattering albedo (shared by cards and strands) */
+export function fibreColour(look: HairLook, o: HairMaterialOptions, id: N, cardRandom: N): { C: N; albedo: N } {
   // 纤维颜色：每根发丝的真黑素浓度有 ±30% 的差别，每张发片再有 ±10%；灰白发按比例混入无色素纤维
   // fibre colour: eumelanin varies ±30 % between strands and ±10 % between cards; grey hair mixes in unpigmented fibres by share
   const eu: N = look.eumelanin.mul(o.pigment).mul(id.mul(0.6).add(0.7)).mul(cardRandom.mul(0.2).add(0.9))
@@ -183,14 +206,15 @@ export function makeHairMaterial(look: HairLook, atlasA: Texture, atlasB: Textur
   // 多次散射的反照率：exp(−2.6·√σa)。√ 的形式随 Chiang 等 2016 的颜色↔吸收换算；系数 2.6 是本项目按观感定的（让棕色预设看起来是棕色）
   // multiple-scattering albedo: exp(−2.6·√σa). The √ form follows Chiang et al. 2016's colour ↔ absorption mapping; the factor 2.6 is this project's, set by eye (so the brown preset reads as brown)
   const albedo: N = exp(sqrt(sig).mul(-2.6)).toVar('hairAlbedo')
+  return { C, albedo }
+}
 
-  // 遮挡：贴图深度（靠里的发丝暗）、层（贴头皮的暗）、发根（靠近头皮的一段暗）
-  // occlusion: atlas depth (inner strands darker), layer (those against the scalp darker), root (the stretch near the scalp darker)
-  const ao: N = mix(float(0.45), float(1), smoothstep(0.15, 0.85, depth))
-    .mul(mix(float(1 - o.layerShadow), float(1), layer))
-    .mul(mix(float(1 - o.rootShadow), float(1), smoothstep(0, 0.3, rootTip)))
-    .toVar('hairAo')
-
+/**
+ * 发片、发丝共用的材质外壳：Karis 光照模型、每根发丝的倾角和粗糙度、Karis 的假法线、alpha-to-coverage。
+ * The material shell shared by cards and strands: the Karis lighting model, per-strand tilt and roughness, Karis's fake
+ * normal, alpha-to-coverage.
+ */
+export function hairMaterial(T: N, C: N, albedo: N, ao: N, id: N, o: HairMaterialOptions): MeshStandardNodeMaterial {
   // 每根发丝的毛鳞片倾角在 2°±1.5° 之间（pbrt：一般 2–4°），粗糙度也各差 ±15%：高光不再是一条整齐的亮带（"湿"的观感主要来自它）
   // per-strand cuticle tilt within 2° ± 1.5° (pbrt: generally 2–4°) and roughness ±15 %: the highlight is no longer one tidy bright band (the main source of the "wet" look)
   const shift: N = float(SHIFT).add(id.sub(0.5).mul(0.05))
@@ -201,14 +225,6 @@ export function makeHairMaterial(look: HairLook, atlasA: Texture, atlasB: Textur
   m.roughnessNode = float(0.55) as N
   m.metalness = 0
   m.colorNode = (vec4 as N)(albedo, 1)
-  // 覆盖率：多级纹理越远平均得越淡，按层级补回一点，远处的头发不会变稀 / coverage: mips average it thinner with distance; a little is added back per level so distant hair does not thin out
-  const texel: N = coord.mul(size)
-  const lod: N = max(log2(max(length(dFdx(texel)), length(dFdy(texel)))), 0)
-  // 发片的根端淡入，免得每张发片的起点成一条硬边 / the card's root end fades in, so each card's start does not show as a hard edge
-  const rootFade: N = o.rootFade > 0 ? smoothstep(0, o.rootFade, rootTip) : float(1)
-  const tipFade: N = o.tipFade > 0 ? float(1).sub(smoothstep(0.8, 1, rootTip).mul(o.tipFade)) : float(1)
-  m.opacityNode = clamp(cov.mul(lod.mul(0.35).add(1)).mul(rootFade).mul(tipFade), 0, 1) as N
-  m.alphaTest = 0.2
   m.alphaToCoverage = true
   m.transparent = false
   m.side = DoubleSide

@@ -44,6 +44,18 @@
      "offset": 383080
     }
    ],
+   "strands": {
+    "file": "short.strands.bin",
+    "bytes": 327916,
+    "guides": 4492,
+    "points": 8,
+    "children": 4,
+    "spread": 0.002,
+    "clump": 0.3,
+    "hairsPerStrand": 6.265,
+    "diameter": 0.000074,
+    "maxDistance": 0.6
+   },
    "stats": {
     "strands": 4492,
     "lengthMmP10": 15.379,
@@ -83,6 +95,18 @@
      "offset": 1244660
     }
    ],
+   "strands": {
+    "file": "long.strands.bin",
+    "bytes": 834720,
+    "guides": 4512,
+    "points": 24,
+    "children": 4,
+    "spread": 0.002,
+    "clump": 0.6,
+    "hairsPerStrand": 6.237,
+    "diameter": 0.000074,
+    "maxDistance": 0.6
+   },
    "stats": {
     "strands": 4512,
     "lengthMmP10": 239.079,

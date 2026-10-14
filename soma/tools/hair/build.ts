@@ -14,14 +14,15 @@
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { HairData, HairLod, HairPiece, HairPieceId } from '../../src/look/types.ts'
+import type { HairData, HairLod, HairPiece, HairPieceId, HairStrandsInfo } from '../../src/look/types.ts'
+import { packStrands } from './strandData.ts'
 import { ATLAS_SIZE, Atlas, type CardKind, DEPTH_RANGE, TILES, renderTile, tileRect } from './atlas.ts'
 import { type Card, type CardOptions, makeCards } from './cards.ts'
 import { browGroom, lashGroom, type Lash } from './face.ts'
 import { type HeadFrame, earDistance, fromHead, headFrame, toHead, azimuth } from './frame.ts'
 import { styleCoverage } from './coverage.ts'
 import { Surface, type V3, dot, len, sub } from './geom.ts'
-import { scalpGroom } from './groom.ts'
+import { GUIDES_PER_CM2, scalpGroom } from './groom.ts'
 import { encodePng } from './png.ts'
 import { EAR_MARGIN, follicles, loadParams, makeScalp, type Params } from './scalp.ts'
 import { type BodyData, ROOT, loadBody } from './skin.ts'
@@ -247,11 +248,34 @@ async function buildBody(body: 'male' | 'female', P: Params): Promise<void> {
     for (const bl of blobs) bin.set(bl, o), (o += bl.length)
     writeFileSync(join(outDir, file), bin)
     const lengths = strands.map((s) => arcLength(s.pts) * 1000)
+    // 近景真发丝：引导发丝 + 自遮挡 / close-up real strands: guides + self-occlusion
+    let strandInfo: HairStrandsInfo | undefined
+    if (id === 'short' || id === 'long') {
+      const points = id === 'long' ? 24 : 8
+      const sb = packStrands(f, strands, points, OFFSET_UNIT)
+      const sfile = `${id}.strands.bin`
+      writeFileSync(join(outDir, sfile), sb)
+      const children = 4
+      const spacing = Math.sqrt(1 / (GUIDES_PER_CM2[id] * 1e4))
+      strandInfo = {
+        file: sfile,
+        bytes: sb.length,
+        guides: strands.length,
+        points,
+        children,
+        spread: r3(spacing * 0.6 * 1000) / 1000,
+        clump: id === 'long' ? 0.6 : 0.3,
+        hairsPerStrand: r3(fol.follicles.length / (strands.length * children)),
+        diameter: P.fibreDiameter.value / 1e6,
+        maxDistance: 0.6,
+      }
+    }
     pieces.push({
       id,
       file,
       bytes: bin.length,
       lods,
+      ...(strandInfo ? { strands: strandInfo } : {}),
       stats: { strands: strands.length, lengthMmP10: r3(pct(lengths, 0.1)), lengthMmP50: r3(pct(lengths, 0.5)), lengthMmP90: r3(pct(lengths, 0.9)), ...extra[id] },
     })
     console.log(`  ${id}: ${lods.map((l) => `${l.cards}×${l.segments}`).join(', ')} cards, ${(bin.length / 1024).toFixed(0)} KiB`)
