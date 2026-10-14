@@ -79,4 +79,6 @@ export const ZH_ID_OVERRIDES: Record<string, { zh: string; reason: string }> = {
   FMA40005: { zh: '腕尺侧副韧带', reason: 'FMA label is the bare "ulnar collateral ligament"; the class is the wrist ligament (Wikidata: Ligamentum collaterale carpi ulnare)' },
   FMA20273: { zh: '肛尾韧带', reason: 'the dataset part is the anococcygeal ligament; FMA also labels the class "anococcygeal body" (肛尾体)' },
   FMA38869: { zh: '肘关节尺侧副韧带', reason: 'ulnar collateral ligament of the elbow joint; kept distinct from the wrist ligament FMA40005' },
+  // 宫颈管：机器翻译给出“子宫颈腔”，通常的中文术语是“子宫颈管”（也常写作“宫颈管”） / cervical canal: the machine translation gave 子宫颈腔; the usual Chinese term is 子宫颈管 (宫颈管 is also common)
+  FMA302971: { zh: '子宫颈管', reason: 'cervical canal: the machine translation 子宫颈腔 is not the usual term; 子宫颈管 (also written 宫颈管) is' },
 }

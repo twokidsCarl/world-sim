@@ -21,6 +21,7 @@ import { writeSystemGlb } from './glb.ts'
 import { signedVolume, topology } from './meshRepair.ts'
 import { SolidTester } from './nerveCourse.ts'
 import { loadFmaNames } from './zanatomy.ts'
+import { openedSkinPackageDir } from './skinPackageDir.ts'
 import { headGuides } from './lumenHead.ts'
 import { buildCavity, type CavityResult } from './lumenCavity.ts'
 import {
@@ -1183,9 +1184,10 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
       meshes.push(cavity.whole)
       for (let t = 0; t < cavity.whole.indices.length / 3; t++) st.push(-1)
     }
+    // 标本自己的腔面（女性的直肠腔）记作 −2，以便把它自身原有的相交与这一步做出来的分开 / the specimen's own lumen surface (the female's rectal lumen) is marked −2, so that intersections it already has within itself are told apart from those this stage makes
     for (const it of items) if (groups[it.group]!.mode === 'real') {
       meshes.push(it.mesh)
-      for (let t = 0; t < it.mesh.indices.length / 3; t++) st.push(-1)
+      for (let t = 0; t < it.mesh.indices.length / 3; t++) st.push(-2)
     }
     return { mesh: mergeParts(meshes), station: Int32Array.from(st) }
   }
@@ -1199,12 +1201,19 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
   const repairFactor = new Float64Array(N).fill(1)
   let repairRounds = 0, bestTotal = Infinity, stall = 0
   const stateCounts: Record<string, number> = {}
+  // 两个三角形都属于标本自己的腔面的相交对：标本原有的（Wu 等 2015 的 06_Rectal_lumen.obj 本身就有 1 对），不是这一步做的，单独记下
+  // pairs whose two triangles both belong to the specimen's own lumen surface: the specimen's own (Wu et al. 2015's 06_Rectal_lumen.obj itself has 1 pair), not made by this stage, recorded apart
+  const specimenOwn: Record<string, number> = {}
   for (; repairRounds < 60; repairRounds++) {
     const bad = new Set<number>()
     for (const [name, rad] of [['full', r1], ['rest', radiiAt(0, true)], ['empty', r0]] as const) {
       const cm = canalMesh(rad)
       const pairs: number[] = []
-      stateCounts[name] = selfIntersections(cm.mesh, 1e9, pairs)
+      selfIntersections(cm.mesh, 1e9, pairs)
+      let own = 0
+      for (let q = 0; q < pairs.length; q += 2) if (cm.station[pairs[q]!] === -2 && cm.station[pairs[q + 1]!] === -2) own++
+      stateCounts[name] = pairs.length / 2 - own
+      specimenOwn[name] = own
       for (const t of pairs) if (cm.station[t]! >= 0) (bad.add(cm.station[t]!), bad.add(Math.min(N - 1, cm.station[t]! + 1)))
     }
     if (!bad.size) break
@@ -1232,7 +1241,7 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
       const key = `${Math.min(a, b)}-${Math.max(a, b)}`
       if (seen.has(key)) continue
       seen.add(key)
-      const d = (i: number): unknown => (i < 0 ? 'real lumen' : { station: i, group: groups[grp[i]!]!.key, kind: KIND_NAME[kind[i]!], part: partOf[i] ?? null, maxRadiusMm: mm(Math.max(...r1.subarray(i * SIDES, (i + 1) * SIDES))), atMm: mm3(P3(C, i)) })
+      const d = (i: number): unknown => (i === -2 ? 'real lumen' : i === -1 ? 'mouth and pharynx cavity' : { station: i, group: groups[grp[i]!]!.key, kind: KIND_NAME[kind[i]!], part: partOf[i] ?? null, maxRadiusMm: mm(Math.max(...r1.subarray(i * SIDES, (i + 1) * SIDES))), atMm: mm3(P3(C, i)) })
       leftRows.push({ a: d(a), b: d(b) })
     }
   }
@@ -1498,7 +1507,7 @@ export async function buildLumen(body: 'male' | 'female', anatomyDir = join(ROOT
   report.repair = { rule: 'stations of triangles still intersecting at f = 1, at rest or at f = 0 are scaled by 0.8 per round', rounds: repairRounds, stations: repairRows.length, list: repairRows, stationPairsStillIntersecting: leftRows, intersectingPairsBeforeRepairAtFull: beforeRepair.atFull, consecutiveRingPairsCrossingBeforeRepair: beforeRepair.ringPairsCrossing }
   report.checks = {
     centrelineContinuous: { stations: N, largestStepMm: mm(maxStep), ok: maxStep < 2.5 * STEP, note: 'steps inside one run; stations are closer together at tight bends' },
-    lumenSurfaceSelfIntersections: { note: 'whole canal in one mesh together with the specimen’s own lumina it meets; triangle pairs', atFull: stateCounts.full, atRest: stateCounts.rest, atEmpty: stateCounts.empty },
+    lumenSurfaceSelfIntersections: { note: 'whole canal in one mesh together with the specimen’s own lumina it meets; triangle pairs; pairs with both triangles on the specimen’s own lumen surface are counted apart (specimenOwnSurfacePairs: they are in the source data, not made by this stage)', atFull: stateCounts.full, atRest: stateCounts.rest, atEmpty: stateCounts.empty, specimenOwnSurfacePairs: { atFull: specimenOwn.full, atRest: specimenOwn.rest, atEmpty: specimenOwn.empty } },
     consecutiveRingPairsCrossing: ringCross,
     lumenInsideWall: { state: 'f = 1', verticesTested: insideN + outsideN, inside: insideN, outside: outsideN, outsideList: outsideRows, smallestClearanceMm: mm(minClear), clearanceOverWall: { median: Math.round(median(clearRatio) * 100) / 100, p05: Math.round((clearRatio.slice().sort((x, y) => x - y)[Math.floor(clearRatio.length * 0.05)] ?? NaN) * 100) / 100 } },
     outerSurfacesUnchanged: { parts: items.length, unchanged: wallsUnchanged, note: 'the wall parts are read and never written; hashes of their vertex buffers before and after are equal' },
@@ -1990,7 +1999,8 @@ async function splitUterovaginal(mesh: Mesh, parts: LumenPartOut[], context: Bui
 
 /** 读开口后的皮肤包的清单和 OBJ（只读），给出唇裂和口腔袋的位置与大小。 / Reads the opened skin package (manifest and OBJ, read-only) and gives the place and size of the lip aperture and the oral pouch. */
 export function oralOpening(body: 'male' | 'female', canalStart: V3): Record<string, unknown> {
-  const dir = join(ROOT, 'data/raw/bodyshape/out', `${body}-skin-open`)
+  // 开口后的包：与构建装入的是同一个目录（见 skinPackageDir.ts） / the opened package: the directory the build installs from (see skinPackageDir.ts)
+  const dir = join(ROOT, openedSkinPackageDir(body))
   const manifestPath = join(dir, 'manifest.json'), objPath = join(dir, 'skin.obj')
   if (!existsSync(manifestPath) || !existsSync(objPath)) return { found: false, note: 'opened skin package not present; nothing read' }
   const man = JSON.parse(readFileSync(manifestPath, 'utf8')) as { face: { margins: { upperLip: number[]; lowerLip: number[] }; constructionAids: { oralPouch: { upper: number[]; lower: number[]; seam?: number[]; rows?: number; columns?: number } } } }

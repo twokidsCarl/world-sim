@@ -121,11 +121,20 @@ describe.each(['male', 'female'])('face driver on the real data: %s', (body) => 
   it.skipIf(!present)('an open vowel opens the jaw and a bilabial nearly shuts it; tongue and lip channels are driven', () => {
     const aa = composeFace(face, { pain: {}, emotion: {}, speech: visemeAUs(face, { AA: 1 }), speaking: 1 })
     const pbm = composeFace(face, { pain: {}, emotion: {}, speech: visemeAUs(face, { PBM: 1 }), speaking: 1 })
-    // 缺省风格是按实测标定的朗读开度：AA 的切牙开度约 5 mm，即 0.118 × jaw.max ≈ 0.0597 rad（校准前是 0.253）
-    // the default style is the calibrated opening of read speech: about 5 mm at the incisors for AA, i.e. 0.118 × jaw.max ≈ 0.0597 rad (0.253 before calibration)
-    expect(aa.jaw).toBeCloseTo(0.118 * face.jaw.max, 9)
+    // 缺省风格是按实测标定的朗读开度：AA 的切牙开度约 5 mm（校准前是 0.253 × jaw.max）。毫米数由 face-mouth 测试按每副身体检查；
+    // 这里的比例按身体自己的切牙下降量换算（visemeJawForBody）：男性 0.118 × jaw.max ≈ 0.0597 rad；
+    // 女性的下颌体较短（2026-10-14 新头），同样 5 mm 需要 0.1298 × jaw.max ≈ 0.0657 rad。
+    // the default style is the calibrated opening of read speech: about 5 mm at the incisors for AA (0.253 × jaw.max before calibration).
+    // The millimetres are checked per body by the face-mouth test; the fraction here is converted with the body's own incisor drop
+    // (visemeJawForBody): male 0.118 × jaw.max ≈ 0.0597 rad; the female's mandibular body is shorter (new head, 2026-10-14),
+    // so the same 5 mm needs 0.1298 × jaw.max ≈ 0.0657 rad.
+    const aaJaw = face.visemes!.visemes.find((v) => v.id === 'AA')!.jaw
+    if (body === 'male') expect(aaJaw).toBe(0.118)
+    expect(aaJaw).toBeGreaterThan(0.118 * 0.9)
+    expect(aaJaw).toBeLessThan(0.118 * 1.15)
+    expect(aa.jaw).toBeCloseTo(aaJaw * face.jaw.max, 9)
     expect(aa.jaw).toBeGreaterThan(0.055)
-    expect(aa.jaw).toBeLessThan(0.065)
+    expect(aa.jaw).toBeLessThan(body === 'male' ? 0.065 : 0.07)
     // 夸张风格还是原来的大口形；1 和 2 之间线性过渡 / the clear style keeps the old wide shape; styles between 1 and 2 interpolate linearly
     const clear = composeFace(face, { pain: {}, emotion: {}, speech: visemeAUs(face, { AA: 1 }, SPEECH_STYLES.clear), speaking: 1 })
     expect(clear.jaw).toBeGreaterThan(0.2)

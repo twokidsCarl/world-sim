@@ -18,7 +18,9 @@ class Body:
     Skin / bone / muscle meshes of one of our bodies (written by export-parts.ts)."""
 
     def __init__(self, name, root=None):
-        d = os.path.join(root or os.path.join(RAW, 'bodies'), name)
+        # 环境变量 SOMA_BODIES=<目录>：改读另一处的导出（例如一次试建的导出，见 export-parts.ts）；不设时与原来相同
+        # the environment variable SOMA_BODIES=<directory> reads the exports from elsewhere (e.g. those of a scratch build, see export-parts.ts); unset, nothing changes
+        d = os.path.join(root or os.environ.get('SOMA_BODIES') or os.path.join(RAW, 'bodies'), name)
         self.name = name
         idx = json.load(open(os.path.join(d, 'index.json')))
         self.parts = idx['parts']

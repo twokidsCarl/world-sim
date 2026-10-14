@@ -146,11 +146,20 @@ describe.skipIf(!present)('female lesser pelvis as shipped (public/anatomy/femal
   const wu = present ? data.parts.filter((p) => p.id.startsWith('WU_')) : []
   const result = present ? pelvisChecks(get, ids) : null
   const check = (id: string) => result!.checks.find((c) => c.id === id)!
+  // 腔这一步退役的 Wu 部件（子宫和阴道腔）→ 取代它的部件（宫腔、宫颈管、阴道腔：同一张标本腔面按中心线分成三片，相接处是开口的）
+  // Wu parts retired by the lumen stage (the uterine and vaginal lumen) → the parts that replace it (uterine cavity, cervical canal, vaginal lumen: the specimen's one lumen surface split in three along its centreline, open where they meet)
+  const retired = (present ? (report.lumen?.retired ?? {}) : {}) as Record<string, string[]>
+  const pieces = new Set(Object.values(retired).flat())
 
   it('ships the Wu structures, split into left and right, and none of the male pelvic floor', () => {
     expect(wu.length).toBeGreaterThanOrEqual(48)
     for (const s of WU_SPECS) {
       const mine = wu.filter((p) => p.id.replace(/_[LR]$/, '') === `WU_${s.item}`)
+      if (retired[`WU_${s.item}`]) {
+        expect(mine, s.item).toEqual([])
+        for (const id of retired[`WU_${s.item}`]!) expect(wu.find((p) => p.id === id)?.source, id).toBe('Wu et al. 2015 pelvic floor')
+        continue
+      }
       expect(mine.map((p) => p.side).sort(), s.item).toEqual(s.split === 'whole' ? ['M'] : ['L', 'R'])
       for (const p of mine) {
         expect(p.provenance).toBe('curated')
@@ -169,6 +178,7 @@ describe.skipIf(!present)('female lesser pelvis as shipped (public/anatomy/femal
   it('ships closed, consistently wound meshes', () => {
     const open: string[] = []
     for (const p of wu) {
+      if (pieces.has(p.id)) continue
       const m = get(p.id)!
       const t = topology(m)
       if (!t.watertight) open.push(p.id)
@@ -177,7 +187,7 @@ describe.skipIf(!present)('female lesser pelvis as shipped (public/anatomy/femal
     // 直肠系膜（作者给出的表面有 150 多条非流形边）要修两遍才封闭，现在也不例外
     // the mesorectum (the authors' surface has 150-odd non-manifold edges) takes two repair passes to close and is no longer an exception
     expect(open).toEqual([])
-    expect(report.wu.closedManifolds).toBe(wu.length)
+    expect(report.wu.closedManifolds).toBe(wu.length - pieces.size + Object.keys(retired).length)
   })
 
   it('places every Wu part in both trees with a concept of its own', () => {

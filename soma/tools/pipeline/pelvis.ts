@@ -1740,7 +1740,9 @@ export function pelvisChecks(get: (idOrName: string) => Mesh | null, ids: string
   }
 
   // 7. 两两重叠表和间隙 / pairwise overlap table and gaps
-  const solid = [...wuIds.filter((id) => !/lumen/.test(id)), ...(bladder ? ['VF_urinary_bladder'] : [])].map((id) => ({ id, mesh: id === 'VF_urinary_bladder' ? bladder! : get(id)! })).filter((p) => p.mesh)
+  // 腔不算实体：标本自己的腔（id 带 lumen），以及腔这一步从它分出的宫腔和宫颈管（见 lumenBuild.ts 的 UTEROVAGINAL_PIECES）
+  // lumina are not solids: the specimen's own lumina (ids with "lumen") and the uterine cavity and cervical canal the lumen stage splits from one of them (UTEROVAGINAL_PIECES in lumenBuild.ts)
+  const solid = [...wuIds.filter((id) => !/lumen/.test(id) && id !== 'WU_uterine_cavity' && id !== 'WU_cervical_canal'), ...(bladder ? ['VF_urinary_bladder'] : [])].map((id) => ({ id, mesh: id === 'VF_urinary_bladder' ? bladder! : get(id)! })).filter((p) => p.mesh)
   const pairs: { a: string; b: string; insidePct: number }[] = []
   {
     const bb = solid.map((p) => bboxOf(p.mesh))

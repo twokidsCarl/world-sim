@@ -19,7 +19,7 @@ import { depthOf, EXPOSURE_MAX_DISTANCE, LAYERS, SUPERFICIAL_EXPOSURE, usesExpos
 import { contentsInside, crossValidate, evaluateCandidates, HARD_TISSUES, IMPORT3_DEFAULTS, overlapWith, pairStructures, placeConcept, pushOutOfSolids, register3to4, SOLID_TISSUES, SurfaceField, type ExistingPart, type Placement } from './import3.ts'
 import { canalFor, isaPathFromFma, localJointWarp, NERVE_BUILD_DEFAULTS, registerZa, syntheticConceptId, warpNerve, type JointCacheEntry, type TreePath } from './importZa.ts'
 import { capHoles, envelopeOf } from './derive.ts'
-import { checkSkinFit, closeShippedSkin, edgeTopology, faceAgainstSkin, FACE_MUSCLE_NAME, FACE_REGION_RADIUS, faceRegionOfSkin, internalsKey, notFittedAgainstSkin, selectSkinPackage, simplifySkinKeepingFace, skinPackageDirFor, skinLockMask, skinResolution, type SkinPackage } from './skinPackage.ts'
+import { checkSkinFit, closeShippedSkin, edgeTopology, faceAgainstSkin, FACE_MUSCLE_NAME, FACE_REGION_RADIUS, faceRegionOfSkin, internalsKey, notFittedAgainstSkin, selectSkinPackage, simplifySkinKeepingFace, skinPackageDir, skinLockMask, skinResolution, type SkinPackage } from './skinPackage.ts'
 import { thinOutsideRegion, thinStructuresOutsideSkin, type ThinOutside } from './thinOutside.ts'
 import { loadThinReference, settleThinParts, THIN_DEFAULTS, THIN_RULES, THIN_TISSUES, type ThinPartsResult } from './thinParts.ts'
 import { FILLING_FILE, FILLING_INDEX_FILE, fillingSidecar, lumenStage, type LumenStagePart } from './lumenStage.ts'
@@ -141,7 +141,7 @@ const SOURCE_O3D: SourceInfo = {
  * 男性外部皮肤包的位置（相对项目根）；环境变量 SOMA_MALE_SKIN_PACKAGE 可改用另一个目录（见 skinPackageDirFor）
  * where the male external skin package lives (relative to the project root); the environment variable SOMA_MALE_SKIN_PACKAGE selects another directory (see skinPackageDirFor)
  */
-const MALE_SKIN_PACKAGE_DIR = skinPackageDirFor('male', 'data/raw/bodyshape/out/male-skin')
+const MALE_SKIN_PACKAGE_DIR = skinPackageDir('male')
 let externalSkinSource: SourceInfo | null = null
 /**
  * 他的上肢外展角钉在 6.5°：皮肤包（male-skin，fittedTo.key 169209ce67d8bd76）就是按这个角的骨架拟合的。

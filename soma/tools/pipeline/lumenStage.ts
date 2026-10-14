@@ -1,10 +1,10 @@
-// 腔这一步，打包成两副人体的构建都能调用的一个函数（男性的构建 run.ts 已经接上，SOMA_LUMEN=0 关闭；女性的还没有）。
+// 腔这一步，打包成两副人体的构建都能调用的一个函数（男性的 run.ts 和女性的 female.ts 都已接上，SOMA_LUMEN=0 关闭）。
 // 输入：构建手里的部件（id、名称、FMA、系统、组织、包围盒、网格）。输出：新的腔部件（tissue 为 space，provenance 为 curated，
 // composition 把“由外表面和文献壁厚推出”“以真实部件为界”“构造”分开）、退役的 id、报告的一节、要提醒用户的话，
 // 以及按 GLB 顶点次序排好的充盈位移场。纯函数在 lumen.ts，装配在 lumenBuild.ts，口和咽在 lumenHead.ts。
 // 不写任何文件；FMA 号都在管线所用的 FMA 表里查过，查不到的部件不给（报告里说明）。
 //
-// The lumen stage, packaged as one function both builds can call (wired into the male build, run.ts, with SOMA_LUMEN=0 to switch it off; not yet into the female build).
+// The lumen stage, packaged as one function both builds can call (wired into the male run.ts and the female female.ts, with SOMA_LUMEN=0 to switch it off).
 // Input: the parts a build holds (id, name, FMA, system, tissue, bounds, mesh). Output: the new lumen
 // parts (tissue `space`, provenance `curated`, with a `composition` that separates "derived from the
 // outer surface and a literature wall thickness", "bounded by real parts" and "construction"), the

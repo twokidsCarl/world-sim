@@ -68,7 +68,7 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(byId.size).toBe(data.parts.length)
     for (const p of data.parts) {
       expect(names, p.id).toContain(p.source)
-      expect(p.id, p.id).toMatch(/^(W_(FJ\d+M?(_upper|_lower)?|R3_FMA\d+|ZA[0-9A-F]{8}|SOMA_[a-z_]+(_[LR])?)|VF_[A-Za-z0-9_]+|VD_[A-Za-z0-9_]+|HRA_[A-Za-z0-9_]+|WU_[a-z_]+(_[LR])?|SOMA_skin)$/)
+      expect(p.id, p.id).toMatch(/^(W_(FJ\d+M?(_upper|_lower)?|R3_FMA\d+|ZA[0-9A-F]{8}|SOMA_[a-z_]+(_[LR])?)|VF_[A-Za-z0-9_]+|VD_[A-Za-z0-9_]+|HRA_[A-Za-z0-9_]+|WU_[a-z_]+(_[LR])?|LUMEN_[a-z_]+(_[LR])?|SOMA_skin)$/)
       if (p.id.startsWith('W_')) {
         // 形变后的男性部件：保留男性部件的身份，并标明其几何的来源
         // warped male part: keeps the male part's identity, names where its geometry came from
@@ -93,6 +93,13 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
         expect(p.source).toBe('University of Denver Visible Human lower extremity')
       } else if (p.id === 'SOMA_skin') {
         expect(p.provenance).toBe('curated')
+      } else if (p.id.startsWith('LUMEN_')) {
+        // 腔这一步从她自己的壁推出或构造的腔：curated，来源 soma (derived)，逐片写明构成
+        // lumina the lumen stage derived from her own walls or constructed: curated, source soma (derived), with their composition piece by piece
+        expect(p.provenance, p.id).toBe('curated')
+        expect(p.source, p.id).toBe('soma (derived)')
+        expect(p.tissue, p.id).toBe('space')
+        expect(p.composition?.length, p.id).toBeGreaterThan(0)
       } else {
         // 标准化之后，她的 CT 部件不再是供体的原样 / after the standardisation her CT parts are no longer as the donor's
         expect(p.provenance, p.id).toBe('warped')
@@ -847,6 +854,21 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
       expect(rows[4]!.endYMm.after).toBeGreaterThan(L.pubicTubercleY * 1000 + 50)
     }
     expect(data.cautions!.map((c) => c.en).join(' ')).toContain('the 10th at the navel of her skin')
+    // 第 6 肋间神经止于她的剑胸结合的高度（1.5 mm 以内），在剑突尖之上，不落在骨或软骨里；报告的前端就是 nerves.json 里的前端
+    // the 6th ends at the level of her xiphisternal joint (within 1.5 mm), above the tip of the xiphoid, nowhere in bone or cartilage; the end in the report is the end in nerves.json
+    const xs = (ic.landmarks as { xiphisternalJointY?: number }).xiphisternalJointY
+    if (xs !== undefined) {
+      const six = (ic.sixth ?? []) as { id: string; side: string; changed: boolean; endYMm: { after: number }; inBoneAfter?: number }[]
+      expect(six.map((r) => r.side).sort()).toEqual(['L', 'R'])
+      for (const r of six) {
+        expect(r.changed, r.id).toBe(true)
+        expect(Math.abs(r.endYMm.after - xs * 1000), r.id).toBeLessThan(1.5)
+        expect(r.endYMm.after, r.id).toBeGreaterThan(L.xiphoidTipY * 1000)
+        expect(r.inBoneAfter ?? 0, r.id).toBe(0)
+        const b = nerves.find((n) => n.part === r.id)!.branches[0]!
+        expect(Math.abs(b.points[b.points.length - 2]! * 1000 - r.endYMm.after), r.id).toBeLessThan(0.1)
+      }
+    }
   })
 
   it('ships consistent nerves.json, adjacency and trees', () => {

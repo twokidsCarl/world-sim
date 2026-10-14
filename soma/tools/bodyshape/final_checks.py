@@ -17,7 +17,8 @@ from bodylib import RAW, Body, hull_perimeter, render_closeup, render_views, sli
 from fit_check import REGIONS, classify, signed_distance  # noqa: E402
 from measure import bone_landmarks  # noqa: E402
 
-OUT = os.path.join(RAW, 'out', 'female-skin')
+# --dir <包目录名>：复核另一个包（缺省 female-skin）/ --dir <package directory name>: checks another package (female-skin by default)
+OUT = os.path.join(RAW, 'out', sys.argv[sys.argv.index('--dir') + 1] if '--dir' in sys.argv else 'female-skin')
 
 
 def section(V, F, origin, axis, radius):

@@ -99,7 +99,7 @@ export interface BindRules {
   attachmentExcludes?: AttachmentExclude[]
   hingeBlend?: HingeBlend[]
   /** 自带外部蒙皮权重的皮肤（见 external.ts）：部件的 Part.source 与权重包 manifest 的 source.name 一致时采用。 Skins that come with external weights (see external.ts): used when the part's Part.source equals source.name of the package manifest. */
-  externalWeights?: { body: string; dir: string; openDir?: string; ribFollow?: RibFollow; map?: ExternalRule[]; caps?: WeightCap[]; generic?: string; genericWhy?: { zh: string; en: string }; why?: { zh: string; en: string } }[]
+  externalWeights?: { body: string; dir: string; openDir?: string; ribFollow?: RibFollow; map?: ExternalRule[]; caps?: WeightCap[]; generic?: string; genericWhy?: { zh: string; en: string }; keepInfluence?: string; keepInfluenceWhy?: { zh: string; en: string }; why?: { zh: string; en: string } }[]
 }
 
 export interface BoundPart {
@@ -1467,6 +1467,51 @@ export function bindAll(ctx: BindContext): BindResult {
           ribbed++
         })
       }
+      // 每个顶点只存 4 个影响（quantise 取最大的 4 个）。keepInfluence 所列的关节不许被这个上限丢掉：一行超过 4 个而它不在前 4 个里时，
+      // 把最小的其他关节逐个并到行里沿骨架树最近的那个关节上（例如 C5 并到 C4），直到剩 4 个。否则下颌角一带下颌的份额（约 0.1）
+      // 在相邻顶点之间时有时无，张口到上限时那里的小三角形翻过来。只动本来会丢掉保留关节的那些行。
+      // Each vertex stores 4 influences (quantise keeps the 4 largest). The joints named by keepInfluence must not be dropped by that
+      // limit: where a row has more than 4 and one of them is not among the top 4, the smallest other joints are merged one by one into
+      // the joint of the row nearest along the skeleton tree (C5 into C4, say) until 4 are left. Otherwise the jaw's share (about 0.1)
+      // round the angle of the mandible is there on one vertex and gone on the next, and small triangles there turn over with the
+      // jaw fully open. Only the rows that would have lost a kept joint are touched.
+      let keptRows = 0
+      if (cfg?.keepInfluence) {
+        const reK = new RegExp(cfg.keepInfluence)
+        const isKeep = joints.map((j) => reK.test(j.def.id))
+        const chain = (j: number): number[] => {
+          const out: number[] = []
+          for (let q = j; q >= 0; q = parentIdx[q]!) out.push(q)
+          return out
+        }
+        const treeDist = (a: number, b: number): number => {
+          const ca = chain(a), cb = chain(b)
+          for (let i = 0; i < ca.length; i++) {
+            const k = cb.indexOf(ca[i]!)
+            if (k >= 0) return i + k
+          }
+          return Infinity
+        }
+        // 与 quantise 相同的次序：权重大的在前，相等时下标小的在前 / the same order as quantise: larger weight first, smaller index on ties
+        const order = (row: Map<number, number>) => [...row].filter(([, w]) => w > 0).sort((a, b) => b[1] - a[1] || a[0] - b[0])
+        for (const row of t.rows) {
+          const ent = order(row)
+          if (ent.length <= 4 || !ent.slice(4).some(([j]) => isKeep[j])) continue
+          while (order(row).length > 4) {
+            const now = order(row)
+            const drop = [...now].reverse().find(([j]) => !isKeep[j])
+            if (!drop) break
+            row.delete(drop[0])
+            let to = -1, best = Infinity
+            for (const [j, w] of order(row)) {
+              const dd = treeDist(drop[0], j)
+              if (dd < best || (dd === best && w > (row.get(to) ?? 0))) (best = dd), (to = j)
+            }
+            if (to >= 0) row.set(to, row.get(to)! + drop[1])
+          }
+          keptRows++
+        }
+      }
       const d = densify(t.rows)
       // 不做整体平滑：外部权重本身是连续的，按 m 的混合也连续；只有个别顶点没取到权重时才由邻居填充
       // no overall smoothing: the external weights are continuous as they are and so is the blend by m; neighbours only fill vertices that got no weight
@@ -1479,7 +1524,7 @@ export function bindAll(ctx: BindContext): BindResult {
         smooth(d, mesh, cfg.ribFollow.smooth, locked)
       }
       finish(p, 'external', mesh, d, nv)
-      notes.push(`${p.id} "${p.name}": bound with external weights from ${ext.dir}, ${src ? `taken by package vertex index (${SKIN_SOURCE_NAME})` : `transferred by closest point on the original surface (mean ${t.meanMm.toFixed(2)} mm, max ${t.maxMm.toFixed(1)} mm away)`}${ribbed ? `; ${ribbed} chest vertices handed part of their thoracic weight to the ribs` : ''}${blended ? `; ${blended} vertices blended with distance-field weights (generic: ${cfg!.generic})` : ''}${capped ? `; ${capped} vertices had jaw weight handed to the skull (upper lip)` : ''}`)
+      notes.push(`${p.id} "${p.name}": bound with external weights from ${ext.dir}, ${src ? `taken by package vertex index (${SKIN_SOURCE_NAME})` : `transferred by closest point on the original surface (mean ${t.meanMm.toFixed(2)} mm, max ${t.maxMm.toFixed(1)} mm away)`}${ribbed ? `; ${ribbed} chest vertices handed part of their thoracic weight to the ribs` : ''}${blended ? `; ${blended} vertices blended with distance-field weights (generic: ${cfg!.generic})` : ''}${capped ? `; ${capped} vertices had jaw weight handed to the skull (upper lip)` : ''}${keptRows ? `; on ${keptRows} vertices the smallest influences were merged into their neighbours on the skeleton so that ${cfg!.keepInfluence} stays among the 4 kept` : ''}`)
       if (++done % 400 === 0) ctx.log?.(`bound ${done} field parts`)
       continue
     }

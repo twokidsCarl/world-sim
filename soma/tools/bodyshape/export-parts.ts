@@ -24,7 +24,7 @@ const SYSTEMS: string[] = data0Systems()
 
 function data0Systems(): string[] {
   const body = process.argv[2] ?? 'male'
-  const d = JSON.parse(readFileSync(join('public/anatomy', body, 'anatomy.json'), 'utf8'))
+  const d = JSON.parse(readFileSync(join(process.env.SOMA_EXPORT_FROM ?? join('public/anatomy', body), 'anatomy.json'), 'utf8'))
   return d.systems.filter((s: any) => s.glb && s.partCount > 0).map((s: any) => s.id)
 }
 
@@ -34,8 +34,12 @@ const io = new NodeIO()
   .registerDependencies({ 'meshopt.decoder': MeshoptDecoder })
 
 for (const body of process.argv.slice(2)) {
-  const dir = join('public/anatomy', body)
-  const out = join('data/raw/bodyshape/bodies', body)
+  // SOMA_EXPORT_FROM=<构建目录>：不读 public/anatomy/<body>/，改读一次试建的输出（只给一个身体时用）；
+  // SOMA_EXPORT_TO=<目录>：导出写到 <目录>/<body>/，不写 data/raw/bodyshape/bodies/。都不设时与原来相同。
+  // SOMA_EXPORT_FROM=<build directory>: reads a scratch build instead of public/anatomy/<body>/ (for one body at a time);
+  // SOMA_EXPORT_TO=<directory>: writes <directory>/<body>/ instead of data/raw/bodyshape/bodies/. Unset, nothing changes.
+  const dir = process.env.SOMA_EXPORT_FROM ?? join('public/anatomy', body)
+  const out = join(process.env.SOMA_EXPORT_TO ?? 'data/raw/bodyshape/bodies', body)
   mkdirSync(out, { recursive: true })
   const data = JSON.parse(readFileSync(join(dir, 'anatomy.json'), 'utf8'))
   const byId = new Map<string, any>(data.parts.map((p: any) => [p.id, p]))
