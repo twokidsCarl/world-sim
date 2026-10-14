@@ -1,0 +1,428 @@
+{
+ "schema": 1,
+ "id": "look-hair",
+ "title": {
+  "zh": "写实的毛发：生成结果 vs 文献的数量和尺寸",
+  "en": "Lifelike hair: what the generator built vs published counts and sizes"
+ },
+ "method": {
+  "zh": "生成结果取自每个人体的 public/anatomy/<body>/hair/hair.json（tools/hair/build.ts 在生成时数出的根数、密度、长度分位数）；参照取自 data/curated/hair/hair.json 列出的文献（那里标明了 cited / secondary / assumed）。本表只读，不重新生成毛发。",
+  "en": "What was built comes from each body's public/anatomy/<body>/hair/hair.json (counts, densities and length percentiles tallied by tools/hair/build.ts while generating); the references are the literature listed in data/curated/hair/hair.json (where every value is marked cited / secondary / assumed). This table only reads; it regenerates no hair."
+ },
+ "tolerance": {
+  "zh": "文献给范围时落在范围内记 within；给均值和标准差时差在 1 SD 内；胡须密度按比值 ×/÷ 1.25。参照本身是假设的项记 not comparable。",
+  "en": "Inside the range where the literature gives one; within 1 SD where it gives mean and SD; beard densities by a ratio within ×/÷ 1.25. Items whose reference is itself an assumption are not comparable."
+ },
+ "references": [
+  {
+   "id": "leerunyakul2020",
+   "name": "Leerunyakul K, Suchonwanit P 2020, Asian Hair: A Review of Structures, Properties, and Distinctive Disorders. Clin Cosmet Investig Dermatol 13:309–318",
+   "version": "PMC7187942; Table 1 (pooled densities; review, values quoted from other studies)",
+   "url": "https://doi.org/10.2147/CCID.S247390",
+   "licence": "CC BY-NC",
+   "clause": "Licence field of the Europe PMC record (\"cc by-nc\"). Only the pooled density mean and SD are cited.",
+   "opened": "2026-10-15"
+  },
+  {
+   "id": "flindt2006",
+   "name": "Flindt R 2006, Amazing Numbers in Biology, Springer, p. 212, via BioNumbers 101509",
+   "version": "BioNumbers entry 101509: 90,000–150,000 scalp hairs",
+   "url": "https://bionumbers.hms.harvard.edu/bionumber.aspx?id=101509",
+   "licence": "Not checked; no open licence is assumed",
+   "clause": "No licence grant is relied on. Only the range is cited as a fact.",
+   "opened": "2026-10-15"
+  },
+  {
+   "id": "thai2020",
+   "name": "Evaluation of Hair Density and Hair Diameter in the Adult Thai Population Using Quantitative Trichoscopic Analysis. BioMed Res Int 2020",
+   "version": "PMC7035527; temporoparietal versus other scalp regions (value seen as a quoted snippet)",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7035527",
+   "licence": "CC BY",
+   "clause": "Licence field of the Europe PMC record (\"cc by\"). Only the ratio of regional densities is cited.",
+   "opened": "2026-10-15"
+  },
+  {
+   "id": "statpearls-eyelash",
+   "name": "Patel BC, Lopez MJ, Joos ZP. Anatomy, Head and Neck: Eyelash. StatPearls (NBK537278)",
+   "version": "quoted through Wikipedia \"Eyelash\": 90–160 upper, 75–80 lower lashes",
+   "url": "https://www.ncbi.nlm.nih.gov/books/NBK537278/",
+   "licence": "Not checked; no open licence is assumed",
+   "clause": "No licence grant is relied on. Only the two count ranges are cited as facts.",
+   "opened": "2026-10-15"
+  },
+  {
+   "id": "wikipedia-eyelash",
+   "name": "Wikipedia, \"Eyelash\"",
+   "version": "accessed 2026-10; lash lengths 7–8 mm upper, 5–6 mm lower (citing Thibaut et al. 2009, Na et al. 2006)",
+   "url": "https://en.wikipedia.org/wiki/Eyelash",
+   "licence": "CC BY-SA 4.0 (Wikipedia text)",
+   "clause": "Wikipedia text is published under CC BY-SA 4.0; only two length ranges are cited as facts.",
+   "opened": "2026-10-15"
+  },
+  {
+   "id": "dua2021",
+   "name": "Dua K, Verma V, Dua A 2021, Beard and Moustache Reconstruction. Indian J Plast Surg 54(4):483–488",
+   "version": "PMC8719972; follicular-unit densities by beard region (authors' observation)",
+   "url": "https://doi.org/10.1055/s-0041-1739248",
+   "licence": "CC BY-NC-ND",
+   "clause": "Licence field of the Europe PMC record (\"cc by-nc-nd\"). Only the regional densities are quoted as facts.",
+   "opened": "2026-10-15"
+  }
+ ],
+ "ourState": {
+  "male": {
+   "hair/hair.json": "886d2921e71a"
+  },
+  "female": {
+   "hair/hair.json": "523a8978cc2a"
+  }
+ },
+ "notes": [
+  {
+   "zh": "生成器按目标密度撒毛囊；表里的密度是生成后在皮肤面积上数出来的，与目标的差来自边界、梯度和随机性。",
+   "en": "The generator scatters follicles at a target density; the densities here are counted over the skin area after generation, and differences from the target come from borders, gradients and randomness."
+  }
+ ],
+ "summary": {
+  "rows": 26,
+  "within": 17,
+  "outside": 0,
+  "notComparable": 9
+ },
+ "rows": [
+  {
+   "body": "male",
+   "item": "scalp hair density",
+   "ours": 196,
+   "ref": 226,
+   "diff": -30,
+   "tolerance": 73,
+   "unit": "/cm²",
+   "source": "leerunyakul2020",
+   "verdict": "within",
+   "note": {
+    "zh": "白种人汇总均值 ± 1 SD（综述，转引）",
+    "en": "Caucasian pooled mean ± 1 SD (review, secondary)"
+   }
+  },
+  {
+   "body": "male",
+   "item": "total scalp hairs",
+   "ours": 148080,
+   "ref": 120000,
+   "refLow": 90000,
+   "refHigh": 150000,
+   "diff": 28080,
+   "tolerance": 30000,
+   "verdict": "within",
+   "unit": "hairs",
+   "source": "flindt2006"
+  },
+  {
+   "body": "male",
+   "item": "temporal / other scalp density",
+   "ours": 0.83,
+   "ref": 0.85,
+   "diff": -0.02,
+   "tolerance": 0.1,
+   "unit": "ratio",
+   "source": "thai2020",
+   "verdict": "within",
+   "note": {
+    "zh": "参照是泰国成人的颞顶区 / 其余区；容差 0.1 是本表所定",
+    "en": "the reference is temporoparietal / elsewhere in Thai adults; the 0.1 tolerance is set by this table"
+   }
+  },
+  {
+   "body": "male",
+   "item": "upper lashes per lid",
+   "ours": 120,
+   "ref": 125,
+   "refLow": 90,
+   "refHigh": 160,
+   "diff": -5,
+   "tolerance": 35,
+   "verdict": "within",
+   "unit": "lashes",
+   "source": "statpearls-eyelash"
+  },
+  {
+   "body": "male",
+   "item": "lower lashes per lid",
+   "ours": 77,
+   "ref": 77.5,
+   "refLow": 75,
+   "refHigh": 80,
+   "diff": -0.5,
+   "tolerance": 2.5,
+   "verdict": "within",
+   "unit": "lashes",
+   "source": "statpearls-eyelash"
+  },
+  {
+   "body": "male",
+   "item": "upper lash length (median)",
+   "ours": 7.5,
+   "ref": 7.5,
+   "refLow": 7,
+   "refHigh": 8,
+   "diff": 0,
+   "tolerance": 0.5,
+   "verdict": "within",
+   "unit": "mm",
+   "source": "wikipedia-eyelash"
+  },
+  {
+   "body": "male",
+   "item": "lower lash length (median)",
+   "ours": 5.6,
+   "ref": 5.5,
+   "refLow": 5,
+   "refHigh": 6,
+   "diff": 0.1,
+   "tolerance": 0.5,
+   "verdict": "within",
+   "unit": "mm",
+   "source": "wikipedia-eyelash"
+  },
+  {
+   "body": "male",
+   "item": "eyebrow hairs per side",
+   "ours": 267,
+   "unit": "hairs",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "参照 200–400（250）只有无出处的科普数字，记为假设",
+    "en": "the 200–400 (250) reference is only an unsourced popular figure, recorded as an assumption"
+   }
+  },
+  {
+   "body": "male",
+   "item": "eyebrow hair length (median)",
+   "ours": 7.5,
+   "unit": "mm",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "参照 5–11 mm 是假设",
+    "en": "the 5–11 mm reference is an assumption"
+   }
+  },
+  {
+   "body": "male",
+   "region": "beard, chin",
+   "ours": 67,
+   "ref": 77,
+   "ratio": 0.87,
+   "toleranceFactor": 1.25,
+   "unit": "/cm²",
+   "source": "dua2021",
+   "verdict": "within",
+   "note": {
+    "zh": "文献是毛囊单位密度，胡须多为单根单位；容差 ×/÷ 1.25 是本表所定",
+    "en": "the source gives follicular-unit densities, and beard units are mostly single hairs; the ×/÷ 1.25 tolerance is set by this table"
+   }
+  },
+  {
+   "body": "male",
+   "region": "beard, moustache",
+   "ours": 85,
+   "ref": 87,
+   "ratio": 0.98,
+   "toleranceFactor": 1.25,
+   "unit": "/cm²",
+   "source": "dua2021",
+   "verdict": "within",
+   "note": {
+    "zh": "参照取上唇外侧 87（中央 155）；文献是毛囊单位密度，胡须多为单根单位",
+    "en": "reference: the lateral upper lip, 87 (central 155); the source gives follicular-unit densities, and beard units are mostly single hairs"
+   }
+  },
+  {
+   "body": "male",
+   "region": "beard, cheek",
+   "ours": 47,
+   "ref": 47,
+   "ratio": 1,
+   "toleranceFactor": 1.25,
+   "unit": "/cm²",
+   "source": "dua2021",
+   "verdict": "within",
+   "note": {
+    "zh": "文献是毛囊单位密度，胡须多为单根单位；容差 ×/÷ 1.25 是本表所定",
+    "en": "the source gives follicular-unit densities, and beard units are mostly single hairs; the ×/÷ 1.25 tolerance is set by this table"
+   }
+  },
+  {
+   "body": "male",
+   "region": "beard, neck",
+   "ours": 22,
+   "unit": "/cm²",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "颈部没有报告值，30 是假设",
+    "en": "no neck value was reported; 30 is assumed"
+   }
+  },
+  {
+   "body": "male",
+   "item": "pubic hair density",
+   "ours": 36,
+   "unit": "/cm²",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "没有找到测量值，目标密度是假设",
+    "en": "no measurement found; the target density is assumed"
+   }
+  },
+  {
+   "body": "male",
+   "item": "axillary hair density",
+   "ours": 24,
+   "unit": "/cm²",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "没有找到测量值，目标密度是假设",
+    "en": "no measurement found; the target density is assumed"
+   }
+  },
+  {
+   "body": "female",
+   "item": "scalp hair density",
+   "ours": 193,
+   "ref": 226,
+   "diff": -33,
+   "tolerance": 73,
+   "unit": "/cm²",
+   "source": "leerunyakul2020",
+   "verdict": "within",
+   "note": {
+    "zh": "白种人汇总均值 ± 1 SD（综述，转引）",
+    "en": "Caucasian pooled mean ± 1 SD (review, secondary)"
+   }
+  },
+  {
+   "body": "female",
+   "item": "total scalp hairs",
+   "ours": 112569,
+   "ref": 120000,
+   "refLow": 90000,
+   "refHigh": 150000,
+   "diff": -7431,
+   "tolerance": 30000,
+   "verdict": "within",
+   "unit": "hairs",
+   "source": "flindt2006"
+  },
+  {
+   "body": "female",
+   "item": "temporal / other scalp density",
+   "ours": 0.88,
+   "ref": 0.85,
+   "diff": 0.03,
+   "tolerance": 0.1,
+   "unit": "ratio",
+   "source": "thai2020",
+   "verdict": "within",
+   "note": {
+    "zh": "参照是泰国成人的颞顶区 / 其余区；容差 0.1 是本表所定",
+    "en": "the reference is temporoparietal / elsewhere in Thai adults; the 0.1 tolerance is set by this table"
+   }
+  },
+  {
+   "body": "female",
+   "item": "upper lashes per lid",
+   "ours": 120,
+   "ref": 125,
+   "refLow": 90,
+   "refHigh": 160,
+   "diff": -5,
+   "tolerance": 35,
+   "verdict": "within",
+   "unit": "lashes",
+   "source": "statpearls-eyelash"
+  },
+  {
+   "body": "female",
+   "item": "lower lashes per lid",
+   "ours": 77,
+   "ref": 77.5,
+   "refLow": 75,
+   "refHigh": 80,
+   "diff": -0.5,
+   "tolerance": 2.5,
+   "verdict": "within",
+   "unit": "lashes",
+   "source": "statpearls-eyelash"
+  },
+  {
+   "body": "female",
+   "item": "upper lash length (median)",
+   "ours": 7.4,
+   "ref": 7.5,
+   "refLow": 7,
+   "refHigh": 8,
+   "diff": -0.1,
+   "tolerance": 0.5,
+   "verdict": "within",
+   "unit": "mm",
+   "source": "wikipedia-eyelash"
+  },
+  {
+   "body": "female",
+   "item": "lower lash length (median)",
+   "ours": 5.5,
+   "ref": 5.5,
+   "refLow": 5,
+   "refHigh": 6,
+   "diff": 0,
+   "tolerance": 0.5,
+   "verdict": "within",
+   "unit": "mm",
+   "source": "wikipedia-eyelash"
+  },
+  {
+   "body": "female",
+   "item": "eyebrow hairs per side",
+   "ours": 271,
+   "unit": "hairs",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "参照 200–400（250）只有无出处的科普数字，记为假设",
+    "en": "the 200–400 (250) reference is only an unsourced popular figure, recorded as an assumption"
+   }
+  },
+  {
+   "body": "female",
+   "item": "eyebrow hair length (median)",
+   "ours": 7.1,
+   "unit": "mm",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "参照 5–11 mm 是假设",
+    "en": "the 5–11 mm reference is an assumption"
+   }
+  },
+  {
+   "body": "female",
+   "item": "pubic hair density",
+   "ours": 36,
+   "unit": "/cm²",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "没有找到测量值，目标密度是假设",
+    "en": "no measurement found; the target density is assumed"
+   }
+  },
+  {
+   "body": "female",
+   "item": "axillary hair density",
+   "ours": 26,
+   "unit": "/cm²",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "没有找到测量值，目标密度是假设",
+    "en": "no measurement found; the target density is assumed"
+   }
+  }
+ ]
+}

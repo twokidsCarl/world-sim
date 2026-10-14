@@ -32,7 +32,9 @@ interface AnyTable {
   rows: Record<string, unknown>[]
 }
 
-const EXPECTED = ['arm-bones', 'face-coverage', 'face-displacement', 'instrument-check', 'muscle-attachments-myo', 'muscle-curves-myo', 'muscle-curves-opensim', 'organ-volumes', 'rom', 'segments']
+// 写实外观的四张表（skin-colour、skin-detail、look-hair、look-eyes）由 tools/look/calibration.ts 生成，另见 tests/look-calibration.test.ts
+// the four lifelike-look tables (skin-colour, skin-detail, look-hair, look-eyes) are built by tools/look/calibration.ts; see also tests/look-calibration.test.ts
+const EXPECTED = ['arm-bones', 'face-coverage', 'face-displacement', 'instrument-check', 'look-eyes', 'look-hair', 'muscle-attachments-myo', 'muscle-curves-myo', 'muscle-curves-opensim', 'organ-volumes', 'rom', 'segments', 'skin-colour', 'skin-detail']
 const read = (id: string): AnyTable => JSON.parse(readFileSync(join(OUT, `${id}.json`), 'utf8')) as AnyTable
 const bodyFile = (body: string, file: string): string => join(ROOT, 'public', 'anatomy', body, file)
 const sha = (path: string): string => createHash('sha256').update(readFileSync(path)).digest('hex').slice(0, 12)
