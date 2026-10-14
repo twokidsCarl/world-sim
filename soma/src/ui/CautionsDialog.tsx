@@ -1,3 +1,4 @@
+import { SOFT_CAUTION } from '../softbody/statements.ts'
 import { useApp } from '../state/store.ts'
 import { Icon } from './Icon.tsx'
 
@@ -24,6 +25,11 @@ export function CautionsDialog() {
             当前人体模型（{dataset}）为初版，以下内容不可作为依据，按重要程度排列。之后可随时点击顶栏的“注意事项”再次查看。
           </p>
           <CautionList items={graph.cautions} />
+          {/* 软组织物理的验证状态（不在人体数据里，由界面补上）/ the validation status of the soft-tissue physics (not in the body data; added by the UI) */}
+          <h3>
+            软组织物理 <span className="en">Soft-tissue physics</span>
+          </h3>
+          <CautionList items={[SOFT_CAUTION]} />
           <div className="dialog-actions">
             <button className="primary-btn" onClick={dismiss}>
               知道了

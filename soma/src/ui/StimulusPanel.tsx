@@ -10,6 +10,7 @@ import { applyStimulus, clearStimulus, replayStimulus } from '../pain/stim.ts'
 import { HEAT_ANCHORS, KINDS, SITES, kindSpec, pressureKPa } from '../pain/stimulus.ts'
 import { useApp } from '../state/store.ts'
 import { PAIN_COLORS } from '../viewer/stimColors.ts'
+import { PressControls } from './SoftPanels.tsx'
 
 /** 模型说明里要求界面明说的事（INTEGRATION.txt 第 9 节）/ What the model's note requires the UI to say plainly (section 9 of INTEGRATION.txt). */
 export const STIM_CAVEATS: { zh: string; en: string }[] = [
@@ -166,6 +167,7 @@ export function StimulusPanel() {
             {k.areaMm2 && settings.kind !== 'heat' && settings.kind !== 'cold' ? `；接触面 ${k.areaMm2} mm²` : ''}。<span className="en"> {k.range.en}.</span>
           </p>
         </div>
+        {settings.kind === 'pressure' && <PressControls />}
         <div className="dof-row">
           <label>
             <span className="dof-name">
@@ -286,6 +288,12 @@ export function StimulusPanel() {
                 <span className="hint">
                   {' '}
                   退缩在 {e.stimulusEnd.toFixed(2)} s 结束了刺激（原定 {e.statedEnd.toFixed(1)} s）。 <span className="en">The withdrawal ended the stimulus at {e.stimulusEnd.toFixed(2)} s (stated {e.statedEnd.toFixed(1)} s).</span>
+                </span>
+              )}
+              {stim.contact && (
+                <span className="hint">
+                  {' '}
+                  压强来自软组织物理：平均 {Math.round(stim.contact.meanPressureKPa * 10) / 10} kPa（{stim.contact.forceN} N ÷ {stim.contact.areaMm2} mm²）。 <span className="en">Pressure from the soft-tissue physics: mean {Math.round(stim.contact.meanPressureKPa * 10) / 10} kPa ({stim.contact.forceN} N ÷ {stim.contact.areaMm2} mm²).</span>
                 </span>
               )}
               {e.peak.intensity === 0 && (

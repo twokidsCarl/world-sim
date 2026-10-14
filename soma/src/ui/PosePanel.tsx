@@ -7,6 +7,7 @@ import type { AnatomyGraph } from '../anatomy/graph.ts'
 import { JOINT_GROUPS, jointGroup, mirrorJointId, posePresets, poseIsRest, ribJoints, type JointGroupId } from '../anatomy/rig.ts'
 import type { Joint, JointDof } from '../anatomy/types.ts'
 import { useApp } from '../state/store.ts'
+import { PosturePanel } from './SoftPanels.tsx'
 import { ActivityPanel } from './ActivityPanel.tsx'
 import { CautionList } from './CautionsDialog.tsx'
 import { ShapeControls } from './ShapeControls.tsx'
@@ -176,6 +177,7 @@ export function PosePanel({ graph }: { graph: AnatomyGraph }) {
       <ActivityPanel graph={graph} />
 
       <ShapeControls />
+      <PosturePanel />
 
       {selected && (
         <section className="group">

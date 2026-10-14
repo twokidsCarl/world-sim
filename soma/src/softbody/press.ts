@@ -73,15 +73,40 @@ export interface PressOptions {
   validatedPressureKPa?: number
   /** 模型可信的最大压应变 / the largest compressive strain the model is credible for */
   validatedStrain?: number
+  /**
+   * 每走一帧调用一次（界面用它边算边显示凹陷）；不改变求解。`depth` 是压头此刻的深度，米。
+   * Called after every frame (the UI shows the dent forming with it); it does not change the solve. `depth` is the
+   * probe's present depth, metres.
+   */
+  onFrame?: (frames: number, depth: number) => void
 }
+
+/**
+ * 力控没有达到要求的力时，是什么让它停下的：'strain-gate' = 压溃闸（轴线压应变超过 0.6、力在加深时掉了三成或不是有限数），
+ * 二分到闸内最深处；'tissue-thickness' = 已压到组织厚度的 85%。达到了或是深度控制时为 null。
+ * What stopped force control short of the requested force: 'strain-gate' = the crush gate (axial compressive strain past
+ * 0.6, the force falling by 30 % while going deeper, or not finite), bisected to the deepest depth inside it;
+ * 'tissue-thickness' = 85 % of the tissue thickness reached. Null when the force was reached or under depth control.
+ */
+export type PressStop = 'strain-gate' | 'tissue-thickness' | null
 
 export interface PressResult {
   depthMm: number
   forceN: number
-  /** 力 ÷ 接触面积 / force ÷ contact area */
+  /**
+   * 平均接触压强 = 力 ÷ 接触面积（所以 平均 × 面积 = 力）。平头和平板：面积是贴在端面上的采样面积。球和半球头：线性单元贴不上
+   * 曲面（贴面的采样点离球面 0.1–1 mm），按采样点数会把面积少算几倍；所以按结点算：平均 = 受力结点上法向压强的面积加权平均，
+   * 面积 = 力 ÷ 平均（垂直于压入方向的投影面积，Hertz 的口径）。两种情况下 峰值 ≥ 平均。
+   * Mean contact pressure = force ÷ contact area (so mean × area = force). Flat punch and plate: the area is that of the
+   * samples lying on the end face. Sphere and hemisphere tip: linear elements cannot follow the curved face (samples in
+   * contact sit 0.1–1 mm off the sphere), so counting samples undercounts the area several times over; it is done per
+   * node instead: mean = the area-weighted mean of the normal pressure on the nodes carrying probe force, area = force ÷
+   * mean (the area projected across the pressing axis, Hertz's convention). In both cases peak ≥ mean.
+   */
   meanPressureKPa: number
-  /** 结点上接触压强的最大值（分辨率一个单元）/ the largest contact pressure at a node (resolution: one cell) */
+  /** 结点上法向接触压强的最大值（分辨率一个单元）/ the largest normal contact pressure at a node (resolution: one cell) */
   peakPressureKPa: number
+  /** 接触面积，平方毫米（口径见 meanPressureKPa）/ contact area, mm² (see meanPressureKPa for how it is counted) */
   contactAreaMm2: number
   /** 压头轴线上、原表面以下 z 毫米处沿轴向的压应变（正 = 压缩）/ compressive strain along the axis at z mm below the original surface (positive = compression) */
   strainAtDepth(zMm: number): number
@@ -97,6 +122,9 @@ export interface PressResult {
   edgeCompensationMm: number
   frames: number
   converged: boolean
+  stoppedBy: PressStop
+  /** 压溃闸的哪一条触发了（stoppedBy = 'strain-gate' 时）/ which condition of the crush gate fired (when stoppedBy = 'strain-gate') */
+  gate: 'strain' | 'force-drop' | 'not-finite' | null
 }
 
 /** 皮肤三角形细分出的接触采样点（重心，带面积）。 Contact samples from subdivided skin triangles (centroids with their areas). */
@@ -158,6 +186,7 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
       for (let k = 0; k < 3; k++) s.probe!.shape.center[k] = c[k]!
       s.step(DT)
       frames++
+      o.onFrame?.(frames, at)
       f = force()
       if (i > ramp && (i - ramp) % 10 === 0) {
         if (Math.abs(f - prev) <= tol * Math.max(1e-4, Math.abs(f))) {
@@ -202,6 +231,7 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
   // 压应变超过这个值就不再加深：再往下单元会失稳翻转，力没有意义 / no deeper once the compressive strain passes this: beyond it elements buckle and invert and the force means nothing
   const CRUSH = 0.6
   let depth: number, f: number
+  let stoppedBy: PressStop = null, gate: PressResult['gate'] = null
   if ('depthMm' in request) {
     depth = request.depthMm * 1e-3
     f = settle(depth)
@@ -231,8 +261,10 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
       depth = next
       f = settle(depth)
       // 压溃 = 不是有限数、轴线应变超过上限，或者压得更深力反而掉了三成 / crushed = not finite, axial strain beyond the limit, or deeper with 30 % less force
-      const crushed = (q: number, prev: number, deeper: boolean): boolean => !Number.isFinite(q) || axisPeak(axis()) > CRUSH || (deeper && q < 0.7 * prev)
-      if (crushed(f, f0, depth > d0)) {
+      const why = (q: number, prev: number, deeper: boolean): PressResult['gate'] => (!Number.isFinite(q) ? 'not-finite' : axisPeak(axis()) > CRUSH ? 'strain' : deeper && q < 0.7 * prev ? 'force-drop' : null)
+      const crushed = (q: number, prev: number, deeper: boolean): boolean => why(q, prev, deeper) !== null
+      gate = why(f, f0, depth > d0)
+      if (gate) {
         // 压溃：在上一个深度和这一个之间二分，找应变不超过上限的最深处，报告那里的力（第三阶段直接退回上一个深度，
         // 割线法一步跨得大时报告的力只有能达到的一部分：前臂上半径 5 mm 的球 0.34 N 对 0.84 N）
         // crushed: bisect between the previous depth and this one for the deepest depth within the strain limit and
@@ -252,12 +284,15 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
         depth = lo
         f = settle(depth)
         bottomed = true
+        stoppedBy = 'strain-gate'
         break
       }
     }
     if (Math.abs(f - target) > 0.03 * target) {
-      if (depth >= limit * 0.999) bottomed = true
-      else if (!bottomed) converged = false
+      if (depth >= limit * 0.999) {
+        bottomed = true
+        stoppedBy ??= 'tissue-thickness'
+      } else if (!bottomed) converged = false
     }
   }
 
@@ -294,16 +329,31 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
       nodeR.set(node, (nodeR.get(node) ?? 0) + b * ai * radial[i]!)
     }
   }
-  let aMax = 0
+  let aMax = 0, tMax = 0
   for (const v of nodeA.values()) aMax = Math.max(aMax, v)
+  for (const v of nodeT.values()) tMax = Math.max(tMax, v)
   let peak = 0
+  // 曲面压头：受力结点上的法向力和采样面积之和 / curved probes: sums of normal force and sampled area over the nodes carrying force
+  let nodeFSum = 0, nodeASum = 0
   const bins = 8, sum = new Float64Array(bins), cnt = new Float64Array(bins)
   for (const [node, an] of nodeA) {
+    // 平面：结点的压强 = 它的力 ÷ 它周围贴在端面上的那部分面积；这些压强按接触面积加权的平均就是 力 ÷ 接触面积，所以峰值 ≥ 平均。
+    // 只看接触面积够大的结点（至少最大者的四分之一）
+    // plane: a node's pressure = its force ÷ the part of its surrounding area lying on the end face; weighted by contact
+    // area these average to force ÷ contact area, so peak ≥ mean. Only nodes with enough contact area (a quarter of the largest at least)
+    const tn = nodeT.get(node)!
+    if (flat && tn > 0 && tn >= 0.25 * tMax) peak = Math.max(peak, nodeF.get(node)! / tn)
     // 只看采样面积够大的结点（至少最大者的四分之一），免得只沾到一点皮肤的结点给出离谱的比值
     // only nodes with enough sampled area (a quarter of the largest at least), so that a node grazing the skin gives no absurd ratio
     if (an < 0.25 * aMax) continue
-    const pr = nodeF.get(node)! / an, r = nodeR.get(node)! / an
-    if (nodeT.get(node)! > 0.5 * an) peak = Math.max(peak, pr)
+    const fn = nodeF.get(node)!, pr = fn / an, r = nodeR.get(node)! / an
+    // 曲面：结点承受压头的力即算接触（"贴着端面"的判断对曲面不可靠，见 meanPressureKPa）；压强 = 力 ÷ 结点周围的采样面积
+    // curved: a node carrying probe force is in contact (the "lying on the face" test is unreliable on a curved face, see meanPressureKPa); pressure = force ÷ the sampled area round the node
+    if (!flat && fn > 0) {
+      peak = Math.max(peak, pr)
+      nodeFSum += fn
+      nodeASum += an
+    }
     const b = Math.min(bins - 1, Math.floor((r / a) * bins))
     if (r < a) (sum[b] = sum[b]! + pr * an), (cnt[b] = cnt[b]! + an)
   }
@@ -317,6 +367,7 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
   }
   const peakStrain = axisPeak(u)
 
+  if (!flat) area = nodeFSum > 0 && f > 0 ? (f * nodeASum) / nodeFSum : 0
   const meanP = area > 0 ? f / area : 0
   const flags: string[] = []
   if (!converged) flags.push('not-converged')
@@ -332,6 +383,7 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
     depthMm: r2(depth * 1000), forceN: Math.round(f * 1000) / 1000, meanPressureKPa: r2(meanP / 1000), peakPressureKPa: r2(peak / 1000), contactAreaMm2: Math.round(area * 1e7) / 10,
     strainAtDepth: (zMm: number) => strainAt(zMm * 1e-3), peakStrain: Math.round(peakStrain * 1000) / 1000, pressureProfile,
     valid: flags.length === 0, flags, cellMm: r2(d.cell * 1000), edgeCompensationMm: r2(comp * 1000), frames, converged,
+    stoppedBy, gate: stoppedBy === 'strain-gate' ? gate : null,
   }
 }
 

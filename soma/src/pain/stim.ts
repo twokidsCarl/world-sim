@@ -12,7 +12,7 @@ import { fetchJson } from '../anatomy/load.ts'
 import { painMapWeights, prepareStimulus, type InnervationTable, type PainBody, type PainEvaluation, type PainSample } from '../painmodel/index.ts'
 import { useApp } from '../state/store.ts'
 import { primeVoice, setExternalPainLevel, vocalise } from './controller.ts'
-import { buildStimulus, kindSpec, resolveSite, type ResolvedSite, type SiteRef, type StimSettings } from './stimulus.ts'
+import { buildStimulus, kindSpec, resolveSite, type Contact, type ResolvedSite, type SiteRef, type StimSettings } from './stimulus.ts'
 
 /** 主视图提供的两样东西：静止皮肤的顶点，以及按需加载系统 / What the main viewer provides: the rest skin's vertices, and loading systems on demand. */
 export interface StimHost {
@@ -58,6 +58,21 @@ export interface ActiveStim {
   curve: { t: number[]; intensity: number[] }
   baseline: PainSample
   weights: Float32Array
+  /** 钝压的接触来自软组织物理时给出（否则用名义的 1 cm² 探头）/ set when a pressure stimulus takes its contact from the soft-tissue physics (otherwise the nominal 1 cm² probe) */
+  contact: Contact | null
+}
+
+/**
+ * 钝压的接触由谁给：软组织物理（src/softbody/client.ts）注册一个函数；它返回 null 时用名义值。
+ * 函数可能要算几秒到几十秒（在 Web Worker 里），算出的接触随后进入疼痛模型。
+ * Who supplies a pressure stimulus's contact: the soft-tissue physics (src/softbody/client.ts) registers a function; when
+ * it returns null the nominal value is used. It may take seconds to tens of seconds (in a Web Worker); the contact it
+ * finds then goes into the pain model.
+ */
+export type ContactProvider = (site: ResolvedSite, settings: StimSettings) => Promise<Contact | null> | null
+let contactProvider: ContactProvider | null = null
+export function registerContactProvider(fn: ContactProvider | null): void {
+  contactProvider = fn
 }
 
 /** 每帧给视图的数据 / What the viewer gets every frame. */
@@ -125,7 +140,7 @@ export function ensurePainBody(): Promise<PainBody> {
   return promise
 }
 
-function start(e: PainEvaluation, settings: StimSettings, site: ResolvedSite, siteRef: SiteRef, pb: PainBody, holding: boolean, keepClock: boolean, frame = false): void {
+function start(e: PainEvaluation, settings: StimSettings, site: ResolvedSite, siteRef: SiteRef, pb: PainBody, holding: boolean, keepClock: boolean, frame = false, contact: Contact | null = null): void {
   const n = 160
   const curve = { t: [] as number[], intensity: [] as number[] }
   const span = Math.max(e.horizon, 0.5)
@@ -135,7 +150,7 @@ function start(e: PainEvaluation, settings: StimSettings, site: ResolvedSite, si
     curve.t.push(x)
     curve.intensity.push(e.sample(x).intensity)
   }
-  active = { nonce: keepClock && active ? active.nonce : ++nonce, e, settings, site, siteRef, holding, frame, curve, baseline: e.sample(-1), weights: painMapWeights(pb, e.at(0).map) }
+  active = { nonce: keepClock && active ? active.nonce : ++nonce, e, settings, site, siteRef, holding, frame, curve, baseline: e.sample(-1), weights: painMapWeights(pb, e.at(0).map), contact }
   if (!keepClock) {
     t = 0
     frozen = false
@@ -160,11 +175,23 @@ export async function applyStimulus(site: ResolvedSite | SiteRef, opts: { gestur
     if (useApp.getState().graph !== app.graph) return false
     const resolved = 'vertex' in site ? site : resolveSite(pb, site)
     const siteRef: SiteRef = 'vertex' in site ? { mm: [site.position[0] * 1000, site.position[1] * 1000, site.position[2] * 1000] } : site
-    const duration = opts.hold ? kindSpec(settings.kind).durationMax : settings.duration
-    const e = prepareStimulus(pb, buildStimulus(settings, resolved, pb.skin.part, duration), { heatAnchor: settings.heatAnchor })
+    // 钝压：有软组织物理时先算接触（几秒到几十秒），疼痛模型用算出的压强；这时不支持"按住施加"（算完之前可能已经松手）
+    // pressure: with the soft-tissue physics the contact is computed first (seconds to tens of seconds) and the pain model takes
+    // that pressure; "press and hold" is not offered then (the hand may be lifted before the solve ends)
+    const pending = settings.kind === 'pressure' ? contactProvider?.(resolved, settings) ?? null : null
+    const contact = pending ? await pending : null
+    if (pending && !contact) {
+      // 物理那边放弃了（换了部位、换了人体）：不施加 / the physics side gave up (another site, another body): nothing applied
+      useApp.setState({ stimStatus: 'idle' })
+      return false
+    }
+    if (useApp.getState().graph !== app.graph) return false
+    const hold = !!opts.hold && !contact
+    const duration = hold ? kindSpec(settings.kind).durationMax : settings.duration
+    const e = prepareStimulus(pb, buildStimulus(settings, resolved, pb.skin.part, duration, contact), { heatAnchor: settings.heatAnchor })
     // 皮肤得看得见：疼痛分布层画在它上面 / the skin has to be visible: the pain layer is drawn on it
     if (!(useApp.getState().systems.integumentary?.visible ?? true)) useApp.getState().setSystemVisible('integumentary', true)
-    start(e, settings, resolved, siteRef, pb, !!opts.hold, false, !!opts.frame)
+    start(e, settings, resolved, siteRef, pb, hold, false, !!opts.frame, contact)
     // 表情、张口和神经都要用到 / the face, the jaw and the nerves are all needed
     void app.ensureFace()
     void host?.request(['nervous'])
@@ -183,8 +210,8 @@ export async function releaseStimulus(): Promise<void> {
   const pb = await ensurePainBody()
   if (active !== a) return
   const settings = { ...a.settings, duration: Math.max(0.2, Math.round(t * 100) / 100), repeat: null }
-  const e = prepareStimulus(pb, buildStimulus(settings, a.site, pb.skin.part), { heatAnchor: settings.heatAnchor })
-  start(e, settings, a.site, a.siteRef, pb, false, true)
+  const e = prepareStimulus(pb, buildStimulus(settings, a.site, pb.skin.part, settings.duration, a.contact), { heatAnchor: settings.heatAnchor })
+  start(e, settings, a.site, a.siteRef, pb, false, true, false, a.contact)
 }
 
 /** 把同一个刺激再放一遍（部位不变，用当前的设置）/ Play the stimulus again at the same site with the current settings. */

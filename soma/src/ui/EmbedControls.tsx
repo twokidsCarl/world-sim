@@ -19,6 +19,9 @@ import { enableSaySound, loadDemoClip, loadDemoPacks, playSay, setSayMode, type 
 import { EXPRESSION_STATEMENT, SAY_STATEMENT, VISEME_STATEMENT } from '../face/statements.ts'
 import { PAIN_STATEMENT, VoiceAttribution } from './PainPanel.tsx'
 import { ShapeSlider } from './ShapeControls.tsx'
+import { SoftEmbedControls } from './SoftPanels.tsx'
+import { useSoft } from '../softbody/client.ts'
+import { POSTURE_CAVEATS, PRESS_CAVEATS } from '../softbody/statements.ts'
 
 /** 卡片 URL 带了哪些参数，就显示哪些控件（见 App 中的 embedKeys）。 */
 /** Which controls appear follows from which parameters the card URL carried (see embedKeys in App). */
@@ -73,11 +76,16 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
   const stimStatus = useApp((s) => s.stimStatus)
   const stimMessage = useApp((s) => s.stimMessage)
   const app = useApp.getState()
+  // 软组织物理的卡片（phys=）：把验证范围放在注意事项的最前 / soft-tissue physics cards (phys=): the validated range comes first among the cautions
+  const physOn = useSoft((s) => s.physOn)
+  const physPress = useSoft((s) => s.pressOn)
+  const physPosture = useSoft((s) => s.posture)
+  const softCautions = physOn ? [...(physPress ? [DISCLAIMER, ...PRESS_CAVEATS] : []), ...(physPress && physPosture === 'standing' ? [] : POSTURE_CAVEATS)] : []
   const layers = graph.data.layers
   const cautions = graph.cautions
   const rigCautions = rig && (embedKeys.has('pose') || embedKeys.has('breath')) ? rig.rig.cautions : []
   // 疼痛卡片：把"这是什么模型"的说明放在最前 / pain cards: the statement of what this model is comes first
-  const all = [...(stimCard ? [DISCLAIMER, ...STIM_CAVEATS, ...(stim ? stim.e.trace.caveats : [])] : []), ...(painCard ? PAIN_STATEMENT : []), ...(exprCard || sayCard ? EXPRESSION_STATEMENT : []), ...(sayCard ? [SAY_STATEMENT, VISEME_STATEMENT] : []), ...cautions, ...rigCautions, ...((painCard || exprCard || sayCard) && face ? face.data.cautions : []), ...(shapeCard && shape ? shape.data.cautions : [])]
+  const all = [...softCautions, ...(stimCard ? [DISCLAIMER, ...STIM_CAVEATS, ...(stim ? stim.e.trace.caveats : [])] : []), ...(painCard ? PAIN_STATEMENT : []), ...(exprCard || sayCard ? EXPRESSION_STATEMENT : []), ...(sayCard ? [SAY_STATEMENT, VISEME_STATEMENT] : []), ...cautions, ...rigCautions, ...((painCard || exprCard || sayCard) && face ? face.data.cautions : []), ...(shapeCard && shape ? shape.data.cautions : [])]
   // 姿势按钮：静止、卡片指定的预设，再加几个常用的 / pose buttons: rest, the card's preset, and a few common ones
   const presets = useMemo(() => {
     if (!rig) return []
@@ -323,6 +331,7 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
             {stimStatus === 'error' && <span className="embed-note">无法施加刺激：{stimMessage}</span>}
           </>
         )}
+        <SoftEmbedControls />
         {shapeCard &&
           shape &&
           shape.data.controls
