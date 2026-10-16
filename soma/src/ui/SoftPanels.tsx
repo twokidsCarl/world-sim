@@ -167,10 +167,10 @@ export function PressControls() {
               )}
               {s.pressTiming && (
                 <p className="hint">
-                  细笼子 {s.pressTiming.nodes} 结点 / {s.pressTiming.tets} 四面体，单元 {fmt(r.cellMm, 1)} mm；组织厚度 {r.tissueThicknessMm ?? '—'} mm；{r.frames} 帧，{fmt(s.pressTiming.msPerFrame, 1)} ms/帧；第一次看到凹陷 {s.pressTiming.clickToFirstDentMs ?? '—'} ms，结果 {fmt(s.pressTiming.clickToResultMs / 1000, 1)} s。
+                  细笼子 {s.pressTiming.nodes} 结点 / {s.pressTiming.tets} 四面体，单元 {fmt(r.cellMm, 1)} mm；组织厚度 {r.tissueThicknessMm ?? '—'} mm；{r.frames} 帧，{fmt(s.pressTiming.msPerFrame, 1)} ms/帧（{s.pressTiming.backend === 'gpu' ? 'GPU' : 'CPU'}）；第一次看到凹陷 {s.pressTiming.clickToFirstDentMs ?? '—'} ms，结果 {fmt(s.pressTiming.clickToResultMs / 1000, 1)} s。
                   <span className="en">
                     {' '}
-                    Fine cage {s.pressTiming.nodes} nodes / {s.pressTiming.tets} tets, cell {fmt(r.cellMm, 1)} mm; tissue {r.tissueThicknessMm ?? '—'} mm; {r.frames} frames at {fmt(s.pressTiming.msPerFrame, 1)} ms; first dent shown after {s.pressTiming.clickToFirstDentMs ?? '—'} ms, result after {fmt(s.pressTiming.clickToResultMs / 1000, 1)} s.
+                    Fine cage {s.pressTiming.nodes} nodes / {s.pressTiming.tets} tets, cell {fmt(r.cellMm, 1)} mm; tissue {r.tissueThicknessMm ?? '—'} mm; {r.frames} frames at {fmt(s.pressTiming.msPerFrame, 1)} ms ({s.pressTiming.backend === 'gpu' ? 'GPU' : 'CPU'}); first dent shown after {s.pressTiming.clickToFirstDentMs ?? '—'} ms, result after {fmt(s.pressTiming.clickToResultMs / 1000, 1)} s.
                   </span>
                 </p>
               )}
@@ -227,15 +227,15 @@ export function PosturePanel({ compact = false }: { compact?: boolean }) {
   )
   const progress = busy && (
     <span className={compact ? 'embed-note' : 'hint'}>
-      {s.postureStatus === 'preparing' ? '建全身笼子… building the whole-body cage…' : s.postureStatus === 'paused' ? '已暂停（页面隐藏）paused (page hidden)' : `走向平衡 settling · ${s.postureProgress?.frames ?? 0} 帧 frames · ${fmt(s.postureProgress?.msPerFrame ?? 0, 0)} ms/帧 · v_max ${(s.postureProgress?.maxSpeed ?? 0).toExponential(1)} m/s`}
+      {s.postureStatus === 'preparing' ? '建全身笼子… building the whole-body cage…' : s.postureStatus === 'paused' ? '已暂停（页面隐藏）paused (page hidden)' : `走向平衡 settling · ${s.postureProgress?.frames ?? 0} 帧 frames · ${fmt(s.postureProgress?.msPerFrame ?? 0, 0)} ms/帧 · v_max ${(s.postureProgress?.maxSpeed ?? 0).toExponential(1)} m/s · ${s.postureBackend === 'gpu' ? 'GPU' : 'CPU'}`}
     </span>
   )
   const result = st && s.postureStatus === 'done' && (
     <span className={compact ? 'embed-note' : 'hint'}>
-      皮肤相对站立：平均 {fmt(st.skinMeanMm, 1)} mm，最大 {fmt(st.skinMaxMm, 1)} mm（{st.frames} 帧，{fmt(st.msPerFrame, 0)} ms/帧，{st.substeps} 子步）· 未与实测对照
+      皮肤相对站立：平均 {fmt(st.skinMeanMm, 1)} mm，最大 {fmt(st.skinMaxMm, 1)} mm（{st.frames} 帧，{fmt(st.msPerFrame, 1)} ms/帧，{st.substeps} 子步，{st.backend === 'gpu' ? 'GPU' : 'CPU'}）· 未与实测对照
       <span className="en">
         {' '}
-        skin relative to standing: mean {fmt(st.skinMeanMm, 1)} mm, largest {fmt(st.skinMaxMm, 1)} mm ({st.frames} frames at {fmt(st.msPerFrame, 0)} ms, {st.substeps} substeps) · not checked against measurements
+        skin relative to standing: mean {fmt(st.skinMeanMm, 1)} mm, largest {fmt(st.skinMaxMm, 1)} mm ({st.frames} frames at {fmt(st.msPerFrame, 1)} ms, {st.substeps} substeps, {st.backend === 'gpu' ? 'GPU' : 'CPU'}) · not checked against measurements
       </span>
     </span>
   )
@@ -257,8 +257,8 @@ export function PosturePanel({ compact = false }: { compact?: boolean }) {
       </h3>
       {avail.ok ? (
         <p className="hint">
-          转动重力，全身软组织笼子在后台走到平衡（CPU，每帧约 60 ms，几百帧），然后显示皮肤相对站立的位移。骨架保持静止姿势。
-          <span className="en"> Gravity is turned and the whole-body soft-tissue cage runs to equilibrium in the background (CPU, about 60 ms a frame, a few hundred frames); then the skin's displacement relative to standing is shown. The skeleton stays in the rest pose.</span>
+          转动重力，全身软组织笼子在后台走到平衡（有 WebGPU 时在 GPU 上，每帧约 8 ms；否则在 CPU 上，每帧约 100 ms；几百帧），然后显示皮肤相对站立的位移。GPU 与 CPU 的约束求解顺序不同，结果在给定的容差内一致（见 README）。骨架保持静止姿势。
+          <span className="en"> Gravity is turned and the whole-body soft-tissue cage runs to equilibrium in the background (on the GPU when WebGPU is there, about 8 ms a frame; otherwise on the CPU, about 100 ms a frame; a few hundred frames); then the skin's displacement relative to standing is shown. The GPU solves the constraints in a different order from the CPU; the results agree within the stated tolerance (see the README). The skeleton stays in the rest pose.</span>
         </p>
       ) : (
         <p className="hint shape-limit">

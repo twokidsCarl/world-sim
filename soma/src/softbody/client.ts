@@ -45,6 +45,10 @@ export interface SoftState {
   postureMessage: string
   postureProgress: { frames: number; maxSpeed: number; msPerFrame: number; elapsedMs: number } | null
   postureStats: PostureStats | null
+  /** 两个 worker 的求解器在哪里跑（GPU = WebGPU；null = 还没开）与没用 GPU 的原因 / where each worker's solver runs (GPU = WebGPU; null = not opened yet) and why the GPU is not used */
+  pressBackend: 'gpu' | 'cpu' | null
+  postureBackend: 'gpu' | 'cpu' | null
+  gpuReason: string
   /** 显示的放大倍数（1 = 真实大小）/ display exaggeration (1 = true size) */
   exaggerate: number
   /** 皮肤按体位位移着色（真实大小）/ colour the skin by the posture displacement (true size) */
@@ -86,6 +90,9 @@ export const useSoft = create<SoftState>((set) => ({
   postureMessage: '',
   postureProgress: null,
   postureStats: null,
+  pressBackend: null,
+  postureBackend: null,
+  gpuReason: '',
   exaggerate: 1,
   colorOn: true,
   setPress: (patch) => {
@@ -116,6 +123,16 @@ interface Channel {
   handlers: Map<number, (r: Reply) => void>
   ready: Promise<void>
   skinN: number
+  backend: 'gpu' | 'cpu'
+}
+
+/**
+ * 地址参数 pgpu=0：软组织物理不用 GPU（对照、排查用）；缺省有 WebGPU 就用。
+ * The URL parameter pgpu=0: the soft-tissue physics does not use the GPU (for comparison and troubleshooting); by
+ * default it does whenever WebGPU is there.
+ */
+function gpuAllowed(): boolean {
+  return typeof location === 'undefined' || new URLSearchParams(location.search).get('pgpu') !== '0'
 }
 
 let seq = 0
@@ -148,22 +165,27 @@ async function bodyPayload(host: SoftHost): Promise<BodyPayload> {
   return { body: 'male', parts: partsLite(), skin: { id: skin.part, positions: skin.positions.slice(), indices: skin.indices.slice() }, rig: rig.rig, rigBin: rig.bin }
 }
 
-function openChannel(): Promise<Channel> {
+function openChannel(kind: 'press' | 'posture'): Promise<Channel> {
   return (async () => {
     const host = await whenSoftHost()
     const payload = await bodyPayload(host)
     const worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' })
-    const ch: Channel = { worker, sent: new Set([payload.skin.id]), handlers: new Map(), ready: Promise.resolve(), skinN: payload.skin.positions.length / 3 }
+    const ch: Channel = { worker, sent: new Set([payload.skin.id]), handlers: new Map(), ready: Promise.resolve(), skinN: payload.skin.positions.length / 3, backend: 'cpu' }
     ch.ready = new Promise<void>((resolve, reject) => {
       worker.onmessage = (ev: MessageEvent<Reply>) => {
         const r = ev.data
-        if (r.type === 'ready') return resolve()
+        if (r.type === 'ready') {
+          ch.backend = r.backend
+          useSoft.setState(kind === 'press' ? { pressBackend: r.backend } : { postureBackend: r.backend })
+          if (r.gpuReason) useSoft.setState({ gpuReason: r.gpuReason })
+          return resolve()
+        }
         if (r.type === 'error' && r.id < 0) return reject(new Error(r.message))
         if ('id' in r) ch.handlers.get(r.id)?.(r)
       }
       worker.onerror = (ev) => reject(new Error(ev.message || 'softbody worker failed'))
     })
-    worker.postMessage({ type: 'init', body: payload })
+    worker.postMessage({ type: 'init', body: payload, gpu: gpuAllowed() })
     await ch.ready
     return ch
   })()
@@ -198,7 +220,7 @@ function resetForBody(): void {
   partsNow = new Map()
   partsFrom = new Map()
   composed = null
-  useSoft.setState({ pressStatus: 'idle', pressMessage: '', pressProgress: null, pressResult: null, pressTiming: null, pressSite: null, postureStatus: 'idle', postureMessage: '', postureProgress: null, postureStats: null, posture: 'standing' })
+  useSoft.setState({ pressStatus: 'idle', pressMessage: '', pressProgress: null, pressResult: null, pressTiming: null, pressSite: null, postureStatus: 'idle', postureMessage: '', postureProgress: null, postureStats: null, posture: 'standing', pressBackend: null, postureBackend: null })
   void whenSoftHost(1).then((h) => (h.setSkinOffset(null), h.setSkinColors(null))).catch(() => {})
 }
 
@@ -374,7 +396,7 @@ export async function runPress(site: ResolvedSite & { triangle?: [number, number
   useSoft.setState({ pressStatus: 'preparing', pressMessage: '', pressProgress: null, pressResult: null, pressTiming: null, pressSite: formatSite(siteRefOf(site)) })
   writeUrl()
   try {
-    pressCh ??= openChannel()
+    pressCh ??= openChannel('press')
     const ch = await pressCh
     const probe = { ...st.probe }
     const target = st.control === 'force' ? { forceN: st.forceN } : { depthMm: st.depthMm }
@@ -472,7 +494,7 @@ async function runPosture(p: Posture): Promise<void> {
   }
   useSoft.setState({ postureStatus: 'preparing', postureMessage: '', postureProgress: null })
   try {
-    postureCh ??= openChannel()
+    postureCh ??= openChannel('posture')
     const ch = await postureCh
     await sendMeshes(ch, cageParts(partsLite()).map((x) => x.id))
     if (job !== postureJob) return

@@ -11,7 +11,7 @@
 //            the skin's displacement relative to standing.
 //
 // 消息 / Messages (main → worker)
-//   { type: 'init', body }                              人体：部件表、皮肤、绑定 / the body: part table, skin, rig
+//   { type: 'init', body, gpu? }                        人体：部件表、皮肤、绑定；gpu: false = 不用 GPU / the body: part table, skin, rig; gpu: false = no GPU
 //   { type: 'meshes', meshes }                          补充部件的静止几何 / rest geometry of more parts
 //   { type: 'press', id, site, probe, target }          一次按压 / one press
 //   { type: 'posture', id, posture }                    一个体位 / one posture
@@ -215,7 +215,7 @@ export interface PressSite {
 }
 
 export type Request =
-  | { type: 'init'; body: BodyPayload }
+  | { type: 'init'; body: BodyPayload; gpu?: boolean }
   | { type: 'meshes'; meshes: MeshPayload[] }
   | { type: 'press'; id: number; site: PressSite; probe: ProbeSpec; target: PressTarget }
   | { type: 'posture'; id: number; posture: Posture }
@@ -275,6 +275,8 @@ export interface PressTiming {
   msPerFrame: number
   nodes: number
   tets: number
+  /** 求解器在哪里跑（WebGPU 或 CPU）/ where the solver ran (WebGPU or CPU) */
+  backend: 'gpu' | 'cpu'
 }
 
 export interface PostureStats {
@@ -294,6 +296,9 @@ export interface PostureStats {
   supportForceN: number | null
   /** 这个体位是从缓存里取的 / served from the cache */
   cached: boolean
+  /** 求解器在哪里跑；GPU 时另记建 GPU 求解器（着色、缓冲区、管线）用的毫秒 / where the solver ran; with the GPU, the milliseconds spent building the GPU solver (colouring, buffers, pipelines) */
+  backend: 'gpu' | 'cpu'
+  gpuSetupMs: number
 }
 
 /**
@@ -310,7 +315,7 @@ export interface PatchUpdate {
 }
 
 export type Reply =
-  | { type: 'ready'; insideMs: number }
+  | { type: 'ready'; insideMs: number; backend: 'gpu' | 'cpu'; gpuReason?: string }
   | { type: 'progress'; id: number; stage: 'cage' | 'solve'; frames: number; elapsedMs: number; depthMm?: number; maxSpeed?: number; msPerFrame?: number; dent?: SparseOffsets; patch?: PatchUpdate; parts?: PartDent[] }
   | { type: 'press-done'; id: number; result: PressSummary; dent: SparseOffsets; patch?: PatchUpdate; parts: PartDent[]; timing: PressTiming }
   | { type: 'posture-done'; id: number; posture: Posture; offsets: Float32Array; parts: PartOffsets[]; stats: PostureStats }
@@ -335,7 +340,8 @@ export function checkRequest(m: unknown): Request {
       if (!b || (b.body !== 'male' && b.body !== 'female')) throw new Error('softbody worker: init.body.body 只能是 male 或 female / must be male or female')
       if (!Array.isArray(b.parts) || !b.skin || !(b.skin.positions instanceof Float32Array) || !(b.skin.indices instanceof Uint32Array)) throw new Error('softbody worker: init.body 需要 parts、skin.positions（Float32Array）、skin.indices（Uint32Array）/ needs parts, skin.positions (Float32Array), skin.indices (Uint32Array)')
       if (!b.rig || !(b.rigBin instanceof Uint8Array)) throw new Error('softbody worker: init.body 需要 rig 和 rigBin（Uint8Array）/ needs rig and rigBin (Uint8Array)')
-      return { type: 'init', body: b }
+      if (r.gpu !== undefined && typeof r.gpu !== 'boolean') throw new Error('softbody worker: init.gpu 必须是 true 或 false / must be true or false')
+      return { type: 'init', body: b, ...(r.gpu !== undefined ? { gpu: r.gpu as boolean } : {}) }
     }
     case 'meshes': {
       if (!Array.isArray(r.meshes) || !r.meshes.every((x: MeshPayload) => typeof x.id === 'string' && x.positions instanceof Float32Array && x.indices instanceof Uint32Array)) throw new Error('softbody worker: meshes 每项要有 id、positions（Float32Array）、indices（Uint32Array）/ every item needs id, positions (Float32Array), indices (Uint32Array)')
