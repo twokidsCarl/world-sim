@@ -1108,6 +1108,33 @@ export class SoftSolver {
     this.jcount = cnt
   }
 
+  /**
+   * GPU 求解器（src/softbody/gpu/）读的内部状态：先做完 prepare，再给出这些数组的引用（不复制，调用者不应写）。
+   * 这样 GPU 用的材料、参考质量、结点体积和逆质量与 CPU 参考逐位相同。
+   * The internal state the GPU solver (src/softbody/gpu/) reads: prepare is done first, then references to the arrays
+   * are returned (not copies; the caller must not write them). The GPU thus uses the very materials, reference
+   * qualities, nodal volumes and inverse masses of the CPU reference.
+   */
+  internals(): {
+    B: Float64Array; qual: Float64Array; restVolume: Float64Array; mu: Float64Array; lam: Float64Array; actScale: Float64Array
+    kappa: Float64Array | null; branchG: Float64Array | null; branchTau: Float64Array | null; viscous: Float64Array | null
+    fibre: Float64Array | null; fibreK: Float64Array | null; ogden: boolean; active: Uint32Array
+    ringStart: Uint32Array; ringTets: Uint32Array; ringVolume: Float64Array; ringK: Float64Array
+    invMass: Float64Array; nodalMultiplier: Float64Array; anchors: PointSet | null; anchorK: Float64Array | null
+    refPrev: Float64Array; rest: Float64Array
+  } {
+    this.prepare()
+    let og = false
+    if (this.ogdenMat) for (let e = 0; e < this.tetCount; e++) if (this.ogdenMat[e]! >= 0 && this.ogdenScale![e]! > 0) og = true
+    return {
+      B: this.B, qual: this.qual, restVolume: this.restVolume, mu: this.mu, lam: this.lam, actScale: this.actScale,
+      kappa: this.kappa, branchG: this.branchG, branchTau: this.branchTau, viscous: this.viscous, fibre: this.fibre, fibreK: this.fibreK, ogden: og, active: this.active,
+      ringStart: this.ringStart, ringTets: this.ringTets, ringVolume: this.ringVolume, ringK: this.ringK,
+      invMass: this.invMass, nodalMultiplier: this.nodalMultiplier, anchors: this.anchors, anchorK: this.anchorK,
+      refPrev: this.refPrev, rest: this.rest,
+    }
+  }
+
   /** 前进一帧（dt 秒）。 Advances one frame (dt seconds). */
   step(dt: number): void {
     this.prepare()

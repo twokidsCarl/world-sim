@@ -46,6 +46,19 @@ export function buildSiteFrom(file: MaterialsFile, body: Body, rig: Rig, rigBin:
   const r = buildCage(body, rig, rigBin, { cell, region, regionPin: cell, gravity: file.gravity, materials: solverMaterials(file), skinThickness: skinThickness(file), ...(o.inBody ? { inBody: o.inBody } : {}), ...(o.skinShare ? { skinShare: o.skinShare } : {}) })
   const soft = decodeSoft(r.json, r.bin)
   const t1 = performance.now()
+  const skin = body.meshes.get(soft.data.skin.part)!
+  const { domain, massScale } = siteDomain(file, soft, skin, site, outward, probeRadius, o)
+  return { soft, domain, stats: r.stats, region, ms: { cage: Math.round(t1 - t0), solver: Math.round(performance.now() - t1) }, massScale }
+}
+
+/**
+ * 由建好的细笼子组出 press() 的求解域（buildSiteFrom 的后半；GPU 的对照页面拿到的是笼子数据，从这里接着走）。
+ * Assembles press()'s domain from a fine cage already built (the second half of buildSiteFrom; the GPU comparison page
+ * receives the cage as data and continues from here).
+ */
+export function siteDomain(file: MaterialsFile, soft: LoadedSoft, skin: { positions: ArrayLike<number>; indices: ArrayLike<number> }, site: Vec3, outward: Vec3, probeRadius: number, o: SiteOptions = {}): { domain: PressDomain; massScale: number } {
+  const a = probeRadius
+  const { cell, extent: ext } = siteGeometry(a, o)
   const input = solverInput(soft, o.mix ?? {})
   const substeps = o.substeps ?? 8, h = 1 / 60 / substeps
   // 质量缩放（准静态）：按最硬的四面体定 / mass scaling (quasi-static), set by the stiffest tetrahedron
@@ -57,7 +70,6 @@ export function buildSiteFrom(file: MaterialsFile, body: Body, rig: Rig, rigBin:
   const scale = massScale(lam90, 1000, cell, h, 1.5)
   const density = Float32Array.from(input.density as ArrayLike<number>, (v) => v * scale)
   const solver = new SoftSolver({ ...input, density }, { substeps, damping: 15 / Math.sqrt(scale), gravity: [0, 0, 0], prestressGravity: null, ...(o.solver ?? {}) })
-  const skin = body.meshes.get(soft.data.skin.part)!
   const sp = surfaceSamples(skin.positions, skin.indices, site, 1.6 * a + cell, Math.min(cell / 3, a / 6))
   const embed = (positions: ArrayLike<number>): PointSet & { inside: Uint8Array } => embedPoints(soft.data.lattice, soft.slotTet, soft.nodes, soft.tets, positions)
   const inward: Vec3 = [-outward[0], -outward[1], -outward[2]]
@@ -81,5 +93,5 @@ export function buildSiteFrom(file: MaterialsFile, body: Body, rig: Rig, rigBin:
     }
   }
   const domain: PressDomain = { solver, cell, site, inward, samples: { points: embed(sp.positions), area: sp.area, positions: sp.positions }, embed, thickness }
-  return { soft, domain, stats: r.stats, region, ms: { cage: Math.round(t1 - t0), solver: Math.round(performance.now() - t1) }, massScale: scale }
+  return { domain, massScale: scale }
 }

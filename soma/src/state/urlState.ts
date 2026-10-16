@@ -80,6 +80,9 @@
 //   grav   supine | prone | left | right          体位；省略为站立。肌肉活动显示（src/activity/state.ts）和软组织物理共用，同样按"其他参数"保留
 //                                                 the posture; standing when omitted. Shared by the muscle-activity display (src/activity/state.ts)
 //                                                 and the soft-tissue physics, likewise kept as an "other parameter"
+//   pgpu   0                                      软组织物理不用 GPU（缺省有 WebGPU 就用；src/softbody/client.ts 读，按"其他参数"保留）
+//                                                 the soft-tissue physics does not use the GPU (by default it does when WebGPU is there;
+//                                                 read by src/softbody/client.ts, kept as an "other parameter")
 //   src    1                                      按来源着色 / colour by source
 //   cmp    ske                                    对照视图及其系统 / compare view and its system
 //

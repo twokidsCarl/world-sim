@@ -29,7 +29,7 @@
 //   by EDGE_COMPENSATION × cell; the coefficient is calibrated on the half-space solution, not derived, and the result
 //   says so.
 
-import { type PointSet, type SoftSolver, type Vec3 } from './solver.ts'
+import { type PointSet, type Probe, type SoftSolver, type Vec3 } from './solver.ts'
 
 export const EDGE_COMPENSATION = 0.25
 
@@ -47,8 +47,28 @@ export interface PressProbe {
 
 export type PressRequest = { depthMm: number } | { forceN: number }
 
-export interface PressDomain {
-  solver: SoftSolver
+/**
+ * press() 用到的求解器：SoftSolver（CPU 参考），或 GPU 求解器（src/softbody/gpu/）。后者的 step() 只排队，x、probeForce
+ * 要在 sync() 之后才是新的；pressSteps 在读它们之前让出，由 pressAsync 去 await sync()。
+ * The solver press() uses: SoftSolver (the CPU reference) or the GPU solver (src/softbody/gpu/). The latter's step()
+ * only queues and x and probeForce are current only after sync(); pressSteps yields before reading them and pressAsync
+ * awaits sync() there.
+ */
+export interface PressSolver {
+  readonly tets: Uint32Array
+  readonly x: Float64Array
+  readonly ref: Float64Array
+  probe: Probe | null
+  readonly probeForce: Vec3
+  probePointForce: Float32Array
+  step(dt: number): void
+  reset(): void
+  pointPosition(set: PointSet, i: number, out: number[]): void
+  sync?(): Promise<void>
+}
+
+export interface PressDomain<S extends PressSolver = SoftSolver> {
+  solver: S
   /** 单元边长，米 / cell edge, metres */
   cell: number
   /** 压入点（静止空间，皮肤上）和压入方向（单位向量，指向体内）/ the site (rest space, on the skin) and the pressing direction (unit, into the body) */
@@ -160,7 +180,33 @@ export function massScale(lambdaMax: number, density: number, cell: number, h: n
   return Math.max(1, (h * h * lambdaMax * (4 / 3)) / (density * cell * cell * ratio))
 }
 
-export function press(d: PressDomain, probe: PressProbe, request: PressRequest, o: PressOptions = {}): PressResult {
+/** 同步地走完一次按压（CPU 参考）。 Runs a press to the end synchronously (the CPU reference). */
+export function press(d: PressDomain<PressSolver>, probe: PressProbe, request: PressRequest, o: PressOptions = {}): PressResult {
+  const g = pressSteps(d, probe, request, o)
+  let r = g.next()
+  while (!r.done) r = g.next()
+  return r.value
+}
+
+/** 异步地走完一次按压：每次让出时等求解器 sync()（GPU）。 Runs a press to the end asynchronously: awaits the solver's sync() (GPU) at every yield. */
+export async function pressAsync(d: PressDomain<PressSolver>, probe: PressProbe, request: PressRequest, o: PressOptions = {}): Promise<PressResult> {
+  const g = pressSteps(d, probe, request, o)
+  let r = g.next()
+  while (!r.done) {
+    await d.solver.sync?.()
+    r = g.next()
+  }
+  return r.value
+}
+
+/**
+ * 按压的过程，写成生成器：在要读求解器状态（反力、位置）之前让出一次。同步驱动（press）不理会让出，所以与原来逐帧读力的写法
+ * 结果相同：力只在每 10 帧的比较和每级结束时用到。
+ * The press as a generator: it yields once before reading solver state (reaction, positions). The synchronous driver
+ * (press) ignores the yields, so the result equals the former frame-by-frame reading of the force: the force is used
+ * only at the comparison every 10 frames and at the end of each stage.
+ */
+export function* pressSteps(d: PressDomain<PressSolver>, probe: PressProbe, request: PressRequest, o: PressOptions = {}): Generator<void, PressResult, void> {
   const s = d.solver, a = probe.radiusMm * 1e-3
   const n = d.inward, site = d.site
   const flat = probe.kind === 'flat' || probe.kind === 'plate'
@@ -176,8 +222,8 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
   // 压头每帧最多前进 0.15 个单元：一步跨过一整个单元会把表层单元直接压翻
   // the probe advances at most 0.15 of a cell per frame: crossing a whole cell at one blow would turn the surface elements inside out
   let at = 0
-  const settle = (depth: number): number => {
-    let prev = -1, f = 0, ok = false
+  function* settle(depth: number): Generator<void, number, void> {
+    let prev = -1, f = 0, ok = false, fresh = false
     const pace = 0.15 * d.cell
     const ramp = Math.ceil(Math.abs(depth - at) / pace)
     for (let i = 1; i <= cap + ramp; i++) {
@@ -187,8 +233,18 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
       s.step(DT)
       frames++
       o.onFrame?.(frames, at)
-      f = force()
-      if (i > ramp && (i - ramp) % 10 === 0) {
+      fresh = false
+      // 让出时 GPU 读回位置，边算边显示的凹陷因此是新的；爬坡时也每 10 帧让出一次。CPU 不理会让出，结果不变。
+      // 不再更勤：worker 里读回一次要等一个来回，每 2 帧一次时平头压头从每帧 8 ms 慢到 48 ms
+      // at a yield the GPU reads positions back, so the dent shown while solving is fresh; during the ramp, too, every 10
+      // frames. The CPU ignores yields and its result is unchanged. Not more often: a read-back costs a round trip in the
+      // worker, and every 2 frames slowed the flat punch from 8 to 48 ms a frame
+      const check = i > ramp && (i - ramp) % 10 === 0
+      if (i <= ramp && i % 10 === 0) yield
+      if (check) {
+        yield
+        f = force()
+        fresh = true
         if (Math.abs(f - prev) <= tol * Math.max(1e-4, Math.abs(f))) {
           ok = true
           break
@@ -197,6 +253,11 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
       }
     }
     if (!ok) converged = false
+    // 最后一帧不是比较的那一帧时，这里读它的力 / when the last frame was not a comparison frame, its force is read here
+    if (!fresh) {
+      yield
+      f = force()
+    }
     return f
   }
   // ── 轴线上的位移和应变：应变 = −du/dz（u 是沿压入方向的位移，表面最大，向深处减小）
@@ -234,7 +295,7 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
   let stoppedBy: PressStop = null, gate: PressResult['gate'] = null
   if ('depthMm' in request) {
     depth = request.depthMm * 1e-3
-    f = settle(depth)
+    f = yield* settle(depth)
     if (!Number.isFinite(f)) {
       // 求解发散（压应变远超模型范围时会发生）：状态清零，结果带 not-finite 标记，后面的调用不受影响
       // the solve diverged (it can, far beyond the strain range of the model): the state is cleared, the result carries `not-finite`, and later calls are unaffected
@@ -248,7 +309,7 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
     const limit = (d.thickness ?? Infinity) * 0.85
     let d0 = 0, f0 = 0
     depth = Math.min(0.25 * a, 0.002)
-    f = settle(depth)
+    f = yield* settle(depth)
     for (let it = 0; it < 12 && Math.abs(f - target) > 0.01 * target; it++) {
       const slope = Math.max(1e-6, (f - f0) / (depth - d0))
       d0 = depth
@@ -259,7 +320,7 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
       next = Math.max(next, depth * 0.5)
       if (Math.abs(next - depth) < 1e-6) break
       depth = next
-      f = settle(depth)
+      f = yield* settle(depth)
       // 压溃 = 不是有限数、轴线应变超过上限，或者压得更深力反而掉了三成 / crushed = not finite, axial strain beyond the limit, or deeper with 30 % less force
       const why = (q: number, prev: number, deeper: boolean): PressResult['gate'] => (!Number.isFinite(q) ? 'not-finite' : axisPeak(axis()) > CRUSH ? 'strain' : deeper && q < 0.7 * prev ? 'force-drop' : null)
       const crushed = (q: number, prev: number, deeper: boolean): boolean => why(q, prev, deeper) !== null
@@ -275,14 +336,14 @@ export function press(d: PressDomain, probe: PressProbe, request: PressRequest, 
           const mid = (lo + hi) / 2
           s.reset()
           at = 0
-          const fm = settle(mid)
+          const fm = yield* settle(mid)
           if (crushed(fm, flo, true)) hi = mid
           else (lo = mid), (flo = fm)
         }
         s.reset()
         at = 0
         depth = lo
-        f = settle(depth)
+        f = yield* settle(depth)
         bottomed = true
         stoppedBy = 'strain-gate'
         break
