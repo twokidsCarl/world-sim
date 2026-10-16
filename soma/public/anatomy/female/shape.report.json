@@ -2,8 +2,8 @@
  "schema": 1,
  "body": "female",
  "inputs": {
-  "rig.json": "91c920721ea24ef2",
-  "rig.bin": "8489fc454f40883b",
+  "rig.json": "1fd703788bcd0950",
+  "rig.bin": "e3f6e02f0b0ccd67",
   "anatomy.json#parts": "8366f56fe86e0f19",
   "integumentary.glb": "b85a6c377ac0e884",
   "muscular.glb": "7f920ec10363dcb4",
@@ -598,13 +598,13 @@
     "worstMm": 29.9,
     "worstPart": "Left genioglossus",
     "depthP5Mm": 3.9,
-    "depthP50Mm": 35.6
+    "depthP50Mm": 35.7
    },
    "fat": {
     "sampled": 3060,
-    "outsidePct": 0.6,
+    "outsidePct": 0.4,
     "over2mmPct": 0.1,
-    "worstMm": 6.3
+    "worstMm": 6.4
    }
   },
   {
@@ -778,9 +778,9 @@
    },
    "fat": {
     "sampled": 3060,
-    "outsidePct": 2.1,
+    "outsidePct": 1.9,
     "over2mmPct": 0.4,
-    "worstMm": 3.9
+    "worstMm": 4.2
    }
   }
  ],

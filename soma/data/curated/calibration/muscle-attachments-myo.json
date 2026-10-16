@@ -27,9 +27,9 @@
  "ourState": {
   "male": {
    "anatomy.json": "53411643e427",
-   "rig.json": "a116fd9ee358",
-   "rig.bin": "d36d82938693",
-   "face.json": "5481f9f46433",
+   "rig.json": "c71751109a20",
+   "rig.bin": "8a45732cfadc",
+   "face.json": "7f57e5b90d94",
    "face.bin": "5bae4424d792",
    "muscular.glb": "67ee781f73e8",
    "skeletal.glb": "153a069e1df5",
@@ -37,9 +37,9 @@
   },
   "female": {
    "anatomy.json": "7bb6bb8270aa",
-   "rig.json": "91c920721ea2",
-   "rig.bin": "8489fc454f40",
-   "face.json": "b1786874c62d",
+   "rig.json": "1fd703788bcd",
+   "rig.bin": "e3f6e02f0b0c",
+   "face.json": "7741d7f94c2e",
    "face.bin": "e92fe3bdbe91",
    "muscular.glb": "7f920ec10363",
    "skeletal.glb": "368e1ca0d548",

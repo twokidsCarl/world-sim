@@ -437,6 +437,20 @@
           "en": "MHR has no rib joints, so chest skin hangs entirely on the thoracic vertebrae and stays put while the ribs rise in inspiration. Skin vertices within 20 mm of a rib hand all of their thoracic share to the rib weights of the distance field, fading to none at 50 mm."
         },
         "smooth": 6
+      },
+      "girdleSplit": {
+        "from": "^sc_([LR])$",
+        "among": "^(sc|ac)_{S}$",
+        "beta": 0.6,
+        "front": {
+          "joint": "gh_{S}",
+          "from": 0.0,
+          "to": 0.06
+        },
+        "why": {
+          "zh": "MHR 的“锁骨”关节（l_clavicle / r_clavicle）带着整个肩带绕胸锁关节转，本骨架把肩带分成胸锁关节（锁骨）和肩锁关节（肩胛骨，上回旋在这里）。原来这一份全给了胸锁关节，肩胛骨上和肩部的皮肤就不随肩胛骨上回旋：外展 90° 时三角肌、肩锁关节囊、腋神经的皮支和胸大肌从肩部和腋前的皮肤里穿出（男性每侧约 1200 个深部顶点在皮肤外）。这里把它按体内距离场在锁骨和肩胛骨之间重新分：靠近锁骨的随胸锁关节，盖在肩胛骨上的随肩锁关节。胸前的皮肤盖在锁骨、胸骨和胸大肌上（肩胛骨只有喙突在深处），所以在盂肱关节中心之前 0–6 cm 渐渐不分：全分时外展 160° 胸前皮肤随肩胛骨转，腋前襞折起约 6–10 cm²。",
+          "en": "MHR's \"clavicle\" joint (l_clavicle / r_clavicle) turns the whole girdle about the sternoclavicular joint; this rig splits the girdle into the sternoclavicular joint (clavicle) and the acromioclavicular joint (scapula, where the upward rotation is). All of that share used to go to the sternoclavicular joint, so the skin over the scapula and the shoulder did not follow the scapula's upward rotation: at 90° of abduction deltoid, the capsule of the acromioclavicular joint, the cutaneous branch of the axillary nerve and pectoralis major came through the skin of the shoulder and the front of the axilla (in the male about 1200 deep-part vertices per side outside the skin). Here it is split again between clavicle and scapula by the in-body distance field: skin near the clavicle follows the sternoclavicular joint, skin over the scapula the acromioclavicular joint. The skin of the front of the chest lies over clavicle, sternum and pectoralis major (of the scapula only the coracoid lies deep there), so the split fades out between 0 and 6 cm in front of the glenohumeral centre: split everywhere, the front of the chest turned with the scapula at 160° of abduction and the anterior fold folded over by about 6–10 cm²."
+        }
       }
     },
     {
@@ -602,6 +616,20 @@
           "en": "MHR has no rib joints, so chest skin hangs entirely on the thoracic vertebrae and stays put while the ribs rise in inspiration. Skin vertices within 20 mm of a rib hand all of their thoracic share to the rib weights of the distance field, fading to none at 50 mm."
         },
         "smooth": 6
+      },
+      "girdleSplit": {
+        "from": "^sc_([LR])$",
+        "among": "^(sc|ac)_{S}$",
+        "beta": 0.6,
+        "front": {
+          "joint": "gh_{S}",
+          "from": 0.0,
+          "to": 0.06
+        },
+        "why": {
+          "zh": "MHR 的“锁骨”关节（l_clavicle / r_clavicle）带着整个肩带绕胸锁关节转，本骨架把肩带分成胸锁关节（锁骨）和肩锁关节（肩胛骨，上回旋在这里）。原来这一份全给了胸锁关节，肩胛骨上和肩部的皮肤就不随肩胛骨上回旋：外展 90° 时三角肌、肩锁关节囊、腋神经的皮支和胸大肌从肩部和腋前的皮肤里穿出（男性每侧约 1200 个深部顶点在皮肤外）。这里把它按体内距离场在锁骨和肩胛骨之间重新分：靠近锁骨的随胸锁关节，盖在肩胛骨上的随肩锁关节。胸前的皮肤盖在锁骨、胸骨和胸大肌上（肩胛骨只有喙突在深处），所以在盂肱关节中心之前 0–6 cm 渐渐不分：全分时外展 160° 胸前皮肤随肩胛骨转，腋前襞折起约 6–10 cm²。",
+          "en": "MHR's \"clavicle\" joint (l_clavicle / r_clavicle) turns the whole girdle about the sternoclavicular joint; this rig splits the girdle into the sternoclavicular joint (clavicle) and the acromioclavicular joint (scapula, where the upward rotation is). All of that share used to go to the sternoclavicular joint, so the skin over the scapula and the shoulder did not follow the scapula's upward rotation: at 90° of abduction deltoid, the capsule of the acromioclavicular joint, the cutaneous branch of the axillary nerve and pectoralis major came through the skin of the shoulder and the front of the axilla (in the male about 1200 deep-part vertices per side outside the skin). Here it is split again between clavicle and scapula by the in-body distance field: skin near the clavicle follows the sternoclavicular joint, skin over the scapula the acromioclavicular joint. The skin of the front of the chest lies over clavicle, sternum and pectoralis major (of the scapula only the coracoid lies deep there), so the split fades out between 0 and 6 cm in front of the glenohumeral centre: split everywhere, the front of the chest turned with the scapula at 160° of abduction and the anterior fold folded over by about 6–10 cm²."
+        }
       }
     }
   ]

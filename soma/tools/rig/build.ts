@@ -14,6 +14,7 @@ import { type BuiltJoint, type JointExt, type JointFile, type Override, type Rom
 import { BYTES_PER_VERTEX } from './pose.ts'
 import { type ViaReportRow, VIA_FILE, placeVias, readViaFile } from './via.ts'
 import { bakeViaPush, withZeroPush } from './viapush.ts'
+import { type CorrectiveConfig, type CorrectiveReport, buildCorrectives } from './corrective.ts'
 import { openedSkinPackageDir, skinPackageDir } from '../pipeline/skinPackageDir.ts'
 
 export const CURATED = join(import.meta.dirname, '..', '..', 'data', 'curated', 'rig')
@@ -44,6 +45,8 @@ export interface BuildResult {
   inputs: Record<string, string>
   /** 膝周肌肉的经过点放在了哪里（tools/rig/via.ts）。 Where the via points of the muscles round the knee were placed (tools/rig/via.ts). */
   via: ViaReportRow[]
+  /** 姿势校正形（tools/rig/corrective.ts）。 The pose-corrective shapes (tools/rig/corrective.ts). */
+  correctives: CorrectiveReport[]
 }
 
 interface RomFile {
@@ -103,8 +106,8 @@ const CAUTIONS: { zh: string; en: string }[] = [
 ]
 
 const EXTERNAL_SKIN_CAUTION = {
-  zh: '皮肤采用 MHR 自带的蒙皮权重（手指除外），关节换成了本骨架的关节：胸部皮肤只随椎骨、不随肋骨，深吸气时肋骨和腹直肌会顶出皮肤；足趾皮肤只随跖趾关节；肩前屈超过约 120° 和深蹲时，腋部与腹股沟的皮肤仍被明显拉长，背阔肌、三角肌等深部结构会局部穿出皮肤（最深约 3–5 cm）。',
-  en: 'The skin uses MHR’s own skinning weights (except on the fingers) with this rig’s joints: chest skin follows the vertebrae, not the ribs, so in deep inspiration ribs and rectus abdominis come through it; toe skin follows the metatarsophalangeal joints only; beyond about 120° of shoulder flexion and in a deep squat the skin of the axilla and groin is still stretched markedly, and deep parts such as latissimus dorsi and deltoid come through the skin locally (by up to about 3–5 cm).',
+  zh: '皮肤采用 MHR 自带的蒙皮权重（手指除外），关节换成了本骨架的关节：胸部皮肤只随椎骨、不随肋骨，深吸气时肋骨和腹直肌会顶出皮肤；足趾皮肤只随跖趾关节；肩外展时腋窝和肩部的皮肤由姿势校正形（外展 90° 和 160° 两个关键姿势，按外展角插值）放松并盖住深部结构；关键姿势之间、以及肩前屈、旋转和深蹲时没有校正形，腋部与腹股沟的皮肤仍被明显拉长，深部结构可能局部穿出皮肤（前屈超过约 120° 时最深约 3–5 cm）。',
+  en: 'The skin uses MHR’s own skinning weights (except on the fingers) with this rig’s joints: chest skin follows the vertebrae, not the ribs, so in deep inspiration ribs and rectus abdominis come through it; toe skin follows the metatarsophalangeal joints only; in shoulder abduction the skin of the axilla and the shoulder is relaxed and drawn over the deep parts by pose-corrective shapes (two key poses, 90° and 160° of abduction, interpolated by the abduction angle); between the key poses, and in shoulder flexion, rotation and a deep squat, there are no corrective shapes, the skin of the axilla and groin is still stretched markedly and deep parts may come through it locally (by up to about 3–5 cm beyond about 120° of flexion).',
 }
 
 /**
@@ -121,7 +124,7 @@ export function withInstalledSkinPackages(rules: BindRules): BindRules {
   return { ...rules, externalWeights: ext }
 }
 
-export function loadCurated(bodyId: string): { defs: ReturnType<typeof expandJointDefs>; rom: Record<string, RomEntry>; rules: BindRules; overrides: Record<string, Override>; hashes: Record<string, string> } {
+export function loadCurated(bodyId: string): { defs: ReturnType<typeof expandJointDefs>; rom: Record<string, RomEntry>; rules: BindRules; overrides: Record<string, Override>; hashes: Record<string, string>; correctives: CorrectiveConfig | null } {
   const hashes: Record<string, string> = {}
   const read = <T>(name: string): T => {
     const text = readFileSync(join(CURATED, name), 'utf8')
@@ -132,13 +135,15 @@ export function loadCurated(bodyId: string): { defs: ReturnType<typeof expandJoi
   const rf = read<RomFile>('rom.json')
   const rules = withInstalledSkinPackages(read<BindRules>('bindings.json'))
   const ov = read<Record<string, Record<string, Override>>>('overrides.json')
+  // 姿势校正形（可选文件）/ the pose-corrective shapes (an optional file)
+  const correctives = existsSync(join(CURATED, 'correctives.json')) ? read<CorrectiveConfig>('correctives.json') : null
   const rom: Record<string, RomEntry> = {}
   for (const [k, e] of Object.entries(rf.entries)) {
     const src = rf.sources[e.source]
     if (!src) throw new Error(`rig: rom.json entry ${k} names unknown source ${e.source}`)
     rom[k] = { positive: e.positive, negative: e.negative, status: e.status, source: src }
   }
-  return { defs: expandJointDefs(jf), rom, rules, overrides: ov[bodyId] ?? {}, hashes }
+  return { defs: expandJointDefs(jf), rom, rules, overrides: ov[bodyId] ?? {}, hashes, correctives }
 }
 
 export interface BuildOptions {
@@ -195,7 +200,7 @@ export function buildRig(body: Body, log: (m: string) => void = () => {}, opts: 
   // rig.bin：按 anatomy.json 的部件顺序依次排放 / rig.bin: parts laid out in anatomy.json order
   let bytes = 0
   for (const p of res.parts) if (p.joint === undefined) bytes += (p.w!.length / 4) * BYTES_PER_VERTEX
-  const bin = new Uint8Array(bytes)
+  let bin = new Uint8Array(bytes)
   const dv = new DataView(bin.buffer)
   const bindings: RigBinding[] = []
   let off = 0
@@ -244,10 +249,28 @@ export function buildRig(body: Body, log: (m: string) => void = () => {}, opts: 
     if (p) (row.pushMaxMm = p.maxMm), (row.pushAtDeg = p.atDeg)
   }
   log(`via push: ${pushed.report.length} lines baked in ${Math.round(performance.now() - t3)} ms, largest ${Math.max(0, ...pushed.report.map((r) => r.maxMm))} mm`)
+  // 姿势校正形：在最终的权重和肌肉作用线上求，接在 rig.bin 各部件的块之后（tools/rig/corrective.ts）
+  // the pose-corrective shapes: solved on the final weights and lines of action, appended after the parts' blocks of rig.bin (tools/rig/corrective.ts)
+  let correctives: CorrectiveReport[] = []
+  if (cur.correctives && !opts.genericSkin) {
+    const t4 = performance.now()
+    const c = buildCorrectives(rig, bin, body, cur.correctives, log)
+    if (c.correctives.length) {
+      const base = bin.length
+      const grown = new Uint8Array(base + c.block.length)
+      grown.set(bin)
+      grown.set(c.block, base)
+      bin = grown
+      rig.correctives = c.correctives.map((e) => ({ ...e, offset: e.offset + base }))
+    }
+    correctives = c.report
+    log(`correctives: ${c.correctives.length} shapes, ${c.block.length} bytes in ${Math.round(performance.now() - t4)} ms`)
+  }
   return {
     rig, bin, built, skeleton, field, calibration, allLines, skinOpen: external.some((w) => w.byIndexFor), external: external.map((w) => ({ dir: w.dir, source: w.sourceName, vertices: w.vertexCount, mapping: w.mapped })), fieldStats: field.stats, bound: res.parts, attach: res.attach, byMethod: res.byMethod,
     notes: [...romNotes, ...res.notes, ...external.flatMap((w) => w.notes), ...built.flatMap((j) => j.warnings.map((w) => `${j.def.id}: ${w}`))],
     inputs: { ...body.inputs, ...cur.hashes, ...extHashes },
     via: placed.report,
+    correctives,
   }
 }

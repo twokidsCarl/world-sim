@@ -140,6 +140,12 @@ for (const bodyId of ['male', 'female'] as const) {
           for (let k = 0; k < 4; k++) if (bin[o + 8 + k]! > 0 && dv.getUint16(o + k * 2, true) >= rig.joints.length) throw new Error(`${b.part} vertex ${i}: joint index out of range`)
         }
       }
+      // 各部件的块之后只有姿势校正形（Rig.correctives），一个接一个，正好排到文件末尾
+      // after the parts' blocks come only the pose-corrective shapes (Rig.correctives), one after another, exactly to the end of the file
+      for (const c of [...(rig.correctives ?? [])].sort((x, y) => x.offset - y.offset)) {
+        expect(c.offset, `corrective ${c.part} ${c.joint}`).toBe(end)
+        end = c.offset + c.count * 4 * (1 + 3 * c.keys.length)
+      }
       expect(end).toBe(bin.length)
       if (report) expect(report.binBytes).toBe(bin.length)
     })

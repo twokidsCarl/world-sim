@@ -12,7 +12,7 @@
 
 import { BufferAttribute, BufferGeometry } from 'three/webgpu'
 import { MeshBVH } from 'three-mesh-bvh'
-import { Poser, type JointFrames } from '../../tools/rig/pose.ts'
+import { Poser, correctedNormals, correctiveOffsets, type JointFrames } from '../../tools/rig/pose.ts'
 import { jointFrames, packJoints, packMuscles, packVia, partJoints, posedBox, type LoadedRig, type Pose, type Scales } from '../anatomy/rig.ts'
 import type { PartBuffers } from './batches.ts'
 
@@ -62,6 +62,28 @@ export class PoseRuntime {
     // drop caches of older versions wholesale so memory does not grow with every pose
     this.posed.clear()
     return { joints: this.jointData, muscles: this.muscleData, via: this.viaData }
+  }
+
+  /**
+   * 某个部件在当前姿势下的姿势校正位移（静止空间；tools/rig/pose.ts 的 correctiveOffsets）；没有起作用的校正形时为 null。
+   * A part's pose-corrective displacement for the current pose (rest space; correctiveOffsets of tools/rig/pose.ts); null when none is active.
+   */
+  correctives(partId: string, vertexCount: number): Float32Array | null {
+    return correctiveOffsets(this.rig.rig, this.rig.bin, partId, vertexCount, this.frames.angles, this.rig.jointIndex)
+  }
+
+  /**
+   * 校正形动过的顶点按摆好姿势之后的形状重算法线，写回静止空间（tools/rig/pose.ts 的 correctedNormals）。offsets 是 correctives() 给的位移。
+   * Normals of the vertices a corrective moved, from the posed shape, written back in rest space (correctedNormals of tools/rig/pose.ts).
+   * `offsets` is what correctives() returned.
+   */
+  correctNormals(partId: string, offsets: Float32Array, positions: Float32Array, index: ArrayLike<number>, indexBase: number, normals: Float32Array): void {
+    const b = this.rig.bindingOf.get(partId)
+    if (!b || b.offset === undefined) return
+    const n = positions.length / 3
+    const mask = new Uint8Array(n)
+    for (let v = 0; v < n; v++) if (offsets[v * 3] !== 0 || offsets[v * 3 + 1] !== 0 || offsets[v * 3 + 2] !== 0) mask[v] = 1
+    correctedNormals(this.rig.bin, b.offset, positions, index, indexBase, this.poser.dqs, mask, normals)
   }
 
   /** 静止几何被改写（面部表情）之后调用：丢弃按旧几何算出的缓存 / Call after the rest geometry was rewritten (facial expression): drops caches computed from the old one. */
@@ -118,7 +140,9 @@ export class PoseRuntime {
     if (hit) return hit.positions
     const b = this.buffers(part)
     if (!b) return null
-    const positions = this.poser.part(b.id, b.buffers.position, 'dqs', { mode: 'tapered' })
+    // 姿势校正形已经由查看器写进静止缓冲（与表情、体型同一条路径），这里不再加一次
+    // the pose-corrective shapes are already written into the rest buffers by the viewer (the path of expression and shape), so they are not added again here
+    const positions = this.poser.part(b.id, b.buffers.position, 'dqs', { mode: 'tapered' }, false)
     this.posed.set(part, { version: this.version, positions, bvh: null })
     return positions
   }

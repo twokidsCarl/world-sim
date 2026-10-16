@@ -410,6 +410,8 @@ export class Viewer {
   private faceDisplaced = new Set<number>()
   /** 软组织物理给主皮肤的静止空间位移（null = 没有）/ the rest-space displacement the soft-tissue physics gives the main skin (null = none) */
   private softOffset: Float32Array | null = null
+  /** 当前显示姿势下主皮肤的姿势校正位移（Rig.correctives；null = 没有）/ the main skin's pose-corrective displacement for the displayed pose (Rig.correctives; null = none) */
+  private correctiveOffset: Float32Array | null = null
   /** 同样的位移，给其他部件（按部件下标）/ the same kind of displacement for other parts (by part index) */
   private softParts = new Map<number, Float32Array>()
   /** 按压凹陷的细分显示网格（src/viewer/dentPatch.ts）/ the subdivided display mesh of a press's dent (src/viewer/dentPatch.ts) */
@@ -897,6 +899,7 @@ export class Viewer {
     this.appliedShape = null
     this.appliedControls = null
     this.restDirty = new Set()
+    this.correctiveOffset = null
     this.boxOverride = new Map()
     this.faceDisplaced = new Set()
     this.faceAUs = {}
@@ -2355,6 +2358,9 @@ export class Viewer {
       this.skinning.update(d.joints, d.muscles, d.via)
       this.prewarmNext = 0
     }
+    // 姿势校正形：静止空间的位移，和表情、体型一起写进皮肤的静止缓冲（stepFace），着色器照常蒙皮；与 CPU 参考的 Poser.part 同一个函数
+    // the pose-corrective shapes: a rest-space displacement written into the skin's rest buffer together with expression and shape (stepFace), then skinned by the shader as usual; the same function as Poser.part of the CPU reference
+    this.updateCorrectives(rt && active ? rt : null)
     if (rt && activity) {
       const changed = activity.update(pose, rt.frames)
       this.skinning.updateBulge(activity.bulge)
@@ -2381,6 +2387,29 @@ export class Viewer {
       this.syncNeeded = true // 爆炸位移与可拾取几何随之切换 / explode offsets and pick geometry follow
     }
     this.dirty = true
+  }
+
+  /**
+   * 按当前显示的姿势重算主皮肤的姿势校正位移；变了就立刻重写静止缓冲，使它与这一帧的关节纹理一致。静止姿势下为 null，静止几何逐位不变。
+   * Recomputes the main skin's pose-corrective displacement for the displayed pose; when it changed the rest buffer is
+   * rewritten at once, so that it matches this frame's joint texture. Null at rest, so the rest geometry is unchanged bit for bit.
+   */
+  private updateCorrectives(rt: PoseRuntime | null): void {
+    const i = this.mainSkinIndex()
+    const id = i >= 0 ? this.inst[i]! : -1
+    const n = id >= 0 && this.batches ? this.batches.partBuffers(id).position.length / 3 : 0
+    const next = rt && n ? rt.correctives(this.graph.parts[i]!.id, n) : null
+    const prev = this.correctiveOffset
+    if (!next && !prev) return
+    if (next && prev && next.length === prev.length) {
+      let same = true
+      for (let k = 0; k < next.length && same; k++) if (next[k] !== prev[k]) same = false
+      if (same) return
+    }
+    this.correctiveOffset = next
+    if (i < 0) return
+    this.restDirty.add(i)
+    this.stepFace(performance.now())
   }
 
   /** 推进姿势过渡与呼吸动画；返回这一帧是否改了姿势 / Advance the pose transition and breathing; true when the pose changed this frame. */
@@ -2636,11 +2665,19 @@ export class Viewer {
       if (displaced) {
         // 位移改变了曲面的朝向：重算法线，明暗才对 / the displacement turns the surface: recompute normals so shading is right
         recomputeNormals(buf.position, buf.index, buf.indexBase, buf.normal)
-        this.boxOverride.set(i, boundsOf(buf.position))
-      } else {
-        buf.normal.set(orig.normal)
-        this.boxOverride.delete(i)
+      } else buf.normal.set(orig.normal)
+      // 姿势校正形（只给主皮肤，见 updateCorrectives）在法线之后加：它是摆好姿势之后的形状换回静止空间的差，在静止空间里看是皱的，
+      // 按它重算的法线不对；它动过的顶点的法线按摆好姿势之后的形状另算（PoseRuntime.correctNormals）
+      // the pose-corrective shapes (main skin only, see updateCorrectives) go on after the normals: they are the difference of a posed shape taken
+      // back to rest space and look crumpled in rest space, so normals recomputed from them would be wrong; the vertices they move get normals
+      // from the posed shape instead (PoseRuntime.correctNormals)
+      const corr = i === this.mainSkinIndex() && this.correctiveOffset && this.correctiveOffset.length === buf.position.length ? this.correctiveOffset : null
+      if (corr) {
+        for (let k = 0; k < corr.length; k++) buf.position[k] = buf.position[k]! + corr[k]!
+        this.poseRt?.correctNormals(this.graph.parts[i]!.id, corr, buf.position, buf.index, buf.indexBase, buf.normal)
       }
+      if (displaced || corr) this.boxOverride.set(i, boundsOf(buf.position))
+      else this.boxOverride.delete(i)
       batches.markPositions(id)
       // 建在旧几何上的 BVH 作废，下次拾取时按新几何重建 / the BVH on the old geometry is dropped and rebuilt on the next pick
       if (this.bvh[i]) {

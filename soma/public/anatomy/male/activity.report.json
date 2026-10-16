@@ -14,20 +14,20 @@
   "reproductive.glb": "7324ce8d9ce6ec20",
   "endocrine.glb": "e2b8ff856931a867",
   "lymphatic.glb": "af8ad72d72e9f60f",
-  "rig.json": "a116fd9ee35836e4",
-  "rig.bin": "d36d829386930de1",
+  "rig.json": "c71751109a20811d",
+  "rig.bin": "8a45732cfadcc85f",
   "shape.json": "f0557d65d5fdc56f",
   "data/curated/activity/params.json#data": "0435a0e6c29dd37b",
   "data/curated/activity/fibre-map.json#data": "2b7484fdeab115de",
-  "data/curated/calibration/muscle-curves-opensim.json#data": "f4b4e530a8110d96",
-  "data/curated/calibration/muscle-curves-myo.json#data": "e1806c5321b9761e",
+  "data/curated/calibration/muscle-curves-opensim.json#data": "949dd778966d1374",
+  "data/curated/calibration/muscle-curves-myo.json#data": "193084dc05ac1f6a",
   "data/curated/rig/opensim/gait2392_thelen2003muscle.osim": "3af1ca20aa87bc88",
   "data/curated/rig/opensim/arm26.osim": "e2224d0044eb393b",
   "data/curated/activity/segments-deleva.json#data": "acf3b7d05c2f1e5c"
  },
  "mass": {
   "bodyKg": 72.04,
-  "computedKg": 72.531,
+  "computedKg": 72.534,
   "normalisation": 0.993,
   "skinVolumeL": 70.258,
   "tissueVolumeL": {
@@ -46,9 +46,9 @@
   "regions": [
    {
     "region": "head",
-    "volumeL": 7.427,
+    "volumeL": 7.431,
     "densityKgM3": 1063,
-    "kg": 7.839,
+    "kg": 7.843,
     "fraction": 0.109,
     "deLevaFraction": 0.0694,
     "comAlong": null,
@@ -56,22 +56,22 @@
    },
    {
     "region": "trunk",
-    "volumeL": 34.735,
+    "volumeL": 34.421,
     "densityKgM3": 996,
-    "kg": 34.357,
-    "fraction": 0.477,
+    "kg": 34.044,
+    "fraction": 0.473,
     "deLevaFraction": 0.4346,
     "comAlong": null,
     "deLevaCom": null
    },
    {
     "region": "upperArm",
-    "volumeL": 1.995,
-    "densityKgM3": 1062,
-    "kg": 2.088,
-    "fraction": 0.029,
+    "volumeL": 2.151,
+    "densityKgM3": 1057,
+    "kg": 2.273,
+    "fraction": 0.032,
     "deLevaFraction": 0.0271,
-    "comAlong": 0.549,
+    "comAlong": 0.542,
     "deLevaCom": 0.5772
    },
    {

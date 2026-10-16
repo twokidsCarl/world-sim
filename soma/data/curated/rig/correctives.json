@@ -1,0 +1,46 @@
+{
+  "_doc": {
+    "zh": "姿势校正形（tools/rig/corrective.ts 构建，存在 rig.json 的 correctives 和 rig.bin 末尾）。每一组：驱动是某个关节自由度的有效角（这里是盂肱关节的外展角），关键姿势是上臂抬到给定胸肱角的姿势（tools/rig/postures.ts 的 raiseArm，肩带按肩肱节律），在每个关键姿势下把区域里的皮肤放松（拉长的边向静止长度收、位移场平滑、不比静止时更远离深层、盖住深部结构），与普通蒙皮之差换回静止空间存下来。运行时在关键角之间线性插值，加在蒙皮之前；驱动角 ≤ 0（静止姿势）时为零。solver 的各量是几何放松的参数，不是皮肤的力学常数。",
+    "en": "Pose-corrective shapes (built by tools/rig/corrective.ts, stored in rig.json's correctives and at the end of rig.bin). Each set: the driver is the effective angle of one joint dof (here the glenohumeral abduction), the key poses are the arm raised to given thoracohumeral angles (raiseArm of tools/rig/postures.ts, the girdle by the scapulohumeral rhythm); at each key pose the skin of the region is relaxed (stretched edges drawn towards their rest length, the displacement field smoothed, no farther from the deep layer than at rest, deep parts covered) and the difference from plain skinning is taken back to rest space and stored. At run time it is interpolated linearly between key angles and added before skinning; it is zero for a driver angle ≤ 0 (the rest pose). The solver's numbers are parameters of a geometric relaxation, not mechanical constants of skin."
+  },
+  "solver": {
+    "outer": 12,
+    "inner": 10,
+    "cover": 0.0015,
+    "lift": 0.004,
+    "smooth": 0.5,
+    "coverWeight": 30,
+    "liftWeight": 20
+  },
+  "sets": [
+    {
+      "id": "abduction",
+      "driver": {
+        "joint": "gh_{S}",
+        "axis": 1
+      },
+      "sides": [
+        "L",
+        "R"
+      ],
+      "keys": [
+        90,
+        160
+      ],
+      "plane": 0,
+      "region": {
+        "centre": [
+          0,
+          -0.07,
+          -0.01
+        ],
+        "inner": 0.12,
+        "outer": 0.2
+      },
+      "why": {
+        "zh": "肩外展时腋窝的皮肤：上臂和躯干之间的权重过渡很窄，抬臂把拉伸集中在腋前襞、腋后襞和腋窝顶的一条窄带里，同时三角肌、背阔肌、胸肌、皮下脂肪和浅层的神经血管从皮肤里穿出来。光改权重做不到两全：把过渡摊宽会让胸侧壁的皮肤随上臂转、离开身体好几厘米。所以在外展 90° 和 160° 两个关键姿势下把皮肤沿身体表面滑开、盖住深部结构，存成随外展角插值的校正形。",
+        "en": "The skin of the axilla in shoulder abduction: the weights pass from arm to trunk in a narrow band, raising the arm concentrates the stretch in a narrow strip along the anterior and posterior folds and the dome of the axilla, and at the same time deltoid, latissimus dorsi, the pectorals, the subcutaneous fat and superficial nerves and vessels come through the skin. Weights alone cannot do both: spreading the transition makes the skin of the lateral chest wall turn with the arm and leave the body by several centimetres. So at two key poses, 90° and 160° of abduction, the skin is slid along the body surface and over the deep parts, and stored as corrective shapes interpolated by the abduction angle."
+      }
+    }
+  ]
+}

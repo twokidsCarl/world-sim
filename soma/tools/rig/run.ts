@@ -88,6 +88,7 @@ if (import.meta.main) {
       via: build.via,
     },
     calibration: build.calibration,
+    correctives: build.correctives,
     externalSkin: build.external,
     fieldQueries: build.field.queryStats,
     attach: build.attach,

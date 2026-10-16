@@ -88,7 +88,7 @@ export const THORACIC = ['T12', 'T11', 'T10', 'T9', 'T8', 'T7', 'T6', 'T5', 'T4'
 export const CERVICAL = ['C7', 'C6', 'C5', 'C4', 'C3', 'C2', 'C1', 'skull']
 
 /** 上臂相对躯干抬高到给定角度（含肩肱节律）。 Arm raised against the trunk to the given angle (with scapulohumeral rhythm). */
-function raiseArm(b: PoseBuilder, side: 'L' | 'R', degrees: number, plane: 0 | 1): void {
+export function raiseArm(b: PoseBuilder, side: 'L' | 'R', degrees: number, plane: 0 | 1): void {
   const id = `gh_${side}`
   if (!b.has(id)) return
   // 闭环：解出盂肱关节角，使上臂长轴与铅垂线的夹角恰为给定值（静止时已有的外展在其中扣除）
