@@ -15,11 +15,13 @@ import type { AnatomyGraph } from '../anatomy/graph.ts'
 import { useApp } from '../state/store.ts'
 import { fetchJson } from '../anatomy/load.ts'
 import {
+  CANAL_ROUTE,
   ORIGIN_BOUNDED,
   ORIGIN_DERIVED,
   applyFilling,
   clamp01,
   closedVolume,
+  flyRoutes,
   formatLumenParams,
   isZeroDisplacement,
   originOf,
@@ -27,6 +29,7 @@ import {
   partFilling,
   segmentKey,
   type FillingEntry,
+  type FlyRoute,
   type OriginSummary,
   type V3,
 } from './core.ts'
@@ -58,11 +61,11 @@ export interface LumenData {
 export const FLY_SPEED = 0.03
 export const FLY_SPEEDS = [0.5, 1, 2, 4]
 /**
- * 漫游时的两条规则（界面和 README 里都写明）：消化道各段的充盈度至少取这个值（全局，不是只在相机附近）；
+ * 漫游时的两条规则（界面和 README 里都写明）：所飞路线上各段的充盈度至少取这个值（整条路线，不是只在相机附近）；
  * 仍然窄于这个半径的地方按圈心撑开到这个半径（只为看得见）。
- * The two rules of the fly-through (stated in the UI and the README): every segment of the canal is filled
- * to at least this much (globally, not just near the camera); and what is still narrower than this radius is
- * widened about its ring centres to this radius (only so that it can be seen).
+ * The two rules of the fly-through (stated in the UI and the README): every segment of the route flown is
+ * filled to at least this much (the whole route, not just near the camera); and what is still narrower than
+ * this radius is widened about its ring centres to this radius (only so that it can be seen).
  */
 export const FLY_MIN_FILL = 0.5
 export const FLY_MIN_RADIUS = 0.003
@@ -77,13 +80,17 @@ export interface LumenState {
   overrides: Record<string, number>
   /** 漫游：null 为关 / the fly-through: null = off */
   fly: { playing: boolean; speed: number; reverse: boolean } | null
-  /** 漫游从哪里开始（段名、部件 id 或毫米数），由查看器取走 / where the fly-through starts (segment key, part id or millimetres); consumed by the viewer */
+  /** 漫游从哪里开始（路线名、段名、部件 id 或毫米数），由查看器取走 / where the fly-through starts (route key, segment key, part id or millimetres); consumed by the viewer */
   flyStart: string | number | null
+  /** 所飞的路线（短名）；null 时由起点定（找不到就是消化道）/ the route flown (its key); null: decided by the start (the canal when nothing else matches) */
+  flyRoute: string | null
   /** 查看器报告的当前位置（米）、全长和所在的段 / reported by the viewer: position (metres), total length and the segment it is in */
   flyS: number
   flyTotal: number
   flySegment: string | null
   flyRadius: number
+  /** 相机在两段之间直线连过去的空隙里（数据里两段不相接）/ the camera is in a straight gap between two segments (they do not meet in the data) */
+  flyGap: boolean
   seek: { nonce: number; s: number }
   status: LumenStatus
   message: string
@@ -93,7 +100,7 @@ export interface LumenState {
   setMode(on: boolean): void
   setFill(g: number): void
   setOverride(part: string, f: number | null): void
-  startFly(at?: string | number): void
+  startFly(at?: string | number, route?: string | null): void
   stopFly(): void
   setFly(patch: Partial<{ playing: boolean; speed: number; reverse: boolean }>): void
   seekFly(s: number): void
@@ -110,8 +117,11 @@ if (typeof console !== 'undefined') for (const w of initial.warnings) console.wa
 
 function writeUrl(s: LumenState): void {
   if (!writeParam) return
-  // 播放时写起点（链接打开后从那里播），停住时写当前的毫米数 / while playing the start is written (a link plays from there); when held, the millimetres reached
-  const fly = s.fly ? { at: s.fly.playing && s.flyStart !== null ? s.flyStart : Math.round(s.flyS * 1000) } : null
+  // 播放时写起点（链接打开后从那里播），停住时写当前的毫米数；毫米数不在消化道上时带上路线名
+  // while playing the start is written (a link plays from there); when held, the millimetres reached; millimetres off the canal carry the route key
+  const route = s.flyRoute ?? undefined
+  const at = s.fly?.playing && s.flyStart !== null ? s.flyStart : Math.round(s.flyS * 1000)
+  const fly = s.fly ? (typeof at === 'number' ? { at, route } : { at }) : null
   // 主 store 里隔离的还是"只看消化道"设的那一组时，写 lumen=canal / lumen=canal while the main store still isolates the set the canal view put there
   const canal = s.canalPending || (canalSet !== null && useApp.getState().isolated === canalSet)
   const out = formatLumenParams({ mode: s.mode, canal, fill: s.fill, overrides: s.overrides, fly })
@@ -130,17 +140,19 @@ export const useLumen = create<LumenState>((set, get) => ({
   // 链接里是毫米数：停在那里；是段名：从那里播放 / a number of millimetres in the link holds there; a segment name plays from it
   fly: initial.params.fly ? { playing: typeof initial.params.fly.at !== 'number' || initial.params.fly.at === 0, speed: 1, reverse: false } : null,
   flyStart: initial.params.fly ? initial.params.fly.at : null,
+  flyRoute: initial.params.fly?.route ?? null,
   flyS: typeof initial.params.fly?.at === 'number' ? initial.params.fly.at / 1000 : 0,
   flyTotal: 0,
   flySegment: null,
   flyRadius: 0,
+  flyGap: false,
   seek: { nonce: 0, s: 0 },
   status: 'idle',
   message: '',
   data: null,
   geometryTick: 0,
   setMode: (mode) => {
-    set(mode ? { mode } : { mode, fly: null, flyStart: null })
+    set(mode ? { mode } : { mode, fly: null, flyStart: null, flyRoute: null })
     writeUrl(get())
   },
   setFill: (g) => {
@@ -154,21 +166,31 @@ export const useLumen = create<LumenState>((set, get) => ({
     set({ overrides })
     writeUrl(get())
   },
-  startFly: (at = 0) => {
-    // 数据已经到了而这副人体没有路径（女性现在如此）：不进漫游 / the data is here and this body has no path (the female at present): no fly-through
+  startFly: (at = 0, route = null) => {
+    // 数据已经到了而这副人体没有路径：不进漫游 / the data is here and this body has no path: no fly-through
     const st = get()
     if ((st.data && !st.data.path) || st.status === 'error') return
-    set((s) => ({ mode: true, fly: { playing: true, speed: s.fly?.speed ?? 1, reverse: false }, flyStart: at, seek: { nonce: s.seek.nonce + 1, s: -1 } }))
+    // 给了路线就在那条路线上；只给了毫米数时留在当前的路线上 / a given route is kept; bare millimetres stay on the current route
+    const r = route ?? (typeof at === 'number' ? st.flyRoute : null)
+    set((s) => ({ mode: true, fly: { playing: true, speed: s.fly?.speed ?? 1, reverse: false }, flyStart: at, flyRoute: r, seek: { nonce: s.seek.nonce + 1, s: -1 } }))
     writeUrl(get())
   },
   stopFly: () => {
-    set({ fly: null, flyStart: null })
+    set({ fly: null, flyStart: null, flyRoute: null })
     writeUrl(get())
   },
   setFly: (patch) => {
-    const fly = get().fly
+    const st = get()
+    const fly = st.fly
     if (!fly) return
-    set({ fly: { ...fly, ...patch } })
+    const next = { ...fly, ...patch }
+    // 在行进方向的尽头按"播放"：回到这一头重新开始（原来会立刻又停下）
+    // "play" at the far end in the direction of travel starts again from the near end (it used to stop again at once)
+    const atEnd = st.flyTotal > 0 && (next.reverse ? st.flyS <= FLY_END_EPS : st.flyS >= st.flyTotal - FLY_END_EPS)
+    if (patch.playing && !fly.playing && atEnd) {
+      const s = next.reverse ? st.flyTotal : 0
+      set({ fly: next, flyS: s, seek: { nonce: st.seek.nonce + 1, s } })
+    } else set({ fly: next })
     writeUrl(get())
   },
   seekFly: (s) => {
@@ -177,15 +199,27 @@ export const useLumen = create<LumenState>((set, get) => ({
   },
 }))
 
-/** 查看器每隔一会儿报告漫游的位置；到头时停下 / The viewer reports the fly-through position now and then; it stops at either end. */
-export function reportFly(s: number, total: number, segment: string | null, radius: number, ended: boolean): void {
+/** 离尽头不到这么远（米）算到头 / Closer than this (metres) to an end counts as at the end. */
+export const FLY_END_EPS = 0.0005
+
+/** 查看器每隔一会儿报告漫游的位置和所在的路线；到头时停下 / The viewer reports the fly-through position and route now and then; it stops at either end. */
+export function reportFly(s: number, total: number, segment: string | null, radius: number, ended: boolean, route: string | null = null, gap = false): void {
   const st = useLumen.getState()
   if (!st.fly) return
-  const patch: Partial<LumenState> = { flyS: s, flyTotal: total, flySegment: segment, flyRadius: radius }
+  const patch: Partial<LumenState> = { flyS: s, flyTotal: total, flySegment: segment, flyRadius: radius, flyGap: gap }
+  if (route !== null && route !== st.flyRoute) patch.flyRoute = route
   if (ended && st.fly.playing) patch.fly = { ...st.fly, playing: false }
   useLumen.setState(patch)
-  if (ended) writeUrl(useLumen.getState())
+  if (ended || patch.flyRoute !== undefined) writeUrl(useLumen.getState())
 }
+
+/** 这副人体能飞的路线（见 core 的 flyRoutes）/ The routes this body can fly (see flyRoutes in core). */
+export function routesOf(graph: AnatomyGraph, data: LumenData): FlyRoute[] {
+  const real = new Set(data.real)
+  return flyRoutes(data.path?.canal ?? [], (id) => !!graph.part(id) && (data.entries.has(id) || real.has(id)))
+}
+
+export { CANAL_ROUTE }
 
 /** 消化道：各段的腔和它们的壁（没有 lumen-path.json 时取消化系统里的腔和壁）/ The alimentary canal: its lumina and their walls (digestive lumina and walls when there is no lumen-path.json). */
 export function canalParts(graph: AnatomyGraph, data: LumenData): string[] {
@@ -223,9 +257,16 @@ export function lumenCandidates(graph: AnatomyGraph): string[] {
   return graph.parts.filter((p) => p.tissue === 'space' && !!p.composition?.length).map((p) => p.id)
 }
 
-/** 标本自己的腔：组织是 space、名字里有 lumen、没有充盈数据（女性的直肠腔、子宫阴道腔）/ The specimen's own lumina: tissue `space`, "lumen" in the name, no filling data (the female's rectal and uterovaginal lumina). */
-export function realLumina(graph: AnatomyGraph, entries: ReadonlyMap<string, FillingEntry> | null): string[] {
-  return graph.parts.filter((p) => p.tissue === 'space' && /\blumen\b/i.test(p.name) && !entries?.has(p.id)).map((p) => p.id)
+/**
+ * 标本自己的腔：组织是 space、没有充盈数据，名字里有 lumen，或者在 lumen-path.json 里列为一个腔（女性的子宫腔叫
+ * "Cavity of uterus"，名字里没有 lumen，原来因此不算腔，也就不在漫游路线上）。
+ * The specimen's own lumina: tissue `space`, no filling data, and "lumen" in the name or listed as a lumen in
+ * lumen-path.json (the female's uterine cavity is called "Cavity of uterus", without "lumen", and so used not
+ * to count as a lumen, nor to be on a fly-through route).
+ */
+export function realLumina(graph: AnatomyGraph, entries: ReadonlyMap<string, FillingEntry> | null, path: LumenPathFile | null = null): string[] {
+  const listed = new Set([...Object.keys(path?.walls ?? {}), ...(path?.canal ?? [])])
+  return graph.parts.filter((p) => p.tissue === 'space' && (/\blumen\b/i.test(p.name) || listed.has(p.id)) && !entries?.has(p.id)).map((p) => p.id)
 }
 
 let loading: { body: string; promise: Promise<LumenData | null> } | null = null
@@ -243,7 +284,7 @@ export function ensureLumenData(graph: AnatomyGraph, body: string, baseUrl: stri
     if (loading?.body === body) loading = null
     geometry.clear()
     // 没有路径就没有漫游（链接里带了 fly 也一样）/ no path, no fly-through (even when a link asked for one)
-    useLumen.setState(data?.path ? { data, status, message } : { data, status, message, fly: null, flyStart: null })
+    useLumen.setState(data?.path ? { data, status, message } : { data, status, message, fly: null, flyStart: null, flyRoute: null })
     writeUrl(useLumen.getState())
     return data
   }
@@ -271,7 +312,7 @@ export function ensureLumenData(graph: AnatomyGraph, body: string, baseUrl: stri
         entries.set(e.part, e)
         origin.set(e.part, originOf(part.composition))
       }
-      const real = realLumina(graph, entries)
+      const real = realLumina(graph, entries, path ?? null)
       for (const id of real) origin.set(id, { kind: ORIGIN_BOUNDED, constructionShare: 0 })
       const walls = new Set<string>()
       for (const [lumen, ids] of Object.entries(path?.walls ?? {})) if (entries.has(lumen)) for (const id of ids) if (graph.part(id)) walls.add(id)

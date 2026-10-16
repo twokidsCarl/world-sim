@@ -5,7 +5,7 @@
 import { useEffect } from 'react'
 import type { AnatomyGraph } from '../anatomy/graph.ts'
 import { LUMEN_COLOR } from '../lumen/colors.ts'
-import { FLY_SPEED, FLY_SPEEDS, registerLumenUrlWriter, syncLumenUrl, useLumen } from '../lumen/state.ts'
+import { CANAL_ROUTE, FLY_SPEED, FLY_SPEEDS, registerLumenUrlWriter, routesOf, syncLumenUrl, useLumen } from '../lumen/state.ts'
 import { FLY_RULE, LUMEN_FEMALE_NOTE, LUMEN_STATEMENT } from '../lumen/statements.ts'
 import { ORIGIN_BOUNDED, ORIGIN_CONSTRUCTION, ORIGIN_DERIVED, ORIGIN_MIXED } from '../lumen/core.ts'
 import { useApp } from '../state/store.ts'
@@ -31,6 +31,8 @@ export function LumenOverlay({ graph }: { graph: AnatomyGraph }) {
   const flyTotal = useLumen((s) => s.flyTotal)
   const flySegment = useLumen((s) => s.flySegment)
   const flyRadius = useLumen((s) => s.flyRadius)
+  const flyRoute = useLumen((s) => s.flyRoute)
+  const flyGap = useLumen((s) => s.flyGap)
   const embed = useApp((s) => s.embed)
   const isolated = useApp((s) => s.isolated)
   const lumen = useLumen.getState()
@@ -41,7 +43,16 @@ export function LumenOverlay({ graph }: { graph: AnatomyGraph }) {
   const none = !!data && data.derived.length === 0
   const seg = flySegment ? graph.part(flySegment) : undefined
   const segName = seg ? graph.partName(seg) : null
-  const canal = data?.path?.canal ?? []
+  const routes = data ? routesOf(graph, data) : []
+  const route = routes.find((r) => r.key === (flyRoute ?? CANAL_ROUTE)) ?? routes[0]
+  const segments = route?.parts ?? data?.path?.canal ?? []
+  const nameOf = (id: string): string => {
+    const p = graph.part(id)
+    return p ? graph.partName(p).primary : id
+  }
+  const routeTitle = (key: string, parts: readonly string[]): { zh: string; en: string } =>
+    key === CANAL_ROUTE ? { zh: '消化道：口 → 肛门', en: 'Alimentary canal: mouth to anus' } : { zh: parts.map(nameOf).join(' → '), en: parts.map((id) => graph.part(id)?.name ?? id).join(' → ') }
+  const diameter = flyRadius * 2000
   return (
     <>
       {!fly && (
@@ -77,17 +88,17 @@ export function LumenOverlay({ graph }: { graph: AnatomyGraph }) {
             <strong>{segName ? segName.primary : '内镜漫游'}</strong> <span className="en">{seg ? seg.name : 'Fly-through'}</span>
             <span className="mono">
               {flyTotal > 0 ? `${Math.round(flyS * 1000)} / ${Math.round(flyTotal * 1000)} mm` : status === 'error' ? '没有数据 no data' : '加载中… loading…'}
-              {flyRadius > 0 ? ` · ⌀ ${(flyRadius * 2000).toFixed(0)} mm` : ''}
+              {flyGap ? ' · 段间空隙 gap between segments' : flyRadius > 0 ? ` · ⌀ ${diameter < 10 ? diameter.toFixed(1) : diameter.toFixed(0)} mm` : ''}
             </span>
           </div>
-          <div className="lumen-fly-track" title="沿消化道的位置：各段的范围 / position along the canal, by segment">
+          <div className="lumen-fly-track" title="沿路线的位置（毫米）/ position along the route (mm)">
             <input type="range" min={0} max={Math.max(1, Math.round(flyTotal * 1000))} step={1} value={Math.round(flyS * 1000)} aria-label="漫游位置（毫米）/ fly-through position (mm)" onChange={(e) => lumen.seekFly(Number(e.target.value) / 1000)} />
           </div>
           <div className="lumen-fly-buttons">
             <button className={`tool-btn${fly.playing ? ' on' : ''}`} aria-pressed={fly.playing} onClick={() => lumen.setFly({ playing: !fly.playing })}>
               {fly.playing ? '暂停' : '播放'} <span className="en">{fly.playing ? 'Pause' : 'Play'}</span>
             </button>
-            <button className={`tool-btn${fly.reverse ? ' on' : ''}`} aria-pressed={fly.reverse} onClick={() => lumen.setFly({ reverse: !fly.reverse })} title="反向：从肛门往口走，朝行进方向看 / reverse: from anus towards the mouth, looking the way of travel">
+            <button className={`tool-btn${fly.reverse ? ' on' : ''}`} aria-pressed={fly.reverse} onClick={() => lumen.setFly({ reverse: !fly.reverse })} title="反向：朝路线的起点走（消化道是从肛门往口），朝行进方向看 / reverse: back towards the route's start (anus to mouth on the canal), looking the way of travel">
               反向 <span className="en">Reverse</span>
             </button>
             <select className="tool-btn" value={fly.speed} aria-label="速度 / speed" onChange={(e) => lumen.setFly({ speed: Number(e.target.value) })}>
@@ -97,15 +108,21 @@ export function LumenOverlay({ graph }: { graph: AnatomyGraph }) {
                 </option>
               ))}
             </select>
-            <select className="tool-btn" value={flySegment ?? ''} aria-label="跳到某一段 / jump to a segment" onChange={(e) => e.target.value && lumen.startFly(e.target.value)}>
-              {canal.map((id) => {
-                const p = graph.part(id)
-                return (
-                  <option key={id} value={id}>
-                    {p ? graph.partName(p).primary : id}
+            {routes.length > 1 && (
+              <select className="tool-btn" value={route?.key ?? ''} aria-label="路线 / route" title={route ? `${routeTitle(route.key, route.parts).zh} / ${routeTitle(route.key, route.parts).en}` : undefined} onChange={(e) => e.target.value && lumen.startFly(e.target.value, e.target.value)}>
+                {routes.map((r) => (
+                  <option key={r.key} value={r.key}>
+                    {routeTitle(r.key, r.parts).zh}
                   </option>
-                )
-              })}
+                ))}
+              </select>
+            )}
+            <select className="tool-btn" value={flySegment ?? ''} aria-label="跳到某一段 / jump to a segment" onChange={(e) => e.target.value && lumen.startFly(e.target.value, route?.key ?? null)}>
+              {segments.map((id) => (
+                <option key={id} value={id}>
+                  {nameOf(id)}
+                </option>
+              ))}
             </select>
             <button className="tool-btn" onClick={() => lumen.stopFly()}>
               退出 <span className="en">Leave</span>
