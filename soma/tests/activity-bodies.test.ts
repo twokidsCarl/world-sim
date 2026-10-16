@@ -21,9 +21,13 @@ const deleva = JSON.parse(readFileSync(join(ROOT, 'data/curated/activity/segment
  * Sanity cases known to fail, with the reason. A case listed here must fail in the way stated: once the model is
  * fixed this test breaks, as a reminder to take the entry off the list.
  */
-const EXPECTED_FAILURES: Record<string, { muscle: RegExp; reason: string }> = {
+const EXPECTED_FAILURES: Record<string, { muscle: RegExp; reason: string; bodies: string[] }> = {
   abduction90: {
     muscle: /supraspinatus/i,
+    // 男性的冈上肌在 2026-10 的肩部皮肤权重改动之后刚好过 0.5% 的门槛（皮肤的权重决定节段质量的切分），这里不再算作已知不通过，按普通的条件检验
+    // the male's supraspinatus just clears the 0.5 % threshold after the shoulder skin-weight change of 2026-10 (skin weights decide how segment
+    // masses are cut), so for him it is no longer a known failure and is checked by the ordinary conditions
+    bodies: ['female'],
     reason:
       'supraspinatus stays silent at 90° of abduction: its line of action is a straight line from the supraspinous fossa to the greater tubercle, which at 90° passes over the joint centre with almost no abduction moment arm (the real tendon wraps over the humeral head). The deltoid, which the model does load, carries the torque alone. The muscle is flagged `wrap` in activity.json.',
   },
@@ -94,7 +98,7 @@ for (const bodyId of ['male', 'female'] as const) {
     })
 
     for (const c of SANITY_CASES) {
-      const known = EXPECTED_FAILURES[c.id]
+      const known = EXPECTED_FAILURES[c.id]?.bodies.includes(bodyId) ? EXPECTED_FAILURES[c.id] : undefined
       it(`${known ? 'EXPECTED FAILURE — ' : ''}${c.id}: ${c.name.en}`, () => {
         const o = runCase(c, bodyId, model, data)
         // 力矩的符号在任何情况下都必须对 / the sign of the required torque must be right in any case

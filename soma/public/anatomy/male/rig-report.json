@@ -20,15 +20,16 @@
   "skin-source.u32": "b7407b92b37146fc",
   "data/curated/rig/joints.json#data": "4cf0339dc3e6948b",
   "data/curated/rig/rom.json#data": "70e54d91f6449e27",
-  "data/curated/rig/bindings.json#data": "d926f612debb3935",
+  "data/curated/rig/bindings.json#data": "2fcc8474648fb806",
   "data/curated/rig/overrides.json#data": "30eec83cd59b485a",
+  "data/curated/rig/correctives.json#data": "c3b2d976520c181e",
   "data/curated/rig/via.json#data": "069774741f4bab6d",
   "data/raw/bodyshape/out/male-skin-open/weights.bin": "ec709fb20d148a3c",
   "data/raw/bodyshape/out/male-skin-open/joints.json": "bb8935a85433c32e",
   "data/raw/bodyshape/out/male-skin-open/skin.obj": "3a73b3dccf48c1f8",
   "data/raw/bodyshape/out/male-skin-open/manifest.json#package": "21b32d11e24d8baf"
  },
- "binBytes": 12701664,
+ "binBytes": 12780960,
  "joints": [
   {
    "id": "pelvis",
@@ -3487,7 +3488,7 @@
   "labelledVoxels": 563926,
   "meanLabels": 8,
   "leaked": false,
-  "buildMs": 9801
+  "buildMs": 13586
  },
  "bindings": {
   "field": {
@@ -9746,6 +9747,52 @@
    "kept": true
   }
  ],
+ "correctives": [
+  {
+   "id": "abduction",
+   "side": "L",
+   "part": "FJ2810",
+   "vertices": 1417,
+   "keys": [
+    {
+     "degrees": 90,
+     "driverRad": 1.15688,
+     "maxMm": 24.2,
+     "meanMm": 6.6,
+     "stillOutside": 9
+    },
+    {
+     "degrees": 160,
+     "driverRad": 2.34797,
+     "maxMm": 44.8,
+     "meanMm": 12,
+     "stillOutside": 57
+    }
+   ]
+  },
+  {
+   "id": "abduction",
+   "side": "R",
+   "part": "FJ2810",
+   "vertices": 1415,
+   "keys": [
+    {
+     "degrees": 90,
+     "driverRad": 1.15608,
+     "maxMm": 25.4,
+     "meanMm": 6.7,
+     "stillOutside": 6
+    },
+    {
+     "degrees": 160,
+     "driverRad": 2.34758,
+     "maxMm": 41,
+     "meanMm": 12.2,
+     "stillOutside": 42
+    }
+   ]
+  }
+ ],
  "externalSkin": [
   {
    "dir": "data/raw/bodyshape/out/male-skin-open",
@@ -10675,8 +10722,8 @@
   }
  ],
  "fieldQueries": {
-  "direct": 4920272,
-  "tested": 234194,
+  "direct": 4923398,
+  "tested": 234316,
   "obstructed": 157506
  },
  "attach": [
@@ -34355,7 +34402,7 @@
   "tpip2_R \"flexion / extension\": the rest pose (-0.6° in the anatomical convention) lies outside the normal range −0…35°; range widened to include the rest pose",
   "tpip3_R \"flexion / extension\": the rest pose (-5.8° in the anatomical convention) lies outside the normal range −0…35°; range widened to include the rest pose",
   "tpip4_R \"flexion / extension\": the rest pose (-5.4° in the anatomical convention) lies outside the normal range −0…35°; range widened to include the rest pose",
-  "FJ2810 \"Skin\": bound with external weights from data/raw/bodyshape/out/male-skin-open, taken by package vertex index (skin-source.u32); 1261 chest vertices handed part of their thoracic weight to the ribs; 2456 vertices blended with distance-field weights (generic: ^(cmc1|mcp[1-5]|pip[2-5]|dip[2-5]|ip1)_[LR]$)",
+  "FJ2810 \"Skin\": bound with external weights from data/raw/bodyshape/out/male-skin-open, taken by package vertex index (skin-source.u32); 1261 chest vertices handed part of their thoracic weight to the ribs; 2456 vertices blended with distance-field weights (generic: ^(cmc1|mcp[1-5]|pip[2-5]|dip[2-5]|ip1)_[LR]$); on 3389 vertices the share of ^sc_([LR])$ was split again among ^(sc|ac)_{S}$ by the distance field",
   "19 lumen parts follow their walls (weights at the closest point of 123 wall parts; 16 lumina matched to wall parts by name, 3 to neighbouring parts; farthest lumen vertex from a wall surface 38.8 mm, in LUMEN_stomach)"
  ],
  "validation": {
@@ -35722,10 +35769,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 1.13,
-      "p999": 2.51,
-      "over2Pct": 0.2,
-      "max": 11,
+      "p99": 1.21,
+      "p999": 2.17,
+      "over2Pct": 0.14,
+      "max": 5.59,
       "worst": "Skin"
      },
      "bone": {
@@ -35764,9 +35811,9 @@
      "flippedPct": 0,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.21,
-     "maxEdgeStretch": 11,
-     "stretchedAreaCm2": 360.2
+     "minAreaRatio": 0.3,
+     "maxEdgeStretch": 5.59,
+     "stretchedAreaCm2": 240.5
     },
     "poke": null,
     "corridors": [
@@ -35939,9 +35986,9 @@
      },
      "skin": {
       "p99": 1.55,
-      "p999": 5.61,
-      "over2Pct": 0.71,
-      "max": 29.74,
+      "p999": 5.11,
+      "over2Pct": 0.64,
+      "max": 23.92,
       "worst": "Skin"
      },
      "bone": {
@@ -35980,9 +36027,9 @@
      "flippedPct": 0.1,
      "collapsedPct": 0,
      "selfInsidePct": 0.1,
-     "minAreaRatio": 0.02,
-     "maxEdgeStretch": 29.74,
-     "stretchedAreaCm2": 1417.2
+     "minAreaRatio": 0.06,
+     "maxEdgeStretch": 23.92,
+     "stretchedAreaCm2": 1257.4
     },
     "poke": null,
     "corridors": [
@@ -37764,7 +37811,7 @@
      "selfInsidePct": 0,
      "minAreaRatio": 0.07,
      "maxEdgeStretch": 5.1,
-     "stretchedAreaCm2": 28
+     "stretchedAreaCm2": 28.7
     },
     "poke": null,
     "corridors": [

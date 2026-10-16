@@ -24,10 +24,12 @@
 //   · 体型：可选的逐关节节段缩放（沿节段长轴 / 横截面），见 jointFrames。
 //     Body shape: an optional per-joint segment scale (along the segment axis / in cross-section), see jointFrames.
 //   · rig.bin：每个顶点 12 字节，小端：4 × uint16 关节下标（指向 Rig.joints），随后 4 × uint8 权重（和为 255）。
+//     各部件的块之后是可选的姿势校正形（Rig.correctives，见 src/anatomy/types.ts 的 RigCorrective）。
 //     rig.bin: 12 bytes per vertex, little-endian: 4 × uint16 joint indices (into Rig.joints) then
-//     4 × uint8 weights summing to 255.
+//     4 × uint8 weights summing to 255. After the parts' blocks come the optional pose-corrective shapes
+//     (Rig.correctives, see RigCorrective in src/anatomy/types.ts).
 
-import type { Joint, JointDof, MuscleLine, Rig, RigBinding } from '../../src/anatomy/types.ts'
+import type { Joint, JointDof, MuscleLine, Rig, RigBinding, RigCorrective } from '../../src/anatomy/types.ts'
 import { type DualQuat, type M3, type V3, type Xf, M3_ID, XF_ID, axisAngle, dqFromXf, m3mul, norm, rotateAbout, sub, xfApply, xfFromDq, xfMul } from './math.ts'
 import { VIA_SAMPLES, applyViaPush, hasVia, hasViaPush, musclePath, polylineLength, sectionInfluences, viaParams, viaPushAt, xfLookup } from './musclepath.ts'
 
@@ -247,6 +249,160 @@ export function skin(rest: Float32Array, bin: Uint8Array, offset: number, xfs: X
   return out
 }
 
+/**
+ * 一个顶点的对偶四元数混合变换（与 skin(…, 'dqs') 同一算法，不含体型）。校正形的构建用它把摆好姿势的位置换回静止空间。
+ * The dual-quaternion blended transform of one vertex (the same arithmetic as skin(…, 'dqs'), without body shape). The
+ * build of the corrective shapes uses it to take posed positions back to rest space.
+ */
+export function vertexBlend(bin: Uint8Array, offset: number, i: number, dqs: DualQuat[]): Xf {
+  const dv = new DataView(bin.buffer, bin.byteOffset, bin.byteLength)
+  const o = offset + i * BYTES_PER_VERTEX
+  const b = [0, 0, 0, 0, 0, 0, 0, 0]
+  let first: DualQuat | null = null
+  for (let k = 0; k < 4; k++) {
+    const w = bin[o + 8 + k]!
+    if (w === 0) continue
+    const q = dqs[dv.getUint16(o + k * 2, true)]!
+    if (!first) first = q
+    const s = (q[0] * first[0] + q[1] * first[1] + q[2] * first[2] + q[3] * first[3] < 0 ? -w : w) / 255
+    for (let c = 0; c < 8; c++) b[c] = b[c]! + s * q[c]!
+  }
+  return xfFromDq(b)
+}
+
+// ── 姿势校正形 / pose-corrective shapes ─────────────────────────────────────────────────────────
+
+/**
+ * 校正形各关键形状的权重：驱动角 a ≤ 0 时全为 0；0 < a < keys[0] 时第一个为 a / keys[0]；关键角之间线性；超过最后一个时最后一个为 1。
+ * The weights of a corrective's key shapes: all 0 for a driver angle a ≤ 0; the first is a / keys[0] for 0 < a < keys[0];
+ * linear between key angles; the last is 1 beyond the last key.
+ */
+export function correctiveWeights(keys: readonly number[], a: number): number[] {
+  const w = keys.map(() => 0)
+  if (!(a > 0) || !keys.length) return w
+  if (a < keys[0]!) {
+    w[0] = a / keys[0]!
+    return w
+  }
+  for (let j = 0; j + 1 < keys.length; j++) {
+    if (a < keys[j + 1]!) {
+      const t = (a - keys[j]!) / (keys[j + 1]! - keys[j]!)
+      w[j] = 1 - t
+      w[j + 1] = t
+      return w
+    }
+  }
+  w[keys.length - 1] = 1
+  return w
+}
+
+/** 解开的校正形数据（按 rig.bin 缓存）/ Decoded corrective data (cached per rig.bin). */
+const correctiveCache = new WeakMap<Uint8Array, Map<RigCorrective, { index: Uint32Array; shapes: Float32Array[] }>>()
+
+/** 读出一个校正形的顶点下标和各关键形状 / Reads a corrective's vertex indices and key shapes. */
+export function correctiveData(c: RigCorrective, bin: Uint8Array): { index: Uint32Array; shapes: Float32Array[] } {
+  let m = correctiveCache.get(bin)
+  if (!m) correctiveCache.set(bin, (m = new Map()))
+  const hit = m.get(c)
+  if (hit) return hit
+  const dv = new DataView(bin.buffer, bin.byteOffset, bin.byteLength)
+  const index = new Uint32Array(c.count)
+  for (let k = 0; k < c.count; k++) index[k] = dv.getUint32(c.offset + k * 4, true)
+  const shapes = c.keys.map((_, j) => {
+    const a = new Float32Array(c.count * 3)
+    const o = c.offset + c.count * 4 + j * c.count * 12
+    for (let k = 0; k < c.count * 3; k++) a[k] = dv.getFloat32(o + k * 4, true)
+    return a
+  })
+  const out = { index, shapes }
+  m.set(c, out)
+  return out
+}
+
+/**
+ * 一个部件在给定有效角（jointFrames 的 angles）下的校正位移（静止空间，扁平 xyz，长度 = 顶点数 × 3）；没有起作用的校正形时为 null。
+ * 静止姿势下所有驱动角为 0，于是返回 null：静止几何不被触动。
+ * The corrective displacement of a part for the given effective angles (`angles` of jointFrames), rest space, flat xyz of
+ * length vertex count × 3; null when no corrective is active. At rest every driver angle is 0, so null comes back and the
+ * rest geometry is not touched.
+ */
+export function correctiveOffsets(rig: Rig, bin: Uint8Array, partId: string, vertexCount: number, angles: number[][], jointIndex: ReadonlyMap<string, number>): Float32Array | null {
+  let out: Float32Array | null = null
+  for (const c of rig.correctives ?? []) {
+    if (c.part !== partId) continue
+    const ji = jointIndex.get(c.joint)
+    if (ji === undefined) continue
+    const w = correctiveWeights(c.keys, angles[ji]?.[c.dof] ?? 0)
+    if (w.every((x) => x === 0)) continue
+    const { index, shapes } = correctiveData(c, bin)
+    out ??= new Float32Array(vertexCount * 3)
+    for (let j = 0; j < shapes.length; j++) {
+      const wj = w[j]!
+      if (wj === 0) continue
+      const d = shapes[j]!
+      for (let k = 0; k < index.length; k++) {
+        const v = index[k]!
+        if (v >= vertexCount) continue
+        out[v * 3] = out[v * 3]! + wj * d[k * 3]!
+        out[v * 3 + 1] = out[v * 3 + 1]! + wj * d[k * 3 + 1]!
+        out[v * 3 + 2] = out[v * 3 + 2]! + wj * d[k * 3 + 2]!
+      }
+    }
+  }
+  return out
+}
+
+/**
+ * 加了校正形的顶点的法线（静止空间）：按摆好姿势之后的形状算面积加权法线，再用各顶点自己的混合转动转回静止空间，
+ * 这样着色器照常转动法线之后正好是摆好姿势的形状的法线。只改 mask 标出的顶点；index 是部件内的三角形下标，base 是它的偏移。
+ * 校正形在静止空间里看是皱的，按静止空间的位置重算的法线不对；不重算、照用原来的法线，又与摆好姿势之后的形状不符。
+ * Normals (rest space) of the vertices a corrective moves: area-weighted normals of the posed shape, turned back to rest space by
+ * each vertex's own blended rotation, so that the shader's usual turn of the normal gives exactly the posed shape's normal. Only
+ * the vertices marked in `mask` change; `index` holds triangle indices with offset `base`. The corrective looks crumpled in rest
+ * space, so normals recomputed from rest positions are wrong, and the original normals do not match the posed shape either.
+ */
+export function correctedNormals(bin: Uint8Array, offset: number, rest: ArrayLike<number>, index: ArrayLike<number>, base: number, dqs: DualQuat[], mask: Uint8Array, normals: Float32Array): void {
+  const n = mask.length
+  const xf = new Map<number, Xf>()
+  const posed = new Map<number, V3>()
+  const at = (v: number): V3 => {
+    let p = posed.get(v)
+    if (!p) {
+      const m = vertexBlend(bin, offset, v, dqs)
+      xf.set(v, m)
+      p = xfApply(m, [rest[v * 3]!, rest[v * 3 + 1]!, rest[v * 3 + 2]!])
+      posed.set(v, p)
+    }
+    return p
+  }
+  const acc = new Float64Array(n * 3)
+  for (let t = 0; t + 2 < index.length; t += 3) {
+    const a = index[t]! - base, b = index[t + 1]! - base, c = index[t + 2]! - base
+    if (!(mask[a] || mask[b] || mask[c])) continue
+    const A = at(a), B = at(b), C = at(c)
+    const ux = B[0] - A[0], uy = B[1] - A[1], uz = B[2] - A[2], vx = C[0] - A[0], vy = C[1] - A[1], vz = C[2] - A[2]
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx
+    for (const q of [a, b, c]) {
+      if (!mask[q]) continue
+      acc[q * 3] = acc[q * 3]! + nx
+      acc[q * 3 + 1] = acc[q * 3 + 1]! + ny
+      acc[q * 3 + 2] = acc[q * 3 + 2]! + nz
+    }
+  }
+  for (let v = 0; v < n; v++) {
+    if (!mask[v]) continue
+    const l = Math.hypot(acc[v * 3]!, acc[v * 3 + 1]!, acc[v * 3 + 2]!)
+    const m = xf.get(v)
+    if (!(l > 0) || !m) continue
+    const x = acc[v * 3]! / l, y = acc[v * 3 + 1]! / l, z = acc[v * 3 + 2]! / l
+    const r = m.r
+    // Rᵀ·n
+    normals[v * 3] = r[0] * x + r[3] * y + r[6] * z
+    normals[v * 3 + 1] = r[1] * x + r[4] * y + r[7] * z
+    normals[v * 3 + 2] = r[2] * x + r[5] * y + r[8] * z
+  }
+}
+
 /** 刚体部件：所有顶点跟随同一个关节。 Rigid part: every vertex follows one joint. */
 export function transformRigid(rest: Float32Array, xf: Xf): Float32Array {
   const out = new Float32Array(rest.length)
@@ -427,12 +583,23 @@ export class Poser {
   }
 
   /**
-   * 部件变形后的顶点位置。`rest` 是该部件从 GLB 解码出的顶点（米）。
-   * Deformed positions of a part. `rest` are the part's vertices as decoded from its GLB (metres).
+   * 部件变形后的顶点位置。`rest` 是该部件从 GLB 解码出的顶点（米）。`correct`：是否加上姿势校正形（缺省加）。
+   * Deformed positions of a part. `rest` are the part's vertices as decoded from its GLB (metres). `correct`: whether the
+   * pose-corrective shapes are added (by default they are).
    */
-  part(partId: string, rest: Float32Array, mode: BlendMode = 'dqs', volume: VolumeOptions | false = { mode: 'uniform' }): Float32Array {
+  part(partId: string, rest: Float32Array, mode: BlendMode = 'dqs', volume: VolumeOptions | false = { mode: 'uniform' }, correct = true): Float32Array {
     const b = this.bindingOf.get(partId)
     if (!b) return Float32Array.from(rest)
+    // 姿势校正形加在蒙皮之前（静止姿势下没有，静止几何逐位不变）；调用方已经把它加进 rest 时传 correct = false
+    // pose-corrective shapes go on before skinning (none at rest, so the rest geometry is unchanged bit for bit); pass correct = false when the caller has already added them into `rest`
+    if (correct && this.rig.correctives?.length) {
+      const off = correctiveOffsets(this.rig, this.bin, partId, rest.length / 3, this.angles, this.jointIndex)
+      if (off) {
+        const r = new Float32Array(rest.length)
+        for (let i = 0; i < r.length; i++) r[i] = rest[i]! + off[i]!
+        rest = r
+      }
+    }
     const line = this.lineOf.get(partId)
     // 有经过点（及 viaPush）：按横截面蒙皮，体积修正，再推出骨面（tools/rig/musclepath.ts）
     // with via points (and viaPush): skinned by cross-section, volume-corrected, then pushed out of the bone (tools/rig/musclepath.ts)

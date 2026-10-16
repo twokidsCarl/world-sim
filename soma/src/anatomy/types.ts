@@ -387,6 +387,31 @@ export interface ShapeParam {
   rest: number
 }
 
+/**
+ * 姿势校正形：某个部件的一组顶点在静止空间里的位移，按一个关节自由度的有效角（弧度）在关键角之间插值，加在蒙皮之前
+ * （tools/rig/corrective.ts 构建，tools/rig/pose.ts 的 correctiveOffsets 求值）。角 ≤ 0 时为零（静止姿势逐位不变），
+ * 0 到 keys[0] 之间线性升到第一个形状，关键角之间线性插值，超过最后一个关键角保持最后一个形状。
+ * rig.bin 里 offset 处：count 个 uint32 顶点下标（部件网格的 GLB 解码次序，升序），接着 keys.length 组、每组 count × 3 个
+ * float32 位移（米），都是小端。
+ * A pose-corrective shape: rest-space displacements of a set of a part's vertices, interpolated between key angles by the
+ * effective angle (radians) of one joint dof and added before skinning (built by tools/rig/corrective.ts, evaluated by
+ * correctiveOffsets in tools/rig/pose.ts). Zero for angles ≤ 0 (the rest pose is unchanged bit for bit), rising linearly
+ * to the first shape between 0 and keys[0], linear between key angles, and held at the last shape beyond the last key.
+ * In rig.bin at `offset`: `count` uint32 vertex indices (GLB decode order of the part's mesh, ascending), then
+ * keys.length groups of count × 3 float32 displacements (metres), all little-endian.
+ */
+export interface RigCorrective {
+  part: string
+  /** 驱动的关节和自由度（Joint.dofs 的下标）/ The driving joint and dof (index into Joint.dofs). */
+  joint: string
+  dof: number
+  /** 关键角（弧度，正、递增）/ Key angles (radians, positive, increasing). */
+  keys: number[]
+  offset: number
+  count: number
+  why?: { zh: string; en: string }
+}
+
 export interface Rig {
   joints: Joint[]
   bindings: RigBinding[]
@@ -395,4 +420,9 @@ export interface Rig {
   shape?: ShapeParam[]
   /** What the rig does not model, for display. */
   cautions: { zh: string; en: string }[]
+  /**
+   * 姿势校正形（可选）；缺省 = 没有（与没有这个字段之前完全相同）。
+   * Pose-corrective shapes (optional); absent = none (exactly as before this field existed).
+   */
+  correctives?: RigCorrective[]
 }

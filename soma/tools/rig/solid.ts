@@ -172,6 +172,15 @@ export class Surface {
   distance(x: number, y: number, z: number): number {
     return this.bvh.closestPointToPoint(this.q.set(x, y, z), this.hit as never)!.distance
   }
+  /** 最近点、它所在的三角形（合并后的下标）和距离 / The nearest point, its triangle (merged index) and the distance. */
+  nearestFace(x: number, y: number, z: number): { point: V3; face: number; distance: number } {
+    const h = this.bvh.closestPointToPoint(this.q.set(x, y, z), this.hit as never)!
+    return { point: [h.point.x, h.point.y, h.point.z], face: h.faceIndex, distance: h.distance }
+  }
+  /** 三角形的三个顶点（合并后的下标；BVH 会重排三角形，所以要从这里取）/ The three vertices of a triangle (merged indices; the BVH reorders the triangles, so take them from here). */
+  faceVerts(face: number): [number, number, number] {
+    return [this.idx[face * 3]!, this.idx[face * 3 + 1]!, this.idx[face * 3 + 2]!]
+  }
   /** 最近点（米）/ The nearest point (m). */
   nearest(x: number, y: number, z: number): V3 {
     const h = this.bvh.closestPointToPoint(this.q.set(x, y, z), this.hit as never)!
@@ -184,5 +193,116 @@ export class Surface {
     let s = 0
     for (const i of [this.idx[t]!, this.idx[t + 1]!, this.idx[t + 2]!]) s += (x - h.point.x) * n[i * 3]! + (y - h.point.y) * n[i * 3 + 1]! + (z - h.point.z) * n[i * 3 + 2]!
     return s > 0 ? h.distance : -h.distance
+  }
+}
+
+/**
+ * 广义环绕数（Jacobson 等 2013），按 Barill 等 2018 的做法加速：三角形放进一棵包围层次，远处的结点用一阶（偶极子）近似。
+ * 对有开口、或者自身相交的网格（摆好姿势的皮肤在腋窝和口、睑处）仍然稳妥：里面约为 1，外面约为 0，叠了两层的地方约为 2。
+ * 网格的法线朝外时里面为正；构造时不检查朝向，调用方可以在一个已知的内点上核对符号。
+ * The generalised winding number (Jacobson et al. 2013), sped up as Barill et al. 2018 do: triangles go into a bounding
+ * hierarchy and far nodes use a first-order (dipole) approximation. It stays sound for meshes with openings or
+ * self-intersections (the posed skin round the axilla and at the mouth and eyelids): about 1 inside, about 0 outside, about
+ * 2 where two layers overlap. With outward normals the inside is positive; the orientation is not checked here, a caller
+ * may check the sign at a known interior point.
+ */
+export class Winding {
+  private readonly p: Float64Array
+  private readonly tri: Uint32Array
+  /** 结点：[开始, 结束, 左, 右]（叶子的左右为 -1）/ nodes: [start, end, left, right] (-1 children for a leaf) */
+  private readonly nodes: number[] = []
+  /** 结点的面积向量之和、面积加权中心、半径 / per node: sum of area vectors, area-weighted centre, radius */
+  private readonly nA: number[] = []
+  private readonly nC: number[] = []
+  private readonly nR: number[] = []
+  /** 三角形在叶子里的次序 / the order of the triangles within the leaves */
+  private readonly order: Uint32Array
+  /** 远场判据：距离大于 beta × 半径时用近似 / far-field test: the approximation is used beyond beta × radius */
+  constructor(positions: ArrayLike<number>, indices: ArrayLike<number>, readonly beta = 2.3) {
+    this.p = Float64Array.from(positions)
+    const nt = indices.length / 3
+    this.tri = Uint32Array.from(indices)
+    const order = Array.from({ length: nt }, (_, i) => i)
+    const cen = new Float64Array(nt * 3)
+    const p = this.p, ix = this.tri
+    for (let t = 0; t < nt; t++) for (let c = 0; c < 3; c++) cen[t * 3 + c] = (p[ix[t * 3]! * 3 + c]! + p[ix[t * 3 + 1]! * 3 + c]! + p[ix[t * 3 + 2]! * 3 + c]!) / 3
+    const build = (s: number, e: number): number => {
+      const id = this.nodes.length / 4
+      this.nodes.push(s, e, -1, -1)
+      // 面积向量与中心 / area vectors and the centre
+      let ax = 0, ay = 0, az = 0, wx = 0, wy = 0, wz = 0, ws = 0
+      const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity]
+      for (let k = s; k < e; k++) {
+        const t = order[k]!
+        const a = ix[t * 3]! * 3, b = ix[t * 3 + 1]! * 3, c = ix[t * 3 + 2]! * 3
+        const ux = p[b]! - p[a]!, uy = p[b + 1]! - p[a + 1]!, uz = p[b + 2]! - p[a + 2]!
+        const vx = p[c]! - p[a]!, vy = p[c + 1]! - p[a + 1]!, vz = p[c + 2]! - p[a + 2]!
+        const nx = (uy * vz - uz * vy) / 2, ny = (uz * vx - ux * vz) / 2, nz = (ux * vy - uy * vx) / 2
+        ax += nx, ay += ny, az += nz
+        const w = Math.hypot(nx, ny, nz)
+        wx += w * cen[t * 3]!, wy += w * cen[t * 3 + 1]!, wz += w * cen[t * 3 + 2]!, ws += w
+        for (const q of [a, b, c]) for (let d = 0; d < 3; d++) (lo[d] = Math.min(lo[d]!, p[q + d]!)), (hi[d] = Math.max(hi[d]!, p[q + d]!))
+      }
+      const C = ws > 0 ? [wx / ws, wy / ws, wz / ws] : [(lo[0]! + hi[0]!) / 2, (lo[1]! + hi[1]!) / 2, (lo[2]! + hi[2]!) / 2]
+      let r = 0
+      for (let k = s; k < e; k++) {
+        const t = order[k]!
+        for (let q = 0; q < 3; q++) {
+          const v = ix[t * 3 + q]! * 3
+          r = Math.max(r, Math.hypot(p[v]! - C[0]!, p[v + 1]! - C[1]!, p[v + 2]! - C[2]!))
+        }
+      }
+      this.nA.push(ax, ay, az)
+      this.nC.push(C[0]!, C[1]!, C[2]!)
+      this.nR.push(r)
+      if (e - s > 8) {
+        // 沿最长的轴按中心的中位数分开 / split at the median centre along the longest axis
+        const ext = [hi[0]! - lo[0]!, hi[1]! - lo[1]!, hi[2]! - lo[2]!]
+        const axis = ext[0]! >= ext[1]! && ext[0]! >= ext[2]! ? 0 : ext[1]! >= ext[2]! ? 1 : 2
+        const part = order.slice(s, e).sort((x, y) => cen[x * 3 + axis]! - cen[y * 3 + axis]! || x - y)
+        for (let k = s; k < e; k++) order[k] = part[k - s]!
+        const m = (s + e) >> 1
+        const l = build(s, m), rr = build(m, e)
+        this.nodes[id * 4 + 2] = l
+        this.nodes[id * 4 + 3] = rr
+      }
+      return id
+    }
+    build(0, nt)
+    this.order = Uint32Array.from(order)
+  }
+
+  /** 点的环绕数 / The winding number at a point. */
+  at(x: number, y: number, z: number): number {
+    const p = this.p, ix = this.tri, nodes = this.nodes, nA = this.nA, nC = this.nC, nR = this.nR
+    let sum = 0
+    const stack = [0]
+    while (stack.length) {
+      const id = stack.pop()!
+      const cx = nC[id * 3]! - x, cy = nC[id * 3 + 1]! - y, cz = nC[id * 3 + 2]! - z
+      const d = Math.hypot(cx, cy, cz)
+      if (d > this.beta * nR[id]!) {
+        sum += (cx * nA[id * 3]! + cy * nA[id * 3 + 1]! + cz * nA[id * 3 + 2]!) / (d * d * d)
+        continue
+      }
+      const l = nodes[id * 4 + 2]!
+      if (l >= 0) {
+        stack.push(l, nodes[id * 4 + 3]!)
+        continue
+      }
+      for (let k = nodes[id * 4]!; k < nodes[id * 4 + 1]!; k++) {
+        const t = this.order[k]!
+        const a = ix[t * 3]! * 3, b = ix[t * 3 + 1]! * 3, c = ix[t * 3 + 2]! * 3
+        const ax = p[a]! - x, ay = p[a + 1]! - y, az = p[a + 2]! - z
+        const bx = p[b]! - x, by = p[b + 1]! - y, bz = p[b + 2]! - z
+        const qx = p[c]! - x, qy = p[c + 1]! - y, qz = p[c + 2]! - z
+        const la = Math.hypot(ax, ay, az), lb = Math.hypot(bx, by, bz), lc = Math.hypot(qx, qy, qz)
+        const det = ax * (by * qz - bz * qy) + ay * (bz * qx - bx * qz) + az * (bx * qy - by * qx)
+        const den = la * lb * lc + (ax * bx + ay * by + az * bz) * lc + (bx * qx + by * qy + bz * qz) * la + (qx * ax + qy * ay + qz * az) * lb
+        // 三角形张的立体角（Van Oosterom 和 Strackee 1983）/ the solid angle of the triangle (Van Oosterom and Strackee 1983)
+        sum += 2 * Math.atan2(det, den)
+      }
+    }
+    return sum / (4 * Math.PI)
   }
 }

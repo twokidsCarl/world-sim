@@ -21,6 +21,7 @@
 
 import type { MuscleLine, NervePath, Part, Vec3 } from '../../src/anatomy/types.ts'
 import type { ExternalRule, ExternalWeights } from './external.ts'
+import { type GirdleSplit, splitGirdle } from './shoulder.ts'
 import { type BodyField, weightsFromDistances } from './field.ts'
 import { pca } from './fits.ts'
 import { Surface } from './geom.ts'
@@ -99,7 +100,7 @@ export interface BindRules {
   attachmentExcludes?: AttachmentExclude[]
   hingeBlend?: HingeBlend[]
   /** 自带外部蒙皮权重的皮肤（见 external.ts）：部件的 Part.source 与权重包 manifest 的 source.name 一致时采用。 Skins that come with external weights (see external.ts): used when the part's Part.source equals source.name of the package manifest. */
-  externalWeights?: { body: string; dir: string; openDir?: string; ribFollow?: RibFollow; map?: ExternalRule[]; caps?: WeightCap[]; generic?: string; genericWhy?: { zh: string; en: string }; keepInfluence?: string; keepInfluenceWhy?: { zh: string; en: string }; why?: { zh: string; en: string } }[]
+  externalWeights?: { body: string; dir: string; openDir?: string; ribFollow?: RibFollow; map?: ExternalRule[]; caps?: WeightCap[]; generic?: string; genericWhy?: { zh: string; en: string }; keepInfluence?: string; keepInfluenceWhy?: { zh: string; en: string }; girdleSplit?: GirdleSplit; why?: { zh: string; en: string } }[]
 }
 
 export interface BoundPart {
@@ -1402,6 +1403,13 @@ export function bindAll(ctx: BindContext): BindResult {
           blended++
         })
       }
+      // 肩带：外部权重里“锁骨”那一份按距离场在锁骨和肩胛骨之间重新分（tools/rig/shoulder.ts 的 splitGirdle）
+      // the girdle: the external weights' "clavicle" share split again between clavicle and scapula by the distance field (splitGirdle in tools/rig/shoulder.ts)
+      let girdled = 0
+      if (cfg?.girdleSplit) {
+        const gs = cfg.girdleSplit
+        girdled = splitGirdle(t.rows, mesh.pos, gs, joints.map((j) => j.def.id), field, (c, out) => weightsFromDistances(c, gs.beta, radius, out), joints.map((j) => j.center))
+      }
       // 权重上限（上唇不跟下颌）/ weight caps (the upper lip does not follow the jaw)
       let capped = 0
       for (const cap of cfg?.caps ?? []) {
@@ -1524,7 +1532,7 @@ export function bindAll(ctx: BindContext): BindResult {
         smooth(d, mesh, cfg.ribFollow.smooth, locked)
       }
       finish(p, 'external', mesh, d, nv)
-      notes.push(`${p.id} "${p.name}": bound with external weights from ${ext.dir}, ${src ? `taken by package vertex index (${SKIN_SOURCE_NAME})` : `transferred by closest point on the original surface (mean ${t.meanMm.toFixed(2)} mm, max ${t.maxMm.toFixed(1)} mm away)`}${ribbed ? `; ${ribbed} chest vertices handed part of their thoracic weight to the ribs` : ''}${blended ? `; ${blended} vertices blended with distance-field weights (generic: ${cfg!.generic})` : ''}${capped ? `; ${capped} vertices had jaw weight handed to the skull (upper lip)` : ''}${keptRows ? `; on ${keptRows} vertices the smallest influences were merged into their neighbours on the skeleton so that ${cfg!.keepInfluence} stays among the 4 kept` : ''}`)
+      notes.push(`${p.id} "${p.name}": bound with external weights from ${ext.dir}, ${src ? `taken by package vertex index (${SKIN_SOURCE_NAME})` : `transferred by closest point on the original surface (mean ${t.meanMm.toFixed(2)} mm, max ${t.maxMm.toFixed(1)} mm away)`}${ribbed ? `; ${ribbed} chest vertices handed part of their thoracic weight to the ribs` : ''}${blended ? `; ${blended} vertices blended with distance-field weights (generic: ${cfg!.generic})` : ''}${girdled ? `; on ${girdled} vertices the share of ${cfg!.girdleSplit!.from} was split again among ${cfg!.girdleSplit!.among} by the distance field` : ''}${capped ? `; ${capped} vertices had jaw weight handed to the skull (upper lip)` : ''}${keptRows ? `; on ${keptRows} vertices the smallest influences were merged into their neighbours on the skeleton so that ${cfg!.keepInfluence} stays among the 4 kept` : ''}`)
       if (++done % 400 === 0) ctx.log?.(`bound ${done} field parts`)
       continue
     }
