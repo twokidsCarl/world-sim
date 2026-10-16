@@ -7,6 +7,7 @@ import type { AnatomyGraph } from '../anatomy/graph.ts'
 import { posePresets } from '../anatomy/rig.ts'
 import { triggerPain } from '../pain/controller.ts'
 import { useApp } from '../state/store.ts'
+import { useLumen } from '../lumen/state.ts'
 import { currentLink } from '../state/urlSync.ts'
 import { CautionList } from './CautionsDialog.tsx'
 import { Icon } from './Icon.tsx'
@@ -32,6 +33,7 @@ export function setEmbedKeys(keys: Iterable<string>): void {
 
 export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
   const [cautionsOpen, setCautionsOpen] = useState(false)
+  const flying = useLumen((s) => !!s.fly)
   const peel = useApp((s) => s.peel)
   const section = useApp((s) => s.section)
   const rig = useApp((s) => s.rig)
@@ -116,10 +118,13 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
         </div>
       )}
 
-      <div className="embed-hint">
-        拖动旋转 · 右键、Shift + 拖动或双指滑动平移 · 滚轮或捏合缩放{' '}
-        <span className="en">drag to rotate · right-drag, Shift + drag or two-finger swipe to pan · wheel or pinch to zoom</span>
-      </div>
+      {/* 漫游时相机由路径带着走，拖动、缩放都不起作用，提示也就不显示 / in the fly-through the path drives the camera and dragging or zooming does nothing, so the hint is not shown */}
+      {!flying && (
+        <div className="embed-hint">
+          拖动旋转 · 右键、Shift + 拖动或双指滑动平移 · 滚轮或捏合缩放{' '}
+          <span className="en">drag to rotate · right-drag, Shift + drag or two-finger swipe to pan · wheel or pinch to zoom</span>
+        </div>
+      )}
 
       <div className="embed-strip">
         <button className="tool-btn" onClick={() => app.requestHome()} title="复位视角 Reset view">

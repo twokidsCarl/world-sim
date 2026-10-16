@@ -94,7 +94,7 @@ import { registerSoftHost } from '../softbody/host.ts'
 import type { ResolvedSite } from '../pain/stimulus.ts'
 import { layerWeights, type LoadedDetail } from '../pain/detail.ts'
 import { LumenLayer } from './lumenLayer.ts'
-import { ORIGIN_BOUNDED, ORIGIN_CONSTRUCTION, ORIGIN_MIXED, applyFilling, buildCanalPath, pathPoint, radiusAt, ringStations, ringsOf, segmentAt, widenRings, type CanalPath, type PathSegmentInput, type RingMesh, type V3 } from '../lumen/core.ts'
+import { ORIGIN_BOUNDED, ORIGIN_CONSTRUCTION, ORIGIN_MIXED, applyFilling, buildCanalPath, findFlyStart, flyFrames, flyPose, keepPlace, radiusAt, ringStations, ringsOf, segmentAt, segmentKey, widenRings, type CanalPath, type FlyFrames, type FlyRoute, type PathSegmentInput, type RingMesh, type V3 } from '../lumen/core.ts'
 import { LUMEN_COLOR } from '../lumen/colors.ts'
 import { isTrackpadScroll } from './wheel.ts'
 import { LookSkin } from '../look/lookSkin.ts'
@@ -109,7 +109,7 @@ import { HairLayer } from '../hair/layer.ts'
 import { ClothLayer } from '../cloth/layer.ts'
 import { ClothSim, type ClothStats } from '../cloth/client.ts'
 import type { LoadedCloth } from '../cloth/load.ts'
-import { FLY_MIN_FILL, FLY_MIN_RADIUS, FLY_SPEED, displacementOf, ensureLumenData, fillingOf, lumenCandidates, registerLumenGeometry, reportFly, segmentIds, showCanal, useLumen, type LumenData, type LumenState } from '../lumen/state.ts'
+import { FLY_MIN_FILL, FLY_MIN_RADIUS, FLY_SPEED, displacementOf, ensureLumenData, fillingOf, lumenCandidates, registerLumenGeometry, reportFly, routesOf, showCanal, useLumen, type LumenData, type LumenState } from '../lumen/state.ts'
 
 const LEGACY_SORT = typeof location !== 'undefined' && new URLSearchParams(location.search).get('sort') === 'origin'
 const GHOST_RGB = new Color('#8d99a6')
@@ -451,15 +451,19 @@ export class Viewer {
   private unsubLumen: (() => void) | null = null
   private fly: {
     path: CanalPath | null
+    /** 路径上每点的视线和"上"方向（只由路径决定）/ view and up at every path point (decided by the path alone) */
+    frames: FlyFrames | null
+    route: FlyRoute | null
     key: string
     s: number
     lastT: number
     seekNonce: number
     started: boolean
     reported: number
-    up: Vector3
     saved: { position: Vector3; target: Vector3; fov: number; near: number; far: number }
   } | null = null
+  /** 漫游时要画的部件：所飞路线上的腔；null 为路线还没定 / Parts drawn in the fly-through: the lumina of the route flown; null before the route is settled. */
+  private flyShown: Set<number> | null = null
 
   /** 关节纹理最多容纳的行数（关节数 + 1）和肌肉作用线数 / Capacity of the joint texture (joints + 1) and of the muscle texture. */
   private static readonly MAX_JOINT_ROWS = 512
@@ -3016,6 +3020,20 @@ export class Viewer {
     // 漫游时不画壁：从腔里面本来就看不到壁，而每片器官的网格两端是封住的，封盖会像隔膜一样横在腔里
     // no walls in the fly-through: from inside the lumen they cannot be seen anyway, and every organ piece is a mesh closed at both ends, whose caps would lie across the lumen like septa
     if (L?.fly) for (const i of this.lumenWalls) if (!s.selection.set.has(this.graph.parts[i]!.id)) this.display[i] = HIDDEN
+    // 漫游时只画所飞路线上的腔（选中的部件照旧显示）：撑开到 6 毫米、充盈到至少一半的腔会穿出自己的壁，原来腹壁
+    // 的肌肉、上腹部的血管、结肠带等几十个部件会横在腔里；从腔里面本来也只该看到腔的内表面。路线上的腔总是画出来，
+    // 即使它所在的系统被隐藏了。
+    // in the fly-through only the lumina of the route flown are drawn (selected parts still show): a lumen
+    // widened to 6 mm and filled to at least half pokes out through its own wall, and dozens of parts —
+    // abdominal-wall muscles, epigastric vessels, the taeniae of the colon — used to lie across it; from inside
+    // a lumen only its inner surface should be seen anyway. The route's lumina are always drawn, even when
+    // their system is hidden.
+    if (L?.fly && this.flyShown) {
+      for (let i = 0; i < this.display.length; i++) {
+        if (this.flyShown.has(i)) this.display[i] = NORMAL
+        else if (this.display[i] !== HIDDEN && !s.selection.set.has(this.graph.parts[i]!.id)) this.display[i] = HIDDEN
+      }
+    }
   }
 
   /** "腔"图层的有无和内容：模式开着、没有爆炸位移时由它来画腔 / Whether the lumina layer is in use and what it draws: with the mode on and no explode offsets it draws the lumina. */
@@ -3069,7 +3087,8 @@ export class Viewer {
     const batches = this.batches
     if (!data || !batches || data.entries.size === 0) return
     const L = useLumen.getState()
-    const canal = L.fly && data.path ? new Set(data.path.canal) : null
+    // 漫游时所飞路线上的腔都按漫游的规则充盈、撑开 / in the fly-through every lumen of the route flown is filled and widened by the fly-through's rules
+    const canal = L.fly && data.path ? new Set(this.fly?.route?.parts ?? data.path.canal) : null
     let changed = false
     for (const [partId, entry] of data.entries) {
       const i = this.graph.indexOf(partId)
@@ -3120,13 +3139,23 @@ export class Viewer {
     }
   }
 
-  /** 漫游路径：各段的圈心连起来（摆了姿势就用变形后的顶点），口腔和咽用引导线 / The fly-through path: ring centres of every segment joined (posed vertices when posed), guide lines for mouth and pharynx. */
-  private buildFlyPath(): CanalPath | null {
+  /**
+   * 漫游路径：所飞路线上各段的圈心连起来（摆了姿势就用变形后的顶点）；口腔和咽用引导线；既没有顶点圈也没有引导线
+   * 的腔（标本自己的直肠、阴道、宫颈管、子宫腔）由网格求中心线。读数里的半径取撑开之前的（充盈后的）圈，所以是
+   * 数据里的腔径，不是为了看得见撑开后的。
+   * The fly-through path: ring centres of every segment of the route joined (posed vertices when posed);
+   * guide lines for mouth and pharynx; a lumen with neither rings nor a guide (the specimen's own rectum,
+   * vagina, cervical canal, uterine cavity) gets its centreline from the mesh. The radius in the readout is
+   * that of the rings before widening (after filling), so it is the lumen of the data, not the one widened to
+   * be visible.
+   */
+  private buildFlyPath(route: FlyRoute): CanalPath | null {
     const data = this.lumenData
     const batches = this.batches
     if (!data?.path || !batches) return null
+    const L = useLumen.getState()
     const inputs: PathSegmentInput[] = []
-    for (const partId of data.path.canal) {
+    for (const partId of route.parts) {
       const i = this.graph.indexOf(partId)
       const id = i >= 0 ? this.inst[i]! : -1
       if (id < 0) return null // 几何还没到齐 / geometry not all here yet
@@ -3157,8 +3186,20 @@ export class Viewer {
         continue
       }
       const rings = this.ringsFor(i, buf)
-      if (!rings) continue
-      inputs.push({ id: partId, stations: ringStations(rings.rings, position), poleStart: rings.poleStart !== null, poleEnd: rings.poleEnd !== null })
+      if (!rings) {
+        inputs.push({ id: partId, mesh: { position, index: buf.index, base: buf.indexBase } })
+        continue
+      }
+      const stations = ringStations(rings.rings, position)
+      // 撑开之前的半径 / the radius before widening
+      const entry = data.entries.get(partId)
+      const d = entry ? displacementOf(data, partId) : null
+      if (entry && d && d.length === buf.position.length) {
+        const f = Math.max(fillingOf(L, entry), FLY_MIN_FILL)
+        const before = ringStations(rings.rings, applyFilling(this.origOf(i, buf).position, d, f, entry.rest, new Float32Array(d.length)))
+        stations.forEach((st, k) => (st.r = before[k]!.r))
+      }
+      inputs.push({ id: partId, stations, poleStart: rings.poleStart !== null, poleEnd: rings.poleEnd !== null })
     }
     return buildCanalPath(inputs)
   }
@@ -3167,6 +3208,11 @@ export class Viewer {
     const fly = this.fly
     if (!fly) return
     this.fly = null
+    if (this.flyShown) {
+      this.flyShown = null
+      this.lumenDirty = true
+      this.syncNeeded = true
+    }
     this.camera.fov = fly.saved.fov
     this.camera.near = fly.saved.near
     this.camera.far = fly.saved.far
@@ -3179,16 +3225,37 @@ export class Viewer {
     this.dirty = true
   }
 
+  /** 定下所飞的路线：store 里给了就用它，否则按起点找（找不到就是消化道）/ Settle the route flown: the store's if given, else found from the start (the canal when nothing matches). */
+  private resolveFlyRoute(L: LumenState, data: LumenData): FlyRoute | null {
+    const routes = routesOf(this.graph, data)
+    const keyOf = (id: string): string => {
+      const p = this.graph.part(id)
+      return p ? segmentKey(p.name) : id
+    }
+    const byKey = L.flyRoute ? routes.find((r) => r.key === L.flyRoute) : undefined
+    if (byKey && (typeof L.flyStart !== 'string' || byKey.key === L.flyStart || byKey.parts.some((id) => id === L.flyStart || keyOf(id) === String(L.flyStart).toLowerCase()))) return byKey
+    if (L.flyStart !== null) {
+      const hit = findFlyStart(routes, L.flyStart, L.flyRoute, keyOf)
+      if (hit) return hit.route
+      console.warn(`[soma] URL: fly: 没有这条路线或这一段 / no such route or segment "${L.flyStart}"`)
+    }
+    return byKey ?? routes[0] ?? null
+  }
+
   /**
-   * 内镜漫游：相机沿消化道的中心线在腔里面走，朝前看。视角 80°、近平面 0.4 毫米（食管只有约 4 毫米宽）。
-   * 位置取前后各 2 毫米的平均、视线指向前方 8 毫米处，所以拐角被抹圆了一些。
-   * The fly-through: the camera travels inside the lumen along the canal's centreline, looking forward.
-   * Field of view 80°, near plane 0.4 mm (the oesophagus is only about 4 mm wide). The position averages
-   * 2 mm either side and the view aims 8 mm ahead, which rounds the corners a little.
+   * 内镜漫游：相机沿所飞路线的中心线在腔里面走，朝前看。视角 80°，近平面 0.1 毫米（原来 0.4 毫米；在急弯处相机
+   * 离腔壁只有零点几毫米，壁会被近平面切掉），远平面 1.5 米。位置、视线和"上"方向都由 flyPose 从预先算好的
+   * flyFrames 取，只取决于在路径上的位置（见 core 里 FLY_CAMERA 的说明）。
+   * The fly-through: the camera travels inside the lumen along the centreline of the route flown, looking
+   * forward. Field of view 80°, near plane 0.1 mm (it was 0.4 mm; at sharp bends the camera passes within a
+   * few tenths of a millimetre of the wall, which the near plane then cut away), far plane 1.5 m. Position,
+   * view and up come from flyPose on the precomputed flyFrames and depend only on the place on the path (see
+   * FLY_CAMERA in core).
    */
   private stepFly(t: number): void {
     const L = useLumen.getState()
-    if (!L.fly || !this.lumenData?.path) {
+    const data = this.lumenData
+    if (!L.fly || !data?.path) {
       if (this.fly) this.endFly()
       return
     }
@@ -3196,51 +3263,76 @@ export class Viewer {
       this.tween = null
       this.fly = {
         path: null,
+        frames: null,
+        route: null,
         key: '',
         s: 0,
         lastT: 0,
         seekNonce: L.seek.nonce,
         started: false,
         reported: 0,
-        up: new Vector3(0, 0, 1),
         saved: { position: this.camera.position.clone(), target: this.controls.target.clone(), fov: this.camera.fov, near: this.camera.near, far: this.camera.far },
       }
       this.controls.enabled = false
       this.camera.fov = 80
-      this.camera.near = 0.0004
-      this.camera.far = 4
+      this.camera.near = 0.0001
+      this.camera.far = 1.5
       this.camera.updateProjectionMatrix()
     }
     const fly = this.fly
-    const key = `${this.lumenVersion}:${this.posed && this.poseRt ? this.poseRt.version : -1}:${this.attachedObjects}`
+    if (L.seek.nonce !== fly.seekNonce && L.seek.s < 0) fly.started = false
+    if (!fly.started || !fly.route) {
+      const route = this.resolveFlyRoute(L, data)
+      if (!route) return
+      if (route !== fly.route && route.key !== fly.route?.key) {
+        fly.route = route
+        fly.path = null
+        this.flyShown = new Set(route.parts.map((id) => this.graph.indexOf(id)).filter((i) => i >= 0))
+        this.lumenDirty = true
+        this.syncNeeded = true
+      }
+    }
+    const route = fly.route!
+    const key = `${route.key}:${this.lumenVersion}:${this.posed && this.poseRt ? this.poseRt.version : -1}:${this.attachedObjects}`
     if (key !== fly.key || !fly.path) {
-      const length = fly.path?.length
+      const old = fly.path
       fly.key = key
-      fly.path = this.buildFlyPath()
+      fly.path = this.buildFlyPath(route)
+      fly.frames = fly.path ? flyFrames(fly.path) : null
       this.dirty = true
-      // 路径变长或变短时（充盈改了圈心）按比例留在原处 / when the path changes length (filling moves ring centres) keep the place proportionally
-      if (fly.path && length) fly.s *= fly.path.length / length
+      // 路径变了（充盈改了圈心、呼吸或姿势让腔移动）：留在同一段里的同一比例处。原来按整条路径的总长按比例换算，
+      // 呼吸时总长每帧变一点，停着的相机在空肠里会沿路径来回滑 18 毫米左右。
+      // the path changed (filling moved ring centres, breathing or a pose moved the lumina): stay at the same
+      // fraction of the same segment. It used to rescale by the whole path's length, which changes a little
+      // every frame while breathing, so a held camera slid back and forth along the jejunum by about 18 mm.
+      if (fly.path && old) fly.s = keepPlace(old, fly.path, fly.s)
     }
     const path = fly.path
-    if (!path) return
+    const frames = fly.frames
+    if (!path || !frames) return
     const segId = (k: number): string => path.segments[k]!.id
     if (!fly.started) {
       fly.started = true
       const at = L.flyStart
       if (typeof at === 'number') fly.s = at / 1000
       else if (at) {
-        const id = segmentIds(this.graph, this.lumenData).get(at.toLowerCase().replace(/^oesophagus$/, 'esophagus')) ?? at
-        const seg = path.segments.find((x) => x.id === id)
+        const keyOf = (id: string): string => {
+          const p = this.graph.part(id)
+          return p ? segmentKey(p.name) : id
+        }
+        const hit = findFlyStart([route], at, route.key, keyOf)
+        const seg = hit?.part ? path.segments.find((x) => x.id === hit.part) : null
+        // 路线名：从头；段：那一段的起点；那一段不在路径上（没有中心线）时留在原处并告警（找不到的名字在 resolveFlyRoute 里已经告警过）
+        // a route key: from the start; a segment: that segment's start; a segment not on the path (no centreline) stays put with a warning (an unknown name was warned about in resolveFlyRoute)
         if (seg) fly.s = seg.start + seg.bridged
-        else console.warn(`[soma] URL: fly: 没有这一段 / no such segment "${at}"`)
-      }
+        else if (hit && !hit.part) fly.s = 0
+        else if (hit) console.warn(`[soma] URL: fly: 路径上没有这一段 / no such segment on the path "${at}"`)
+      } else fly.s = 0
     }
     if (L.seek.nonce !== fly.seekNonce) {
       fly.seekNonce = L.seek.nonce
       if (L.seek.s >= 0) fly.s = L.seek.s
-      else fly.started = false
       this.dirty = true
-      if (!fly.started) return
     }
     const dt = fly.lastT ? Math.min(0.1, (t - fly.lastT) / 1000) : 0
     fly.lastT = t
@@ -3252,44 +3344,29 @@ export class Viewer {
       this.dirty = true
     }
     fly.s = Math.min(path.length, Math.max(0, fly.s))
-    const a: V3 = [0, 0, 0], b: V3 = [0, 0, 0], c: V3 = [0, 0, 0]
-    pathPoint(path, fly.s - 0.002, a)
-    pathPoint(path, fly.s, b)
-    pathPoint(path, fly.s + 0.002, c)
-    const pos = this.camera.position.set((a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3)
-    // 朝行进方向看；快到头时用身后的一点定方向 / look the way of travel; near the end the direction comes from a point behind
-    const ahead = fly.s + dir * 0.008
-    const view = new Vector3()
-    if (ahead >= 0 && ahead <= path.length) {
-      pathPoint(path, ahead, a)
-      view.set(a[0] - pos.x, a[1] - pos.y, a[2] - pos.z)
-    } else {
-      pathPoint(path, fly.s - dir * 0.008, a)
-      view.set(pos.x - a[0], pos.y - a[1], pos.z - a[2])
-    }
-    if (view.lengthSq() < 1e-12) view.set(0, -1, 0)
-    view.normalize()
-    // "上"沿路径平移：去掉沿视线的分量；退化时换一个垂直方向 / "up" is transported along the path: drop its component along the view; pick another perpendicular when degenerate
-    fly.up.addScaledVector(view, -fly.up.dot(view))
-    if (fly.up.lengthSq() < 1e-6) fly.up.set(Math.abs(view.z) < 0.9 ? 0 : 1, 0, Math.abs(view.z) < 0.9 ? 1 : 0).addScaledVector(view, -(Math.abs(view.z) < 0.9 ? view.z : view.x))
-    fly.up.normalize()
-    this.camera.up.copy(fly.up)
-    this.camera.lookAt(pos.x + view.x, pos.y + view.y, pos.z + view.z)
+    const pose = flyPose(path, frames, fly.s, L.fly.reverse)
+    this.camera.position.set(pose.pos[0], pose.pos[1], pose.pos[2])
+    this.camera.up.set(pose.up[0], pose.up[1], pose.up[2])
+    this.camera.lookAt(pose.pos[0] + pose.dir[0], pose.pos[1] + pose.dir[1], pose.pos[2] + pose.dir[2])
     this.camera.updateMatrixWorld()
     this.tween = null
     // 位置每隔 120 毫秒报告一次（界面上的读数和进度条），到头时立即报告 / the position is reported every 120 ms (readout and scrubber), and at once at either end
     if (ended || t - fly.reported > 120) {
-      const id = segId(segmentAt(path, fly.s))
+      const k = segmentAt(path, fly.s)
+      const id = segId(k)
       const radius = radiusAt(path, fly.s)
-      if (ended || Math.abs(L.flyS - fly.s) > 1e-6 || L.flyTotal !== path.length || L.flySegment !== id || L.flyRadius !== radius) {
+      const seg = path.segments[k]!
+      // 段间空隙：两段之间直线连过去的那一截（超过 1 毫米才算）/ a gap: the straight stretch joining two segments (over 1 mm)
+      const gap = seg.bridged > 0.001 && fly.s < seg.start + seg.bridged
+      if (ended || Math.abs(L.flyS - fly.s) > 1e-6 || L.flyTotal !== path.length || L.flySegment !== id || L.flyRadius !== radius || L.flyRoute !== route.key || L.flyGap !== gap) {
         fly.reported = t
-        reportFly(fly.s, path.length, id, radius, ended)
+        reportFly(fly.s, path.length, id, gap ? 0 : radius, ended, route.key, gap)
       }
     }
   }
 
   /** 腔显示的现状（验证用）/ The state of the lumina display (verification). */
-  lumenInfo(): { data: boolean; derived: number; real: number; walls: number; layer: boolean; layerParts: number; rewritten: number; fly: { s: number; length: number; segment: string; segments: { id: string; start: number; end: number; bridged: number }[] } | null } {
+  lumenInfo(): { data: boolean; derived: number; real: number; walls: number; layer: boolean; layerParts: number; rewritten: number; fly: { route: string; s: number; length: number; segment: string; segments: { id: string; start: number; end: number; bridged: number }[] } | null } {
     const path = this.fly?.path
     return {
       data: !!this.lumenData,
@@ -3299,7 +3376,7 @@ export class Viewer {
       layer: this.lumenLayerOn,
       layerParts: this.lumenLayerOn && this.lumenLayer ? this.lumenLayer.parts.filter((i) => this.display[i] === NORMAL).length : 0,
       rewritten: [...this.lumenApplied.values()].filter((k) => k !== 'mismatch').length,
-      fly: this.fly && path ? { s: this.fly.s, length: path.length, segment: path.segments[segmentAt(path, this.fly.s)]!.id, segments: path.segments } : null,
+      fly: this.fly && path ? { route: this.fly.route?.key ?? '', s: this.fly.s, length: path.length, segment: path.segments[segmentAt(path, this.fly.s)]!.id, segments: path.segments } : null,
     }
   }
 
